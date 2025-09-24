@@ -1,0 +1,5 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+/hwrf_uv_fcst_2504_12.zarr
+**/__pycache__
