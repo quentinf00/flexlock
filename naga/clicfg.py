@@ -17,8 +17,12 @@ def clicfg(fn):
         parser.add_argument('--overrides_path', default=None, help="Path to a YAML file with configuration overrides.")
         parser.add_argument('-o', '--overrides_dot', nargs='*', default=None, help="Dot-separated key-value pairs for overrides (e.g., 'param=10').")
 
-        args_list = [] if 'ipykernel_launcher' in sys.argv[0] else None
-        cli_args = parser.parse_args(args_list)
+        if 'ipykernel_launcher' in sys.argv[0]:
+            sys.argv = ['naga'] 
+        if 'pytest' in sys.argv[0]:
+            sys.argv = ['naga'] 
+
+        cli_args = parser.parse_args()
 
         # Start with a base config. If the wrapped function has a default, use it.
         # Otherwise, start with an empty config.
