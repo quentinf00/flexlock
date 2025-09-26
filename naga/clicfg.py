@@ -3,6 +3,7 @@ import argparse
 from omegaconf import OmegaConf, open_dict, DictConfig
 import sys
 import inspect
+from pathlib import Path
 from .parallel import ParallelExecutor, load_tasks
 
 def clicfg(fn):
@@ -12,6 +13,7 @@ def clicfg(fn):
     experiment key. It also adds support for parallel execution.
     """
     def wrapped(*args, **kwargs):
+        print(args)
         parser = argparse.ArgumentParser(description="CLI configuration for a Naga function.")
         # Standard config arguments
         parser.add_argument('--config', default=None, help="Path to the base YAML configuration file.")
@@ -40,7 +42,15 @@ def clicfg(fn):
             for k, v in signature.parameters.items()
             if v.default is not inspect.Parameter.empty
         ]
-        default_cfg = next((arg for arg in defaults if isinstance(arg, DictConfig)), None)
+        print(f"{defaults=}")
+        def isconfig(x):
+            try: 
+                c = OmegaConf.create(x)
+                return isinstance(c, DictConfig)
+            except:
+                return False
+            
+        default_cfg = next((arg for arg in defaults if isconfig(arg)), None)
         if default_cfg:
             cfg = default_cfg.copy()
 
@@ -54,6 +64,14 @@ def clicfg(fn):
 
         if cli_args.experiment:
             cfg = OmegaConf.select(cfg, cli_args.experiment)
+        
+        print(f"{cfg=}")
+        if "save_dir" not in cfg:
+            print("Warning: No save_dir found in config")
+        else:
+            save_dir = Path(cfg.save_dir)
+            save_dir.mkdir(parents=True, exist_ok=True)
+            OmegaConf.save(cfg, save_dir / 'config.yaml')
 
         # Parallel execution logic
         if cli_args.tasks or cli_args.tasks_key:
@@ -78,6 +96,9 @@ def clicfg(fn):
                 print("Warning: --tasks or --tasks-key provided, but no tasks were loaded. Running once.")
 
         # Default behavior: run the function once with the resolved config.
-        return fn(cfg, *args[1:], **kwargs)
+        print(args)
+        args_cfg = OmegaConf.create(args[0])
+        final_cfg = OmegaConf.merge(cfg, args_cfg)
+        return fn(final_cfg, *args[1:], **kwargs)
     
     return wrapped

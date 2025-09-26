@@ -6,6 +6,14 @@ from omegaconf import DictConfig, OmegaConf
 
 from .context import run_context
 
+def load_stage_from_path(path: str) -> dict:
+    """
+    Loads a stage from a given path and returns its data.
+    """
+    all_stages = {}
+    _load_and_flatten_recursively("loaded_stage", path, all_stages)
+    return all_stages
+
 def _load_and_flatten_recursively(stage_key: str, stage_path_str: str, all_stages: dict):
     """
     Recursively loads a stage and its ancestors, adding them to the all_stages dict.
@@ -54,7 +62,8 @@ def load_stage(*stage_keys: str):
                 if stage_path_str is None:
                     raise ValueError(f"Previous stage key '{key}' not found in config.")
                 
-                _load_and_flatten_recursively(key, stage_path_str, all_stages)
+                loaded_stages = load_stage_from_path(stage_path_str)
+                all_stages.update(loaded_stages)
 
             return fn(cfg, *args, **kwargs)
         return wrapped

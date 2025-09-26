@@ -5,23 +5,48 @@ authors = [ {name="Quentin Febvre", email="quentin.febvre@gmail.com"} ]
 description = "A lightweight and painless MLOps library"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
+
+[build-system] 
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["naga"]
+only-packages = true
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
+preview = ["pixi-build"]
 
+
+[tool.pixi.package]
+name = "naga"
+version = "0.1.0"
+
+[tool.pixi.package.build.backend]
+name = "pixi-build-python"
+version = "*"
+channels = ["https://prefix.dev/pixi-build-backends", "conda-forge"]
+
+[tool.pixi.package.host-dependencies]
+hatchling = "*"
 [tool.pixi.tasks]
 test = { cmd = "pytest" }
+
+[tool.pixi.feature.build.dependencies]
+naga = {path = "."}
 
 [tool.pixi.feature.test.dependencies]
 pytest = ">=8.3.2,<9"
 pytest-mock = ">=3.14.0,<4"
 
+[tool.pixi.feature.test.pypi-dependencies]
+naga = { path = ".", editable = true }
+
 [tool.pixi.dependencies]
-xxhash = ">=0.8.3,<0.9"
 python = "3.11.*"
-dvc = ">=3.63.0,<4"
 omegaconf = ">=2.3.0,<3"
 gitpython = ">=3.1.45,<4"
 python-xxhash = ">=3.5.0,<4"
@@ -31,9 +56,8 @@ pandas = ">=2.3.2,<3"
 submitit = ">=1.5.2,<2"
 
 [tool.pixi.pypi-dependencies]
-xxhash = ">=3.5.0, <4"
 dirhash = ">=0.5.0, <0.6"
-naga = { path = ".", editable = true }
 
 [tool.pixi.environments]
-test = { features = ["test"], solve-group = "test" }
+build = { features = ["build"] }
+default = { features = ["test"] }

@@ -46,13 +46,10 @@ def load_tasks(tasks: str, tasks_key: str, cfg: DictConfig) -> List[Any]:
 def merge_task_into_cfg(cfg: DictConfig, task: Any, task_to: str) -> DictConfig:
     """Merge a task into the config."""
     # Create a minimal config with just the task structure
-    key_parts = task_to.split('.')
-    task_branch = OmegaConf.create()
-    current_level = task_branch
-    for part in key_parts[:-1]:
-        current_level = current_level.setdefault(part, {})
-    current_level[key_parts[-1]] = task
 
+    task_branch = OmegaConf.create({})
+    OmegaConf.update(task_branch, task_to, task, force_add=True)
+    print(cfg, task, task_branch)
     return OmegaConf.merge(cfg, task_branch)
 
 

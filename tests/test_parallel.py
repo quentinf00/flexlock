@@ -44,7 +44,7 @@ def test_load_tasks_file_not_found():
         load_tasks("non_existent_file.txt", None, OmegaConf.create())
 
 def test_merge_task_into_cfg():
-    cfg = OmegaConf.create({"a": {"b": 1}})
+    cfg = OmegaConf.create({"a": {"b": 1, "task_data": None}})
     task = {"c": 2}
     merged_cfg = merge_task_into_cfg(cfg, task, "a.task_data")
     assert merged_cfg.a.b == 1

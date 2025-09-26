@@ -54,7 +54,7 @@ def commit_cwd(branch, message, repo_path=".", include=None, exclude=None):
     log_branch.commit = commit
     return commit
 
-def snapshot(branch="run_logs", message="Naga: Auto-snapshot", include=None, exclude=None):
+def snapshot(branch="run_logs", message="Naga: Auto-snapshot", include=None, exclude=None, git_repo_path="."):
     """
     A decorator that automatically versions the source code of a project
     by taking a Git snapshot before running a function.
@@ -62,7 +62,7 @@ def snapshot(branch="run_logs", message="Naga: Auto-snapshot", include=None, exc
     def decorator(fn):
         @wraps(fn)
         def wrapped(*args, **kwargs):
-            commit = commit_cwd(branch, message, include=include, exclude=exclude)
+            commit = commit_cwd(branch, message, include=include, exclude=exclude, repo_path=git_repo_path)
             run_context.get()["git_commit"] = commit.hexsha
             return fn(*args, **kwargs)
         return wrapped

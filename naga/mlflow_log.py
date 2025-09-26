@@ -15,7 +15,8 @@ default_lock_path=lambda cfg: Path(cfg.save_dir) / "run.lock"
 default_log_file_path=lambda cfg: Path(cfg.save_dir) / "experiment.log"
 def mlflow_log_run(
     run_lock_path: Union[Path, Callable, str] = default_lock_path, 
-    log_file_path: Union[Path, Callable, str, None] = default_log_file_path
+    log_file_path: Union[Path, Callable, str, None] = default_log_file_path,
+    exec_fn_first: bool=False,
 ):
     """
     A decorator to integrate MLflow logging with a function execution.
@@ -34,6 +35,8 @@ def mlflow_log_run(
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            if exec_fn_first:
+                result = func(*args, **kwargs)
             # Get config from the function arguments (first argument should be cfg or save_dir)
             if not args:
                 logger.warning("No arguments provided to function, cannot proceed with MLflow logging.")
@@ -155,7 +158,8 @@ def mlflow_log_run(
                 elif actual_log_file_path:
                     logger.warning(f"Log file not found at {actual_log_file_path}")
 
-                result = func(*args, **kwargs)
+                if not exec_fn_first:
+                    result = func(*args, **kwargs)
 
             # After the new run is finished, deprecate the previous one if it exists
             if logical_run_identifier and previous_active_run_id:
