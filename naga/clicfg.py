@@ -2,35 +2,47 @@
 import argparse
 from omegaconf import OmegaConf, open_dict, DictConfig
 import sys
+import inspect
+from .parallel import ParallelExecutor, load_tasks
 
 def clicfg(fn):
     """
     A decorator that wraps a function to provide CLI configuration capabilities
     using OmegaConf. It allows specifying a base config, overrides, and an
-    experiment key.
+    experiment key. It also adds support for parallel execution.
     """
     def wrapped(*args, **kwargs):
         parser = argparse.ArgumentParser(description="CLI configuration for a Naga function.")
-        # ... (rest of the parser setup is the same)
+        # Standard config arguments
         parser.add_argument('--config', default=None, help="Path to the base YAML configuration file.")
         parser.add_argument('--experiment', default=None, help="Dot-separated key to select a specific experiment from the config.")
         parser.add_argument('--overrides_path', default=None, help="Path to a YAML file with configuration overrides.")
         parser.add_argument('-o', '--overrides_dot', nargs='*', default=None, help="Dot-separated key-value pairs for overrides (e.g., 'param=10').")
 
-        if 'ipykernel_launcher' in sys.argv[0]:
-            sys.argv = ['naga'] 
-        if 'pytest' in sys.argv[0]:
-            sys.argv = ['naga'] 
+        # Parallel execution arguments
+        parser.add_argument('--tasks', default=None, help="Path to a file with a list of tasks (e.g., .txt, .yaml).")
+        parser.add_argument('--tasks-key', default=None, help="Dot-separated key to select a list of tasks from the config.")
+        parser.add_argument('--task-to', default=None, help="Dot-separated key where to merge the task in the config.")
+        parser.add_argument('--n_jobs', type=int, default=1, help="Number of parallel jobs for joblib.")
+        parser.add_argument('--slurm_config', default=None, help="Path to a Slurm configuration file for submitit.")
 
-        cli_args = parser.parse_args()
+        if 'ipykernel_launcher' in sys.argv[0] or 'pytest' in sys.argv[0]:
+            cli_args = parser.parse_args([])
+        else:
+            cli_args = parser.parse_args()
 
         # Start with a base config. If the wrapped function has a default, use it.
         # Otherwise, start with an empty config.
         cfg = OmegaConf.create()
-        if fn.__defaults__:
-            default_cfg = next((arg for arg in fn.__defaults__ if isinstance(arg, DictConfig)), None)
-            if default_cfg:
-                cfg = default_cfg.copy()
+        signature = inspect.signature(fn)
+        defaults = [
+            v.default
+            for k, v in signature.parameters.items()
+            if v.default is not inspect.Parameter.empty
+        ]
+        default_cfg = next((arg for arg in defaults if isinstance(arg, DictConfig)), None)
+        if default_cfg:
+            cfg = default_cfg.copy()
 
         with open_dict(cfg):
             if cli_args.config:
@@ -42,8 +54,30 @@ def clicfg(fn):
 
         if cli_args.experiment:
             cfg = OmegaConf.select(cfg, cli_args.experiment)
-        
-        # Pass the generated cfg as the first argument, followed by others.
+
+        # Parallel execution logic
+        if cli_args.tasks or cli_args.tasks_key:
+            if not cli_args.task_to:
+                parser.error("--task-to is required when using --tasks or --tasks-key.")
+            
+            tasks = load_tasks(cli_args.tasks, cli_args.tasks_key, cfg)
+            
+            if tasks:
+                executor = ParallelExecutor(
+                    func=fn,
+                    tasks=tasks,
+                    task_to=cli_args.task_to,
+                    cfg=cfg,
+                    n_jobs=cli_args.n_jobs,
+                    slurm_config=cli_args.slurm_config
+                )
+                # The executor's run method will handle calling the original function `fn`
+                # for each task, so we return its result.
+                return executor.run()
+            else:
+                print("Warning: --tasks or --tasks-key provided, but no tasks were loaded. Running once.")
+
+        # Default behavior: run the function once with the resolved config.
         return fn(cfg, *args[1:], **kwargs)
     
     return wrapped

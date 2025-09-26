@@ -47,20 +47,31 @@
     - [ ] Create commands or functions to `push` and `pull` experiment results
 - [ ] Expose  Push/Pull with a command (with args)
 
-### Phase 5.2: Parallel
-- [ ] Implement local parallel execution with `joblib`
-    - [ ] Create a `run_parallel` function or similar wrapper
-    - [ ] Ensure decorators and config handling are compatible with parallel execution
-- [ ] Implement cluster parallel execution with `submitit`
-    - [ ] Design a wrapper to submit `joblib` chunks to a SLURM cluster
-    - [ ] Ensure decorators and config handling are compatible with parallel execution
-- [ ] Implement job requeue in case the tasks list are not finished
+### Phase 5.2: Parallel Execution
+- [ ] Redesign parallel execution feature
+    - [ ] Add `--task-to` argument to specify where in the config to inject task items.
+    - [ ] Add `--n_jobs` argument to control the number of workers for `joblib`.
+    - [ ] Add `--slurm_config` argument to point to a Slurm configuration file for `submitit`.
+    - [ ] Wrap the main function in a class with a `checkpoint` method for requeueing undone tasks.
+    - [ ] Decide on implementation location: `naga/clicfg.py` or a new dedicated file (e.g., `naga/parallel.py`).
+    - [ ] Implement local parallelization with `joblib`.
+    - [ ] Implement cluster parallelization with `submitit`.
+    - [ ] Implement serial workers with task pool and requeueing mechanism.
 
 ### Phase 5.3: Debugging
 - [x] Integrate `unsafe_debug` decorator
 - [x] Make decorator conditional on `NAGA_DEBUG` environment variable
 - [x] Add tests for the debug decorator
 - [x] Document the debug decorator
+
+### Phase 5.4: Additionnal interfaces
+- [ ] Resolver based workflow:
+    - [ ] add omegaconf resolver to populate the run context while resolving the config 
+    - [ ] resolver for tracking data
+    - [ ] resolver for flagging previous stages
+- [ ] context manager based workflow:
+    - [ ] the hashing, versioning, previous stage snapshoting could be done in a context manager
+
 
 ## Phase 6: Documentation & Refinement
 - [ ] Write user documentation and examples for each feature
@@ -76,5 +87,5 @@
 - [ ] Specify that parallel must have tasks 
 
 ## Misc:
-- Add flexibility to track data from config keys or from explicit path
+- [ ]Add flexibility to track data from config keys or from explicit path
 

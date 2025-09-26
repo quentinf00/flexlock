@@ -97,3 +97,30 @@ def test_ipykernel_ignore():
     with patch.object(sys, 'argv', ['.../ipykernel_launcher.py', '-f', 'some_file', '-o', 'param=99']):
         cfg = main()
         assert cfg.param == 1 # Should be the default, not 99
+
+def test_clicfg_parallel_execution(tmp_path):
+    """Test that clicfg correctly triggers parallel execution."""
+    tasks_file = tmp_path / "tasks.txt"
+    tasks_file.write_text("task_A\ntask_B")
+
+    # A list to collect the configs received by the dummy function
+    received_configs = []
+
+    @clicfg
+    def parallel_main(cfg):
+        received_configs.append(cfg.copy())
+
+    # Simulate CLI arguments for parallel execution
+    with patch.object(sys, 'argv', [
+        'script.py',
+        '--tasks', str(tasks_file),
+        '--task-to', 'task_name',
+        '-o', f'save_dir={str(tmp_path)}' # save_dir is required by ParallelExecutor
+    ]):
+        parallel_main()
+
+    assert len(received_configs) == 2
+    assert received_configs[0].task_name == "task_A"
+    assert received_configs[1].task_name == "task_B"
+    # Ensure the save_dir override was also applied
+    assert received_configs[0].save_dir == str(tmp_path)

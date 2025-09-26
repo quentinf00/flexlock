@@ -48,34 +48,28 @@ class Config:
 
 # 3. Create the `main` function with the core logic
 #    Order of decorators matters: @runlock should be first to capture the final config.
-@runlock
+@clicfg
 @snapshot(branch="run_logs", message="Naga experiment run")
 @track_data("input_data")
-@clicfg
+@runlock
 def main(cfg: Config = OmegaConf.structured(Config)):
-    try:
-        # Your main experiment logic goes here
-        save_dir = Path(cfg.save_dir)
-        save_dir.mkdir(parents=True, exist_ok=True)
-        
-        print(f"Running experiment with learning rate: {cfg.learning_rate}")
-        
-        # In a real experiment, you would do something like:
-        # model = train_model(cfg.input_data, cfg.learning_rate, cfg.epochs)
-        # save_model(model, save_dir / "model.pkl")
-        # save_metrics({"accuracy": 0.95}, save_dir / "metrics.json")
-        
-        # For this example, we'll just create some dummy files
-        (save_dir / "model.pkl").write_text("dummy model")
-        (save_dir / "metrics.json").write_text('{"accuracy": 0.95}')
-        (save_dir / "experiment.log").write_text("Log content from the experiment.")
+    # Your main experiment logic goes here
+    save_dir = Path(cfg.save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
+    
+    print(f"Running experiment with learning rate: {cfg.learning_rate}")
+    
+    # In a real experiment, you would do something like:
+    # model = train_model(cfg.input_data, cfg.learning_rate, cfg.epochs)
+    # save_model(model, save_dir / "model.pkl")
+    # save_metrics({"accuracy": 0.95}, save_dir / "metrics.json")
+    
+    # For this example, we'll just create some dummy files
+    (save_dir / "model.pkl").write_text("dummy model")
+    (save_dir / "metrics.json").write_text('{"accuracy": 0.95}')
+    (save_dir / "experiment.log").write_text("Log content from the experiment.")
 
-    except Exception as e:
-        import traceback
-        print(traceback.format_exc())
-    finally:
-        # Return the config for the diag function
-        return cfg
+    return cfg
 
 # 4. Create the `diag` function for logging and analysis
 #    It is decorated with @mlflow_log_run

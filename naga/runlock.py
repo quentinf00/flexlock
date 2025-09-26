@@ -19,6 +19,7 @@ def runlock(fn):
     @wraps(fn)
     def wrapped(cfg: DictConfig, *args, **kwargs):
         # Ensure the save directory exists
+        print(cfg)
         save_dir = Path(cfg.save_dir)
         save_dir.mkdir(parents=True, exist_ok=True)
 

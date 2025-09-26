@@ -11,7 +11,12 @@ from omegaconf import OmegaConf
 
 logger = logging.getLogger(__name__)
 
-def mlflow_log_run(run_lock_path: Union[Path, Callable, str], log_file_path: Union[Path, Callable, str, None] = None):
+default_lock_path=lambda cfg: Path(cfg.save_dir) / "run.lock"
+default_log_file_path=lambda cfg: Path(cfg.save_dir) / "experiment.log"
+def mlflow_log_run(
+    run_lock_path: Union[Path, Callable, str] = default_lock_path, 
+    log_file_path: Union[Path, Callable, str, None] = default_log_file_path
+):
     """
     A decorator to integrate MLflow logging with a function execution.
     It logs parameters from a run.lock file and optionally an experiment log file.
@@ -87,7 +92,7 @@ def mlflow_log_run(run_lock_path: Union[Path, Callable, str], log_file_path: Uni
             if actual_run_lock_path.exists():
                 with open(actual_run_lock_path, "r") as f:
                     run_lock_data = yaml.safe_load(f)
-                print(run_lock_data)
+
                 if "config" in run_lock_data and "save_dir" in run_lock_data["config"]:
                     logical_run_identifier = run_lock_data["config"]["save_dir"]
                     logger.info(f"Derived logical_run_identifier from save_dir: {logical_run_identifier}")

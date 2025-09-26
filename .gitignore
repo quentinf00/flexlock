@@ -3,3 +3,7 @@
 !.pixi/config.toml
 /hwrf_uv_fcst_2504_12.zarr
 **/__pycache__
+.env
+.pytest_cache
+naga.egg-info
+trash
