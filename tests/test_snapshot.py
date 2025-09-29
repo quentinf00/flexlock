@@ -1,10 +1,9 @@
-
 import pytest
 from git import Repo
-import os
 from pathlib import Path
+import os
 
-from naga import snapshot
+from naga.snapshot import get_git_commit, commit_cwd
 
 @pytest.fixture
 def git_repo(tmp_path):
@@ -13,7 +12,6 @@ def git_repo(tmp_path):
     repo_dir.mkdir()
     repo = Repo.init(repo_dir)
     
-    # Initial commit is required to have a HEAD
     initial_file = repo_dir / "README.md"
     initial_file.write_text("Initial commit")
     repo.index.add([str(initial_file)])
@@ -23,70 +21,55 @@ def git_repo(tmp_path):
     
     return repo
 
-def test_snapshot_basic(git_repo):
-    """Test that a basic snapshot captures new and modified files."""
+def test_get_git_commit(git_repo):
+    """Test that get_git_commit returns the correct commit hash."""
+    expected_hash = git_repo.head.commit.hexsha
+    actual_hash = get_git_commit(path=git_repo.working_dir)
+    assert actual_hash == expected_hash
+
+def test_commit_cwd_basic(git_repo):
+    """Test that commit_cwd creates a new commit with the correct files."""
     repo_dir = Path(git_repo.working_dir)
-    
-    # Create a new file and modify an existing one
+    initial_commit = git_repo.head.commit
+
+    # Create a new file
     (repo_dir / "new_file.txt").write_text("new content")
-    (repo_dir / "README.md").write_text("modified content")
 
-    @snapshot(branch="test_branch", message="Test basic commit")
-    def my_function():
-        pass
+    new_commit = commit_cwd(
+        branch="test_branch",
+        message="Test commit",
+        repo_path=str(repo_dir)
+    )
 
-    # Run in the repo directory
-    os.chdir(repo_dir)
-    my_function()
-
-    # Assertions
-    test_branch = git_repo.heads["test_branch"]
-    last_commit = test_branch.commit
+    assert new_commit != initial_commit
+    assert new_commit.message.strip() == "Test commit"
     
-    assert last_commit.message.strip() == "Test basic commit"
-    assert len(last_commit.parents) == 1
-    
-    # Check that both new and modified files are in the commit
-    committed_files = last_commit.stats.files.keys()
+    committed_files = new_commit.stats.files.keys()
     assert "new_file.txt" in committed_files
-    assert "README.md" in committed_files
+    assert "README.md" not in committed_files # Was not changed
 
-def test_snapshot_exclude(git_repo):
-    """Test that the exclude filter prevents files from being committed."""
+    # Check that the branch was created
+    assert "test_branch" in git_repo.heads
+
+def test_commit_cwd_filesize_warn(git_repo):
+    """Test that commit_cwd issues a warning for large files."""
     repo_dir = Path(git_repo.working_dir)
     
-    (repo_dir / "script.py").write_text("print('hello')")
-    (repo_dir / "data.log").write_text("log entry")
+    # Create a large file
+    large_file = repo_dir / "large_file.bin"
+    # Write 2KB of data, with a 1KB warning threshold
+    large_file.write_bytes(os.urandom(2 * 1024 * 1024))
 
-    @snapshot(branch="exclude_branch", exclude=["*.log"])
-    def my_function():
-        pass
+    with pytest.warns(UserWarning, match="larger than 1.00 MB"):
+        commit_cwd(
+            branch="large_file_branch",
+            message="Large file commit",
+            repo_path=str(repo_dir),
+            filesize_warn=1 * 1024 * 1024 # 1 MB
+        )
 
-    os.chdir(repo_dir)
-    my_function()
-
-    last_commit = git_repo.heads["exclude_branch"].commit
-    committed_files = last_commit.stats.files.keys()
-    
-    assert "script.py" in committed_files
-    assert "data.log" not in committed_files
-
-def test_snapshot_include(git_repo):
-    """Test that the include filter only commits specified files."""
-    repo_dir = Path(git_repo.working_dir)
-    
-    (repo_dir / "script.py").write_text("print('hello')")
-    (repo_dir / "README.md").write_text("docs")
-
-    @snapshot(branch="include_branch", include=["*.py"])
-    def my_function():
-        pass
-
-    os.chdir(repo_dir)
-    my_function()
-
-    last_commit = git_repo.heads["include_branch"].commit
-    committed_files = last_commit.stats.files.keys()
-    
-    assert "script.py" in committed_files
-    assert "README.md" not in committed_files
+def test_get_git_commit_error():
+    """Test that get_git_commit handles non-repo paths gracefully."""
+    # This will fail because the temp directory is not a git repo
+    error_message = get_git_commit(path="/tmp")
+    assert "Error getting git commit" in error_message

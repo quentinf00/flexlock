@@ -56,6 +56,7 @@ def _load_cache():
 def _save_cache(cache):
     """Saves the hash cache to the JSON file."""
     try:
+        CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(CACHE_FILE, 'w') as f:
             json.dump(cache, f, indent=2)
     except IOError as e:

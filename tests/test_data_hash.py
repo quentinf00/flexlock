@@ -7,7 +7,6 @@ import os
 from unittest.mock import patch, call
 
 from naga.data_hash import hash_data, _load_cache
-from naga.track_data import track_data
 from naga.context import run_context
 
 # --- Fixtures ---
@@ -149,21 +148,3 @@ def test_naga_no_cache_env_variable(test_data, monkeypatch):
     cache = _load_cache()
     assert not cache # Cache should be empty
 
-# --- Decorator Test ---
-
-def test_track_data_decorator(test_data):
-    """Test that the @track_data decorator correctly hashes specified paths."""
-    @dataclass
-    class DataConfig:
-        my_data_dir: str = str(test_data)
-
-    @track_data("my_data_dir")
-    def my_data_function(cfg: DataConfig):
-        pass
-
-    run_context.set({})
-    my_data_function(OmegaConf.structured(DataConfig))
-    context_data = run_context.get()
-    
-    assert "data_hashes" in context_data
-    assert context_data["data_hashes"]["my_data_dir"] == hash_data(test_data)

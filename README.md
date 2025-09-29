@@ -1,134 +1,112 @@
 # Naga
 
-Naga is a Python library designed to improve the quality of life when developing ML experiments. It provides a set of decorators and utilities that address common requirements in ML development:
+Naga is a lightweight Python library designed to bring clarity, reproducibility, and scalability to your computational experiments. It provides a set of explicit, composable tools to handle the boilerplate of experiment tracking, so you can focus on your core logic.
 
-- Easy debugging when scripting
-- No cost transition going from script to lib (function)
-- Easy exploration of different config
-- Lightweight config management
-- Automatic versioning of data and source code
-- Saving and restoring experiment
-- Browsing and comparing results across runs
-- From simple case scripting to parallel execution (joblib or slurm)
-- Separated computation and diagnostics for iterative development
+Naga is built on the philosophy that **explicit is better than implicit**. Instead of magical decorators, you use clear, standalone functions and context managers to manage the lifecycle of your run.
 
-## Documentation
+## Core Components
 
-For complete documentation, please see the [docs/](./docs/) directory:
-
-- [Overview](./docs/README.md)
-- [Decorators](./docs/decorators.md)
-- [Usage Examples](./docs/examples.md)
-
-## Features
-
-### Configuration Management
-- `@clicfg` decorator for CLI configuration capabilities
-- Supports OmegaConf for flexible configuration
-- Command-line overrides and multi-file configuration
-
-### Source Code Versioning
-- `@snapshot` decorator for automatic Git snapshots
-- Include/exclude filters for selective versioning
-
-### Data Versioning
-- `@track_data` decorator for computing and tracking data hashes
-- Support for both files and directories
-
-### State Management
-- `@runlock` decorator for creating run.lock files with complete experiment state
-- `@load_stage` decorator for loading previous experiment stages
-
-### MLflow Integration
-- Track experiments with MLflow
-- Support for separate diagnostic functions
-- Update past MLflow runs
+- **`naga.clicfg`**: A flexible decorator to handle configuration from both CLI (`--arg value`) and programmatic (`my_func(arg='value')`) calls using OmegaConf.
+- **`naga.runlock`**: A function to create a `run.lock` file—a definitive receipt of your experiment containing the config, data hashes, Git commits, and dependencies.
+- **`naga.mlflow_lock`**: A context manager that handles the MLflow run lifecycle, including run creation, artifact logging, and logical run management (deprecation of previous runs).
+- **Helper Utilities**: Functions like `naga.get_git_commit` and `naga.commit_cwd` for interacting with Git.
 
 ## Installation
 
-To install Naga, use pip:
+You can install Naga using `pixi` or `pip` if you manage dependencies manually.
 
 ```bash
-pip install naga
+# With pixi
+pixi add naga
 ```
 
 ## Quick Start
 
-The recommended approach for using Naga is with a separated computation and diagnostics pattern:
+Here is a simple example demonstrating the new Naga workflow.
+
+**1. Define your configuration and core logic in a file (e.g., `my_project/main.py`):**
 
 ```python
-from dataclass import dataclass
-from omegaconf import OmegaConf
+# my_project/main.py
+from dataclasses import dataclass
 from pathlib import Path
-from datetime import datetime
-import pickle
-
-# Register a resolver for automatic timestamp formatting
-OmegaConf.register_resolver('now', lambda s: datetime.now().strftime(s), replace=True)
+from omegaconf import OmegaConf
 
 @dataclass
-class Config:
-    save_dir = "results/<my_stage>/${now: %y%m%d-%H%M}"
-    param = 1
-    # All the parameters for the function go here
+class TrainConfig:
+    # --- Parameters for the core logic ---
+    learning_rate: float = 0.01
+    dataset_path: str = "data/raw/iris.csv"
+    
+    # --- Parameters for Naga ---
+    # The save_dir is crucial for Naga to store outputs
+    save_dir: str = "/tmp/naga/runs/${now:%Y-%m-%d_%H-%M-%S}"
+    # You can track previous stages
+    preprocessing_stage: str = "/path/to/preprocessing/run"
 
-def main(cfg: Config = OmegaConf.structured(Config())):
-    try: 
-        # %% The percent cell allows for interactive execution in IDEs like VSCode or Jupyter console
-        save_dir = Path(cfg.save_dir)
-        save_dir.mkdir(parents=True, exist_ok=True)
-        OmegaConf.resolve(cfg)
-        OmegaConf.save(cfg, save_dir / 'config.yaml')  # Save config
-
-        # %% Your main computation logic here
-        print(f"Processing with param: {cfg.param}")
-        
-        # Save results for diagnostic function
-        results = {"output": cfg.param * 2, "status": "success"}
-        with open(save_dir / "results.pkl", "wb") as f:
-            pickle.dump(results, f)
-        
-    except Exception as e:  # Catch errors when executing full function
-        import traceback
-        print(traceback.format_exc())  # Print traceback
-    finally:
-        return cfg, locals()  # Return cfg and locals for diag function
-
-def diag(cfg):
-    # Diagnostic and analysis function - separate from computation
-    # This allows you to iterate on diagnostics without recomputing
+def core_logic(cfg: TrainConfig):
+    """
+    This is your pure, testable application logic.
+    It takes a config and saves its results to the `save_dir`.
+    """
+    print(f"Running training with lr: {cfg.learning_rate}")
+    print(f"Using dataset: {cfg.dataset_path}")
+    
+    # Your ML code here...
+    # For this example, we'll just create a dummy model file.
     save_dir = Path(cfg.save_dir)
+    (save_dir / "model.pt").touch()
     
-    # Load results from main() and perform analysis
-    with open(save_dir / "results.pkl", "rb") as f:
-        results = pickle.load(f)
-    
-    print(f"Analyzing results in {save_dir}")
-    print(f"Results: {results}")
-    # Add visualizations or additional analysis here
-
-if __name__ == '__main__':
-    import my_stage
-    import importlib as iml; iml.reload(my_stage)  # Reload to avoid restarting the kernel
-    
-    # Run main computation
-    cfg, local_vars = my_stage.main()
-    
-    # Then run diagnostics
-    my_stage.diag(cfg)
-    
-    # Update kernel state with latest execution locals if needed
-    locals().update(local_vars)
+    print(f"Model saved in: {save_dir}")
+    return cfg # Return the final, resolved config
 ```
 
-For more detailed usage examples, see the [Usage Examples](./docs/examples.md) documentation.
+**2. Create an entry point script (`main.py`) to orchestrate the run:**
 
-## Requirements
+```python
+# main.py
+import naga
+from my_project.main import core_logic, TrainConfig
 
-- Python 3.7+
-- OmegaConf: For configuration management
-- GitPython: For source code versioning
-- dirhash: For directory hashing
-- xxhash: For fast hashing
-- mlflow: For experiment tracking (optional)
-- pandas: For parameter flattening in MLflow logging
+# Use @naga.clicfg to handle configuration from CLI or Python
+@naga.clicfg(config_class=TrainConfig)
+def main(cfg):
+    """
+    This entry point orchestrates the experiment by combining the
+    core logic with Naga's MLOps tools.
+    """
+    # Use the mlflow_lock context manager to manage the MLflow run
+    with naga.mlflow_lock(path=cfg.save_dir):
+        
+        # --- 1. Execute the Core Logic ---
+        final_cfg = core_logic(cfg)
+
+        # --- 2. Create the Runlock ---
+        # This creates the definitive receipt for the run after it has finished.
+        if final_cfg:
+            naga.runlock(
+                config=final_cfg,
+                # Create a new git commit to capture the exact state of the code
+                repos={'main_repo': '.'}, 
+                # Hash the dataset to track data provenance
+                data={'raw_data': final_cfg.dataset_path},
+                # Link this run to its predecessors
+                prevs=[final_cfg.preprocessing_stage]
+            )
+            print(f"run.lock created at {final_cfg.save_dir}")
+
+if __name__ == "__main__":
+    main()
+```
+
+**3. Run from the command line:**
+
+```bash
+# Run with default configuration
+pixi run python main.py
+
+# Override parameters from the CLI
+pixi run python main.py -o learning_rate=0.005 dataset_path=data/v2/iris.csv
+```
+
+This workflow gives you a clear, explicit, and reproducible structure for your experiments.

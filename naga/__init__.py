@@ -1,12 +1,20 @@
+"""Naga: A lightweight library for reproducible ML experiments."""
+
 from .clicfg import clicfg
-from .context import run_context
-from .snapshot import snapshot
-from .load_stage import load_stage
 from .runlock import runlock
+from .mlflow_log import mlflow_lock
+from .snapshot import get_git_commit, commit_cwd
 from .debug import unsafe_debug
-from .decorator import naga
-from .track_data import track_data
-from .mlflow_log import mlflow_log_run
 from .resolvers import register_resolvers
 
+# Register OmegaConf resolvers when the library is imported
 register_resolvers()
+
+__all__ = [
+    "clicfg",
+    "runlock",
+    "mlflow_lock",
+    "get_git_commit",
+    "commit_cwd",
+    "unsafe_debug",
+]

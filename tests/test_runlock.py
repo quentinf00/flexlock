@@ -1,83 +1,134 @@
 import pytest
 from git import Repo
-import os
 from pathlib import Path
-from omegaconf import OmegaConf, MISSING
-from dataclasses import dataclass
+from omegaconf import OmegaConf
 import yaml
-import sys
-from unittest.mock import patch
 
-from naga import clicfg, snapshot, runlock
-
-# Define a config structure for testing the full stack
-@dataclass
-class FullConfig:
-    save_dir: str = MISSING
-    param: int = 1
-
-# Create a dummy main function with the full decorator stack
-# Note the order: runlock is first to intercept the final config
-@clicfg
-@snapshot(branch="runlock_test")
-@runlock
-def full_main(cfg: FullConfig = OmegaConf.structured(FullConfig)):
-    return f"Finished with param: {cfg.param}"
+from naga.runlock import runlock
 
 @pytest.fixture
-def git_repo_for_runlock(tmp_path):
-    """Setup a git repo for the runlock test."""
-    repo_dir = tmp_path / "runlock_repo"
+def setup_test_env(tmp_path):
+    """
+    Sets up a comprehensive test environment in a temporary directory.
+    """
+    # --- Git Repo Setup ---
+    repo_dir = tmp_path / "repo"
     repo_dir.mkdir()
     repo = Repo.init(repo_dir)
-    
-    initial_file = repo_dir / "config.yaml"
-    initial_file.write_text("param: 10")
-    repo.index.add([str(initial_file)])
+    (repo_dir / "README.md").write_text("Initial file")
+    repo.index.add(["README.md"])
     repo.config_writer().set_value("user", "name", "Test User").release()
     repo.config_writer().set_value("user", "email", "test@example.com").release()
     repo.index.commit("Initial commit")
-    
-    return repo, repo_dir
 
-def test_runlock_creation(git_repo_for_runlock):
-    """
-    Test that the full decorator stack correctly creates a run.lock file
-    with config and git commit information.
-    """
-    repo, repo_dir = git_repo_for_runlock
-    save_dir = repo_dir / "results"
-    
-    # Create a file to be committed by the snapshot decorator
-    (repo_dir / "new_file.txt").write_text("content")
+    # --- Data File Setup ---
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "dataset.csv").write_text("col1,col2\n1,2\n3,4")
 
-    # Simulate running from the command line
-    os.chdir(repo_dir)
-    with patch.object(sys, 'argv', [
-        'script.py',
-        '-o', f'save_dir={save_dir}', 'param=100'
-    ]):
-        result = full_main()
+    # --- Previous Stage Setup ---
+    prev_stage_dir = tmp_path / "prev_run"
+    prev_stage_dir.mkdir()
+    prev_runlock_data = {
+        "config": {"param": 10},
+        "repos": {"main": "prev_commit_hash"}
+    }
+    with open(prev_stage_dir / "run.lock", "w") as f:
+        yaml.dump(prev_runlock_data, f)
 
-    # --- Assertions ---
-    assert result == "Finished with param: 100"
+    # --- Save Directory ---
+    save_dir = tmp_path / "results"
+    save_dir.mkdir()
+
+    return {
+        "repo": repo,
+        "repo_dir": repo_dir,
+        "data_dir": data_dir,
+        "prev_stage_dir": prev_stage_dir,
+        "save_dir": save_dir,
+    }
+
+def test_runlock_basic_creation(setup_test_env):
+    """Test basic runlock creation without commits, data, or prevs."""
+    env = setup_test_env
+    cfg = OmegaConf.create({"param": 1, "save_dir": str(env["save_dir"])})
     
-    # 1. Check the run.lock file exists and has the correct content
-    lock_file = save_dir / "run.lock"
+    runlock(config=cfg, commit=False)
+
+    lock_file = env["save_dir"] / "run.lock"
     assert lock_file.exists()
-    
     with open(lock_file, 'r') as f:
-        run_data = yaml.safe_load(f)
-
-    # 2. Check the config section
-    assert run_data["config"]["param"] == 100
-    assert run_data["config"]["save_dir"] == str(save_dir)
-
-    # 3. Check the git_commit from the snapshot decorator
-    assert "git_commit" in run_data
+        data = yaml.safe_load(f)
     
-    # 4. Verify the commit in the actual git repo
-    commit_hash = run_data["git_commit"]
-    commit = repo.commit(commit_hash)
-    assert commit is not None
-    assert commit.message.strip() == "Naga: Auto-snapshot"
+    assert data["config"]["param"] == 1
+
+def test_runlock_with_data_and_prevs(setup_test_env):
+    """Test runlock with data hashing and previous stage loading."""
+    env = setup_test_env
+    cfg = OmegaConf.create({"param": 2, "save_dir": str(env["save_dir"])})
+
+    runlock(
+        config=cfg,
+        data={"my_data": str(env["data_dir"] / "dataset.csv")},
+        prevs=[str(env["prev_stage_dir"])],
+        commit=False
+    )
+
+    lock_file = env["save_dir"] / "run.lock"
+    assert lock_file.exists()
+    with open(lock_file, 'r') as f:
+        data = yaml.safe_load(f)
+
+    assert "data" in data
+    assert "my_data" in data["data"]
+    assert isinstance(data["data"]["my_data"], str)
+    assert len(data["data"]["my_data"]) > 0
+
+    assert "prevs" in data
+    assert str(env["prev_stage_dir"].resolve()) in data["prevs"]
+    assert data["prevs"][str(env["prev_stage_dir"].resolve())]["config"]["param"] == 10
+
+def test_runlock_with_commit_true(setup_test_env):
+    """Test that runlock creates a new commit when commit=True."""
+    env = setup_test_env
+    repo = env["repo"]
+    initial_commit = repo.head.commit
+
+    # Make a change to the repo
+    (env["repo_dir"] / "new_file.txt").write_text("uncommitted change")
+
+    cfg = OmegaConf.create({"param": 3, "save_dir": str(env["save_dir"])})
+    runlock(config=cfg, repos={"main": str(env["repo_dir"])}, commit=True)
+
+    lock_file = env["save_dir"] / "run.lock"
+    with open(lock_file, 'r') as f:
+        data = yaml.safe_load(f)
+
+    assert "repos" in data
+    new_commit_hash = data["repos"]["main"]
+    assert new_commit_hash != initial_commit.hexsha
+    
+    new_commit = repo.commit(new_commit_hash)
+    assert "Naga: Auto-snapshot" in new_commit.message
+
+def test_runlock_caller_info(setup_test_env):
+    """Test that caller information (module, function, filepath) is captured."""
+    env = setup_test_env
+    cfg = OmegaConf.create({"param": 5, "save_dir": str(env["save_dir"])})
+
+    # We call runlock from this function, so it should be captured.
+    runlock(config=cfg, repos={"test_repo": str(env["repo_dir"])}, commit=False)
+
+    lock_file = env["save_dir"] / "run.lock"
+    with open(lock_file, 'r') as f:
+        data = yaml.safe_load(f)
+
+    assert "caller" in data
+    caller_info = data["caller"]
+    
+    assert caller_info["module"] == "test_runlock"
+    assert caller_info["function"] == "test_runlock_caller_info"
+    
+    # In some CI/test environments, the test file may not be inside the repo,
+    # so we check the filepath name, which is more robust.
+    assert Path(caller_info["filepath"]).name == "test_runlock.py"

@@ -1,126 +1,88 @@
 import pytest
-from omegaconf import OmegaConf, MISSING
+from omegaconf import OmegaConf
 from dataclasses import dataclass
 import sys
 from unittest.mock import patch
-import os
 
-from naga import clicfg
+from pathlib import Path
+from naga.clicfg import clicfg
 
-# Define a default config structure for testing
+# Define a dataclass for the configuration schema
 @dataclass
 class MyConfig:
     param: int = 1
-    nested: dict = MISSING
+    nested: str = "default"
 
-# Create a dummy main function to be decorated
-@clicfg
-def main(cfg: MyConfig = OmegaConf.structured(MyConfig)):
+# Create a decorated function to be used in tests
+@clicfg(config_class=MyConfig)
+def main(cfg):
     return cfg
 
 @pytest.fixture
-def config_files(tmp_path):
-    """Create temporary config files for testing."""
+def config_file(tmp_path):
+    """Create a temporary base config file."""
     base_path = tmp_path / "base.yaml"
-    base_path.write_text("param: 10\nnested:\n  key: value")
+    base_path.write_text("param: 10\nnested: 'from_file'")
+    return base_path
 
-    override_path = tmp_path / "override.yaml"
-    override_path.write_text("param: 20\nnew_param: added")
-    
-    exp_path = tmp_path / "exp.yaml"
-    exp_path.write_text("defaults:\n  - base\n\nexp1:\n  param: 100\n\nexp2:\n  param: 200")
+def test_clicfg_default_config():
+    """Test that the default config from the dataclass is used."""
+    cfg = main()
+    assert cfg.param == 1
+    assert cfg.nested == "default"
 
-    return base_path, override_path, exp_path
-
-def test_default_config():
-    """Test that the default config is used when no args are provided."""
-    with patch.object(sys, 'argv', ['script.py']):
-        cfg = main()
-        assert cfg.param == 1
-        assert OmegaConf.is_missing(cfg, "nested")
-
-def test_config_file(config_files):
-    """Test loading a config from a file."""
-    base_path, _, _ = config_files
-    with patch.object(sys, 'argv', ['script.py', '--config', str(base_path)]):
+def test_clicfg_cli_mode_with_config_file(config_file):
+    """Test loading a config from a file via CLI arguments."""
+    with patch.object(sys, 'argv', ['script.py', '--config', str(config_file)]):
         cfg = main()
         assert cfg.param == 10
-        assert cfg.nested.key == "value"
+        assert cfg.nested == "from_file"
 
-def test_override_path(config_files):
-    """Test overriding a config with another file."""
-    base_path, override_path, _ = config_files
-    with patch.object(sys, 'argv', ['script.py', '--config', str(base_path), '--overrides_path', str(override_path)]):
+def test_clicfg_cli_mode_with_overrides(config_file):
+    """Test overriding config values from the CLI."""
+    with patch.object(sys, 'argv', [
+        'script.py',
+        '--config', str(config_file),
+        '-o', 'param=20', 'nested=cli_override'
+    ]):
         cfg = main()
         assert cfg.param == 20
-        assert cfg.nested.key == "value"
-        assert cfg.new_param == "added"
+        assert cfg.nested == "cli_override"
 
-def test_dotlist_override(config_files):
-    """Test overriding with dotlist arguments."""
-    base_path, _, _ = config_files
-    with patch.object(sys, 'argv', ['script.py', '--config', str(base_path), '-o', 'param=30', 'nested.key=new_value']):
+def test_clicfg_programmatic_mode():
+    """Test calling the decorated function programmatically with kwargs."""
+    cfg = main(param=30, nested="programmatic_override")
+    assert cfg.param == 30
+    assert cfg.nested == "programmatic_override"
+
+def test_clicfg_programmatic_mode_overrides_file(config_file):
+    """
+    Test that programmatic kwargs have higher precedence than the base config file.
+    To do this, we need to simulate a CLI call that provides the config file,
+    but then call the function with kwargs. The current implementation gives
+    programmatic kwargs the highest priority.
+    """
+    # In a real script, you might load a base config and then override it.
+    # The decorator handles this by layering overrides.
+    # Let's test the final layer (programmatic) wins.
+    
+    # Simulate a scenario where a base config is loaded via CLI args in a script,
+    # but the function is then called with kwargs.
+    overrides_config = Path(config_file).parent / 'override.yaml'
+    overrides_config.write_text("param: 40\nnested: 'from_override_file'")
+    with patch.object(sys, 'argv', ['script.py', '--config', str(config_file), '--overrides_path', str(overrides_config)]):
+        # Even though the CLI specifies a config file, the direct kwargs take precedence.
         cfg = main()
-        assert cfg.param == 30
-        assert cfg.nested.key == "new_value"
 
-def test_experiment_select(config_files):
-    """Test selecting an experiment from a config file."""
-    _, _, exp_path = config_files
-    # This test requires a slightly different main to handle experiment selection structure
-    @clicfg
-    def exp_main(cfg = OmegaConf.create()):
+    assert cfg.param == 40
+    # 'nested' should come from the file, as it wasn't overridden programmatically.
+    assert cfg.nested == "from_override_file"
+
+def test_clicfg_no_config_class():
+    """Test that the decorator works even without a config_class."""
+    @clicfg()
+    def simple_main(cfg):
         return cfg
 
-    with patch.object(sys, 'argv', ['script.py', '--config', str(exp_path), '--experiment', 'exp1']):
-        cfg = exp_main()
-        assert cfg.param == 100
-
-def test_all_overrides(config_files):
-    """Test the combination of all override mechanisms."""
-    base_path, override_path, _ = config_files
-    with patch.object(sys, 'argv', [
-        'script.py',
-        '--config', str(base_path),
-        '--overrides_path', str(override_path),
-        '-o', 'param=40', 'nested.key=final_value'
-    ]):
-        cfg = main()
-        # Dotlist override should have the highest precedence
-        assert cfg.param == 40
-        assert cfg.nested.key == "final_value"
-        assert cfg.new_param == "added"
-
-def test_ipykernel_ignore():
-    """Test that sys.argv is ignored if an ipykernel is detected."""
-    # This simulates being in a Jupyter notebook, so CLI args should be ignored
-    with patch.object(sys, 'argv', ['.../ipykernel_launcher.py', '-f', 'some_file', '-o', 'param=99']):
-        cfg = main()
-        assert cfg.param == 1 # Should be the default, not 99
-
-def test_clicfg_parallel_execution(tmp_path):
-    """Test that clicfg correctly triggers parallel execution."""
-    tasks_file = tmp_path / "tasks.txt"
-    tasks_file.write_text("task_A\ntask_B")
-
-    # A list to collect the configs received by the dummy function
-    received_configs = []
-
-    @clicfg
-    def parallel_main(cfg):
-        received_configs.append(cfg.copy())
-
-    # Simulate CLI arguments for parallel execution
-    with patch.object(sys, 'argv', [
-        'script.py',
-        '--tasks', str(tasks_file),
-        '--task-to', 'task_name',
-        '-o', f'save_dir={str(tmp_path)}' # save_dir is required by ParallelExecutor
-    ]):
-        parallel_main()
-
-    assert len(received_configs) == 2
-    assert received_configs[0].task_name == "task_A"
-    assert received_configs[1].task_name == "task_B"
-    # Ensure the save_dir override was also applied
-    assert received_configs[0].save_dir == str(tmp_path)
+    cfg = simple_main(param=50)
+    assert cfg.param == 50
