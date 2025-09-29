@@ -6,107 +6,171 @@ Naga is built on the philosophy that **explicit is better than implicit**. Inste
 
 ## Core Components
 
-- **`naga.clicfg`**: A flexible decorator to handle configuration from both CLI (`--arg value`) and programmatic (`my_func(arg='value')`) calls using OmegaConf.
+- **`naga.clicfg`**: A decorator to effortlessly create powerful command-line interfaces from your Python configuration classes.
 - **`naga.runlock`**: A function to create a `run.lock` file—a definitive receipt of your experiment containing the config, data hashes, Git commits, and dependencies.
-- **`naga.mlflow_lock`**: A context manager that handles the MLflow run lifecycle, including run creation, artifact logging, and logical run management (deprecation of previous runs).
-- **Helper Utilities**: Functions like `naga.get_git_commit` and `naga.commit_cwd` for interacting with Git.
+- **`naga.mlflow_lock`**: A context manager that handles the MLflow run lifecycle, including run creation, artifact logging, and logical run management.
+- **`naga.unsafe_debug`**: A helper decorator for seamless debugging, dropping you into an interactive session with full context when an exception occurs.
 
 ## Installation
-
-You can install Naga using `pixi` or `pip` if you manage dependencies manually.
 
 ```bash
 # With pixi
 pixi add naga
 ```
 
-## Quick Start
+## Quickstart
 
-Here is a simple example demonstrating the new Naga workflow.
-
-**1. Define your configuration and core logic in a file (e.g., `my_project/main.py`):**
+Let's start with a simple data processing script.
 
 ```python
-# my_project/main.py
-from dataclasses import dataclass
+# process.py
 from pathlib import Path
-from omegaconf import OmegaConf
 
-@dataclass
-class TrainConfig:
-    # --- Parameters for the core logic ---
-    learning_rate: float = 0.01
-    dataset_path: str = "data/raw/iris.csv"
-    
-    # --- Parameters for Naga ---
-    # The save_dir is crucial for Naga to store outputs
-    save_dir: str = "/tmp/naga/runs/${now:%Y-%m-%d_%H-%M-%S}"
-    # You can track previous stages
-    preprocessing_stage: str = "/path/to/preprocessing/run"
+class Config:
+    param = 1
+    input_path = 'data/preprocess/input.csv'
+    save_dir = 'results/process'
 
-def core_logic(cfg: TrainConfig):
-    """
-    This is your pure, testable application logic.
-    It takes a config and saves its results to the `save_dir`.
-    """
-    print(f"Running training with lr: {cfg.learning_rate}")
-    print(f"Using dataset: {cfg.dataset_path}")
-    
-    # Your ML code here...
-    # For this example, we'll just create a dummy model file.
-    save_dir = Path(cfg.save_dir)
-    (save_dir / "model.pt").touch()
-    
-    print(f"Model saved in: {save_dir}")
-    return cfg # Return the final, resolved config
+def process(cfg: Config=Config()):
+    print(f"Running with param: {cfg.param}")
+    # Create dummy input if it doesn't exist
+    Path(cfg.input_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(cfg.input_path).write_text("some data")
+
+    # Core logic
+    output_path = Path(cfg.save_dir) / 'out.txt'
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, 'w') as f:
+        for _ in range(cfg.param):
+            f.write(Path(cfg.input_path).read_text())
+    print(f"Output written to {output_path}")
+
+if __name__ == '__main__':
+    process()
 ```
 
-**2. Create an entry point script (`main.py`) to orchestrate the run:**
+This is a standard Python script. Now, let's introduce Naga to add reproducibility and a powerful CLI.
+
+### Step 1: Track Your Run with `runlock`
+
+To ensure reproducibility, we need to track the configuration, code version, and data used in a run. `naga.runlock` creates a `run.lock` file with this information.
 
 ```python
-# main.py
-import naga
-from my_project.main import core_logic, TrainConfig
+# process.py
+...
+from naga import runlock
 
-# Use @naga.clicfg to handle configuration from CLI or Python
-@naga.clicfg(config_class=TrainConfig)
-def main(cfg):
+def process(cfg: Config=Config()):
+    ...
+    # Your core logic here...
+    ...
+    runlock(
+        config=cfg,
+        repos=['.'],  # Track the git version of the current repo
+        data=[cfg.input_path],  # Hash the input data
+        # prevs=[Path(cfg.input_path).parent], # You can also track previous stages
+        runlock_path=Path(cfg.save_dir) / 'run.lock'
+    )
+```
+
+Now, running `process()` will generate a `results/process/run.lock` file, giving you a complete snapshot of your run.
+
+### Step 2: Log to MLflow with `mlflow_lock`
+
+Logging to MLflow is isolated in a separate context manager. This decouples your core logic from your logging logic, which is useful for adding diagnostics later without re-running the entire experiment.
+
+```python
+# log.py
+from pathlib import Path
+import mlflow
+from naga import mlflow_lock
+
+def log_run(save_dir):
     """
-    This entry point orchestrates the experiment by combining the
-    core logic with Naga's MLOps tools.
+    Logs the results of a run to MLflow.
+    Can be run independently from the main process.
     """
-    # Use the mlflow_lock context manager to manage the MLflow run
-    with naga.mlflow_lock(path=cfg.save_dir):
-        
-        # --- 1. Execute the Core Logic ---
-        final_cfg = core_logic(cfg)
+    with mlflow_lock(save_dir) as run:
+        # This creates a new MLflow run and links it to your run directory.
+        # It automatically logs the contents of run.lock.
+        # It also deprecates older MLflow runs for the same save_dir.
 
-        # --- 2. Create the Runlock ---
-        # This creates the definitive receipt for the run after it has finished.
-        if final_cfg:
-            naga.runlock(
-                config=final_cfg,
-                # Create a new git commit to capture the exact state of the code
-                repos={'main_repo': '.'}, 
-                # Hash the dataset to track data provenance
-                data={'raw_data': final_cfg.dataset_path},
-                # Link this run to its predecessors
-                prevs=[final_cfg.preprocessing_stage]
-            )
-            print(f"run.lock created at {final_cfg.save_dir}")
+        # You can add custom logging here:
+        mlflow.log_artifact(str(Path(save_dir) / 'out.txt'))
+        print(f"Logged artifacts for run: {run.info.run_id}")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    # Assuming process() has already been run
+    log_run('results/process')
+```
+
+### Step 3: Create a Powerful CLI with `clicfg`
+
+The `@naga.clicfg` decorator turns your configuration class into a flexible command-line interface.
+
+```python
+# process.py
+...
+from naga import clicfg
+
+@clicfg(config_class=Config)
+def main(cfg: Config):
+    """Main entry point for the process."""
+    process(cfg)
+
+if __name__ == '__main__':
     main()
 ```
 
-**3. Run from the command line:**
+This simple addition unlocks a powerful CLI:
 
 ```bash
-# Run with default configuration
-pixi run python main.py
+# Run with default config
+python process.py
 
-# Override parameters from the CLI
-pixi run python main.py -o learning_rate=0.005 dataset_path=data/v2/iris.csv
+# Override a parameter
+python process.py -o param=10
+
+# Provide a different config file
+python process.py --config conf/my_config.yml
+
+# Load a specific experiment from a multi-stage config file
+python process.py --config conf/multi_stage.yml --experiment process_v2
+
+# Run multiple experiments in parallel
+echo "1\n2\n3" > tasks.txt
+python process.py --tasks tasks.txt --task_to param --n_jobs=3
 ```
 
-This workflow gives you a clear, explicit, and reproducible structure for your experiments.
+## Development Workflow: The Debug Decorator
+
+When developing, you often want the script to drop into an interactive debugger on failure. The `@unsafe_debug` decorator provides this behavior.
+
+```python
+# process.py
+...
+from naga import clicfg, unsafe_debug
+
+@unsafe_debug
+@clicfg(config_class=Config)
+def main(cfg: Config):
+    a = 0
+    b = 1 / a  # This will raise an exception
+    process(cfg)
+
+if __name__ == '__main__':
+    main()
+```
+
+Now, run the function in a python/jupyter repl environment with the `NAGA_DEBUG=1` environment variable. When the exception occurs,  all the local variables (`cfg`, `a`, etc.) will be available for interactive inspection.
+
+```bash
+NAGA_DEBUG=1 ipython -i process.py
+# ... Exception occurs ...
+# Dropping into an interactive shell.
+# The current context is available in the `ctx` dictionary.
+# For example, access the config with `ctx['cfg']`.
+IPython post-mortem debugger> a
+0
+```
+This workflow combines the best of both worlds: the exploratory power of a notebook and the robustness of a script.

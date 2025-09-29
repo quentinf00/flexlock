@@ -4,8 +4,9 @@ from omegaconf import OmegaConf, DictConfig
 import sys
 from pathlib import Path
 from .parallel import ParallelExecutor, load_tasks
+from .debug import unsafe_debug
 
-def clicfg(config_class=None, description=None):
+def clicfg(config_class=None, description=None, add_debug=False):
     """
     A decorator that wraps a function to provide CLI and programmatic configuration
     capabilities using OmegaConf.
@@ -20,7 +21,15 @@ def clicfg(config_class=None, description=None):
             # --- Help Message Generation ---
             epilog_str = ""
             if config_class:
-                default_cfg = OmegaConf.structured(config_class)
+                if isinstance(config_class, type):
+                    default_cfg = OmegaConf.structured(config_class)
+                elif isinstance(config_class, dict):
+                    default_cfg = OmegaConf.create(config_class)
+                else: 
+                    default_cfg = config_class
+                        
+
+
                 yaml_help = OmegaConf.to_yaml(default_cfg)
                 epilog_str = f"Default Configuration:\n---\n{yaml_help}"
 
@@ -55,7 +64,13 @@ def clicfg(config_class=None, description=None):
                 dot_list_overrides = [f"{key}={value}" for key, value in kwargs.items()]
 
             # --- Configuration Loading ---
-            cfg = OmegaConf.structured(config_class) if config_class else OmegaConf.create()
+            cfg = OmegaConf.create()
+            if isinstance(config_class, type):
+                cfg = OmegaConf.structured(config_class)
+            elif isinstance(config_class, dict):
+                cfg = OmegaConf.create(config_class)
+            elif isinstance(config_class, DictConfig): 
+                cfg = config_class
 
             if cli_args.config:
                 cfg.merge_with(OmegaConf.load(cli_args.config))
@@ -101,6 +116,7 @@ def clicfg(config_class=None, description=None):
 
             # --- Single Run Execution ---
             return fn(cfg)
-
+        if add_debug:
+            wrapper = unsafe_debug(wrapper)
         return wrapper
     return decorator

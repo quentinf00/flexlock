@@ -20,7 +20,7 @@ def _get_caller_info(repos: dict) -> dict:
         caller_info = {
             "module": caller_module.__name__ if caller_module else Path(caller_frame.filename).name,
             "function": caller_frame.function,
-            "filepath": caller_module.__file__,
+            "filepath": caller_module.__file__ if caller_module else caller_frame.filename,
             "repo": None,
         }
 
@@ -83,6 +83,7 @@ def runlock(
     commit: bool = True,
     commit_branch: str = "naga-run-logs",
     commit_message: str = "Naga: Auto-snapshot",
+    mlflow_log: bool = True,
 ):
     """
     Writes a `run.lock` file with the state of the experiment.
@@ -139,3 +140,7 @@ def runlock(
 
     # Write the file atomically
     _atomic_write_yaml(run_data, lock_file)
+    if mlflow_log:
+        from .mlflow_log import mlflow_lock
+        with mlflow_lock(str(lock_file.parent)) as _:
+            pass
