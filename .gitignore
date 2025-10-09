@@ -8,3 +8,4 @@ flexlock.egg-info
 trash
 *.conda
 mlruns
+.env
