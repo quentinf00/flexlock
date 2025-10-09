@@ -6,18 +6,18 @@ import time
 import os
 from unittest.mock import patch, call
 
-from naga.data_hash import hash_data, _load_cache
-from naga.context import run_context
+from flexlock.data_hash import hash_data, _load_cache
+from flexlock.context import run_context
 
 # --- Fixtures ---
 
 @pytest.fixture(autouse=True)
 def clear_cache_before_each_test(tmp_path):
     """Fixture to ensure the cache is clear and isolated for each test."""
-    cache_dir = tmp_path / ".cache" / "naga"
+    cache_dir = tmp_path / ".cache" / "flexlock"
     cache_file = cache_dir / "hashes.json"
     
-    with patch('naga.data_hash.CACHE_FILE', cache_file):
+    with patch('flexlock.data_hash.CACHE_FILE', cache_file):
         if cache_file.exists():
             os.remove(cache_file)
         yield
@@ -90,14 +90,14 @@ def test_small_dir_cache_invalidation_by_add_file(test_data):
 
 def test_large_dir_fallback_caching(tmp_path, monkeypatch):
     """Test that large directories fall back to simple mtime caching."""
-    monkeypatch.setenv("NAGA_CACHE_DIR_FILE_LIMIT", "5")
+    monkeypatch.setenv("FLEXLOCK_CACHE_DIR_FILE_LIMIT", "5")
     large_dir = tmp_path / "large_dir"
     large_dir.mkdir()
     for i in range(10):
         (large_dir / f"file{i}.txt").write_text(str(i))
 
     # Mock logger to check for the warning
-    with patch('naga.data_hash.log') as mock_log:
+    with patch('flexlock.data_hash.log') as mock_log:
         hash1 = hash_data(large_dir)
         # Second call should be a cache hit based on mtime
         hash2 = hash_data(large_dir)
@@ -119,8 +119,8 @@ def test_large_dir_fallback_caching(tmp_path, monkeypatch):
     assert hash1 != hash4
 
 def test_cache_dir_file_limit_env_var(tmp_path, monkeypatch):
-    """Test that the NAGA_CACHE_DIR_FILE_LIMIT env var is respected."""
-    monkeypatch.setenv("NAGA_CACHE_DIR_FILE_LIMIT", "2")
+    """Test that the FLEXLOCK_CACHE_DIR_FILE_LIMIT env var is respected."""
+    monkeypatch.setenv("FLEXLOCK_CACHE_DIR_FILE_LIMIT", "2")
     
     test_dir = tmp_path / "test_dir"
     test_dir.mkdir()
@@ -141,9 +141,9 @@ def test_cache_dir_file_limit_env_var(tmp_path, monkeypatch):
     # Should now have fallen back to the simple mtime cache
     assert "mtime" in stats and "file_count" not in stats
 
-def test_naga_no_cache_env_variable(test_data, monkeypatch):
-    """Test that NAGA_NO_CACHE=1 disables the cache."""
-    monkeypatch.setenv("NAGA_NO_CACHE", "1")
+def test_flexlock_no_cache_env_variable(test_data, monkeypatch):
+    """Test that FLEXLOCK_NO_CACHE=1 disables the cache."""
+    monkeypatch.setenv("FLEXLOCK_NO_CACHE", "1")
     hash_data(test_data)
     cache = _load_cache()
     assert not cache # Cache should be empty

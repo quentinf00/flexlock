@@ -1,4 +1,4 @@
-"""Data hashing utilities for Naga."""
+"""Data hashing utilities for FlexLock."""
 import os
 import json
 import logging
@@ -9,7 +9,7 @@ import xxhash
 log = logging.getLogger(__name__)
 
 # --- Cache Configuration ---
-CACHE_DIR = Path.home() / ".cache" / "naga"
+CACHE_DIR = Path.home() / ".cache" / "flexlock"
 CACHE_FILE = CACHE_DIR / "hashes.json"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_DIR_FILE_LIMIT = 1000
@@ -60,7 +60,7 @@ def _save_cache(cache):
         with open(CACHE_FILE, 'w') as f:
             json.dump(cache, f, indent=2)
     except IOError as e:
-        log.warning(f"Could not save naga hash cache: {e}")
+        log.warning(f"Could not save flexlock hash cache: {e}")
 
 
 def hash_data(path, match=None, ignore=None, jobs=4, algorithm=xxhash.xxh3_64, chunk_size=2**18, use_cache=True):
@@ -68,8 +68,8 @@ def hash_data(path, match=None, ignore=None, jobs=4, algorithm=xxhash.xxh3_64, c
     Computes a hash for a file or a directory, using a cache to avoid re-computation.
     """
     path = Path(path).resolve()
-    use_cache = os.environ.get("NAGA_NO_CACHE", use_cache) not in ("1", "true", "True")
-    dir_file_limit = int(os.environ.get("NAGA_CACHE_DIR_FILE_LIMIT", DEFAULT_DIR_FILE_LIMIT))
+    use_cache = os.environ.get("FLEXLOCK_NO_CACHE", use_cache) not in ("1", "true", "True")
+    dir_file_limit = int(os.environ.get("FLEXLOCK_CACHE_DIR_FILE_LIMIT", DEFAULT_DIR_FILE_LIMIT))
 
     cache = {}
     if use_cache:
@@ -90,7 +90,7 @@ def hash_data(path, match=None, ignore=None, jobs=4, algorithm=xxhash.xxh3_64, c
                     log.warning(
                         f"Directory '{path_str}' has over {dir_file_limit} files. "
                         "Falling back to less accurate timestamp caching. Use `touch` on the "
-                        "directory or set NAGA_NO_CACHE=1 to force a re-hash if inner content changed."
+                        "directory or set FLEXLOCK_NO_CACHE=1 to force a re-hash if inner content changed."
                     )
                 else:
                     current_stats = {"file_count": file_count, "latest_mtime": latest_mtime}

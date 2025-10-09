@@ -154,7 +154,7 @@ def main(cfg):
     1/a
     ...
 
-```IPython (env NAGA_DEBUG=1)
+```IPython (env FLEXLOCK_DEBUG=1)
 >>> import process; process.main()
 Exception ...
 >>> a

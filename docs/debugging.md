@@ -1,6 +1,6 @@
-# `unsafe_debug`: Interactive Debugging
+# `debug_on_fail`: Interactive Debugging
 
-The `@unsafe_debug` decorator is a development tool designed to bridge the gap between interactive, exploratory programming (like in a Jupyter notebook) and robust, script-based execution. When an exception occurs in a decorated function, instead of crashing, it drops you into an interactive IPython debugger with the full state of your program preserved.
+The `@debug_on_fail` decorator is a development tool designed to bridge the gap between interactive, exploratory programming (like in a Jupyter notebook) and robust, script-based execution. When an exception occurs in a decorated function, instead of crashing, it drops you into an interactive IPython debugger with the full state of your program preserved.
 
 ## The Problem
 
@@ -18,14 +18,14 @@ if __name__ == '__main__':
 # Script crashes, and you can't inspect the values of a and b.
 ```
 
-## The Solution: `@unsafe_debug`
+## The Solution: `@debug_on_fail`
 
-By adding the `@unsafe_debug` decorator and running your script with the `NAGA_DEBUG=1` environment variable, you can seamlessly transition from execution to debugging.
+By adding the `@debug_on_fail` decorator and running your script with the `FLEXLOCK_DEBUG=1` environment variable, you can seamlessly transition from execution to debugging.
 
 ```python
-from naga import unsafe_debug
+from flexlock import debug_on_fail
 
-@unsafe_debug
+@debug_on_fail
 def main():
     a = 1
     b = 0
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 Now, run the script from your terminal:
 
 ```bash
-NAGA_DEBUG=1 python your_script.py
+FLEXLOCK_DEBUG=1 python your_script.py
 ```
 
 When the `ZeroDivisionError` occurs, you will be dropped into an IPython post-mortem debugger.
@@ -63,17 +63,17 @@ ipdb> # You can now inspect variables, run code, and debug interactively.
 
 ## Best Practices
 
-- **Development Only**: As the name implies, `@unsafe_debug` is for development. It should not be used in production code.
-- **Combine with `@clicfg`**: `@unsafe_debug` is particularly powerful when combined with `@clicfg`. Place it *above* `@clicfg`.
+- **Development Only**: As the name implies, `@debug_on_fail` is for development. It should not be used in production code.
+- **Combine with `@flexcli`**: `@debug_on_fail` is particularly powerful when combined with `@flexcli`. Place it *above* `@flexcli`.
 
   ```python
-  from naga import clicfg, unsafe_debug
+  from flexlock import flexcli, debug_on_fail
 
   class Config:
       ...
 
-  @unsafe_debug
-  @clicfg(config_class=Config)
+  @debug_on_fail
+  @flexcli(config_class=Config)
   def main(cfg: Config):
       # Your code here
       ...

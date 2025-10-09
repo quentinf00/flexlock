@@ -1,12 +1,12 @@
-"""Configuration decorator for Naga."""
+"""Configuration decorator for FlexLock."""
 import argparse
 from omegaconf import OmegaConf, DictConfig
 import sys
 from pathlib import Path
 from .parallel import ParallelExecutor, load_tasks
-from .debug import unsafe_debug
+from .debug import debug_on_fail
 
-def clicfg(config_class=None, description=None, add_debug=False):
+def flexcli(config_class=None, description=None, debug=False):
     """
     A decorator that wraps a function to provide CLI and programmatic configuration
     capabilities using OmegaConf.
@@ -17,6 +17,8 @@ def clicfg(config_class=None, description=None, add_debug=False):
     """
 
     def decorator(fn):
+        if debug:
+            return debug_on_fail(fn)
         def wrapper(**kwargs):
             # --- Help Message Generation ---
             epilog_str = ""
@@ -52,6 +54,11 @@ def clicfg(config_class=None, description=None, add_debug=False):
             parser.add_argument('--task-to', default=None, help="Dot-separated key where to merge the task in the config.")
             parser.add_argument('--n_jobs', type=int, default=1, help="Number of parallel jobs for joblib.")
             parser.add_argument('--slurm_config', default=None, help="Path to a Slurm configuration file for submitit.")
+
+            # Logging arguments
+            parser.add_argument('--verbose', action='store_true', help="Set log level to DEBUG.")
+            parser.add_argument('--quiet', action='store_true', help="Keep console logger even when a logfile is specified.")
+            parser.add_argument('--logfile', default=None, help="Path to the log file. Defaults to 'save_dir/experiment.log'.")
 
             # Determine if running from CLI or programmatically
             is_cli_call = len(sys.argv) > 1 and not any('ipykernel' in arg for arg in sys.argv) and 'pytest' not in sys.argv[0]
@@ -116,7 +123,5 @@ def clicfg(config_class=None, description=None, add_debug=False):
 
             # --- Single Run Execution ---
             return fn(cfg)
-        if add_debug:
-            wrapper = unsafe_debug(wrapper)
         return wrapper
     return decorator

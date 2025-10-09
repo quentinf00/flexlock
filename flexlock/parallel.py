@@ -1,5 +1,5 @@
 """
-This module contains the advanced parallel execution logic for Naga.
+This module contains the advanced parallel execution logic for FlexLock.
 It supports a multi-level parallelism hierarchy:
 1. Slurm Job Arrays (via submitit's map_array)
 2. Task distribution within a Slurm job (across nodes/tasks)
@@ -73,7 +73,7 @@ class ParallelExecutor:
 
         if not self.cfg.get('save_dir'):
             raise ValueError("Configuration must contain a 'save_dir' for parallel execution tracking.")
-        self.done_dir = Path(self.cfg.save_dir) / ".naga_done"
+        self.done_dir = Path(self.cfg.save_dir) / ".flexlock_done"
         self.done_dir.mkdir(parents=True, exist_ok=True)
 
     def _get_task_id(self, task: Any) -> str:

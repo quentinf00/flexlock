@@ -1,6 +1,6 @@
 
 import pytest
-from naga.parallel import load_tasks, merge_task_into_cfg, ParallelExecutor
+from flexlock.parallel import load_tasks, merge_task_into_cfg, ParallelExecutor
 from omegaconf import OmegaConf
 from pathlib import Path
 import yaml

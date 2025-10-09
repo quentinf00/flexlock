@@ -9,10 +9,13 @@ from git import Repo
 
 from .data_hash import hash_data
 from .load_stage import load_stage_from_path
-from .snapshot import commit_cwd, get_git_commit
+from .git_utils import commit_cwd, get_git_commit
+import logging
+
+logger  = logging.getLogger(__name__)
 
 def _get_caller_info(repos: dict) -> dict:
-    """Gets information about the function that called runlock."""
+    """Gets information about the function that called snapshot."""
     try:
         caller_frame = inspect.stack()[2] # Go back 2 frames to get the actual caller
         caller_module = inspect.getmodule(caller_frame[0])
@@ -73,29 +76,35 @@ def _atomic_write_yaml(data: dict, path: Path):
         yaml.dump(data, f, default_flow_style=False, sort_keys=False)
     os.rename(temp_path, path)
 
-def runlock(
+def snapshot(
     config: DictConfig,
-    repos: dict = None,
-    data: dict = None,
-    prevs: list = None,
-    runlock_path: str = None,
+    repos: dict | list | str | None = None,
+    data: dict | list | str | None = None,
+    prevs: list | str | None = None,
+    snapshot_path: str | None = None,
     merge: bool = False,
     commit: bool = True,
-    commit_branch: str = "naga-run-logs",
-    commit_message: str = "Naga: Auto-snapshot",
-    mlflow_log: bool = True,
+    commit_branch: str = "flexlock-run-logs",
+    commit_message: str = "FlexLock: Auto-snapshot",
+    mlflowlink: bool = True,
+    resolve: bool = True,
+    save_config: str | None =  'unresolved'
 ):
     """
     Writes a `run.lock` file with the state of the experiment.
 
     Args:
         config (DictConfig): The OmegaConf configuration object for the run.
-        repos (dict, optional): A dictionary mapping a name to a git repository path 
-                                (e.g., {'main_repo': '.'}).
-        data (dict, optional): A dictionary mapping a name to a data path to be hashed
-                               (e.g., {'raw_data': 'path/to/data'}).
+        repos (dict, str, or list[str], optional): 
+            - A dictionary mapping a name to a git repository path (e.g., {'main_repo': '.'}).
+            - A single path to a git repository. The key will be the directory name.
+            - A list of paths to git repositories.
+        data (dict, str, or list[str], optional): 
+            - A dictionary mapping a name to a data path to be hashed (e.g., {'raw_data': 'path/to/data'}).
+            - A single path to a data file/directory. The key will be the full path.
+            - A list of paths to data files/directories.
         prevs (list, optional): A list of paths to previous stage directories to be included.
-        runlock_path (str, optional): The explicit path to the `run.lock` file. 
+        snapshot_path (str, optional): The explicit path to the `run.lock` file. 
                                       If None, defaults to `config.save_dir / 'run.lock'`.
         merge (bool, optional): If True and a `run.lock` file already exists, it will be
                                 read, updated with the new information, and written back.
@@ -103,20 +112,52 @@ def runlock(
                                  If False, record the current commit hash. Defaults to True.
         commit_branch (str, optional): The branch to commit to if `commit=True`.
         commit_message (str, optional): The commit message to use if `commit=True`.
+        resolve (bool): wether to resolve the config (should always be true)
+        save_config ('resolved', 'unresolved'):  whether to save a config.yaml before or after running resolvers
     """
-    if runlock_path:
-        lock_file = Path(runlock_path)
+    unresolved = config.copy()
+    if snapshot_path:
+        lock_file = Path(snapshot_path)
     elif "save_dir" in config:
         lock_file = Path(config.save_dir) / "run.lock"
     else:
-        raise ValueError("Either `runlock_path` must be provided or `config` must have a `save_dir` key.")
-
+        raise ValueError("Either `snapshot_path` must be provided or `config` must have a `save_dir` key.")
     lock_file.parent.mkdir(parents=True, exist_ok=True)
+
+    if save_config == 'unresolved':
+        (lock_file.parent / 'config.yaml').write_text(OmegaConf.to_yaml(unresolved))
+
+    if resolve:
+        OmegaConf.resolve(config)
+
+    if save_config == 'resolved':
+        (lock_file.parent / 'config.yaml').write_text(OmegaConf.to_yaml(config))
 
     run_data = {}
     if merge and lock_file.exists():
         with open(lock_file, 'r') as f:
             run_data = yaml.safe_load(f) or {}
+
+    # --- Process flexible 'repos' and 'data' arguments ---
+    def _process_arg(arg, is_repo=False):
+        if not arg:
+            return {}
+        if isinstance(arg, str):
+            arg = [arg]
+        if isinstance(arg, list):
+            new_dict = {}
+            for path_str in arg:
+                path = Path(path_str)
+                key = path.absolute().name
+                if key in new_dict:
+                    logger.error(f"Key '{key}' is being overridden in {'repos' if is_repo else 'data'} use dict syntax to specify unique key for arg.")
+                    raise Exception(f"Runlock key collision {'repos' if is_repo else 'data'}")
+                new_dict[key] = str(path)
+            return new_dict
+        return arg
+
+    repos = _process_arg(repos, is_repo=True)
+    data = _process_arg(data)
 
     # --- Capture Caller and Repo Info First ---
     run_data["caller"] = _get_caller_info(repos)
@@ -133,14 +174,39 @@ def runlock(
         run_data.setdefault("data", {}).update(data_hashes)
 
     if prevs:
+        def _find_snapshot_dir(start_path: Path) -> Path | None:
+            """Search for `run.lock` in `start_path` and its parents."""
+            p = start_path.resolve()
+            if p.is_file():
+                p = p.parent
+            
+            while p != p.parent: # Stop at the root directory
+                if (p / "run.lock").exists():
+                    return p
+                p = p.parent
+            return None
+
+        if isinstance(prevs, str):
+            prevs = [prevs]
+
         previous_stages_data = {}
-        for path in prevs:
-            previous_stages_data.update(load_stage_from_path(path))
+        for path_str in prevs:
+            snapshot_dir = _find_snapshot_dir(Path(path_str))
+            if snapshot_dir:
+                stage_data = load_stage_from_path(str(snapshot_dir))
+                # The key from load_stage_from_path is the full path, 
+                # we want to use the directory name as the key.
+                original_key = next(iter(stage_data))
+                previous_stages_data[snapshot_dir.name] = stage_data[original_key]
+            else:
+                logger.warning(f"Could not find a 'run.lock' file for the previous stage at or above '{path_str}'.")
+        
         run_data.setdefault("prevs", {}).update(previous_stages_data)
 
     # Write the file atomically
     _atomic_write_yaml(run_data, lock_file)
-    if mlflow_log:
-        from .mlflow_log import mlflow_lock
-        with mlflow_lock(str(lock_file.parent)) as _:
+    if mlflowlink:
+        from .mlflowlink import mlflowlink
+        with mlflowlink(str(lock_file.parent)) as _:
             pass
+        pass

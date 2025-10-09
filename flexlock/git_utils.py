@@ -1,4 +1,4 @@
-"""Source code versioning utilities for Naga."""
+"""Source code versioning utilities for FlexLock."""
 import fnmatch
 import os
 import warnings
@@ -54,12 +54,20 @@ def commit_cwd(
         if os.path.exists(full_path) and os.path.getsize(full_path) > filesize_warn:
             warnings.warn(
                 f"File '{file_path}' is larger than {filesize_warn / 1024 / 1024:.2f} MB. "
-                "Consider adding it to .gitignore or a naga-specific exclude file.",
+                "Consider adding it to .gitignore or a flexlock-specific exclude file.",
                 UserWarning
             )
 
     index = repo.index
-    index.add([str(f) for f in files_to_consider])
+    
+    # Separate files into 'to_add' and 'to_remove'
+    files_to_add = [f for f in files_to_consider if os.path.exists(os.path.join(repo.working_dir, f))]
+    files_to_remove = [f for f in files_to_consider if not os.path.exists(os.path.join(repo.working_dir, f))]
+
+    if files_to_add:
+        index.add(files_to_add)
+    if files_to_remove:
+        index.remove(files_to_remove)
 
     log_branch = getattr(repo.heads, branch, None) or repo.create_head(branch)
     parent_commit = log_branch.commit if log_branch.commit else repo.head.commit

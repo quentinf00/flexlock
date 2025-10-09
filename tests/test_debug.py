@@ -2,12 +2,12 @@ import os
 import pytest
 from unittest.mock import patch
 
-from naga import unsafe_debug
+from flexlock import debug_on_fail
 
 def test_debug_decorator_inactive_by_default():
-    """Verify the decorator does nothing when NAGA_DEBUG is not set."""
+    """Verify the decorator does nothing when FLEXLOCK_DEBUG is not set."""
 
-    @unsafe_debug
+    @debug_on_fail
     def failing_function():
         x = 1
         y = 0
@@ -20,11 +20,11 @@ def test_debug_decorator_inactive_by_default():
     assert 'x' not in locals(), "Variable 'x' should not be injected when decorator is inactive"
     assert 'y' not in locals(), "Variable 'y' should not be injected when decorator is inactive"
 
-@patch.dict(os.environ, {"NAGA_DEBUG": "0"})
+@patch.dict(os.environ, {"FLEXLOCK_DEBUG": "0"})
 def test_debug_decorator_explicitly_inactive():
-    """Verify the decorator does nothing when NAGA_DEBUG is '0'."""
+    """Verify the decorator does nothing when FLEXLOCK_DEBUG is '0'."""
 
-    @unsafe_debug
+    @debug_on_fail
     def failing_function():
         x = 1
         y = 0
@@ -34,14 +34,14 @@ def test_debug_decorator_explicitly_inactive():
     with pytest.raises(ZeroDivisionError):
         failing_function()
 
-    assert 'x' not in locals(), "Variable 'x' should not be injected when NAGA_DEBUG='0'"
-    assert 'y' not in locals(), "Variable 'y' should not be injected when NAGA_DEBUG='0'"
+    assert 'x' not in locals(), "Variable 'x' should not be injected when FLEXLOCK_DEBUG='0'"
+    assert 'y' not in locals(), "Variable 'y' should not be injected when FLEXLOCK_DEBUG='0'"
 
-@patch.dict(os.environ, {"NAGA_DEBUG": "1"})
+@patch.dict(os.environ, {"FLEXLOCK_DEBUG": "1"})
 def test_debug_decorator_active_and_injects_on_exception():
-    """Verify the decorator injects local variables into the caller's frame when NAGA_DEBUG='1'."""
+    """Verify the decorator injects local variables into the caller's frame when FLEXLOCK_DEBUG='1'."""
 
-    @unsafe_debug
+    @debug_on_fail
     def failing_function():
         a = 100
         b = 0
@@ -56,11 +56,11 @@ def test_debug_decorator_active_and_injects_on_exception():
     assert locals()['a'] == 100, "Injected variable 'a' should have the correct value"
     assert locals()['b'] == 0, "Injected variable 'b' should have the correct value"
 
-@patch.dict(os.environ, {"NAGA_DEBUG": "true"})
+@patch.dict(os.environ, {"FLEXLOCK_DEBUG": "true"})
 def test_debug_decorator_active_with_true_string():
-    """Verify the decorator activates when NAGA_DEBUG='true'."""
+    """Verify the decorator activates when FLEXLOCK_DEBUG='true'."""
 
-    @unsafe_debug
+    @debug_on_fail
     def failing_function():
         text_var = "hello"
         raise RuntimeError("A test error")
@@ -68,5 +68,5 @@ def test_debug_decorator_active_with_true_string():
     with pytest.raises(RuntimeError):
         failing_function()
 
-    assert 'text_var' in locals(), "Variable should be injected when NAGA_DEBUG='true'"
+    assert 'text_var' in locals(), "Variable should be injected when FLEXLOCK_DEBUG='true'"
     assert locals()['text_var'] == "hello", "Injected variable should have the correct value"

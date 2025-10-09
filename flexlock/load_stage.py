@@ -1,4 +1,4 @@
-"""Utility for loading data from a previous Naga stage."""
+"""Utility for loading data from a previous FlexLock stage."""
 from pathlib import Path
 import yaml
 
@@ -22,7 +22,7 @@ def _load_and_flatten_recursively(stage_key: str, stage_path_str: str, all_stage
     Recursively loads a stage and its ancestors, adding them to the all_stages dict.
     """
     # Use the canonical path as the key to prevent duplicates
-    canonical_key = Path(stage_path_str).resolve().as_posix()
+    canonical_key = Path(stage_path_str).resolve().name
     if canonical_key in all_stages:
         return
 

@@ -1,4 +1,4 @@
-"""Shared context for a Naga run."""
+"""Shared context for a FlexLock run."""
 from contextvars import ContextVar
 
 # This context will hold information gathered during a run, like the git commit hash.

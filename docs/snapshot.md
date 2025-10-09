@@ -1,14 +1,14 @@
-# `runlock`: Experiment Tracking
+# `snapshot`: Experiment Tracking
 
-The `runlock` function is the cornerstone of reproducibility in Naga. It creates a `run.lock` file, which is a comprehensive and immutable receipt of your experiment. This file captures everything needed to reproduce your run: the exact configuration, the version of your code, the hashes of your data, and links to previous stages.
+The `snapshot` function is the cornerstone of reproducibility in FlexLock. It creates a `run.lock` file, which is a comprehensive and immutable receipt of your experiment. This file captures everything needed to reproduce your run: the exact configuration, the version of your code, the hashes of your data, and links to previous stages.
 
 ## Basic Usage
 
-Here's how to integrate `runlock` into a simple processing script:
+Here's how to integrate `snapshot` into a simple processing script:
 
 ```python
 from pathlib import Path
-from naga import runlock
+from flexlock import snapshot
 
 class Config:
     param = 1
@@ -23,10 +23,10 @@ def main(cfg: Config = Config()):
     output_path.write_text("results")
     # --- Core logic ends ---
 
-    # Create the runlock after the process has successfully completed.
-    runlock(
+    # Create the snapshot after the process has successfully completed.
+    snapshot(
         config=cfg,
-        runlock_path=Path(cfg.save_dir) / 'run.lock' # (default if save_dir is in config)
+        snapshot_path=Path(cfg.save_dir) / 'run.lock' # (default if save_dir is in config)
     )
 
 if __name__ == '__main__':
@@ -37,10 +37,10 @@ Running this script will create a `run.lock` file in `results/process/`. This fi
 
 ## Tracking Code Version
 
-To ensure that you can always trace your results back to the exact code that produced them, `runlock` can track the Git commit of your repositories.
+To ensure that you can always trace your results back to the exact code that produced them, `snapshot` can track the Git commit of your repositories.
 
 ```python
-runlock(
+snapshot(
     config=cfg,
     repos=['.']  # Tracks the Git commit of the current directory
 )
@@ -49,7 +49,7 @@ runlock(
 If your project involves multiple repositories, you can provide paths to each of them:
 
 ```python
-runlock(
+snapshot(
     config=cfg,
     repos={
         'main_project': '.',
@@ -60,10 +60,10 @@ runlock(
 
 ## Tracking Data
 
-To ensure data provenance, `runlock` can hash your input files and directories.
+To ensure data provenance, `snapshot` can hash your input files and directories.
 
 ```python
-runlock(
+snapshot(
     config=cfg,
     repos=['.'],
     data=[cfg.input_path]  # Hashes the file at cfg.input_path
@@ -73,7 +73,7 @@ runlock(
 You can also provide a dictionary to give meaningful names to your data dependencies:
 
 ```python
-runlock(
+snapshot(
     config=cfg,
     repos=['.'],
     data={
@@ -85,10 +85,10 @@ runlock(
 
 ## Tracking Previous Stages
 
-Complex workflows often involve multiple stages (e.g., preprocessing, training, evaluation). `runlock` allows you to link a run to its predecessors by embedding their `run.lock` files.
+Complex workflows often involve multiple stages (e.g., preprocessing, training, evaluation). `snapshot` allows you to link a run to its predecessors by embedding their `run.lock` files.
 
 ```python
-runlock(
+snapshot(
     config=cfg,
     repos=['.'],
     data=[cfg.input_path],

@@ -1,21 +1,21 @@
-# `clicfg`: Command-Line Interface
+# `flexcli`: Command-Line Interface
 
-The `@clicfg` decorator is a powerful tool that bridges the gap between your Python configuration classes and a command-line interface. It allows you to define your parameters in a structured class and then override them from the command line, from configuration files, or when calling the function programmatically.
+The `@flexcli` decorator is a powerful tool that bridges the gap between your Python configuration classes and a command-line interface. It allows you to define your parameters in a structured class and then override them from the command line, from configuration files, or when calling the function programmatically.
 
 ## Basic Usage
 
-To use `@clicfg`, you need a configuration class and a main function decorated with it.
+To use `@flexcli`, you need a configuration class and a main function decorated with it.
 
 ```python
 # process.py
-from naga import clicfg
+from flexlock import flexcli
 
 class Config:
     param = 1
     input_path = 'data/input.csv'
     save_dir = 'results/process'
 
-@clicfg(config_class=Config)
+@flexcli(config_class=Config)
 def main(cfg: Config):
     print(f"Parameter: {cfg.param}")
     print(f"Input path: {cfg.input_path}")
@@ -100,7 +100,7 @@ python process.py --config conf/experiments.yml --experiment experiment_b
 
 ## Parallelization
 
-`@clicfg` also provides built-in support for running multiple tasks in parallel.
+`@flexcli` also provides built-in support for running multiple tasks in parallel.
 
 ### 1. Local Parallelization
 

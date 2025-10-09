@@ -1,12 +1,12 @@
 # Advanced Topics
 
-This section covers advanced features of Naga that provide more power and flexibility for complex workflows.
+This section covers advanced features of FlexLock that provide more power and flexibility for complex workflows.
 
 ## Resolvers
 
-Resolvers allow you to dynamically fetch information and embed it directly into your configuration. This is particularly useful for making your `runlock` definitions more declarative.
+Resolvers allow you to dynamically fetch information and embed it directly into your configuration. This is particularly useful for making your `snapshot` definitions more declarative.
 
-Instead of creating the `runlock` imperatively in your Python script, you can specify the data and previous stage dependencies directly in your YAML configuration.
+Instead of creating the `snapshot` imperatively in your Python script, you can specify the data and previous stage dependencies directly in your YAML configuration.
 
 ### Example
 
@@ -16,45 +16,47 @@ Consider a training stage that depends on a preprocessing stage.
 
 ```yaml
 # config.yml
-training_data: 'data/preprocessed/features.csv'
-
-runlock:
-  data:
-    # Use the runlock_data resolver to hash the training data
-    training_features: '${runlock_data:${training_data}}'
-  prevs:
-    # Use the runlock_prev resolver to link to the preprocessing stage
-    preprocessing: '${runlock_prev:${training_data}}' 
+training_data: '${snapshot:data/preprocessed/features.csv, training_data}'
 ```
 
 **Python Script:**
 
 ```python
 # train.py
-from naga import clicfg, runlock
+from flexlock import flexcli, snapshot
 
 class Config:
     training_data: str
-    runlock: dict
 
-@clicfg(config_class=Config)
+@flexcli(config_class=Config)
 def main(cfg: Config):
     # ... your training logic ...
 
-    # The runlock is now created from the resolved config
-    runlock(config=cfg, **cfg.runlock)
+    # The snapshot is now created from the resolved config
+    snapshot(config=cfg, **cfg.snapshot)
 ```
 
-When you run `python train.py --config config.yml`, Naga's resolvers will automatically:
-1.  Find the file at `data/preprocessed/features.csv`.
-2.  `runlock_data`: Hash the file and inject the hash into the `runlock.data.training_features` field.
-3.  `runlock_prev`: Find the `run.lock` in the parent directory (`data/preprocessed/`) and embed it into the `runlock.prevs.preprocessing` field.
+When you run `python train.py --config config.yml`, FlexLock's `snapshot` resolvers will automatically:
+1.  add an entry in the snapshot data section (computing the hash of the path)
+2.  try adding an entry in the snapshot prev section and do so if a run.lock if found
+
+The resolvers works like this:
+```python
+def snapshot_resolver(path, key=None):
+    item = path if key is None else {key: path}
+    snapshot(data=item, prevs=item, merge=True) # The merge keyword append to the run.lock 
+    return path # return the actual path
+```
 
 This approach keeps your configuration self-contained and your Python script cleaner and more focused on logic.
 
+Warning: When reproducing a run from the saved config `python script.py --config result/xp_XXX/run.lock --experiment config` the config file will have been resolved and therefore will not rerun the the snapshot resolvers
+Use the save_config='unresolved' argument (default) in the snapshot function to save a 'config.yaml' file before resolution.
+The command `python script.py --config result/xp_XXX/config.yaml` will then rerun the script and the resolver
+
 ## Persisting Runs (Push/Pull)
 
-For ultimate reproducibility and collaboration, especially across different machines, you need a way to persist and retrieve the exact state of a run—both the code and the data. Naga proposes a workflow for "pushing" and "pulling" runs.
+For ultimate reproducibility and collaboration, especially across different machines, you need a way to persist and retrieve the exact state of a run—both the code and the data. FlexLock proposes a workflow for "pushing" and "pulling" runs.
 
 ### The `push` Operation
 

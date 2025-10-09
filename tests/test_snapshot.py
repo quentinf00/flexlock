@@ -1,75 +1,233 @@
 import pytest
 from git import Repo
 from pathlib import Path
-import os
+from omegaconf import OmegaConf
+import yaml
 
-from naga.snapshot import get_git_commit, commit_cwd
+from flexlock.snapshot import snapshot
 
 @pytest.fixture
-def git_repo(tmp_path):
-    """Create a temporary git repository for testing."""
-    repo_dir = tmp_path / "test_repo"
+def setup_test_env(tmp_path):
+    """
+    Sets up a comprehensive test environment in a temporary directory.
+    """
+    # --- Git Repo Setup ---
+    repo_dir = tmp_path / "repo"
     repo_dir.mkdir()
     repo = Repo.init(repo_dir)
-    
-    initial_file = repo_dir / "README.md"
-    initial_file.write_text("Initial commit")
-    repo.index.add([str(initial_file)])
+    (repo_dir / "README.md").write_text("Initial file")
+    repo.index.add(["README.md"])
     repo.config_writer().set_value("user", "name", "Test User").release()
     repo.config_writer().set_value("user", "email", "test@example.com").release()
     repo.index.commit("Initial commit")
+
+    # --- Data File Setup ---
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "dataset.csv").write_text("col1,col2\n1,2\n3,4")
+
+    # --- Previous Stage Setup ---
+    prev_stage_dir = tmp_path / "prev_run"
+    prev_stage_dir.mkdir()
+    prev_snapshot_data = {
+        "config": {"param": 10},
+        "repos": {"main": "prev_commit_hash"}
+    }
+    with open(prev_stage_dir / "run.lock", "w") as f:
+        yaml.dump(prev_snapshot_data, f)
+
+    # --- Save Directory ---
+    save_dir = tmp_path / "results"
+    save_dir.mkdir()
+
+    return {
+        "repo": repo,
+        "repo_dir": repo_dir,
+        "data_dir": data_dir,
+        "prev_stage_dir": prev_stage_dir,
+        "save_dir": save_dir,
+    }
+
+def test_snapshot_basic_creation(setup_test_env):
+    """Test basic snapshot creation without commits, data, or prevs."""
+    env = setup_test_env
+    cfg = OmegaConf.create({"param": 1, "save_dir": str(env["save_dir"])})
     
-    return repo
+    snapshot(config=cfg, commit=False)
 
-def test_get_git_commit(git_repo):
-    """Test that get_git_commit returns the correct commit hash."""
-    expected_hash = git_repo.head.commit.hexsha
-    actual_hash = get_git_commit(path=git_repo.working_dir)
-    assert actual_hash == expected_hash
+    lock_file = env["save_dir"] / "run.lock"
+    assert lock_file.exists()
+    with open(lock_file, 'r') as f:
+        data = yaml.safe_load(f)
+    
+    assert data["config"]["param"] == 1
 
-def test_commit_cwd_basic(git_repo):
-    """Test that commit_cwd creates a new commit with the correct files."""
-    repo_dir = Path(git_repo.working_dir)
-    initial_commit = git_repo.head.commit
+def test_snapshot_with_data_and_prevs(setup_test_env):
+    """Test snapshot with data hashing and previous stage loading."""
+    env = setup_test_env
+    cfg = OmegaConf.create({"param": 2, "save_dir": str(env["save_dir"])})
 
-    # Create a new file
-    (repo_dir / "new_file.txt").write_text("new content")
-
-    new_commit = commit_cwd(
-        branch="test_branch",
-        message="Test commit",
-        repo_path=str(repo_dir)
+    snapshot(
+        config=cfg,
+        data={"my_data": str(env["data_dir"] / "dataset.csv")},
+        prevs=[str(env["prev_stage_dir"])],
+        commit=False
     )
 
-    assert new_commit != initial_commit
-    assert new_commit.message.strip() == "Test commit"
+    lock_file = env["save_dir"] / "run.lock"
+    assert lock_file.exists()
+    with open(lock_file, 'r') as f:
+        data = yaml.safe_load(f)
+
+    assert "data" in data
+    assert "my_data" in data["data"]
+    assert isinstance(data["data"]["my_data"], str)
+    assert len(data["data"]["my_data"]) > 0
+
+    assert "prevs" in data
+    assert str(env["prev_stage_dir"].resolve().name) in data["prevs"]
+    assert data["prevs"][str(env["prev_stage_dir"].resolve().name)]["config"]["param"] == 10
+
+def test_snapshot_with_commit_true(setup_test_env):
+    """Test that snapshot creates a new commit when commit=True."""
+    env = setup_test_env
+    repo = env["repo"]
+    initial_commit = repo.head.commit
+
+    # Make a change to the repo
+    (env["repo_dir"] / "new_file.txt").write_text("uncommitted change")
+
+    cfg = OmegaConf.create({"param": 3, "save_dir": str(env["save_dir"])})
+    snapshot(config=cfg, repos={"main": str(env["repo_dir"])}, commit=True)
+
+    lock_file = env["save_dir"] / "run.lock"
+    with open(lock_file, 'r') as f:
+        data = yaml.safe_load(f)
+
+    assert "repos" in data
+    new_commit_hash = data["repos"]["main"]
+    assert new_commit_hash != initial_commit.hexsha
     
-    committed_files = new_commit.stats.files.keys()
-    assert "new_file.txt" in committed_files
-    assert "README.md" not in committed_files # Was not changed
+    new_commit = repo.commit(new_commit_hash)
+    assert "FlexLock: Auto-snapshot" in new_commit.message
 
-    # Check that the branch was created
-    assert "test_branch" in git_repo.heads
+def test_snapshot_caller_info(setup_test_env):
+    """Test that caller information (module, function, filepath) is captured."""
+    env = setup_test_env
+    cfg = OmegaConf.create({"param": 5, "save_dir": str(env["save_dir"])})
 
-def test_commit_cwd_filesize_warn(git_repo):
-    """Test that commit_cwd issues a warning for large files."""
-    repo_dir = Path(git_repo.working_dir)
+    # We call snapshot from this function, so it should be captured.
+    snapshot(config=cfg, repos={"test_repo": str(env["repo_dir"])}, commit=False)
+
+    lock_file = env["save_dir"] / "run.lock"
+    with open(lock_file, 'r') as f:
+        data = yaml.safe_load(f)
+
+    assert "caller" in data
+    caller_info = data["caller"]
     
-    # Create a large file
-    large_file = repo_dir / "large_file.bin"
-    # Write 2KB of data, with a 1KB warning threshold
-    large_file.write_bytes(os.urandom(2 * 1024 * 1024))
+    assert caller_info["module"] == "test_snapshot"
+    assert caller_info["function"] == "test_snapshot_caller_info"
+    
+    # In some CI/test environments, the test file may not be inside the repo,
+    # so we check the filepath name, which is more robust.
+    assert Path(caller_info["filepath"]).name == "test_snapshot.py"
 
-    with pytest.warns(UserWarning, match="larger than 1.00 MB"):
-        commit_cwd(
-            branch="large_file_branch",
-            message="Large file commit",
-            repo_path=str(repo_dir),
-            filesize_warn=1 * 1024 * 1024 # 1 MB
-        )
 
-def test_get_git_commit_error():
-    """Test that get_git_commit handles non-repo paths gracefully."""
-    # This will fail because the temp directory is not a git repo
-    error_message = get_git_commit(path="/tmp")
-    assert "Error getting git commit" in error_message
+def test_snapshot_repo_as_string(setup_test_env):
+    """Test snapshot with the 'repos' argument provided as a single string."""
+    env = setup_test_env
+    cfg = OmegaConf.create({"param": 6, "save_dir": str(env["save_dir"])})
+
+    snapshot(config=cfg, repos=str(env["repo_dir"]), commit=False)
+
+    lock_file = env["save_dir"] / "run.lock"
+    assert lock_file.exists()
+    with open(lock_file, 'r') as f:
+        data = yaml.safe_load(f)
+
+    assert "repos" in data
+    # The key should be the name of the repo directory
+    repo_dir_name = env["repo_dir"].name
+    assert repo_dir_name in data["repos"]
+    assert data["repos"][repo_dir_name] == env["repo"].head.commit.hexsha
+
+def test_snapshot_data_as_list(setup_test_env):
+    """Test snapshot with the 'data' argument provided as a list of strings."""
+    env = setup_test_env
+    cfg = OmegaConf.create({"param": 7, "save_dir": str(env["save_dir"])})
+    
+    data_file_path = str(env["data_dir"] / "dataset.csv")
+    snapshot(config=cfg, data=[data_file_path, str(env["data_dir"])], commit=False)
+
+    lock_file = env["save_dir"] / "run.lock"
+    assert lock_file.exists()
+    with open(lock_file, 'r') as f:
+        data = yaml.safe_load(f)
+
+    assert "data" in data
+    # The key should be the string representation of the path
+    assert "dataset.csv" in data["data"]
+    assert str(env["data_dir"].name) in data["data"]
+    assert isinstance(data["data"]["dataset.csv"], str)
+
+
+def test_snapshot_prevs_discovery(setup_test_env):
+    """Test that snapshot can find a run.lock file in parent directories."""
+    env = setup_test_env
+    
+    # Create a nested directory structure inside the prev_stage_dir
+    nested_dir = env["prev_stage_dir"] / "nested" / "deeply"
+    nested_dir.mkdir(parents=True)
+    some_file = nested_dir / "some_file.txt"
+    some_file.write_text("hello")
+
+    cfg = OmegaConf.create({"param": 8, "save_dir": str(env["save_dir"])})
+
+    # Call snapshot with a path to a file deep in the nested structure
+    snapshot(config=cfg, prevs=[str(some_file)], commit=False)
+
+    lock_file = env["save_dir"] / "run.lock"
+    assert lock_file.exists()
+    with open(lock_file, 'r') as f:
+        data = yaml.safe_load(f)
+
+    assert "prevs" in data
+    # The key should be the name of the directory containing the run.lock, which is 'prev_run'
+    assert "prev_run" in data["prevs"]
+    assert data["prevs"]["prev_run"]["config"]["param"] == 10
+
+
+def test_snapshot_save_config(setup_test_env):
+    """Test the save_config parameter in the snapshot function."""
+    env = setup_test_env
+    
+    # --- Test 'unresolved' ---
+    unresolved_dir = env["save_dir"] / "unresolved_test"
+    cfg_unresolved = OmegaConf.create({
+        "value": "${now:%Y}",
+        "save_dir": str(unresolved_dir)
+    })
+    snapshot(config=cfg_unresolved, save_config='unresolved')
+
+    unresolved_config_path = unresolved_dir / "config.yaml"
+    assert unresolved_config_path.exists()
+    with open(unresolved_config_path, 'r') as f:
+        content = f.read()
+        assert "${now:%Y}" in content
+
+    # --- Test 'resolved' ---
+    resolved_dir = env["save_dir"] / "resolved_test"
+    cfg_resolved = OmegaConf.create({
+        "value": "${now:%Y}",
+        "save_dir": str(resolved_dir)
+    })
+    snapshot(config=cfg_resolved, save_config='resolved')
+
+    resolved_config_path = resolved_dir / "config.yaml"
+    assert resolved_config_path.exists()
+    with open(resolved_config_path, 'r') as f:
+        content = f.read()
+        assert "${now:%Y}" not in content
+        from datetime import datetime
+        assert str(datetime.now().year) in content

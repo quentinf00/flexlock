@@ -5,7 +5,7 @@ import sys
 from unittest.mock import patch
 
 from pathlib import Path
-from naga.clicfg import clicfg
+from flexlock.flexcli import flexcli
 
 # Define a dataclass for the configuration schema
 @dataclass
@@ -14,7 +14,7 @@ class MyConfig:
     nested: str = "default"
 
 # Create a decorated function to be used in tests
-@clicfg(config_class=MyConfig)
+@flexcli(config_class=MyConfig)
 def main(cfg):
     return cfg
 
@@ -25,20 +25,20 @@ def config_file(tmp_path):
     base_path.write_text("param: 10\nnested: 'from_file'")
     return base_path
 
-def test_clicfg_default_config():
+def test_flexcli_default_config():
     """Test that the default config from the dataclass is used."""
     cfg = main()
     assert cfg.param == 1
     assert cfg.nested == "default"
 
-def test_clicfg_cli_mode_with_config_file(config_file):
+def test_flexcli_cli_mode_with_config_file(config_file):
     """Test loading a config from a file via CLI arguments."""
     with patch.object(sys, 'argv', ['script.py', '--config', str(config_file)]):
         cfg = main()
         assert cfg.param == 10
         assert cfg.nested == "from_file"
 
-def test_clicfg_cli_mode_with_overrides(config_file):
+def test_flexcli_cli_mode_with_overrides(config_file):
     """Test overriding config values from the CLI."""
     with patch.object(sys, 'argv', [
         'script.py',
@@ -49,13 +49,13 @@ def test_clicfg_cli_mode_with_overrides(config_file):
         assert cfg.param == 20
         assert cfg.nested == "cli_override"
 
-def test_clicfg_programmatic_mode():
+def test_flexcli_programmatic_mode():
     """Test calling the decorated function programmatically with kwargs."""
     cfg = main(param=30, nested="programmatic_override")
     assert cfg.param == 30
     assert cfg.nested == "programmatic_override"
 
-def test_clicfg_programmatic_mode_overrides_file(config_file):
+def test_flexcli_programmatic_mode_overrides_file(config_file):
     """
     Test that programmatic kwargs have higher precedence than the base config file.
     To do this, we need to simulate a CLI call that provides the config file,
@@ -78,9 +78,9 @@ def test_clicfg_programmatic_mode_overrides_file(config_file):
     # 'nested' should come from the file, as it wasn't overridden programmatically.
     assert cfg.nested == "from_override_file"
 
-def test_clicfg_no_config_class():
+def test_flexcli_no_config_class():
     """Test that the decorator works even without a config_class."""
-    @clicfg()
+    @flexcli()
     def simple_main(cfg):
         return cfg
 
