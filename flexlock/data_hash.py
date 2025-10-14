@@ -3,16 +3,20 @@ import os
 import json
 import logging
 from pathlib import Path
-from dirhash import dirhash
 import xxhash
+import hashlib
+import os
+from pathlib import Path
+from glob import glob
+from joblib import Parallel, delayed
 
 log = logging.getLogger(__name__)
 
 # --- Cache Configuration ---
-CACHE_DIR = Path.home() / ".cache" / "flexlock"
+CACHE_DIR = Path(os.environ.get("FLEXLOCK_CACHE", Path.home() / ".cache" / "flexlock"))
 CACHE_FILE = CACHE_DIR / "hashes.json"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
-DEFAULT_DIR_FILE_LIMIT = 1000
+DEFAULT_DIR_FILE_LIMIT = os.environ.get("FLEXLOCK_DIR_FILE_LIMIT", 1000)
 
 # --- Helper Functions ---
 
@@ -63,6 +67,61 @@ def _save_cache(cache):
         log.warning(f"Could not save flexlock hash cache: {e}")
 
 
+def _hash_file(filepath, algorithm, chunk_size):
+    """Hashes a single file."""
+    hasher = algorithm()
+    with open(filepath, 'rb') as f:
+        while True:
+            data = f.read(chunk_size)
+            if not data:
+                break
+            hasher.update(data)
+    return hasher.hexdigest()
+
+def dirhash(path, match=None, ignore=None, jobs=1, algorithm=hashlib.md5, chunk_size=65536):
+    """
+    Computes a hash of the directory content using pathlib.glob for filtering.
+    """
+    base_path = Path(path)
+    if not base_path.is_dir():
+        raise ValueError(f"'{path}' is not a valid directory.")
+
+    # Default match to all files recursively if not specified
+    match_pattern = match if match is not None else '**/*'
+    if isinstance(match_pattern, str):
+        match_pattern = [match_pattern]
+
+    ignore_patterns = ignore if ignore is not None else []
+    if isinstance(ignore_patterns, str):
+        ignore_patterns = [ignore_patterns]
+
+    included_files_set = set()
+    for pattern in match_pattern:
+        for f in base_path.glob(pattern):
+            if f.is_file():
+                included_files_set.add(f)
+
+    excluded_files_set = set()
+    for pattern in ignore_patterns:
+        for f in base_path.glob(pattern):
+            if f.is_file():
+                excluded_files_set.add(f)
+
+    files_to_hash = sorted(list(included_files_set - excluded_files_set))
+
+    if not files_to_hash:
+        return algorithm().hexdigest()
+
+    file_hashes = Parallel(n_jobs=jobs)(
+        delayed(_hash_file)(str(f), algorithm, chunk_size) for f in files_to_hash
+    )
+
+    final_hasher = algorithm()
+    for h in sorted(file_hashes):
+        final_hasher.update(h.encode('utf-8'))
+
+    return final_hasher.hexdigest()
+
 def hash_data(path, match=None, ignore=None, jobs=4, algorithm=xxhash.xxh3_64, chunk_size=2**18, use_cache=True):
     """
     Computes a hash for a file or a directory, using a cache to avoid re-computation.
@@ -104,14 +163,7 @@ def hash_data(path, match=None, ignore=None, jobs=4, algorithm=xxhash.xxh3_64, c
 
     new_hash = None
     if path.is_file():
-        hasher = algorithm()
-        with open(path, 'rb') as f:
-            while True:
-                data = f.read(chunk_size)
-                if not data:
-                    break
-                hasher.update(data)
-        new_hash = hasher.hexdigest()
+        new_hash = _hash_file(path, algorithm, chunk_size)
     elif path.is_dir():
         new_hash = dirhash(
             path, match=match, ignore=ignore, jobs=jobs,
@@ -137,3 +189,55 @@ def hash_data(path, match=None, ignore=None, jobs=4, algorithm=xxhash.xxh3_64, c
         _save_cache(cache)
 
     return new_hash
+
+if __name__ == '__main__':
+    # --- Example Usage ---
+
+    # 1. Create some dummy files and directories for testing
+    test_dir = Path("./test_dir_for_dirhash")
+    test_dir.mkdir(exist_ok=True)
+    (test_dir / "file1.txt").write_text("content of file 1")
+    (test_dir / "file2.py").write_text("import os\nprint('hello')")
+    (test_dir / "sub_dir").mkdir(exist_ok=True)
+    (test_dir / "sub_dir" / "file3.txt").write_text("another file")
+    (test_dir / "sub_dir" / "ignore_me.log").write_text("log content")
+    (test_dir / "temp_file.tmp").write_text("temporary data")
+    (test_dir / ".gitignore").write_text("*.tmp\n*.log") # This file itself can be ignored or included
+
+    print(f"Hashing directory: {test_dir.resolve()}")
+
+    # Basic hash of all files
+    hash1 = dirhash(test_dir)
+    print(f"Default hash (all files, md5): {hash1}")
+
+    # Hash with specific algorithm
+    hash2 = dirhash(test_dir, algorithm=hashlib.sha256)
+    print(f"SHA256 hash (all files): {hash2}")
+
+    # Hash ignoring certain files
+    hash3 = dirhash(test_dir, ignore=['*.log', '*.tmp'])
+    print(f"Hash ignoring .log and .tmp files: {hash3}")
+
+    # Hash matching only .txt files
+    hash4 = dirhash(test_dir, match='**/*.txt')
+    print(f"Hash only .txt files: {hash4}")
+
+    # Hash with multiple match patterns
+    hash5 = dirhash(test_dir, match=['*.txt', '**/*.py'])
+    print(f"Hash .txt and .py files: {hash5}")
+
+    # Hash with multiple ignore patterns
+    hash6 = dirhash(test_dir, ignore=['*.tmp', 'sub_dir/*'])
+    print(f"Hash ignoring .tmp and contents of sub_dir: {hash6}")
+
+    # Demonstrate changes affecting the hash
+    (test_dir / "file1.txt").write_text("updated content of file 1")
+    hash1_updated = dirhash(test_dir)
+    print(f"Updated default hash (file1 changed): {hash1_updated}")
+    print(f"Hashes are different after change: {hash1 != hash1_updated}")
+
+    # Clean up test directory
+    import shutil
+    shutil.rmtree(test_dir)
+    print(f"\nCleaned up {test_dir}")
+

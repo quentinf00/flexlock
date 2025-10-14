@@ -6,7 +6,7 @@ from .mlflowlink import mlflowlink
 from .snapshot import get_git_commit, commit_cwd
 from .debug import debug_on_fail
 from .resolvers import register_resolvers
-from .logging import setup_flexlock_logging
+from .flexlogging import setup_flexlock_logging
 
 # Register OmegaConf resolvers when the library is imported
 register_resolvers()

@@ -9,3 +9,4 @@ trash
 *.conda
 mlruns
 .env
+dist

@@ -1,6 +1,6 @@
 [project]
 name = "flexlock"
-version = "0.1.0"
+version = "0.1.3"
 authors = [ {name="Quentin Febvre", email="quentin.febvre@gmail.com"} ]
 description = "A lightweight and painless SciOps library"
 readme = "README.md"
@@ -22,7 +22,7 @@ preview = ["pixi-build"]
 
 [tool.pixi.package]
 name = "flexlock"
-version = "0.1.0"
+version = "0.1.3"
 
 [tool.pixi.package.build.backend]
 name = "pixi-build-python"
@@ -32,11 +32,25 @@ channels = ["https://prefix.dev/pixi-build-backends", "conda-forge"]
 [tool.pixi.package.host-dependencies]
 hatchling = "*"
 
+[tool.pixi.package.run-dependencies]
+python = "3.11.*"
+gitpython = ">=3.1.45,<4"
+python-xxhash = ">=3.5.0,<4"
+mlflow = ">=3.2.0,<4"
+joblib = ">=1.5.2,<2"
+pandas = ">=2.3.2,<3"
+submitit = ">=1.5.2,<2"
+omegaconf = ">=2.3.0,<3"
+
 [tool.pixi.tasks]
 test = { cmd = "pytest" }
 
 [tool.pixi.feature.build.dependencies]
 flexlock = {path = "."}
+
+[tool.pixi.feature.build.pypi-dependencies]
+build = "*"
+twine = "*"
 
 [tool.pixi.feature.test.dependencies]
 pytest = ">=8.3.2,<9"
@@ -48,17 +62,13 @@ flexlock = { path = ".", editable = true }
 
 [tool.pixi.dependencies]
 python = "3.11.*"
-omegaconf = ">=2.3.0,<3"
 gitpython = ">=3.1.45,<4"
 python-xxhash = ">=3.5.0,<4"
 mlflow = ">=3.2.0,<4"
 joblib = ">=1.5.2,<2"
 pandas = ">=2.3.2,<3"
 submitit = ">=1.5.2,<2"
-ipython = "*"
-
-[tool.pixi.pypi-dependencies]
-dirhash = ">=0.5.0, <0.6"
+omegaconf = ">=2.3.0,<3"
 
 [tool.pixi.environments]
 build = { features = ["build"] }

@@ -88,7 +88,8 @@ def snapshot(
     commit_message: str = "FlexLock: Auto-snapshot",
     mlflowlink: bool = True,
     resolve: bool = True,
-    save_config: str | None =  'unresolved'
+    save_config: str | None =  'unresolved',
+    prevs_from_data: bool = True,
 ):
     """
     Writes a `run.lock` file with the state of the experiment.
@@ -172,6 +173,15 @@ def snapshot(
     if data:
         data_hashes = {name: hash_data(path) for name, path in data.items()}
         run_data.setdefault("data", {}).update(data_hashes)
+    
+    if prevs:
+        if isinstance(prevs, str):
+            prevs = [prevs]
+    if prevs_from_data:
+        if prevs:
+            prevs = prevs + list(data.values())
+        else:
+            prevs = list(data.values())
 
     if prevs:
         def _find_snapshot_dir(start_path: Path) -> Path | None:
@@ -186,8 +196,6 @@ def snapshot(
                 p = p.parent
             return None
 
-        if isinstance(prevs, str):
-            prevs = [prevs]
 
         previous_stages_data = {}
         for path_str in prevs:
