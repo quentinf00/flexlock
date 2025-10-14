@@ -10,6 +10,7 @@ from git import Repo
 from .data_hash import hash_data
 from .load_stage import load_stage_from_path
 from .git_utils import commit_cwd, get_git_commit
+from .utils import to_dictconfig
 import logging
 
 logger  = logging.getLogger(__name__)
@@ -116,6 +117,7 @@ def snapshot(
         resolve (bool): wether to resolve the config (should always be true)
         save_config ('resolved', 'unresolved'):  whether to save a config.yaml before or after running resolvers
     """
+    config = to_dictconfig(config)
     unresolved = config.copy()
     if snapshot_path:
         lock_file = Path(snapshot_path)

@@ -1,18 +1,20 @@
 """Configuration decorator for FlexLock."""
 import argparse
+from dataclasses import is_dataclass
 from omegaconf import OmegaConf, DictConfig
 import sys
 from pathlib import Path
 from .parallel import ParallelExecutor, load_tasks
 from .debug import debug_on_fail
+from .utils import to_dictconfig
 
-def flexcli(config_class=None, description=None, debug=False):
+def flexcli(default_config=None, description=None, debug=False):
     """
     A decorator that wraps a function to provide CLI and programmatic configuration
     capabilities using OmegaConf.
     
     Args:
-        config_class: The dataclass representing the configuration schema.
+        default_config: The dataclass representing the configuration schema.
         description (str, optional): A description of the script to be displayed in the help message.
     """
 
@@ -22,16 +24,8 @@ def flexcli(config_class=None, description=None, debug=False):
         def wrapper(**kwargs):
             # --- Help Message Generation ---
             epilog_str = ""
-            if config_class:
-                if isinstance(config_class, type):
-                    default_cfg = OmegaConf.structured(config_class)
-                elif isinstance(config_class, dict):
-                    default_cfg = OmegaConf.create(config_class)
-                else: 
-                    default_cfg = config_class
-                        
-
-
+            if default_config is not None:
+                default_cfg = to_dictconfig(default_config)
                 yaml_help = OmegaConf.to_yaml(default_cfg)
                 epilog_str = f"Default Configuration:\n---\n{yaml_help}"
 
@@ -72,12 +66,16 @@ def flexcli(config_class=None, description=None, debug=False):
 
             # --- Configuration Loading ---
             cfg = OmegaConf.create()
-            if isinstance(config_class, type):
-                cfg = OmegaConf.structured(config_class)
-            elif isinstance(config_class, dict):
-                cfg = OmegaConf.create(config_class)
-            elif isinstance(config_class, DictConfig): 
-                cfg = config_class
+            if default_config is not None:
+                if is_dataclass(default_config):
+                    cfg = OmegaConf.structured(default_config)
+                elif isinstance(default_config, dict):
+                    cfg = OmegaConf.create(default_config)
+                elif isinstance(default_config, DictConfig): 
+                    cfg = default_config
+                else:
+                    # For any other type, try to create an OmegaConf from it
+                    cfg = OmegaConf.create(default_config)
 
             if cli_args.config:
                 cfg.merge_with(OmegaConf.load(cli_args.config))

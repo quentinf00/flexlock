@@ -14,7 +14,7 @@ class MyConfig:
     nested: str = "default"
 
 # Create a decorated function to be used in tests
-@flexcli(config_class=MyConfig)
+@flexcli(default_config=MyConfig)
 def main(cfg):
     return cfg
 
@@ -78,8 +78,8 @@ def test_flexcli_programmatic_mode_overrides_file(config_file):
     # 'nested' should come from the file, as it wasn't overridden programmatically.
     assert cfg.nested == "from_override_file"
 
-def test_flexcli_no_config_class():
-    """Test that the decorator works even without a config_class."""
+def test_flexcli_no_default_config():
+    """Test that the decorator works even without a default_config."""
     @flexcli()
     def simple_main(cfg):
         return cfg
