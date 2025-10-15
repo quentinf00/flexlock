@@ -3,7 +3,7 @@ from omegaconf import OmegaConf
 from pathlib import Path
 import time
 
-from flexlock.resolvers import now_resolver, vinc_resolver
+from flexlock.resolvers import now_resolver, vinc_resolver, resolver_context
 
 def test_now_resolver():
     """Test the now_resolver returns a string in the correct format."""
@@ -28,12 +28,14 @@ def test_vinc_resolver(tmp_path):
     base_path = tmp_path / "experiment"
 
     # First call, should return experiment_0000
-    path1 = vinc_resolver(str(base_path))
+    with resolver_context():
+        path1 = vinc_resolver(str(base_path))
     assert path1 == str(tmp_path / "experiment_0000")
     Path(path1).mkdir()
 
     # Second call, should return experiment_0001
-    path2 = vinc_resolver(str(base_path))
+    with resolver_context():
+        path2 = vinc_resolver(str(base_path))
     assert path2 == str(tmp_path / "experiment_0001")
     Path(path2).mkdir()
 
@@ -50,10 +52,12 @@ def test_vinc_resolver_with_custom_format(tmp_path):
     fmt = "-v{i:02d}"
 
     # First call
-    path1 = vinc_resolver(str(base_path), fmt=fmt)
+    with resolver_context():
+        path1 = vinc_resolver(str(base_path), fmt=fmt)
     assert path1 == str(tmp_path / "run-v00")
     Path(path1).mkdir()
 
     # Second call
-    path2 = vinc_resolver(str(base_path), fmt=fmt)
+    with resolver_context():
+        path2 = vinc_resolver(str(base_path), fmt=fmt)
     assert path2 == str(tmp_path / "run-v01")
