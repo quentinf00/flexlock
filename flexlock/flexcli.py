@@ -180,8 +180,8 @@ def flexcli(default_config=None, description=None, debug=None):
                     # Run tasks sequentially in debug mode
                     tasks = load_tasks(cli_args.tasks, cli_args.tasks_key, cfg)
                     if tasks:
-                        # Apply debug wrapper once
-                        debug_fn = debug_on_fail(fn)
+                        # Apply debug wrapper once with stack depth 2 (to inject into main context)
+                        debug_fn = debug_on_fail(fn, stack_depth=2)
                         # Run each task individually with debug enabled
                         for task in tasks:
                             # Create a copy of cfg and merge the task
@@ -195,8 +195,8 @@ def flexcli(default_config=None, description=None, debug=None):
                         print(
                             "Warning: --tasks or --tasks-key provided, but no tasks were loaded. Running once."
                         )
-                        # Apply debug wrapper and run once
-                        debug_fn = debug_on_fail(fn)
+                        # Apply debug wrapper and run once with stack depth 2 (to inject into main context)
+                        debug_fn = debug_on_fail(fn, stack_depth=2)
                         return debug_fn(cfg)
                 elif cli_args.tasks or cli_args.tasks_key:
                     # Parallel execution without debug
@@ -226,8 +226,8 @@ def flexcli(default_config=None, description=None, debug=None):
                 else:
                         # Single run execution
                     if debug_enabled:
-                        # Apply debug wrapper
-                        wrapped_fn = debug_on_fail(fn)
+                        # Apply debug wrapper with stack depth 2 (to inject into main context)
+                        wrapped_fn = debug_on_fail(fn, stack_depth=2)
                         return wrapped_fn(cfg)
                     else:
                         return fn(cfg)
