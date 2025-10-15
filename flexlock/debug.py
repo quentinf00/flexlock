@@ -12,7 +12,6 @@ def debug_on_fail(fn):
     Modifying a caller's locals can lead to unpredictable and hard-to-debug code.
     """
     flexlock_debug = os.environ.get('FLEXLOCK_DEBUG', 'false').lower() in ('1', 'true')
-    print(flexlock_debug)
 
     if not flexlock_debug:
         return fn

@@ -39,11 +39,8 @@ def vinc_resolver(path: str, fmt: str = '_{i:04d}') -> str:
     highest_version = -1
     if not parent_dir.exists():
         parent_dir.mkdir(parents=True, exist_ok=True)
-    print(parent_dir, base_name, regex)
     for item in parent_dir.glob(f"{base_name}*"):
-        print(item)
         match = regex.match(item.name)
-        print(match)
         if match:
             version = int(match.group(1))
             if version > highest_version:
@@ -54,7 +51,7 @@ def vinc_resolver(path: str, fmt: str = '_{i:04d}') -> str:
     
     return str(parent_dir / f"{base_name}{version_str}")
 
-def snapshot_resolver(path: str, key: str = None, *, _root_: DictConfig) -> str:
+def snapshot_resolver(path: str, key: str | None = None, *, _root_: DictConfig) -> str:
     """
     OmegaConf resolver that adds a path to the snapshot's data and prevs sections.
     """
@@ -64,7 +61,7 @@ def snapshot_resolver(path: str, key: str = None, *, _root_: DictConfig) -> str:
     
     # The _root_ config is passed by OmegaConf to the resolver.
     # We can use it to call snapshot with the actual config.
-    snapshot(config=_root_, data=item, prevs=item, merge=True, mlflowlink=False, resolve=False)
+    snapshot(config=_root_, data=item, prevs=[path], merge=True, mlflowlink=False, resolve=False)
     return path
 
 def register_resolvers():
