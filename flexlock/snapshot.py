@@ -2,8 +2,12 @@
 import os
 import tempfile
 import yaml
+import sqlite3
 import inspect
+import threading
+import time
 from pathlib import Path
+from contextlib import contextmanager
 from omegaconf import OmegaConf, DictConfig
 from git import Repo
 
@@ -14,6 +18,88 @@ from .utils import to_dictconfig
 import logging
 
 logger  = logging.getLogger(__name__)
+
+# Thread-local storage for tracking database connections
+_db_connections = threading.local()
+
+def _get_db_connection(lock_file_path: Path) -> sqlite3.Connection:
+    """Get a thread-local database connection for task tracking."""
+    if not hasattr(_db_connections, 'connections'):
+        _db_connections.connections = {}
+    
+    db_path = lock_file_path.with_suffix('.tasks.db')
+    
+    if db_path not in _db_connections.connections:
+        # Create connection with appropriate settings for concurrent access
+        conn = sqlite3.connect(str(db_path), check_same_thread=False)
+        # Enable WAL mode for better concurrent reads/writes
+        conn.execute("PRAGMA journal_mode=WAL")
+        # Set timeout for lock acquisition
+        conn.execute("PRAGMA busy_timeout=5000")  # 5 seconds timeout
+        
+        # Create tasks table if it doesn't exist
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_info TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        _db_connections.connections[db_path] = conn
+    
+    return _db_connections.connections[db_path]
+
+def _dump_tasks_to_yaml(lock_file_path: Path):
+    """Dump all tracked tasks from SQLite to the YAML run.lock file."""
+    conn = _get_db_connection(lock_file_path)
+    
+    # Get all tasks from the database
+    cursor = conn.execute("SELECT task_info FROM tasks ORDER BY id")
+    tasks = [yaml.safe_load(row[0]) for row in cursor.fetchall()]
+    
+    # Load existing run.lock file
+    run_data = {}
+    if lock_file_path.exists():
+        with open(lock_file_path, 'r') as f:
+            run_data = yaml.safe_load(f) or {}
+    
+    # Add tasks to the run_data
+    if tasks:
+        run_data["tasks"] = tasks
+    
+    # Write the updated file atomically
+    _atomic_write_yaml(run_data, lock_file_path)
+
+def track_task(task_info, snapshot_path: str | None = None, config: DictConfig = None):
+    """
+    Track an individual task within a batch processing run.
+    
+    Args:
+        task_info: Information about the task that was processed (can be a dict, str, or any serializable object)
+        snapshot_path: Path to the snapshot file. If None, will try to use config.save_dir / 'run.lock'
+        config: Config object to determine save_dir if snapshot_path is None
+    """
+    actual_snapshot_path = None
+    if snapshot_path is not None:
+        actual_snapshot_path = Path(snapshot_path)
+    elif config is not None:
+        # Extract save_dir from config if available
+        if hasattr(config, 'save_dir') or (isinstance(config, dict) and 'save_dir' in config):
+            save_dir = config.get('save_dir')
+            if save_dir:
+                actual_snapshot_path = Path(save_dir) / "run.lock"
+    
+    if actual_snapshot_path is not None:
+        # Safely insert the task into the SQLite database
+        conn = _get_db_connection(actual_snapshot_path)
+        
+        # Serialize task_info as a YAML string to store in SQLite
+        task_str = yaml.dump(task_info)
+        
+        # Insert the task into the database (this is thread-safe and process-safe)
+        conn.execute("INSERT INTO tasks (task_info) VALUES (?)", (task_str,))
+        conn.commit()  # Commit immediately to ensure persistence
 
 def _get_caller_info(repos: dict) -> dict:
     """Gets information about the function that called snapshot."""
@@ -91,6 +177,7 @@ def snapshot(
     resolve: bool = True,
     save_config: str | None =  'unresolved',
     prevs_from_data: bool = True,
+    track_batch: bool = False,
 ):
     """
     Writes a `run.lock` file with the state of the experiment.
@@ -116,6 +203,8 @@ def snapshot(
         commit_message (str, optional): The commit message to use if `commit=True`.
         resolve (bool): wether to resolve the config (should always be true)
         save_config ('resolved', 'unresolved'):  whether to save a config.yaml before or after running resolvers
+        track_batch (bool): Whether to initialize task tracking for batch processing mode.
+                           When True, enables tracking of individual tasks within the run.
     """
     config = to_dictconfig(config)
     unresolved = config.copy()
@@ -210,13 +299,38 @@ def snapshot(
                 previous_stages_data[snapshot_dir.name] = stage_data[original_key]
             else:
                 logger.warning(f"Could not find a 'run.lock' file for the previous stage at or above '{path_str}'.")
-        
+
         run_data.setdefault("prevs", {}).update(previous_stages_data)
+
+    # If in batch mode, initialize SQLite database for tracking future tasks
+    if track_batch:
+        # Initialize SQLite database for this run to track tasks
+        conn = _get_db_connection(lock_file)
+        # Clear any existing tasks for this new run
+        conn.execute("DELETE FROM tasks")
+        conn.commit()
 
     # Write the file atomically
     _atomic_write_yaml(run_data, lock_file)
+
+    # Dump any pending tasks from database to the YAML file (in case tasks were added before snapshot creation)
+    _dump_tasks_to_yaml(lock_file)
+    
     if mlflowlink:
         from .mlflowlink import mlflowlink
         with mlflowlink(str(lock_file.parent)) as _:
             pass
         pass
+
+def close_db_connections():
+    """Close all database connections and dump remaining tasks to YAML."""
+    if hasattr(_db_connections, 'connections'):
+        for db_path, conn in _db_connections.connections.items():
+            try:
+                # Dump any remaining tasks to YAML
+                run_lock_path = db_path.with_suffix('.lock')
+                _dump_tasks_to_yaml(run_lock_path)
+                conn.close()
+            except Exception as e:
+                logger.warning(f"Error closing database connection {db_path}: {e}")
+        _db_connections.connections.clear()
