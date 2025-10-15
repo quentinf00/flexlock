@@ -198,36 +198,3 @@ def test_snapshot_prevs_discovery(setup_test_env):
     assert data["prevs"]["prev_run"]["config"]["param"] == 10
 
 
-def test_snapshot_save_config(setup_test_env):
-    """Test the save_config parameter in the snapshot function."""
-    env = setup_test_env
-    
-    # --- Test 'unresolved' ---
-    unresolved_dir = env["save_dir"] / "unresolved_test"
-    cfg_unresolved = OmegaConf.create({
-        "value": "${now:%Y}",
-        "save_dir": str(unresolved_dir)
-    })
-    snapshot(config=cfg_unresolved, save_config='unresolved')
-
-    unresolved_config_path = unresolved_dir / "config.yaml"
-    assert unresolved_config_path.exists()
-    with open(unresolved_config_path, 'r') as f:
-        content = f.read()
-        assert "${now:%Y}" in content
-
-    # --- Test 'resolved' ---
-    resolved_dir = env["save_dir"] / "resolved_test"
-    cfg_resolved = OmegaConf.create({
-        "value": "${now:%Y}",
-        "save_dir": str(resolved_dir)
-    })
-    snapshot(config=cfg_resolved, save_config='resolved')
-
-    resolved_config_path = resolved_dir / "config.yaml"
-    assert resolved_config_path.exists()
-    with open(resolved_config_path, 'r') as f:
-        content = f.read()
-        assert "${now:%Y}" not in content
-        from datetime import datetime
-        assert str(datetime.now().year) in content

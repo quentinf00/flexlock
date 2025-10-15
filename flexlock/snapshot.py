@@ -58,18 +58,9 @@ def _dump_tasks_to_yaml(lock_file_path: Path):
     cursor = conn.execute("SELECT task_info FROM tasks ORDER BY id")
     tasks = [yaml.safe_load(row[0]) for row in cursor.fetchall()]
     
-    # Load existing run.lock file
-    run_data = {}
-    if lock_file_path.exists():
-        with open(lock_file_path, 'r') as f:
-            run_data = yaml.safe_load(f) or {}
-    
-    # Add tasks to the run_data
-    if tasks:
-        run_data["tasks"] = tasks
-    
+    tasks_file = lock_file_path.with_suffix('.tasks')
     # Write the updated file atomically
-    _atomic_write_yaml(run_data, lock_file_path)
+    _atomic_write_yaml(tasks, tasks_file)
 
 def track_task(task_info, snapshot_path: str | None = None, config: DictConfig = None):
     """
@@ -100,6 +91,9 @@ def track_task(task_info, snapshot_path: str | None = None, config: DictConfig =
         # Insert the task into the database (this is thread-safe and process-safe)
         conn.execute("INSERT INTO tasks (task_info) VALUES (?)", (task_str,))
         conn.commit()  # Commit immediately to ensure persistence
+
+        _dump_tasks_to_yaml(actual_snapshot_path)
+    
 
 def _get_caller_info(repos: dict) -> dict:
     """Gets information about the function that called snapshot."""
@@ -175,9 +169,8 @@ def snapshot(
     commit_message: str = "FlexLock: Auto-snapshot",
     mlflowlink: bool = True,
     resolve: bool = True,
-    save_config: str | None =  'unresolved',
     prevs_from_data: bool = True,
-    track_batch: bool = False,
+    force: bool = False,
 ):
     """
     Writes a `run.lock` file with the state of the experiment.
@@ -202,28 +195,22 @@ def snapshot(
         commit_branch (str, optional): The branch to commit to if `commit=True`.
         commit_message (str, optional): The commit message to use if `commit=True`.
         resolve (bool): wether to resolve the config (should always be true)
-        save_config ('resolved', 'unresolved'):  whether to save a config.yaml before or after running resolvers
-        track_batch (bool): Whether to initialize task tracking for batch processing mode.
-                           When True, enables tracking of individual tasks within the run.
     """
     config = to_dictconfig(config)
-    unresolved = config.copy()
     if snapshot_path:
         lock_file = Path(snapshot_path)
     elif "save_dir" in config:
         lock_file = Path(config.save_dir) / "run.lock"
     else:
         raise ValueError("Either `snapshot_path` must be provided or `config` must have a `save_dir` key.")
-    lock_file.parent.mkdir(parents=True, exist_ok=True)
+    if lock_file.exists() and  (merge or force):
+        logger.info(f"File '{lock_file}' exists exiting (set force or merge to True to force execution or append to existing).")
+        return 
 
-    if save_config == 'unresolved':
-        (lock_file.parent / 'config.yaml').write_text(OmegaConf.to_yaml(unresolved))
+    lock_file.parent.mkdir(parents=True, exist_ok=True)
 
     if resolve:
         OmegaConf.resolve(config)
-
-    if save_config == 'resolved':
-        (lock_file.parent / 'config.yaml').write_text(OmegaConf.to_yaml(config))
 
     run_data = {}
     if merge and lock_file.exists():
@@ -302,20 +289,10 @@ def snapshot(
 
         run_data.setdefault("prevs", {}).update(previous_stages_data)
 
-    # If in batch mode, initialize SQLite database for tracking future tasks
-    if track_batch:
-        # Initialize SQLite database for this run to track tasks
-        conn = _get_db_connection(lock_file)
-        # Clear any existing tasks for this new run
-        conn.execute("DELETE FROM tasks")
-        conn.commit()
-
     # Write the file atomically
     _atomic_write_yaml(run_data, lock_file)
 
     # Dump any pending tasks from database to the YAML file (in case tasks were added before snapshot creation)
-    _dump_tasks_to_yaml(lock_file)
-    
     if mlflowlink:
         from .mlflowlink import mlflowlink
         with mlflowlink(str(lock_file.parent)) as _:

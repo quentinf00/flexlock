@@ -1,7 +1,7 @@
 """FlexLock: A lightweight library for reproducible ML experiments."""
 
 from .flexcli import flexcli
-from .snapshot import snapshot
+from .snapshot import snapshot, track_task
 from .mlflowlink import mlflowlink
 from .snapshot import get_git_commit, commit_cwd
 from .debug import debug_on_fail

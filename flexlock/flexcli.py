@@ -163,7 +163,9 @@ def flexcli(default_config=None, description=None, debug=None):
             # it and merge it back to the unresolved config to keep other values unresolved
             if "save_dir" in cfg:
                 # Create a temporary fully resolved config to get the resolved save_dir
-                resolved_cfg = OmegaConf.resolve(cfg.copy())
+
+                resolved_cfg = cfg.copy()
+                OmegaConf.resolve(resolved_cfg)
                 resolved_save_dir = resolved_cfg.save_dir
                 save_dir = Path(resolved_save_dir)
                 save_dir.mkdir(parents=True, exist_ok=True)
@@ -210,6 +212,9 @@ def flexcli(default_config=None, description=None, debug=None):
                 tasks = load_tasks(cli_args.tasks, cli_args.tasks_key, cfg)
 
                 if tasks:
+                    from .snapshot import close_db_connections
+                    close_db_connections()
+
                     executor = ParallelExecutor(
                         func=fn,
                         tasks=tasks,
