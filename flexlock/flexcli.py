@@ -7,6 +7,7 @@ from pathlib import Path
 from .parallel import ParallelExecutor, load_tasks
 from .debug import debug_on_fail
 from .utils import to_dictconfig
+from loguru import logger
 
 
 def flexcli(default_config=None, description=None, debug=None):
@@ -102,12 +103,17 @@ def flexcli(default_config=None, description=None, debug=None):
             parser.add_argument(
                 "--quiet",
                 action="store_true",
-                help="Keep console logger even when a logfile is specified.",
+                help="Disable console logger even when a logfile is specified.",
             )
             parser.add_argument(
                 "--logfile",
                 default=None,
                 help="Path to the log file. Defaults to 'save_dir/experiment.log'.",
+            )
+            parser.add_argument(
+                "--nologfile",
+                default=False,
+                help="Boolean wether to log to a file",
             )
 
             # Determine if running from CLI or programmatically
@@ -172,6 +178,14 @@ def flexcli(default_config=None, description=None, debug=None):
                 OmegaConf.save(cfg, save_dir / "config.yaml")
                 # Update the original config with the resolved save_dir
                 cfg.save_dir = resolved_save_dir
+                                
+                if cli_args.quiet:
+                    logger.remove()
+
+                if not cli_args.nologfile:
+                    logfile  = cli_args.logfile or  (save_dir / "experiment.log")
+                    logger.add(logfile, format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {name}:{line} | {message}")
+                        
             else:
                 print("Warning: No 'save_dir' found in the final configuration.")
 

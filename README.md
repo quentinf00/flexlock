@@ -142,6 +142,64 @@ echo "1\n2\n3" > tasks.txt
 python process.py --tasks tasks.txt --task_to param --n_jobs=3
 ```
 
+## Logging with Loguru
+
+FlexLock uses [Loguru](https://loguru.readthedocs.io/) for logging, providing a simple and powerful logging experience. The CLI automatically sets up logging with both console and file output.
+
+### CLI Logging Options
+
+The `@flexcli` decorator supports several logging options:
+
+```python
+# process.py
+from flexlock import flexcli
+
+@flexcli(config_class=Config)
+def main(cfg: Config):
+    # Your main function
+    process(cfg)
+
+if __name__ == '__main__':
+    main()
+```
+
+```bash
+# Basic run with console logging and file logging to save_dir/experiment.log
+python process.py
+
+# Enable debug logging
+python process.py --verbose
+# Or set environment variable: FLEXLOCK_DEBUG=1 python process.py
+
+# Log to a specific file
+python process.py --logfile /path/to/logfile.log
+
+# Disable FileLog to a specific file
+python process.py --nologfile 
+
+# Log to default location (save_dir/experiment.log) without console output
+python process.py --quiet
+
+# Control log level via environment variable
+LOGURU_LEVEL=DEBUG python process.py
+```
+
+### Manual Logging
+
+You can also use loguru directly in your code:
+
+```python
+from loguru import logger
+
+def process(cfg):
+    logger.info(f"Processing with param: {cfg.param}")
+    logger.debug(f"Input path: {cfg.input_path}")
+    
+    # Your logic here...
+    
+    logger.success("Processing completed successfully!")
+```
+
 ## Development Workflow: The Debug Decorator
 
 When developing, you often want the script to drop into an interactive debugger on failure. The `@debug_on_fail` decorator provides this behavior.
