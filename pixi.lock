@@ -1427,7 +1427,7 @@ packages:
 - pypi: ./
   name: flexlock
   version: 0.1.9
-  sha256: 971b90e2b1870ce3572815e68ab897828221d5e46aa30b3531b3c1639280e3ff
+  sha256: 654f4675373fcac76053accc57818b3e35c180d15249ae697bc0536633fd3dd7
   requires_python: '>=3.11'
   editable: true
 - conda: .
@@ -1448,7 +1448,7 @@ packages:
   - loguru >=0.7.0,<1
   license: MIT
   input:
-    hash: 6b1f83e9e4cdb6875971bfebd983c52322d8606522bcffeaee706e62cdf8d02e
+    hash: 3ee645a9ef343498d5d9f0ddcaaa7975955b66d4404912d2fed478fd1f1154cc
     globs:
     - pyproject.toml
 - conda: https://conda.anaconda.org/conda-forge/linux-64/fonttools-4.60.1-py311h3778330_0.conda

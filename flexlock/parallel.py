@@ -8,7 +8,6 @@ It also supports checkpointing of individual tasks to avoid re-computation.
 """
 
 import hashlib
-import logging
 import os
 from pathlib import Path
 from typing import Any, Callable, List
@@ -16,8 +15,8 @@ from typing import Any, Callable, List
 import yaml
 from joblib import Parallel, delayed
 from omegaconf import DictConfig, OmegaConf
+from loguru import logger
 
-log = logging.getLogger(__name__)
 
 try:
     import submitit
@@ -93,20 +92,20 @@ class ParallelExecutor:
         ]
         total_count = len(self.initial_tasks)
         done_count = total_count - len(self.undone_tasks)
-        log.info(f"Task status: {total_count} total, {done_count} already complete, {len(self.undone_tasks)} to run.")
+        logger.info(f"Task status: {total_count} total, {done_count} already complete, {len(self.undone_tasks)} to run.")
 
     def run_single(self, task: Any):
         """Run the function for a single task and mark it as done on success."""
         done_file = self._get_done_file_path(task)
         try:
             task_cfg = merge_task_into_cfg(self.cfg, task, self.task_to)
-            log.debug(f"Running task with config:\n{OmegaConf.to_yaml(task_cfg)}")
+            logger.debug(f"Running task with config:\n{OmegaConf.to_yaml(task_cfg)}")
             self.func(task_cfg)
             # Create done file on success
             done_file.touch()
-            log.info(f"Task {self._get_task_id(task)} completed successfully.")
+            logger.info(f"Task {self._get_task_id(task)} completed successfully.")
         except Exception as e:
-            log.error(f"Task {self._get_task_id(task)} failed: {e}", exc_info=True)
+            logger.error(f"Task {self._get_task_id(task)} failed: {e}", exc_info=True)
             # Optionally remove a partially created done file if that's desired
             if done_file.exists():
                 os.remove(done_file)
@@ -116,8 +115,7 @@ class ParallelExecutor:
         """Executes a subset of tasks, either serially or with joblib."""
         if not tasks_subset:
             return
-
-        log.info(f"Processing a subset of {len(tasks_subset)} tasks with n_jobs={self.n_jobs}.")
+        logger.info(f"Processing a subset of {len(tasks_subset)} tasks with n_jobs={self.n_jobs}.")
         if self.n_jobs > 1:
             Parallel(n_jobs=self.n_jobs)(
                 delayed(self.run_single)(task) for task in tasks_subset
@@ -133,7 +131,7 @@ class ParallelExecutor:
         """
         env = submitit.JobEnvironment()
         my_tasks = tasks_to_distribute[env.global_rank::env.world_size]
-        log.info(
+        logger.info(
             f"Slurm worker {env.global_rank}/{env.world_size} received {len(my_tasks)} tasks."
         )
         self._run_subset_locally(my_tasks)
@@ -146,14 +144,14 @@ class ParallelExecutor:
         """
         self._filter_done_tasks()
         if not self.undone_tasks:
-            log.info("All tasks are already complete. Nothing to do.")
+            logger.info("All tasks are already complete. Nothing to do.")
             return
 
         if self.slurm_config_path:
             if submitit is None:
                 raise ImportError("The 'submitit' library is required for Slurm execution.")
 
-            log.info(f"Using Slurm config: {self.slurm_config_path}")
+            logger.info(f"Using Slurm config: {self.slurm_config_path}")
             slurm_kwargs = OmegaConf.to_container(
                 OmegaConf.load(self.slurm_config_path), resolve=True
             )
@@ -163,7 +161,7 @@ class ParallelExecutor:
             executor.update_parameters(**slurm_kwargs)
 
             if array_parallelism > 1:
-                log.info(f"Distributing tasks across a Slurm job array of size {array_parallelism}.")
+                logger.info(f"Distributing tasks across a Slurm job array of size {array_parallelism}.")
                 # Split tasks into chunks for the job array
                 tasks_per_job = -(-len(self.undone_tasks) // array_parallelism)  # Ceiling division
                 task_chunks = [
@@ -171,13 +169,13 @@ class ParallelExecutor:
                     for i in range(0, len(self.undone_tasks), tasks_per_job)
                 ]
                 jobs = executor.map_array(self._distribute_and_run, task_chunks)
-                log.info(f"Submitted job array with {len(jobs)} jobs.")
+                logger.info(f"Submitted job array with {len(jobs)} jobs.")
             else:
-                log.info("Submitting a single Slurm job.")
+                logger.info("Submitting a single Slurm job.")
                 job = executor.submit(self._distribute_and_run, self.undone_tasks)
-                log.info(f"Submitted single job {job.job_id}")
+                logger.info(f"Submitted single job {job.job_id}")
         else:
-            log.info("Running all tasks locally.")
+            logger.info("Running all tasks locally.")
             self._run_subset_locally(self.undone_tasks)
 
     def checkpoint(self):
@@ -185,5 +183,5 @@ class ParallelExecutor:
         Checkpoint the execution. On requeue, this will call self.run() again,
         which will automatically filter out completed tasks.
         """
-        log.info("Checkpointing...")
+        logger.info("Checkpointing...")
         return submitit.helpers.DelayedSubmission(self.run)

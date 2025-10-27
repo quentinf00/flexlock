@@ -23,7 +23,7 @@ def flexcli(default_config=None, description=None, debug=None):
     """
 
     def decorator(fn):
-        def wrapper(**kwargs):
+        def wrapper(cfg=None, **kwargs):
             epilog_str = ""
             if default_config is not None:
                 default_cfg = to_dictconfig(default_config)
@@ -88,32 +88,15 @@ def flexcli(default_config=None, description=None, debug=None):
                 default=None,
                 help="Path to a Slurm configuration file for submitit.",
             )
-
             # Debug argument
             parser.add_argument(
                 "--debug",
                 action="store_true",
                 help="Enable debug mode with local variable injection on exceptions (overrides FLEXLOCK_DEBUG env var).",
             )
-
             # Logging arguments
             parser.add_argument(
                 "--verbose", action="store_true", help="Set log level to DEBUG."
-            )
-            parser.add_argument(
-                "--quiet",
-                action="store_true",
-                help="Disable console logger even when a logfile is specified.",
-            )
-            parser.add_argument(
-                "--logfile",
-                default=None,
-                help="Path to the log file. Defaults to 'save_dir/experiment.log'.",
-            )
-            parser.add_argument(
-                "--nologfile",
-                default=False,
-                help="Boolean wether to log to a file",
             )
 
             # Determine if running from CLI or programmatically
@@ -144,7 +127,10 @@ def flexcli(default_config=None, description=None, debug=None):
                     "true",
                 )
             # --- Configuration Loading ---
-            cfg = OmegaConf.create()
+            if cfg is None:
+                cfg = OmegaConf.create()
+            else:
+                cfg = to_dictconfig(cfg)
             if default_config is not None:
                 cfg = to_dictconfig(default_config)
 
@@ -178,25 +164,19 @@ def flexcli(default_config=None, description=None, debug=None):
                 OmegaConf.save(cfg, save_dir / "config.yaml")
                 # Update the original config with the resolved save_dir
                 cfg.save_dir = resolved_save_dir
-                                
-                if cli_args.quiet:
-                    logger.remove()
-
-                if not cli_args.nologfile:
-                    logfile  = cli_args.logfile or  (save_dir / "experiment.log")
-                    logger.add(logfile, format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {name}:{line} | {message}")
                         
             else:
-                print("Warning: No 'save_dir' found in the final configuration.")
+                logger.info("Warning: No 'save_dir' found in the final configuration.")
 
             # --- Debug and Parallel Execution Logic ---
             # Debug mode and parallel execution are mutually exclusive
             if debug_enabled and (cli_args.tasks or cli_args.tasks_key):
-                print(
+                logger.info(
                     "Warning: Debug mode is enabled, parallel execution is disabled. Running tasks sequentially in debug mode."
                 )
                 # Run tasks sequentially in debug mode
                 tasks = load_tasks(cli_args.tasks, cli_args.tasks_key, cfg)
+                logger.info(f"{len(tasks)}  tasks loaded")
                 if tasks:
                     # Apply debug wrapper once with stack depth 2 (to inject into main context)
                     debug_fn = debug_on_fail(fn, stack_depth=2)
@@ -210,7 +190,7 @@ def flexcli(default_config=None, description=None, debug=None):
                     # For consistency of behavior, return None or a result
                     return None  # or could return some summary of the tasks run
                 else:
-                    print(
+                    logger.info(
                         "Warning: --tasks or --tasks-key provided, but no tasks were loaded. Running once."
                     )
                     # Apply debug wrapper and run once with stack depth 2 (to inject into main context)
@@ -224,6 +204,7 @@ def flexcli(default_config=None, description=None, debug=None):
                     )
 
                 tasks = load_tasks(cli_args.tasks, cli_args.tasks_key, cfg)
+                logger.info(f"{len(tasks)}  tasks loaded")
 
                 if tasks:
                     from .snapshot import close_db_connections
@@ -239,7 +220,7 @@ def flexcli(default_config=None, description=None, debug=None):
                     )
                     return executor.run()
                 else:
-                    print(
+                    logger.info(
                         "Warning: --tasks or --tasks-key provided, but no tasks were loaded. Running once."
                     )
                     # Even when no tasks are loaded, run the function normally without debug

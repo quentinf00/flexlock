@@ -1,5 +1,6 @@
 import os
 import sys
+from loguru import logger
 
 def debug_on_fail(fn=None, *, stack_depth=1):
     """

@@ -71,7 +71,7 @@ joblib = ">=1.5.2,<2"
 pandas = ">=2.3.2,<3"
 submitit = ">=1.5.2,<2"
 omegaconf = ">=2.3.0,<3"
-loguru = ">=0.7.0,<1"
+loguru = ">=0.7.3,<0.8"
 
 [tool.pixi.environments]
 build = { features = ["build"] }
