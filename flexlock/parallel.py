@@ -54,13 +54,15 @@ def merge_task_into_cfg(cfg: DictConfig, task: Any, task_to: str) -> DictConfig:
 class ParallelExecutor:
     """A class to handle multi-level parallel execution of a function."""
 
-    def __init__(self,
-                 func: Callable,
-                 tasks: List[Any],
-                 task_to: str,
-                 cfg: DictConfig,
-                 n_jobs: int,
-                 slurm_config: str):
+    def __init__(
+        self,
+        func: Callable,
+        tasks: List[Any],
+        task_to: str,
+        cfg: DictConfig,
+        n_jobs: int,
+        slurm_config: str,
+    ):
         self.func = func
         self.initial_tasks = tasks
         self.task_to = task_to
@@ -69,8 +71,10 @@ class ParallelExecutor:
         self.slurm_config_path = slurm_config
         self.undone_tasks = []
 
-        if not self.cfg.get('save_dir'):
-            raise ValueError("Configuration must contain a 'save_dir' for parallel execution tracking.")
+        if not self.cfg.get("save_dir"):
+            raise ValueError(
+                "Configuration must contain a 'save_dir' for parallel execution tracking."
+            )
         self.done_dir = Path(self.cfg.save_dir) / ".flexlock_done"
         self.done_dir.mkdir(parents=True, exist_ok=True)
 
@@ -86,12 +90,15 @@ class ParallelExecutor:
     def _filter_done_tasks(self):
         """Filters the initial task list to exclude tasks that are already done."""
         self.undone_tasks = [
-            task for task in self.initial_tasks
+            task
+            for task in self.initial_tasks
             if not self._get_done_file_path(task).exists()
         ]
         total_count = len(self.initial_tasks)
         done_count = total_count - len(self.undone_tasks)
-        logger.info(f"Task status: {total_count} total, {done_count} already complete, {len(self.undone_tasks)} to run.")
+        logger.info(
+            f"Task status: {total_count} total, {done_count} already complete, {len(self.undone_tasks)} to run."
+        )
 
     def run_single(self, task: Any):
         """Run the function for a single task and mark it as done on success."""
@@ -114,7 +121,9 @@ class ParallelExecutor:
         """Executes a subset of tasks, either serially or with joblib."""
         if not tasks_subset:
             return
-        logger.info(f"Processing a subset of {len(tasks_subset)} tasks with n_jobs={self.n_jobs}.")
+        logger.info(
+            f"Processing a subset of {len(tasks_subset)} tasks with n_jobs={self.n_jobs}."
+        )
         if self.n_jobs > 1:
             Parallel(n_jobs=self.n_jobs)(
                 delayed(self.run_single)(task) for task in tasks_subset
@@ -129,7 +138,7 @@ class ParallelExecutor:
         size to select its share of tasks and then runs them.
         """
         env = submitit.JobEnvironment()
-        my_tasks = tasks_to_distribute[env.global_rank::env.world_size]
+        my_tasks = tasks_to_distribute[env.global_rank :: env.world_size]
         logger.info(
             f"Slurm worker {env.global_rank}/{env.world_size} received {len(my_tasks)} tasks."
         )
@@ -148,7 +157,9 @@ class ParallelExecutor:
 
         if self.slurm_config_path:
             if submitit is None:
-                raise ImportError("The 'submitit' library is required for Slurm execution.")
+                raise ImportError(
+                    "The 'submitit' library is required for Slurm execution."
+                )
 
             logger.info(f"Using Slurm config: {self.slurm_config_path}")
             slurm_kwargs = OmegaConf.to_container(
@@ -160,11 +171,15 @@ class ParallelExecutor:
             executor.update_parameters(**slurm_kwargs)
 
             if array_parallelism > 1:
-                logger.info(f"Distributing tasks across a Slurm job array of size {array_parallelism}.")
+                logger.info(
+                    f"Distributing tasks across a Slurm job array of size {array_parallelism}."
+                )
                 # Split tasks into chunks for the job array
-                tasks_per_job = -(-len(self.undone_tasks) // array_parallelism)  # Ceiling division
+                tasks_per_job = -(
+                    -len(self.undone_tasks) // array_parallelism
+                )  # Ceiling division
                 task_chunks = [
-                    self.undone_tasks[i:i + tasks_per_job]
+                    self.undone_tasks[i : i + tasks_per_job]
                     for i in range(0, len(self.undone_tasks), tasks_per_job)
                 ]
                 jobs = executor.map_array(self._distribute_and_run, task_chunks)

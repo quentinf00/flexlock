@@ -5,6 +5,7 @@ import warnings
 from dataclasses import is_dataclass, fields, MISSING
 from omegaconf import OmegaConf, DictConfig
 
+
 def to_dictconfig(incfg):
     """
     Convert various config formats (dataclass, dict, class instance, DictConfig)
@@ -50,4 +51,3 @@ def to_dictconfig(incfg):
 
     # Fallback: try creating directly
     return OmegaConf.create(incfg)
-

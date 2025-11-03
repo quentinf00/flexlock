@@ -1,4 +1,5 @@
 """Data hashing utilities for FlexLock."""
+
 import os
 import json
 import logging
@@ -20,16 +21,17 @@ DEFAULT_DIR_FILE_LIMIT = os.environ.get("FLEXLOCK_DIR_FILE_LIMIT", 1000)
 
 # --- Helper Functions ---
 
+
 def _get_dir_stats(path: Path, limit: int):
     """
     Walks a directory to get the file count and the latest modification time.
-    
+
     If the file count exceeds the limit, it returns (limit + 1, 0) to signal
     that the directory is "large".
     """
     count = 0
     latest_mtime = path.stat().st_mtime
-    
+
     for root, _, files in os.walk(path):
         count += len(files)
         if count > limit:
@@ -52,16 +54,17 @@ def _load_cache():
     if not CACHE_FILE.exists():
         return {}
     try:
-        with open(CACHE_FILE, 'r') as f:
+        with open(CACHE_FILE, "r") as f:
             return json.load(f)
     except (json.JSONDecodeError, IOError):
         return {}
+
 
 def _save_cache(cache):
     """Saves the hash cache to the JSON file."""
     try:
         CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(CACHE_FILE, 'w') as f:
+        with open(CACHE_FILE, "w") as f:
             json.dump(cache, f, indent=2)
     except IOError as e:
         log.warning(f"Could not save flexlock hash cache: {e}")
@@ -70,7 +73,7 @@ def _save_cache(cache):
 def _hash_file(filepath, algorithm, chunk_size):
     """Hashes a single file."""
     hasher = algorithm()
-    with open(filepath, 'rb') as f:
+    with open(filepath, "rb") as f:
         while True:
             data = f.read(chunk_size)
             if not data:
@@ -78,7 +81,10 @@ def _hash_file(filepath, algorithm, chunk_size):
             hasher.update(data)
     return hasher.hexdigest()
 
-def dirhash(path, match=None, ignore=None, jobs=1, algorithm=hashlib.md5, chunk_size=65536):
+
+def dirhash(
+    path, match=None, ignore=None, jobs=1, algorithm=hashlib.md5, chunk_size=65536
+):
     """
     Computes a hash of the directory content using pathlib.glob for filtering.
     """
@@ -87,7 +93,7 @@ def dirhash(path, match=None, ignore=None, jobs=1, algorithm=hashlib.md5, chunk_
         raise ValueError(f"'{path}' is not a valid directory.")
 
     # Default match to all files recursively if not specified
-    match_pattern = match if match is not None else '**/*'
+    match_pattern = match if match is not None else "**/*"
     if isinstance(match_pattern, str):
         match_pattern = [match_pattern]
 
@@ -118,27 +124,42 @@ def dirhash(path, match=None, ignore=None, jobs=1, algorithm=hashlib.md5, chunk_
 
     final_hasher = algorithm()
     for h in sorted(file_hashes):
-        final_hasher.update(h.encode('utf-8'))
+        final_hasher.update(h.encode("utf-8"))
 
     return final_hasher.hexdigest()
 
-def hash_data(path, match=None, ignore=None, jobs=4, algorithm=xxhash.xxh3_64, chunk_size=2**18, use_cache=True):
+
+def hash_data(
+    path,
+    match=None,
+    ignore=None,
+    jobs=4,
+    algorithm=xxhash.xxh3_64,
+    chunk_size=2**18,
+    use_cache=True,
+):
     """
     Computes a hash for a file or a directory, using a cache to avoid re-computation.
     """
     path = Path(path).resolve()
-    use_cache = os.environ.get("FLEXLOCK_NO_CACHE", use_cache) not in ("1", "true", "True")
-    dir_file_limit = int(os.environ.get("FLEXLOCK_CACHE_DIR_FILE_LIMIT", DEFAULT_DIR_FILE_LIMIT))
+    use_cache = os.environ.get("FLEXLOCK_NO_CACHE", use_cache) not in (
+        "1",
+        "true",
+        "True",
+    )
+    dir_file_limit = int(
+        os.environ.get("FLEXLOCK_CACHE_DIR_FILE_LIMIT", DEFAULT_DIR_FILE_LIMIT)
+    )
 
     cache = {}
     if use_cache:
         cache = _load_cache()
         path_str = str(path)
-        
+
         if path_str in cache:
             cached_entry = cache[path_str]
             current_stats = None
-            
+
             if path.is_file():
                 current_stats = {"mtime": path.stat().st_mtime}
             elif path.is_dir():
@@ -152,7 +173,10 @@ def hash_data(path, match=None, ignore=None, jobs=4, algorithm=xxhash.xxh3_64, c
                         "directory or set FLEXLOCK_NO_CACHE=1 to force a re-hash if inner content changed."
                     )
                 else:
-                    current_stats = {"file_count": file_count, "latest_mtime": latest_mtime}
+                    current_stats = {
+                        "file_count": file_count,
+                        "latest_mtime": latest_mtime,
+                    }
 
             if current_stats and cached_entry.get("stats") == current_stats:
                 return cached_entry["hash"]
@@ -166,12 +190,16 @@ def hash_data(path, match=None, ignore=None, jobs=4, algorithm=xxhash.xxh3_64, c
         new_hash = _hash_file(path, algorithm, chunk_size)
     elif path.is_dir():
         new_hash = dirhash(
-            path, match=match, ignore=ignore, jobs=jobs,
-            algorithm=algorithm, chunk_size=chunk_size
+            path,
+            match=match,
+            ignore=ignore,
+            jobs=jobs,
+            algorithm=algorithm,
+            chunk_size=chunk_size,
         )
 
     if new_hash is None:
-         raise ValueError(f"Could not compute hash for path: {path}")
+        raise ValueError(f"Could not compute hash for path: {path}")
 
     # Update and save the cache if enabled
     if use_cache:
@@ -183,14 +211,18 @@ def hash_data(path, match=None, ignore=None, jobs=4, algorithm=xxhash.xxh3_64, c
             if file_count > dir_file_limit:
                 stats_to_cache = {"mtime": path.stat().st_mtime}
             else:
-                stats_to_cache = {"file_count": file_count, "latest_mtime": latest_mtime}
-        
+                stats_to_cache = {
+                    "file_count": file_count,
+                    "latest_mtime": latest_mtime,
+                }
+
         cache[str(path)] = {"stats": stats_to_cache, "hash": new_hash}
         _save_cache(cache)
 
     return new_hash
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # --- Example Usage ---
 
     # 1. Create some dummy files and directories for testing
@@ -202,7 +234,9 @@ if __name__ == '__main__':
     (test_dir / "sub_dir" / "file3.txt").write_text("another file")
     (test_dir / "sub_dir" / "ignore_me.log").write_text("log content")
     (test_dir / "temp_file.tmp").write_text("temporary data")
-    (test_dir / ".gitignore").write_text("*.tmp\n*.log") # This file itself can be ignored or included
+    (test_dir / ".gitignore").write_text(
+        "*.tmp\n*.log"
+    )  # This file itself can be ignored or included
 
     print(f"Hashing directory: {test_dir.resolve()}")
 
@@ -215,19 +249,19 @@ if __name__ == '__main__':
     print(f"SHA256 hash (all files): {hash2}")
 
     # Hash ignoring certain files
-    hash3 = dirhash(test_dir, ignore=['*.log', '*.tmp'])
+    hash3 = dirhash(test_dir, ignore=["*.log", "*.tmp"])
     print(f"Hash ignoring .log and .tmp files: {hash3}")
 
     # Hash matching only .txt files
-    hash4 = dirhash(test_dir, match='**/*.txt')
+    hash4 = dirhash(test_dir, match="**/*.txt")
     print(f"Hash only .txt files: {hash4}")
 
     # Hash with multiple match patterns
-    hash5 = dirhash(test_dir, match=['*.txt', '**/*.py'])
+    hash5 = dirhash(test_dir, match=["*.txt", "**/*.py"])
     print(f"Hash .txt and .py files: {hash5}")
 
     # Hash with multiple ignore patterns
-    hash6 = dirhash(test_dir, ignore=['*.tmp', 'sub_dir/*'])
+    hash6 = dirhash(test_dir, ignore=["*.tmp", "sub_dir/*"])
     print(f"Hash ignoring .tmp and contents of sub_dir: {hash6}")
 
     # Demonstrate changes affecting the hash
@@ -238,6 +272,6 @@ if __name__ == '__main__':
 
     # Clean up test directory
     import shutil
+
     shutil.rmtree(test_dir)
     print(f"\nCleaned up {test_dir}")
-

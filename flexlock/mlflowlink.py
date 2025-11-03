@@ -10,7 +10,9 @@ from loguru import logger
 
 
 @contextmanager
-def mlflowlink(path: str, snapshot_file: str = 'run.lock', log_file: str = 'experiment.log'):
+def mlflowlink(
+    path: str, snapshot_file: str = "run.lock", log_file: str = "experiment.log"
+):
     """
     A context manager to handle the MLflow run lifecycle.
 
@@ -32,22 +34,25 @@ def mlflowlink(path: str, snapshot_file: str = 'run.lock', log_file: str = 'expe
         runs = mlflow.search_runs(
             filter_string=f"tags.`flexlock.logical_run_id` = '{logical_run_identifier}' AND tags.`flexlock.run_status` = 'active'",
             order_by=["start_time DESC"],
-            max_results=1
+            max_results=1,
         )
         if not runs.empty:
             previous_active_run_id = runs.iloc[0].run_id
-            logger.info(f"Found previous active run for {logical_run_identifier}: {previous_active_run_id}")
+            logger.info(
+                f"Found previous active run for {logical_run_identifier}: {previous_active_run_id}"
+            )
     except Exception as e:
         logger.warning(f"Could not search for MLflow runs: {e}")
-
 
     # --- Enter the new run context ---
     current_run_id = None
     try:
         with mlflow.start_run() as active_run:
             current_run_id = active_run.info.run_id
-            logger.info(f"Started new MLflow run {current_run_id} for {logical_run_identifier}")
-            
+            logger.info(
+                f"Started new MLflow run {current_run_id} for {logical_run_identifier}"
+            )
+
             mlflow.set_tag("flexlock.logical_run_id", logical_run_identifier)
             mlflow.set_tag("flexlock.run_status", "active")
             if previous_active_run_id:
@@ -58,17 +63,16 @@ def mlflowlink(path: str, snapshot_file: str = 'run.lock', log_file: str = 'expe
     finally:
         # --- Exit the run context ---
 
-        if current_run_id: # Ensure we only log if the run was successfully started
+        if current_run_id:  # Ensure we only log if the run was successfully started
             # Log parameters and artifacts
             if run_lock_path.exists():
-                
                 config_dict = OmegaConf.load(run_lock_path)
                 flat_params = pd.json_normalize(
-                    OmegaConf.to_container(config_dict, resolve=True), sep='.'
+                    OmegaConf.to_container(config_dict, resolve=True), sep="."
                 ).to_dict(orient="records")[0]
                 mlflow.log_params(flat_params, run_id=current_run_id)
                 logger.info(f"Logged parameters from {run_lock_path}")
-                
+
                 mlflow.log_artifact(str(run_lock_path), run_id=current_run_id)
                 logger.info(f"Logged artifact: {run_lock_path}")
                 logger.info(f"Logged artifact: {run_lock_path}")
@@ -86,5 +90,7 @@ def mlflowlink(path: str, snapshot_file: str = 'run.lock', log_file: str = 'expe
                     mlflow.set_tag("flexlock.superseded_by_run_id", current_run_id)
                     logger.info(f"Deprecated previous run {previous_active_run_id}")
             except Exception as e:
-                logger.error(f"Failed to deprecate previous run {previous_active_run_id}: {e}")
+                logger.error(
+                    f"Failed to deprecate previous run {previous_active_run_id}: {e}"
+                )
                 raise e

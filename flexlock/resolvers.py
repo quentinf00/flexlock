@@ -6,11 +6,13 @@ import re
 from pathlib import Path
 from functools import wraps
 
+
 def track_resolver(path: str) -> str:
     """
     OmegaConf resolver that computes and returns the hash of a data path.
     """
     return hash_data(path)
+
 
 def stage_resolver(path: str) -> dict:
     """
@@ -18,15 +20,17 @@ def stage_resolver(path: str) -> dict:
     """
     return load_stage_from_path(path)
 
+
 def now_resolver(fmt: str = "%Y-%m-%d_%H-%M-%S") -> str:
     """
     OmegaConf resolver that returns the current time as a formatted string.
     """
     return datetime.now().strftime(fmt)
 
-def vinc_resolver(path: str, fmt: str = '_{i:04d}') -> str:
+
+def vinc_resolver(path: str, fmt: str = "_{i:04d}") -> str:
     """
-    OmegaConf resolver that finds the highest existing version of a folder/file 
+    OmegaConf resolver that finds the highest existing version of a folder/file
     and returns the next versioned path as a string. Results are cached to ensure
     consistent values within a single execution.
     """
@@ -35,7 +39,7 @@ def vinc_resolver(path: str, fmt: str = '_{i:04d}') -> str:
     parent_dir = p.parent
     base_name = p.name
 
-    regex_pattern = re.sub(r'\{i.*\}', r'(\\d+)', fmt)
+    regex_pattern = re.sub(r"\{i.*\}", r"(\\d+)", fmt)
     regex = re.compile(f"^{re.escape(base_name)}{regex_pattern}")
 
     highest_version = -1
@@ -50,21 +54,30 @@ def vinc_resolver(path: str, fmt: str = '_{i:04d}') -> str:
 
     next_version = highest_version + 1
     version_str = fmt.format(i=next_version)
-    
+
     return str(parent_dir / f"{base_name}{version_str}")
+
 
 def snapshot_resolver(path: str, key: str | None = None, *, _root_: DictConfig) -> str:
     """
     OmegaConf resolver that adds a path to the snapshot's data and prevs sections.
     """
     from .snapshot import snapshot
-    
+
     item = path if key is None else {key: path}
-    
+
     # The _root_ config is passed by OmegaConf to the resolver.
     # We can use it to call snapshot with the actual config.
-    snapshot(config=_root_, data=item, prevs=[path], merge=True, mlflowlink=False, resolve=False)
+    snapshot(
+        config=_root_,
+        data=item,
+        prevs=[path],
+        merge=True,
+        mlflowlink=False,
+        resolve=False,
+    )
     return path
+
 
 def register_resolvers():
     """

@@ -1,6 +1,8 @@
 """Utility for loading data from a previous FlexLock stage."""
+
 from pathlib import Path
 import yaml
+
 
 def load_stage_from_path(path: str) -> dict:
     """
@@ -17,7 +19,10 @@ def load_stage_from_path(path: str) -> dict:
     _load_and_flatten_recursively(Path(path).as_posix(), path, all_stages)
     return all_stages
 
-def _load_and_flatten_recursively(stage_key: str, stage_path_str: str, all_stages: dict):
+
+def _load_and_flatten_recursively(
+    stage_key: str, stage_path_str: str, all_stages: dict
+):
     """
     Recursively loads a stage and its ancestors, adding them to the all_stages dict.
     """
@@ -30,9 +35,11 @@ def _load_and_flatten_recursively(stage_key: str, stage_path_str: str, all_stage
     lock_file = stage_path / "run.lock"
 
     if not lock_file.exists():
-        raise FileNotFoundError(f"run.lock not found in previous stage '{stage_key}': {lock_file}")
+        raise FileNotFoundError(
+            f"run.lock not found in previous stage '{stage_key}': {lock_file}"
+        )
 
-    with open(lock_file, 'r') as f:
+    with open(lock_file, "r") as f:
         stage_data = yaml.safe_load(f)
 
     # Recurse into nested stages first (depth-first)
@@ -40,7 +47,9 @@ def _load_and_flatten_recursively(stage_key: str, stage_path_str: str, all_stage
         for nested_key, nested_data in stage_data["prevs"].items():
             nested_path = nested_data.get("config", {}).get("save_dir")
             if not nested_path:
-                raise ValueError(f"Could not find 'config.save_dir' in nested stage '{nested_key}' from '{stage_key}'")
+                raise ValueError(
+                    f"Could not find 'config.save_dir' in nested stage '{nested_key}' from '{stage_key}'"
+                )
             _load_and_flatten_recursively(nested_key, nested_path, all_stages)
 
     # Add the current stage's data (without its own lineage) to the dict

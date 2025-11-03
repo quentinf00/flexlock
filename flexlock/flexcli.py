@@ -151,7 +151,7 @@ def flexcli(default_config=None, description=None, debug=None):
                 cfg.merge_with(OmegaConf.from_dotlist(dot_list_overrides))
 
             # --- Resolve save_dir to ensure consistent directory across all tasks ---
-            # Resolve the entire config to get the final save_dir, but then extract 
+            # Resolve the entire config to get the final save_dir, but then extract
             # it and merge it back to the unresolved config to keep other values unresolved
             if "save_dir" in cfg:
                 # Create a temporary fully resolved config to get the resolved save_dir
@@ -164,7 +164,7 @@ def flexcli(default_config=None, description=None, debug=None):
                 OmegaConf.save(cfg, save_dir / "config.yaml")
                 # Update the original config with the resolved save_dir
                 cfg.save_dir = resolved_save_dir
-                        
+
             else:
                 logger.info("Warning: No 'save_dir' found in the final configuration.")
 
@@ -208,6 +208,7 @@ def flexcli(default_config=None, description=None, debug=None):
 
                 if tasks:
                     from .snapshot import close_db_connections
+
                     close_db_connections()
 
                     executor = ParallelExecutor(
@@ -226,7 +227,7 @@ def flexcli(default_config=None, description=None, debug=None):
                     # Even when no tasks are loaded, run the function normally without debug
                     return fn(cfg)
             else:
-                    # Single run execution
+                # Single run execution
                 if debug_enabled:
                     # Apply debug wrapper with stack depth 2 (to inject into main context)
                     wrapped_fn = debug_on_fail(fn, stack_depth=2)
