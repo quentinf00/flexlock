@@ -48,7 +48,6 @@ def merge_task_into_cfg(cfg: DictConfig, task: Any, task_to: str) -> DictConfig:
 
     task_branch = OmegaConf.create({})
     OmegaConf.update(task_branch, task_to, task, force_add=True)
-    print(cfg, task, task_branch)
     return OmegaConf.merge(cfg, task_branch)
 
 

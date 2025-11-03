@@ -6,8 +6,8 @@ import yaml
 from omegaconf import OmegaConf
 import pandas as pd
 from contextlib import contextmanager
+from loguru import logger
 
-logger = logging.getLogger(__name__)
 
 @contextmanager
 def mlflowlink(path: str, snapshot_file: str = 'run.lock', log_file: str = 'experiment.log'):
@@ -71,10 +71,10 @@ def mlflowlink(path: str, snapshot_file: str = 'run.lock', log_file: str = 'expe
                 
                 mlflow.log_artifact(str(run_lock_path), run_id=current_run_id)
                 logger.info(f"Logged artifact: {run_lock_path}")
-                print(f"Logged artifact: {run_lock_path}")
+                logger.info(f"Logged artifact: {run_lock_path}")
 
             if log_file_path.exists():
-                print(f"Logged log: {log_file_path}")
+                logger.info(f"Logged log: {log_file_path}")
                 mlflow.log_artifact(str(log_file_path), run_id=current_run_id)
                 logger.info(f"Logged artifact: {log_file_path}")
 
