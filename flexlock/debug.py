@@ -44,7 +44,7 @@ def debug_on_fail(fn=None, *, stack_depth=1):
                     file=sys.stderr,
                 )
                 logger.debug(
-                    f"--- FLEXLOCK_DEBUG: Locals in '{fn.__name__}' at time of error: {fn_locals} ---",
+                    f"--- FLEXLOCK_DEBUG: Locals in '{fn.__name__}' at time of error: {list(fn_locals)} ---",
                     file=sys.stderr,
                 )
 

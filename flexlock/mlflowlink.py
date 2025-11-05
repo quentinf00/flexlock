@@ -1,7 +1,6 @@
 import logging
 import os
 from pathlib import Path
-import mlflow
 import yaml
 from omegaconf import OmegaConf
 import pandas as pd
@@ -11,19 +10,24 @@ from loguru import logger
 
 @contextmanager
 def mlflowlink(
-    path: str, snapshot_file: str = "run.lock", log_file: str = "experiment.log"
+    path: str | Path,
+    snapshot_file: str = 'run.lock',
+    log_file: str = "experiment.log",
 ):
     """
     A context manager to handle the MLflow run lifecycle.
-
-    It uses the provided `path` as a logical run identifier to manage and deprecate
-    previous runs. Upon exiting, it logs the `run.lock` and `experiment.log` files.
-
-    Args:
-        path (str): The directory of the run, used as the logical run identifier.
-        snapshot_file (str, optional): Name of the snapshot file. Defaults to 'run.lock'.
-        log_file (str, optional): Name of the log file. Defaults to 'experiment.log'.
+    ...
     """
+    try:
+        import mlflow
+        import pandas as pd
+    except ImportError:
+        logger.warning(
+            "mlflow or pandas not found. To use mlflowlink, please install it with `pip install mlflow pandas` or `pixi add mlflow pandas`."
+        )
+        yield None
+        return
+
     logical_run_identifier = Path(path).as_posix()
     run_lock_path = Path(path) / snapshot_file
     log_file_path = Path(path) / log_file

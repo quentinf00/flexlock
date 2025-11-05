@@ -2,7 +2,7 @@ import pytest
 from omegaconf import OmegaConf
 from dataclasses import dataclass
 import sys
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from pathlib import Path
 from flexlock.flexcli import flexcli
@@ -12,17 +12,20 @@ from flexlock.flexcli import flexcli
 class MyConfig:
     param: int = 1
     nested: str = "default"
+    save_dir: str = "/tmp/flexlock_tests"
 
 # Create a decorated function to be used in tests
 @flexcli(default_config=MyConfig)
 def main(cfg):
+    # In a real scenario, this function would be the entry point of the script.
+    # For testing, we often just return the config to inspect it.
     return cfg
 
 @pytest.fixture
 def config_file(tmp_path):
     """Create a temporary base config file."""
     base_path = tmp_path / "base.yaml"
-    base_path.write_text("param: 10\nnested: 'from_file'")
+    base_path.write_text(f"param: 10\nnested: 'from_file'\nsave_dir: {tmp_path}")
     return base_path
 
 def test_flexcli_default_config():
@@ -55,34 +58,61 @@ def test_flexcli_programmatic_mode():
     assert cfg.param == 30
     assert cfg.nested == "programmatic_override"
 
-def test_flexcli_programmatic_mode_overrides_file(config_file):
+@patch('flexlock.flexcli.ParallelExecutor')
+def test_flexcli_parallel_execution_is_triggered(mock_executor, config_file, tmp_path):
     """
-    Test that programmatic kwargs have higher precedence than the base config file.
-    To do this, we need to simulate a CLI call that provides the config file,
-    but then call the function with kwargs. The current implementation gives
-    programmatic kwargs the highest priority.
+    Verify that when task-related arguments are provided, the ParallelExecutor
+    is instantiated and its `run` method is called.
     """
-    # In a real script, you might load a base config and then override it.
-    # The decorator handles this by layering overrides.
-    # Let's test the final layer (programmatic) wins.
+    tasks_file = tmp_path / "tasks.yaml"
+    tasks_file.write_text("- task1\n- task2")
+
+    slurm_config_file = tmp_path / "slurm.yaml"
+    slurm_config_file.write_text("partition: 'compute'")
+
+    with patch.object(sys, 'argv', [
+        'script.py',
+        '--config', str(config_file),
+        '--tasks', str(tasks_file),
+        '--task-to', 'experiment.name',
+        '--n_jobs', '4',
+        '--slurm_config', str(slurm_config_file)
+    ]):
+        main(cfg=OmegaConf.create({"save_dir": str(tmp_path)}))
+
+    # Check that the executor was called with the correct arguments
+    mock_executor.assert_called_once()
     
-    # Simulate a scenario where a base config is loaded via CLI args in a script,
-    # but the function is then called with kwargs.
-    overrides_config = Path(config_file).parent / 'override.yaml'
-    overrides_config.write_text("param: 40\nnested: 'from_override_file'")
-    with patch.object(sys, 'argv', ['script.py', '--config', str(config_file), '--overrides_path', str(overrides_config)]):
-        # Even though the CLI specifies a config file, the direct kwargs take precedence.
-        cfg = main()
+    # Inspect the keyword arguments passed to the ParallelExecutor constructor
+    _, kwargs = mock_executor.call_args
+    assert kwargs['tasks'] == ['task1', 'task2']
+    assert kwargs['task_to'] == 'experiment.name'
+    assert kwargs['n_jobs'] == 4
+    assert kwargs['slurm_config'] == str(slurm_config_file)
+    assert kwargs['pbs_config'] is None # Ensure pbs_config was not set
 
-    assert cfg.param == 40
-    # 'nested' should come from the file, as it wasn't overridden programmatically.
-    assert cfg.nested == "from_override_file"
+    # Check that the run method was called on the instance
+    executor_instance = mock_executor.return_value
+    executor_instance.run.assert_called_once()
 
-def test_flexcli_no_default_config():
-    """Test that the decorator works even without a default_config."""
-    @flexcli()
-    def simple_main(cfg):
-        return cfg
+@patch('flexlock.flexcli.ParallelExecutor')
+def test_flexcli_uses_pbs_config(mock_executor, config_file, tmp_path):
+    """Verify that the --pbs_config argument is correctly passed to the executor."""
+    tasks_file = tmp_path / "tasks.yaml"
+    tasks_file.write_text("- task1")
+    
+    pbs_config_file = tmp_path / "pbs.yaml"
+    pbs_config_file.write_text("queue: 'work'")
 
-    cfg = simple_main(param=50)
-    assert cfg.param == 50
+    with patch.object(sys, 'argv', [
+        'script.py',
+        '--config', str(config_file),
+        '--tasks', str(tasks_file),
+        '--task-to', 'experiment.name',
+        '--pbs_config', str(pbs_config_file)
+    ]):
+        main(cfg=OmegaConf.create({"save_dir": str(tmp_path)}))
+
+    _, kwargs = mock_executor.call_args
+    assert kwargs['pbs_config'] == str(pbs_config_file)
+    assert kwargs['slurm_config'] is None

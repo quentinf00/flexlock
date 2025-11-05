@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from .parallel import ParallelExecutor, load_tasks
 from .debug import debug_on_fail
-from .utils import to_dictconfig
+from .utils import to_dictconfig, merge_task_into_cfg
 from loguru import logger
 
 
@@ -81,12 +81,17 @@ def flexcli(default_config=None, description=None, debug=None):
                 "--n_jobs",
                 type=int,
                 default=1,
-                help="Number of parallel jobs for joblib.",
+                help="Number of parallel jobs.",
             )
             parser.add_argument(
                 "--slurm_config",
                 default=None,
-                help="Path to a Slurm configuration file for submitit.",
+                help="Path to a Slurm configuration file.",
+            )
+            parser.add_argument(
+                "--pbs_config",
+                default=None,
+                help="Path to a PBS configuration file.",
             )
             # Debug argument
             parser.add_argument(
@@ -168,72 +173,49 @@ def flexcli(default_config=None, description=None, debug=None):
             else:
                 logger.info("Warning: No 'save_dir' found in the final configuration.")
 
-            # --- Debug and Parallel Execution Logic ---
-            # Debug mode and parallel execution are mutually exclusive
-            if debug_enabled and (cli_args.tasks or cli_args.tasks_key):
-                logger.info(
-                    "Warning: Debug mode is enabled, parallel execution is disabled. Running tasks sequentially in debug mode."
-                )
-                # Run tasks sequentially in debug mode
-                tasks = load_tasks(cli_args.tasks, cli_args.tasks_key, cfg)
-                logger.info(f"{len(tasks)}  tasks loaded")
-                if tasks:
-                    # Apply debug wrapper once with stack depth 2 (to inject into main context)
-                    debug_fn = debug_on_fail(fn, stack_depth=2)
-                    # Run each task individually with debug enabled
-                    for task in tasks:
-                        # Create a copy of cfg and merge the task
-                        task_cfg = OmegaConf.merge(
-                            cfg, OmegaConf.from_dotlist([f"{cli_args.task_to}={task}"])
-                        )
-                        debug_fn(task_cfg)
-                    # For consistency of behavior, return None or a result
-                    return None  # or could return some summary of the tasks run
-                else:
-                    logger.info(
-                        "Warning: --tasks or --tasks-key provided, but no tasks were loaded. Running once."
-                    )
-                    # Apply debug wrapper and run once with stack depth 2 (to inject into main context)
-                    debug_fn = debug_on_fail(fn, stack_depth=2)
-                    return debug_fn(cfg)
-            elif cli_args.tasks or cli_args.tasks_key:
-                # Parallel execution without debug
-                if not cli_args.task_to:
-                    parser.error(
-                        "--task-to is required when using --tasks or --tasks-key."
-                    )
-
-                tasks = load_tasks(cli_args.tasks, cli_args.tasks_key, cfg)
-                logger.info(f"{len(tasks)}  tasks loaded")
-
-                if tasks:
-                    from .snapshot import close_db_connections
-
-                    close_db_connections()
-
-                    executor = ParallelExecutor(
-                        func=fn,
-                        tasks=tasks,
-                        task_to=cli_args.task_to,
-                        cfg=cfg,
-                        n_jobs=cli_args.n_jobs,
-                        slurm_config=cli_args.slurm_config,
-                    )
-                    return executor.run()
-                else:
-                    logger.info(
-                        "Warning: --tasks or --tasks-key provided, but no tasks were loaded. Running once."
-                    )
-                    # Even when no tasks are loaded, run the function normally without debug
-                    return fn(cfg)
-            else:
-                # Single run execution
+            # --- Execution Logic ---
+            # 1. Handle single run case first
+            if not cli_args.tasks and not cli_args.tasks_key:
                 if debug_enabled:
-                    # Apply debug wrapper with stack depth 2 (to inject into main context)
                     wrapped_fn = debug_on_fail(fn, stack_depth=2)
                     return wrapped_fn(cfg)
                 else:
                     return fn(cfg)
+
+            # 2. Load tasks for batch execution
+            tasks = load_tasks(cli_args.tasks, cli_args.tasks_key, cfg)
+            logger.info(f"{len(tasks)} tasks loaded")
+
+            if not tasks:
+                logger.warning("--tasks or --tasks-key provided, but no tasks were loaded. Running once.")
+                if debug_enabled:
+                    return debug_on_fail(fn, stack_depth=2)(cfg)
+                else:
+                    return fn(cfg)
+
+            if not cli_args.task_to:
+                parser.error("--task-to is required when using --tasks or --tasks-key.")
+
+            # 3. Handle debug sequential run
+            if debug_enabled:
+                logger.warning("Debug mode is enabled, parallel execution is disabled. Running tasks sequentially.")
+                debug_fn = debug_on_fail(fn, stack_depth=2)
+                for task in tasks:
+                    task_cfg = merge_task_into_cfg(cfg, task, cli_args.task_to)
+                    debug_fn(task_cfg)
+                return None
+
+            # 4. Handle parallel execution
+            executor = ParallelExecutor(
+                func=fn,
+                tasks=tasks,
+                task_to=cli_args.task_to,
+                cfg=cfg,
+                n_jobs=cli_args.n_jobs,
+                slurm_config=cli_args.slurm_config,
+                pbs_config=cli_args.pbs_config,
+            )
+            return executor.run()
 
         return wrapper
 

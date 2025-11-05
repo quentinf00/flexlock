@@ -4,7 +4,7 @@ from loguru import logger
 
 logger.disable("flexlock")
 from .flexcli import flexcli
-from .snapshot import snapshot, track_task
+from .snapshot import snapshot
 from .mlflowlink import mlflowlink
 from .snapshot import get_git_commit, commit_cwd
 from .debug import debug_on_fail

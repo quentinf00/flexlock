@@ -1,6 +1,7 @@
 from omegaconf import OmegaConf, DictConfig
 from dataclasses import is_dataclass
 
+from typing import Any
 import warnings
 from dataclasses import is_dataclass, fields, MISSING
 from omegaconf import OmegaConf, DictConfig
@@ -51,3 +52,14 @@ def to_dictconfig(incfg):
 
     # Fallback: try creating directly
     return OmegaConf.create(incfg)
+
+
+def merge_task_into_cfg(cfg: DictConfig, task: Any, task_to: str | None) -> DictConfig:
+    """Merge a task into the config."""
+    # Create a minimal config with just the task structure
+
+    if (task_to is not None) and (task_to != '.') :
+        task_branch = OmegaConf.create({})
+        OmegaConf.update(task_branch, task_to, task, force_add=True)
+        task = task_branch
+    return OmegaConf.merge(cfg, task)

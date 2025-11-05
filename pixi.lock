@@ -230,7 +230,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/sqlalchemy-2.0.43-py311h49ec1c0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sqlparse-0.5.3-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/starlette-0.48.0-pyhfdc7a7d_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/submitit-1.5.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.6.0-pyhecae5ae_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_hd72426e_102.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.3.0-pyhcf101f3_0.conda
@@ -527,7 +526,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/sqlparse-0.5.3-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/starlette-0.48.0-pyhfdc7a7d_0.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/submitit-1.5.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.6.0-pyhecae5ae_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_hd72426e_102.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.3.0-pyhcf101f3_0.conda
@@ -1427,7 +1425,7 @@ packages:
 - pypi: ./
   name: flexlock
   version: 0.1.9
-  sha256: 654f4675373fcac76053accc57818b3e35c180d15249ae697bc0536633fd3dd7
+  sha256: 58cf207da22711a4f58b6354b1bd4c9b3be4582e1e17b76276df67d7089469f9
   requires_python: '>=3.11'
   editable: true
 - conda: .
@@ -1443,12 +1441,12 @@ packages:
   - mlflow >=3.2.0,<4
   - joblib >=1.5.2,<2
   - pandas >=2.3.2,<3
-  - submitit >=1.5.2,<2
   - omegaconf >=2.3.0,<3
   - loguru >=0.7.0,<1
+  - cloudpickle >=3.0.0,<4
   license: MIT
   input:
-    hash: 3ee645a9ef343498d5d9f0ddcaaa7975955b66d4404912d2fed478fd1f1154cc
+    hash: cbfb45431ca8384e4952c314b6bcdc87293f15b13c493c1653443c304797fb45
     globs:
     - pyproject.toml
 - conda: https://conda.anaconda.org/conda-forge/linux-64/fonttools-4.60.1-py311h3778330_0.conda
@@ -4191,19 +4189,6 @@ packages:
   - pkg:pypi/starlette?source=hash-mapping
   size: 64039
   timestamp: 1757860651806
-- conda: https://conda.anaconda.org/conda-forge/noarch/submitit-1.5.2-pyhd8ed1ab_0.conda
-  sha256: 96920e92a15ded35bcbe042a7272ed67727ce0cc3276f410dfd4dc30483bb559
-  md5: df0323db1008e83e3e4003b70214b958
-  depends:
-  - cloudpickle >=1.2.1
-  - python >=3.6
-  - typing_extensions >=3.7.4.2
-  license: MIT
-  license_family: MIT
-  purls:
-  - pkg:pypi/submitit?source=hash-mapping
-  size: 59492
-  timestamp: 1731977337763
 - conda: https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.6.0-pyhecae5ae_0.conda
   sha256: 6016672e0e72c4cf23c0cf7b1986283bd86a9c17e8d319212d78d8e9ae42fdfd
   md5: 9d64911b31d57ca443e9f1e36b04385f
