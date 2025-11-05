@@ -6,7 +6,6 @@ logger.disable("flexlock")
 from .flexcli import flexcli
 from .snapshot import snapshot
 from .mlflowlink import mlflowlink
-from .snapshot import get_git_commit, commit_cwd
 from .debug import debug_on_fail
 from .resolvers import register_resolvers
 
@@ -17,7 +16,5 @@ __all__ = [
     "flexcli",
     "snapshot",
     "mlflowlink",
-    "get_git_commit",
-    "commit_cwd",
     "debug_on_fail",
 ]

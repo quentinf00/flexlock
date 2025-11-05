@@ -10,15 +10,11 @@ import time
 from pathlib import Path
 from contextlib import contextmanager
 from omegaconf import OmegaConf, DictConfig
-from git import Repo
 
 from .data_hash import hash_data
 from .load_stage import load_stage_from_path
-from .git_utils import commit_cwd, get_git_commit
 from .utils import to_dictconfig
-import logging
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 def _get_caller_info(repos: dict) -> dict:
@@ -91,7 +87,7 @@ def _atomic_write_yaml(data: dict, path: Path):
         yaml.dump(data, f, default_flow_style=False, sort_keys=False)
     os.rename(temp_path, path)
 
-
+@logger.catch(reraise=False)
 def snapshot(
     config: DictConfig,
     repos: dict | list | str | None = None,
@@ -131,6 +127,8 @@ def snapshot(
         commit_message (str, optional): The commit message to use if `commit=True`.
         resolve (bool): wether to resolve the config (should always be true)
     """
+    from git import Repo
+    from .git_utils import commit_cwd, get_git_commit
     config = to_dictconfig(config)
     if snapshot_path:
         lock_file = Path(snapshot_path)

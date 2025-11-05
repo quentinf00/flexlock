@@ -19,7 +19,8 @@ class PBSBackend(Backend):
         lines = [
             "#!/bin/bash",
             f"#PBS -N flexlock",
-            f"#PBS -l nodes=1:ppn={self.kwargs.get('num_cpus',1)}",
+            f"#PBS -l nodes=1",
+            f"#PBS -l ncpus={self.kwargs.get('num_cpus',1)}",
             f"#PBS -l walltime={self.kwargs.get('time','01:00:00')}",
             f"#PBS -q {self.kwargs.get('queue','batch')}",
         ]
@@ -61,7 +62,6 @@ class PBSBackend(Backend):
         return PBSJob(job_id)
 
     def map_array(self, fn, params_list: list):
-        all_same = len(params_list) > 1 and all(p == params_list[0] for p in params_list)
         data = [(fn, p if isinstance(p, tuple) else (p,), {}) for p in params_list]
         pkl_path = self.folder / f"array_{secrets.token_hex(4)}.pkl"
         with open(pkl_path, 'wb') as f:

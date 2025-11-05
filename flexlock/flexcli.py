@@ -172,15 +172,12 @@ def flexcli(default_config=None, description=None, debug=None):
 
             else:
                 logger.info("Warning: No 'save_dir' found in the final configuration.")
-
+            
+            main_fn = debug_on_fail(fn, stack_depth=2) if debug_enabled else fn
             # --- Execution Logic ---
             # 1. Handle single run case first
             if not cli_args.tasks and not cli_args.tasks_key:
-                if debug_enabled:
-                    wrapped_fn = debug_on_fail(fn, stack_depth=2)
-                    return wrapped_fn(cfg)
-                else:
-                    return fn(cfg)
+                return main_fn(cfg)
 
             # 2. Load tasks for batch execution
             tasks = load_tasks(cli_args.tasks, cli_args.tasks_key, cfg)
@@ -188,10 +185,7 @@ def flexcli(default_config=None, description=None, debug=None):
 
             if not tasks:
                 logger.warning("--tasks or --tasks-key provided, but no tasks were loaded. Running once.")
-                if debug_enabled:
-                    return debug_on_fail(fn, stack_depth=2)(cfg)
-                else:
-                    return fn(cfg)
+                return main_fn(cfg)
 
             if not cli_args.task_to:
                 parser.error("--task-to is required when using --tasks or --tasks-key.")
@@ -199,15 +193,14 @@ def flexcli(default_config=None, description=None, debug=None):
             # 3. Handle debug sequential run
             if debug_enabled:
                 logger.warning("Debug mode is enabled, parallel execution is disabled. Running tasks sequentially.")
-                debug_fn = debug_on_fail(fn, stack_depth=2)
                 for task in tasks:
                     task_cfg = merge_task_into_cfg(cfg, task, cli_args.task_to)
-                    debug_fn(task_cfg)
+                    main_fn(task_cfg) #  debug wrapper
                 return None
 
             # 4. Handle parallel execution
             executor = ParallelExecutor(
-                func=fn,
+                func=main_fn, # not debug wrapper
                 tasks=tasks,
                 task_to=cli_args.task_to,
                 cfg=cfg,
