@@ -1,0 +1,240 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlexLock Push/Pull Workflow for Ultimate Reproducibility &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">FlexLock Push/Pull Workflow for Ultimate Reproducibility</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/push_pull_workflow.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="flexlock-push-pull-workflow-for-ultimate-reproducibility">
+<h1>FlexLock Push/Pull Workflow for Ultimate Reproducibility<a class="headerlink" href="#flexlock-push-pull-workflow-for-ultimate-reproducibility" title="Link to this heading"></a></h1>
+<p>This document outlines a robust, Git-centric workflow for persisting and retrieving the complete state of a FlexLock run. The goal is to ensure that any experiment can be perfectly replicated on any machine by anyone with access to the central code and data repositories.</p>
+<section id="core-concepts">
+<h2>Core Concepts<a class="headerlink" href="#core-concepts" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>The Git Tag is the Run</strong>: The single source of truth for a persisted run is an <strong>annotated git tag</strong> in the main project repository. This tag is atomic and uniquely identifies a run.</p></li>
+<li><p><strong>The Manifest</strong>: The tag’s annotation message contains a <code class="docutils literal notranslate"><span class="pre">manifest.yaml</span></code>. This manifest is the key to reproducibility, containing all the metadata needed to pull and reconstruct the run’s environment.</p></li>
+<li><p><strong>Content-Addressable Storage</strong>: All data and run artifacts are stored in a remote location (e.g., S3, GCS, NFS) using a content-addressable scheme. This means objects are stored based on the hash of their content, providing automatic deduplication and ensuring data integrity.</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="the-push-workflow">
+<h2>The <code class="docutils literal notranslate"><span class="pre">push</span></code> Workflow<a class="headerlink" href="#the-push-workflow" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">push</span></code> command bundles the code, data, and run artifacts and uploads them to remote storage, creating an immutable, shareable snapshot of the run.</p>
+<p><strong>Command:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock<span class="w"> </span>push<span class="w"> </span>&lt;path/to/run.lock&gt;<span class="w"> </span>--main-repo-path<span class="w"> </span>&lt;path/to/main/repo&gt;
+</pre></div>
+</div>
+<p><strong>Sequence of Steps:</strong></p>
+<ol class="arabic">
+<li><p><strong>Parse <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> Tree</strong>: The script recursively parses the specified <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> and any predecessors in its <code class="docutils literal notranslate"><span class="pre">prevs</span></code> section to gather a complete list of:</p>
+<ul class="simple">
+<li><p>All Git repositories (local path, commit hash, and remote URL).</p></li>
+<li><p>All data dependencies (local absolute paths).</p></li>
+</ul>
+</li>
+<li><p><strong>Identify Run Artifacts</strong>: The primary <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> and the corresponding <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> (unresolved) from the same directory are identified as key run artifacts.</p></li>
+<li><p><strong>Push Artifacts to Store</strong>: For every data dependency and run artifact (including the <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> and <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>):</p>
+<ul class="simple">
+<li><p>Its content hash (e.g., <code class="docutils literal notranslate"><span class="pre">xxh64</span></code>) is calculated.</p></li>
+<li><p>The artifact is copied to the content-addressable store using its hash as the key. <code class="docutils literal notranslate"><span class="pre">rclone</span></code> is ideal for this, as it naturally handles deduplication.</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example: Copy a dataset to the remote store</span>
+rclone<span class="w"> </span>copy<span class="w"> </span>/path/to/dataset.csv<span class="w"> </span>flexlock-storage:store/xxh64-a1b2c3d4/
+</pre></div>
+</div>
+</li>
+<li><p><strong>Generate Manifest</strong>: A manifest is created in memory with all the gathered information.</p></li>
+<li><p><strong>Create and Push Atomic Git Tag</strong>:</p>
+<ul class="simple">
+<li><p>A unique, descriptive tag name is generated (e.g., <code class="docutils literal notranslate"><span class="pre">flexlock/run/YYYYMMDD-HHMMSS-&lt;short_hash&gt;</span></code>).</p></li>
+<li><p>An annotated git tag is created in the main repository. The manifest is embedded directly into the tag’s message.</p></li>
+<li><p>The tag is pushed to the remote (<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">origin</span> <span class="pre">&lt;tag_name&gt;</span></code>). This single, atomic action publishes the run.</p></li>
+</ul>
+</li>
+</ol>
+<p><strong>Example Manifest (in Git Tag Message):</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- FlexLock Run Manifest ---</span>
+<span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.1</span>
+<span class="nt">repos</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">main_repo</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">git@github.com:user/my-repo.git</span>
+<span class="w">    </span><span class="nt">commit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">abc1234</span>
+<span class="w">  </span><span class="nt">dep_repo</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">git@github.com:user/dep-repo.git</span>
+<span class="w">    </span><span class="nt">commit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">def5678</span>
+<span class="nt">data</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">/home/user/data/dataset.csv</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xxh64-a1b2c3d4</span>
+<span class="w">  </span><span class="nt">/home/user/project/outputs/prev_run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xxh64-e5f6g7h8</span>
+<span class="nt">artifacts</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">run_lock</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">original_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/home/user/project/outputs/my_run/run.lock</span>
+<span class="w">    </span><span class="nt">hash</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xxh64-b4a3c2d1</span>
+<span class="w">  </span><span class="nt">config_yaml</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">original_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/home/user/project/outputs/my_run/config.yaml</span>
+<span class="w">    </span><span class="nt">hash</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xxh64-f8e7g6h5</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="the-pull-workflow">
+<h2>The <code class="docutils literal notranslate"><span class="pre">pull</span></code> Workflow<a class="headerlink" href="#the-pull-workflow" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">pull</span></code> command reconstructs the exact environment of a persisted run in a local directory.</p>
+<p><strong>Command:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock<span class="w"> </span>pull<span class="w"> </span>&lt;tag_name&gt;<span class="w"> </span>--target-dir<span class="w"> </span>./replicated-run
+</pre></div>
+</div>
+<p><strong>Sequence of Steps:</strong></p>
+<ol class="arabic">
+<li><p><strong>Fetch Tag and Parse Manifest</strong>: The script fetches the specified git tag and extracts the manifest from its annotation message.</p></li>
+<li><p><strong>Pull Code</strong>: Each repository listed in the manifest is cloned, and the exact commit is checked out into a <code class="docutils literal notranslate"><span class="pre">code/</span></code> subdirectory.</p></li>
+<li><p><strong>Recreate Filesystem</strong>:</p>
+<ul class="simple">
+<li><p>A <code class="docutils literal notranslate"><span class="pre">fsroot/</span></code> directory is created to serve as the new root for all absolute paths.</p></li>
+<li><p>For every <code class="docutils literal notranslate"><span class="pre">data</span></code> and <code class="docutils literal notranslate"><span class="pre">artifacts</span></code> entry in the manifest, the original absolute path is recreated within <code class="docutils literal notranslate"><span class="pre">fsroot/</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rclone</span> <span class="pre">link</span></code> is used to create a local file that points to the corresponding object in the remote content-addressable store. This is extremely efficient on shared filesystems.</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Recreate a linked dataset</span>
+rclone<span class="w"> </span>link<span class="w"> </span>flexlock-storage:store/xxh64-a1b2c3d4<span class="w"> </span>./replicated-run/fsroot/home/user/data/dataset.csv
+</pre></div>
+</div>
+</li>
+<li><p><strong>Create Convenience Symlinks</strong>: For ease of use, top-level symlinks are created in the target directory:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">./replicated-run/config.yaml</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">fsroot/path/to/original/config.yaml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">./replicated-run/run.lock</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">fsroot/path/to/original/run.lock</span></code></p></li>
+</ul>
+</li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="how-to-reproduce-a-pulled-run">
+<h2>How to Reproduce a Pulled Run<a class="headerlink" href="#how-to-reproduce-a-pulled-run" title="Link to this heading"></a></h2>
+<p>To make a script capable of running in a pulled environment, a small modification is required to handle path remapping.</p>
+<ol class="arabic">
+<li><p><strong>Pull the run</strong>: <code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">pull</span> <span class="pre">&lt;tag_name&gt;</span> <span class="pre">--target-dir</span> <span class="pre">./my-repro</span></code></p></li>
+<li><p><strong>Modify the script for reproducibility</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># In your main script (e.g., train.py)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span><span class="p">,</span> <span class="n">snapshot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.path</span><span class="w"> </span><span class="kn">import</span> <span class="n">remap_paths</span> <span class="c1"># A new, proposed utility</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="c1"># If running in a pulled environment, remap all paths in the config</span>
+    <span class="k">if</span> <span class="s2">&quot;FLEXLOCK_PULLED_RUN_ROOT&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">remap_paths</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">new_root</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;FLEXLOCK_PULLED_RUN_ROOT&quot;</span><span class="p">])</span>
+
+    <span class="c1"># The rest of your script logic remains unchanged</span>
+    <span class="c1"># ...</span>
+    <span class="n">snapshot</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Execute the run</strong>: The <code class="docutils literal notranslate"><span class="pre">pull</span></code> command will output the precise command needed to reproduce the run.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Set the environment variable to tell FlexLock where the new filesystem root is</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">FLEXLOCK_PULLED_RUN_ROOT</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/my-repro/fsroot
+
+<span class="c1"># Run the original script using the pulled, unresolved config</span>
+python<span class="w"> </span>./my-repro/code/main_repo/path/to/train.py<span class="w"> </span>--config<span class="w"> </span>./my-repro/config.yaml
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This ensures that the script re-runs the resolvers but operates on the remapped, correct paths, achieving perfect reproducibility.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

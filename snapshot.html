@@ -1,0 +1,200 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>snapshot: Experiment Tracking &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/snapshot.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="snapshot-experiment-tracking">
+<h1><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking<a class="headerlink" href="#snapshot-experiment-tracking" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">snapshot</span></code> function is the cornerstone of reproducibility in FlexLock. It creates a <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> file, which is a comprehensive and immutable receipt of your experiment. This file captures everything needed to reproduce your run: the exact configuration, the version of your code, the hashes of your data, and links to previous stages.</p>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
+<p>Here’s how to integrate <code class="docutils literal notranslate"><span class="pre">snapshot</span></code> into a simple processing script:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">input_path</span> <span class="o">=</span> <span class="s1">&#39;data/input.csv&#39;</span>
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="s1">&#39;results/process&#39;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()):</span>
+    <span class="c1"># --- Your core logic runs here ---</span>
+    <span class="c1"># For example, processing data and saving results.</span>
+    <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;output.txt&#39;</span>
+    <span class="n">output_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">output_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;results&quot;</span><span class="p">)</span>
+    <span class="c1"># --- Core logic ends ---</span>
+
+    <span class="c1"># Create the snapshot after the process has successfully completed.</span>
+    <span class="n">snapshot</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+        <span class="n">snapshot_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;run.lock&#39;</span><span class="p">,</span> <span class="c1"># (default if save_dir is in config)</span>
+        <span class="n">merge</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># Merge with existing run.lock if it exists</span>
+        <span class="n">commit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># Commit changes to git before snapshotting</span>
+        <span class="n">commit_branch</span><span class="o">=</span><span class="s2">&quot;flexlock-run-logs&quot;</span><span class="p">,</span> <span class="c1"># Branch to commit to</span>
+        <span class="n">commit_message</span><span class="o">=</span><span class="s2">&quot;FlexLock: Auto-snapshot&quot;</span><span class="p">,</span> <span class="c1"># Commit message</span>
+        <span class="n">mlflowlink</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="c1"># Log to MLflow</span>
+        <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># Resolve OmegaConf config before snapshotting</span>
+        <span class="n">prevs_from_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># Automatically add data paths to prevs</span>
+        <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="c1"># Force new snapshot even if run.lock exists</span>
+    <span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Running this script will create a <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> file in <code class="docutils literal notranslate"><span class="pre">results/process/</span></code>. This file is a YAML that contains the resolved configuration used for the run.</p>
+</section>
+<section id="tracking-code-version">
+<h2>Tracking Code Version<a class="headerlink" href="#tracking-code-version" title="Link to this heading"></a></h2>
+<p>To ensure that you can always trace your results back to the exact code that produced them, <code class="docutils literal notranslate"><span class="pre">snapshot</span></code> can track the Git commit of your repositories.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+    <span class="n">repos</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="p">]</span>  <span class="c1"># Tracks the Git commit of the current directory</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>If your project involves multiple repositories, you can provide paths to each of them:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+    <span class="n">repos</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;main_project&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;shared_library&#39;</span><span class="p">:</span> <span class="s1">&#39;../libs/my_lib&#39;</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="tracking-data">
+<h2>Tracking Data<a class="headerlink" href="#tracking-data" title="Link to this heading"></a></h2>
+<p>To ensure data provenance, <code class="docutils literal notranslate"><span class="pre">snapshot</span></code> can hash your input files and directories.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+    <span class="n">repos</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="p">],</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">cfg</span><span class="o">.</span><span class="n">input_path</span><span class="p">]</span>  <span class="c1"># Hashes the file at cfg.input_path</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also provide a dictionary to give meaningful names to your data dependencies:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+    <span class="n">repos</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="p">],</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;raw_dataset&#39;</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">input_path</span><span class="p">,</span>
+        <span class="s1">&#39;validation_set&#39;</span><span class="p">:</span> <span class="s1">&#39;data/validation.csv&#39;</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="tracking-previous-stages">
+<h2>Tracking Previous Stages<a class="headerlink" href="#tracking-previous-stages" title="Link to this heading"></a></h2>
+<p>Complex workflows often involve multiple stages (e.g., preprocessing, training, evaluation). <code class="docutils literal notranslate"><span class="pre">snapshot</span></code> allows you to link a run to its predecessors by embedding their <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> files.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+    <span class="n">repos</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="p">],</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">cfg</span><span class="o">.</span><span class="n">input_path</span><span class="p">],</span>
+    <span class="n">prevs</span><span class="o">=</span><span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">input_path</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="p">]</span> <span class="c1"># Path to the directory of the previous stage</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This will look for a <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> file in the parent directory of <code class="docutils literal notranslate"><span class="pre">cfg.input_path</span></code> and embed it in the new <code class="docutils literal notranslate"><span class="pre">run.lock</span></code>. This creates a complete, traceable graph of your experiment pipeline.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

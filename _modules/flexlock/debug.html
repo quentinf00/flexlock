@@ -1,0 +1,180 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flexlock.debug &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">flexlock.debug</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for flexlock.debug</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Debugging utilities for FlexLock.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+
+<div class="viewcode-block" id="debug_on_fail">
+<a class="viewcode-back" href="../../api.html#flexlock.debug_on_fail">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">debug_on_fail</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">stack_depth</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A decorator that, upon exception, injects the failed function&#39;s</span>
+<span class="sd">    local variables into the caller&#39;s frame.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fn: The function to decorate. If None, returns a decorator.</span>
+<span class="sd">        stack_depth: How many frames up to inject locals (default 1, 0 would be the current frame).</span>
+<span class="sd">                    Use 2 to inject into the main calling context when used inside flexcli wrapper.</span>
+
+<span class="sd">    This decorator is only active if the environment variable FLEXLOCK_DEBUG is set to &#39;1&#39; or &#39;true&#39;.</span>
+
+<span class="sd">    WARNING: This is an advanced and potentially dangerous pattern.</span>
+<span class="sd">    Modifying a caller&#39;s locals can lead to unpredictable and hard-to-debug code.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+        <span class="n">flexlock_debug</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;true&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">flexlock_debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">fn</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># Get the local variables from the frame where the exception was raised</span>
+                <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">traceback</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
+
+                <span class="c1"># The frame where the exception occurred</span>
+                <span class="n">exception_frame</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">tb_next</span><span class="o">.</span><span class="n">tb_frame</span>
+                <span class="n">fn_locals</span> <span class="o">=</span> <span class="n">exception_frame</span><span class="o">.</span><span class="n">f_locals</span>
+
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;--- FLEXLOCK_DEBUG: An exception occurred in </span><span class="si">{</span><span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc_value</span><span class="si">}</span><span class="s2"> ---&quot;</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;--- FLEXLOCK_DEBUG: Locals in &#39;</span><span class="si">{</span><span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; at time of error: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">fn_locals</span><span class="p">)</span><span class="si">}</span><span class="s2"> ---&quot;</span><span class="p">,</span>
+                    <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Update the locals of the caller function at specified stack depth</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># sys._getframe(n) gets the frame n levels up the stack</span>
+                    <span class="n">caller_frame</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="n">stack_depth</span><span class="p">)</span>
+                    <span class="n">caller_frame</span><span class="o">.</span><span class="n">f_locals</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fn_locals</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;--- FLEXLOCK_DEBUG: Injected locals into &#39;</span><span class="si">{</span><span class="n">caller_frame</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_name</span><span class="si">}</span><span class="s2">&#39;. ---&quot;</span><span class="p">,</span>
+                        <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="c1"># It is crucial to delete frame references to avoid reference cycles</span>
+                    <span class="k">del</span> <span class="n">traceback</span><span class="p">,</span> <span class="n">exception_frame</span><span class="p">,</span> <span class="n">caller_frame</span>
+
+                <span class="k">raise</span>
+
+        <span class="k">return</span> <span class="n">_fn</span>
+
+    <span class="c1"># Support both @debug_on_fail and @debug_on_fail(stack_depth=2) usage</span>
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Called as @debug_on_fail(stack_depth=2)</span>
+        <span class="k">return</span> <span class="n">decorator</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Called as @debug_on_fail</span>
+        <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

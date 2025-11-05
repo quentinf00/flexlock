@@ -1,0 +1,319 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flexlock.flexcli &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">flexlock.flexcli</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for flexlock.flexcli</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Configuration decorator for FlexLock.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelExecutor</span><span class="p">,</span> <span class="n">load_tasks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.debug</span><span class="w"> </span><span class="kn">import</span> <span class="n">debug_on_fail</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_dictconfig</span><span class="p">,</span> <span class="n">merge_task_into_cfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+
+<div class="viewcode-block" id="flexcli">
+<a class="viewcode-back" href="../../api.html#flexlock.flexcli">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">flexcli</span><span class="p">(</span><span class="n">default_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A decorator that wraps a function to provide CLI and programmatic configuration</span>
+<span class="sd">    capabilities using OmegaConf.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        default_config: The dataclass representing the configuration schema.</span>
+<span class="sd">        description (str, optional): A description of the script to be displayed in the help message.</span>
+<span class="sd">        debug: If True, enables debug mode with local variable injection on exceptions.</span>
+<span class="sd">               If None (default), debug mode is determined by CLI args or FLEXLOCK_DEBUG env var.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="n">cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">epilog_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">default_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">default_cfg</span> <span class="o">=</span> <span class="n">to_dictconfig</span><span class="p">(</span><span class="n">default_config</span><span class="p">)</span>
+                <span class="n">yaml_help</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_yaml</span><span class="p">(</span><span class="n">default_cfg</span><span class="p">)</span>
+                <span class="n">epilog_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Default Configuration:</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="si">{</span><span class="n">yaml_help</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+                <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                <span class="n">epilog</span><span class="o">=</span><span class="n">epilog_str</span><span class="p">,</span>
+                <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">RawTextHelpFormatter</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># --- Argument Parsing ---</span>
+            <span class="c1"># Standard config arguments</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--config&quot;</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the base YAML configuration file.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--experiment&quot;</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key to select a specific experiment from the config.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--overrides_path&quot;</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a YAML file with configuration overrides.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;-o&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;--overrides_dot&quot;</span><span class="p">,</span>
+                <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key-value pairs for overrides (e.g., &#39;param=10&#39;).&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Parallel execution arguments</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--tasks&quot;</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a file with a list of tasks (e.g., .txt, .yaml).&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--tasks-key&quot;</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key to select a list of tasks from the config.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--task-to&quot;</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key where to merge the task in the config.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--n_jobs&quot;</span><span class="p">,</span>
+                <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of parallel jobs.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--slurm_config&quot;</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a Slurm configuration file.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--pbs_config&quot;</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a PBS configuration file.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># Debug argument</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--debug&quot;</span><span class="p">,</span>
+                <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable debug mode with local variable injection on exceptions (overrides FLEXLOCK_DEBUG env var).&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># Logging arguments</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;--verbose&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Set log level to DEBUG.&quot;</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Determine if running from CLI or programmatically</span>
+            <span class="n">is_cli_call</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="s2">&quot;ipykernel&quot;</span> <span class="ow">in</span> <span class="n">arg</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="s2">&quot;pytest&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">is_cli_call</span><span class="p">:</span>
+                <span class="n">cli_args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+                <span class="n">dot_list_overrides</span> <span class="o">=</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">overrides_dot</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cli_args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">([])</span>
+                <span class="n">dot_list_overrides</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+
+            <span class="c1"># Determine debug mode: CLI arg &gt; function param &gt; environment variable</span>
+            <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+                <span class="n">debug_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">debug</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Explicitly set to True or False</span>
+                <span class="n">debug_enabled</span> <span class="o">=</span> <span class="n">debug</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Use environment variable as fallback</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+                <span class="n">debug_enabled</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span>
+                    <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;true&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="c1"># --- Configuration Loading ---</span>
+            <span class="k">if</span> <span class="n">cfg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cfg</span> <span class="o">=</span> <span class="n">to_dictconfig</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">default_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cfg</span> <span class="o">=</span> <span class="n">to_dictconfig</span><span class="p">(</span><span class="n">default_config</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+                <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="p">:</span>
+                <span class="n">cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Experiment &#39;</span><span class="si">{</span><span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="si">}</span><span class="s2">&#39; did not resolve to a dictionary in the config.&quot;</span>
+                    <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">overrides_path</span><span class="p">:</span>
+                <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">overrides_path</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">dot_list_overrides</span><span class="p">:</span>
+                <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">(</span><span class="n">dot_list_overrides</span><span class="p">))</span>
+
+            <span class="c1"># --- Resolve save_dir to ensure consistent directory across all tasks ---</span>
+            <span class="c1"># Resolve the entire config to get the final save_dir, but then extract</span>
+            <span class="c1"># it and merge it back to the unresolved config to keep other values unresolved</span>
+            <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+                <span class="c1"># Create a temporary fully resolved config to get the resolved save_dir</span>
+
+                <span class="n">resolved_cfg</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">OmegaConf</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">resolved_cfg</span><span class="p">)</span>
+                <span class="n">resolved_save_dir</span> <span class="o">=</span> <span class="n">resolved_cfg</span><span class="o">.</span><span class="n">save_dir</span>
+                <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">resolved_save_dir</span><span class="p">)</span>
+                <span class="n">save_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">OmegaConf</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;config.yaml&quot;</span><span class="p">)</span>
+                <span class="c1"># Update the original config with the resolved save_dir</span>
+                <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">resolved_save_dir</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Warning: No &#39;save_dir&#39; found in the final configuration.&quot;</span><span class="p">)</span>
+            
+            <span class="n">main_fn</span> <span class="o">=</span> <span class="n">debug_on_fail</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">stack_depth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="n">debug_enabled</span> <span class="k">else</span> <span class="n">fn</span>
+            <span class="c1"># --- Execution Logic ---</span>
+            <span class="c1"># 1. Handle single run case first</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">tasks</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">tasks_key</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">main_fn</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+            <span class="c1"># 2. Load tasks for batch execution</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="n">load_tasks</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">tasks</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">tasks_key</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks loaded&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;--tasks or --tasks-key provided, but no tasks were loaded. Running once.&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">main_fn</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">task_to</span><span class="p">:</span>
+                <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;--task-to is required when using --tasks or --tasks-key.&quot;</span><span class="p">)</span>
+
+            <span class="c1"># 3. Handle debug sequential run</span>
+            <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Debug mode is enabled, parallel execution is disabled. Running tasks sequentially.&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+                    <span class="n">task_cfg</span> <span class="o">=</span> <span class="n">merge_task_into_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">task_to</span><span class="p">)</span>
+                    <span class="n">main_fn</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">)</span> <span class="c1">#  debug wrapper</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+            <span class="c1"># 4. Handle parallel execution</span>
+            <span class="n">executor</span> <span class="o">=</span> <span class="n">ParallelExecutor</span><span class="p">(</span>
+                <span class="n">func</span><span class="o">=</span><span class="n">main_fn</span><span class="p">,</span> <span class="c1"># not debug wrapper</span>
+                <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
+                <span class="n">task_to</span><span class="o">=</span><span class="n">cli_args</span><span class="o">.</span><span class="n">task_to</span><span class="p">,</span>
+                <span class="n">cfg</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+                <span class="n">n_jobs</span><span class="o">=</span><span class="n">cli_args</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span>
+                <span class="n">slurm_config</span><span class="o">=</span><span class="n">cli_args</span><span class="o">.</span><span class="n">slurm_config</span><span class="p">,</span>
+                <span class="n">pbs_config</span><span class="o">=</span><span class="n">cli_args</span><span class="o">.</span><span class="n">pbs_config</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

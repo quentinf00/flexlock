@@ -1,0 +1,162 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mlflowlink: MLflow Integration &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/mlflowlink.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mlflowlink-mlflow-integration">
+<h1><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration<a class="headerlink" href="#mlflowlink-mlflow-integration" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code> context manager provides a robust and explicit way to manage the MLflow lifecycle for your experiments. It is designed to be separate from your core logic, allowing you to iterate on your logging and diagnostics without re-running your entire experiment.</p>
+<section id="philosophy">
+<h2>Philosophy<a class="headerlink" href="#philosophy" title="Link to this heading"></a></h2>
+<p>In FlexLock, we believe that your core scientific code should be decoupled from your MLOps tooling.</p>
+<ul class="simple">
+<li><p><strong>Core Logic</strong>: A function that takes a configuration and produces outputs. It should be pure and testable.</p></li>
+<li><p><strong>Logging</strong>: A separate function or script that takes the output directory of a run and logs its contents to a platform like MLflow.</p></li>
+</ul>
+<p>This separation has several advantages:</p>
+<ul class="simple">
+<li><p>You can re-run your logging script to add new metrics or artifacts without the cost of re-running the experiment.</p></li>
+<li><p>You can log runs that were completed a long time ago.</p></li>
+<li><p>Your core logic remains clean and focused on its primary task.</p></li>
+</ul>
+</section>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code> is a context manager that takes the path to a run directory (which should contain a <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> file).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># log.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflowlink</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">log_run</span><span class="p">(</span><span class="n">save_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Logs the results of a completed run to MLflow.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">mlflowlink</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">snapshot_file</span><span class="o">=</span><span class="s1">&#39;run.lock&#39;</span><span class="p">,</span> <span class="n">log_file</span><span class="o">=</span><span class="s1">&#39;experiment.log&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">run</span><span class="p">:</span>
+        <span class="c1"># 1. A new MLflow run is created.</span>
+        <span class="c1"># 2. The `run.lock` file from `save_dir` is automatically logged as an artifact.</span>
+        <span class="c1"># 3. The MLflow run is tagged with a `logical_run_id` corresponding to `save_dir`.</span>
+        <span class="c1"># 4. Any previous MLflow runs with the same `logical_run_id` are marked as &quot;deprecated&quot;.</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MLflow run started with ID: </span><span class="si">{</span><span class="n">run</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">run_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># You can add any other logging here.</span>
+        <span class="c1"># For example, log the output file as an artifact:</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/out.txt&quot;</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MLflow run finished.&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1"># Assume the main process has already been run and created results in &#39;results/process&#39;</span>
+    <span class="n">log_run</span><span class="p">(</span><span class="s1">&#39;results/process&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="logical-run-management">
+<h2>Logical Run Management<a class="headerlink" href="#logical-run-management" title="Link to this heading"></a></h2>
+<p>A key feature of <code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code> is its management of “logical runs”. Often, you will have multiple MLflow runs that correspond to the same conceptual experiment (e.g., you are re-running logging to add a new metric).</p>
+<p><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code> handles this by:</p>
+<ol class="arabic simple">
+<li><p>Assigning a <code class="docutils literal notranslate"><span class="pre">logical_run_id</span></code> to each MLflow run, which is the absolute path of the <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>.</p></li>
+<li><p>When a new run is created for a given <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>, it finds all previous runs with the same <code class="docutils literal notranslate"><span class="pre">logical_run_id</span></code> and sets their status to <code class="docutils literal notranslate"><span class="pre">DEPRECATED</span></code>.</p></li>
+<li><p>It tags the new run with <code class="docutils literal notranslate"><span class="pre">status:</span> <span class="pre">active</span></code>.</p></li>
+</ol>
+<p>This means you can easily filter for the “active” run for each of your experiments in the MLflow UI, giving you a clean and organized view of your results.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

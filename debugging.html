@@ -1,0 +1,180 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>debug_on_fail: Interactive Debugging &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/debugging.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="debug-on-fail-interactive-debugging">
+<h1><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging<a class="headerlink" href="#debug-on-fail-interactive-debugging" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">&#64;debug_on_fail</span></code> decorator is a development tool designed to bridge the gap between interactive, exploratory programming (like in a Jupyter notebook) and robust, script-based execution. When an exception occurs in a decorated function, instead of crashing, it drops you into an interactive IPython debugger with the full state of your program preserved.</p>
+<section id="the-problem">
+<h2>The Problem<a class="headerlink" href="#the-problem" title="Link to this heading"></a></h2>
+<p>When you are developing a complex data processing or machine learning script, it is common for errors to occur. When a script fails, you typically get a traceback, but you lose the entire local context of the function. This makes it difficult to inspect the variables and understand what went wrong.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">/</span> <span class="n">b</span>  <span class="c1"># Raises ZeroDivisionError</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+
+<span class="c1"># Script crashes, and you can&#39;t inspect the values of a and b.</span>
+</pre></div>
+</div>
+</section>
+<section id="the-solution-debug-on-fail">
+<h2>The Solution: <code class="docutils literal notranslate"><span class="pre">&#64;debug_on_fail</span></code><a class="headerlink" href="#the-solution-debug-on-fail" title="Link to this heading"></a></h2>
+<p>By adding the <code class="docutils literal notranslate"><span class="pre">&#64;debug_on_fail</span></code> decorator and running your script with the <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG=1</span></code> environment variable, you can seamlessly transition from execution to debugging.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">debug_on_fail</span>
+
+<span class="nd">@debug_on_fail</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">/</span> <span class="n">b</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now, run the script from your terminal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">FLEXLOCK_DEBUG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>your_script.py
+</pre></div>
+</div>
+<p>When the <code class="docutils literal notranslate"><span class="pre">ZeroDivisionError</span></code> occurs, you will be dropped into an IPython post-mortem debugger.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ZeroDivisionError: division by zero
+&gt; /path/to/your_script.py(7)main()
+      5     a = 1
+      6     b = 0
+----&gt; 7     c = a / b
+
+Dropping into an interactive shell.
+The current context is available in the `ctx` dictionary.
+For example, access a with `ctx[&#39;a&#39;]`.
+
+ipdb&gt; a
+1
+ipdb&gt; b
+0
+ipdb&gt; # You can now inspect variables, run code, and debug interactively.
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
+<ul>
+<li><p><strong>Development Only</strong>: As the name implies, <code class="docutils literal notranslate"><span class="pre">&#64;debug_on_fail</span></code> is for development. It should not be used in production code.</p></li>
+<li><p><strong>Combine with <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code></strong>: <code class="docutils literal notranslate"><span class="pre">&#64;debug_on_fail</span></code> is particularly powerful when combined with <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>. Place it <em>above</em> <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span><span class="p">,</span> <span class="n">debug_on_fail</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="o">...</span>
+
+<span class="nd">@debug_on_fail</span>
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">default_config</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="c1"># Your code here</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Autoreload</strong>: For an even more seamless workflow, use an autoreload tool in your interactive shell (e.g., the <code class="docutils literal notranslate"><span class="pre">%autoreload</span></code> magic in IPython). This allows you to edit your code in your editor and have the changes automatically reflected in your debugging session.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

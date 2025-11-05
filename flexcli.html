@@ -1,0 +1,236 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flexcli: Command-Line Interface &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/flexcli.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="flexcli-command-line-interface">
+<h1><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface<a class="headerlink" href="#flexcli-command-line-interface" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code> decorator is a powerful tool that bridges the gap between your Python configuration classes and a command-line interface. It allows you to define your parameters in a structured class and then override them from the command line, from configuration files, or when calling the function programmatically.</p>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
+<p>To use <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>, you need a configuration class and a main function decorated with it.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># process.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">input_path</span> <span class="o">=</span> <span class="s1">&#39;data/input.csv&#39;</span>
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="s1">&#39;results/process&#39;</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">default_config</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Input path: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">input_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Save directory: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This script can now be run in several ways:</p>
+<section id="default-configuration">
+<h3>1. Default Configuration<a class="headerlink" href="#default-configuration" title="Link to this heading"></a></h3>
+<p>Run the script without any arguments to use the default values defined in the <code class="docutils literal notranslate"><span class="pre">Config</span></code> class.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>process.py
+<span class="c1"># Parameter: 1</span>
+<span class="c1"># Input path: data/input.csv</span>
+<span class="c1"># Save directory: results/process</span>
+</pre></div>
+</div>
+</section>
+<section id="overriding-parameters-from-the-cli">
+<h3>2. Overriding Parameters from the CLI<a class="headerlink" href="#overriding-parameters-from-the-cli" title="Link to this heading"></a></h3>
+<p>You can override any parameter using the <code class="docutils literal notranslate"><span class="pre">-o</span></code> or <code class="docutils literal notranslate"><span class="pre">--override</span></code> flag.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>process.py<span class="w"> </span>-o<span class="w"> </span><span class="nv">param</span><span class="o">=</span><span class="m">10</span>
+<span class="c1"># Parameter: 10</span>
+<span class="c1"># Input path: data/input.csv</span>
+<span class="c1"># Save directory: results/process</span>
+</pre></div>
+</div>
+</section>
+<section id="using-a-configuration-file">
+<h3>3. Using a Configuration File<a class="headerlink" href="#using-a-configuration-file" title="Link to this heading"></a></h3>
+<p>For more complex configurations, you can use a YAML file.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># conf/production.yml</span>
+<span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/data/prod/process</span>
+</pre></div>
+</div>
+<p>Then, run the script with the <code class="docutils literal notranslate"><span class="pre">--config</span></code> flag:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>process.py<span class="w"> </span>--config<span class="w"> </span>conf/production.yml
+<span class="c1"># Parameter: 100</span>
+<span class="c1"># Input path: data/input.csv</span>
+<span class="c1"># Save directory: /data/prod/process</span>
+</pre></div>
+</div>
+</section>
+<section id="using-multi-stage-configuration-files">
+<h3>4. Using Multi-Stage Configuration Files<a class="headerlink" href="#using-multi-stage-configuration-files" title="Link to this heading"></a></h3>
+<p>You can store multiple configurations in a single YAML file.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># conf/experiments.yml</span>
+<span class="nt">defaults</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">base_config</span>
+
+<span class="nt">base_config</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">input_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">data/input.csv</span>
+
+<span class="nt">experiment_a</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">results/exp_a</span>
+
+<span class="nt">experiment_b</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">results/exp_b</span>
+</pre></div>
+</div>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">--experiment</span></code> flag to select a specific configuration:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>process.py<span class="w"> </span>--config<span class="w"> </span>conf/experiments.yml<span class="w"> </span>--experiment<span class="w"> </span>experiment_b
+<span class="c1"># Parameter: 10</span>
+<span class="c1"># Input path: data/input.csv</span>
+<span class="c1"># Save directory: results/exp_b</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="parallelization">
+<h2>Parallelization<a class="headerlink" href="#parallelization" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code> also provides built-in support for running multiple tasks in parallel.</p>
+<section id="local-parallelization">
+<h3>1. Local Parallelization<a class="headerlink" href="#local-parallelization" title="Link to this heading"></a></h3>
+<p>If you have a list of parameters you want to run, you can use the <code class="docutils literal notranslate"><span class="pre">--tasks</span></code> and <code class="docutils literal notranslate"><span class="pre">--task_to</span></code> flags.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># tasks.txt</span>
+<span class="m">1</span>
+<span class="m">2</span>
+<span class="m">3</span>
+<span class="m">4</span>
+<span class="m">5</span>
+</pre></div>
+</div>
+<p>The following command will run the <code class="docutils literal notranslate"><span class="pre">main</span></code> function 5 times, with <code class="docutils literal notranslate"><span class="pre">param</span></code> being set to 1, 2, 3, 4, and 5 respectively. It will run up to 10 jobs in parallel on your local machine.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>process.py<span class="w"> </span>--tasks<span class="w"> </span>tasks.txt<span class="w"> </span>--task_to<span class="w"> </span>param<span class="w"> </span>--n_jobs<span class="o">=</span><span class="m">10</span>
+</pre></div>
+</div>
+</section>
+<section id="slurm-parallelization">
+<h3>2. Slurm Parallelization<a class="headerlink" href="#slurm-parallelization" title="Link to this heading"></a></h3>
+<p>If you are working on a cluster with Slurm, you can distribute your jobs across the cluster.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>process.py<span class="w"> </span>--tasks<span class="w"> </span>tasks.txt<span class="w"> </span>--task_to<span class="w"> </span>param<span class="w"> </span>--slurm_config<span class="o">=</span>slurm.yaml
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">slurm.yaml</span></code> file contains the configuration for the Slurm job (e.g., partition, memory, time).</p>
+</section>
+<section id="pbs-parallelization">
+<h3>3. PBS Parallelization<a class="headerlink" href="#pbs-parallelization" title="Link to this heading"></a></h3>
+<p>If you are working on a cluster with PBS, you can distribute your jobs across the cluster.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>process.py<span class="w"> </span>--tasks<span class="w"> </span>tasks.txt<span class="w"> </span>--task_to<span class="w"> </span>param<span class="w"> </span>--pbs_config<span class="o">=</span>pbs.yaml
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">pbs.yaml</span></code> file contains the configuration for the PBS job (e.g., queue, nodes, walltime).</p>
+</section>
+</section>
+<section id="debugging-and-logging">
+<h2>Debugging and Logging<a class="headerlink" href="#debugging-and-logging" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code> also provides arguments for debugging and controlling log verbosity.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--debug</span></code>: Enable debug mode with local variable injection on exceptions. This overrides the <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG</span></code> environment variable.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--verbose</span></code>: Set the log level to DEBUG, providing more detailed output.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

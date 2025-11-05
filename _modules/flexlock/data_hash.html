@@ -1,0 +1,384 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flexlock.data_hash &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">flexlock.data_hash</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for flexlock.data_hash</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Data hashing utilities for FlexLock.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">xxhash</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">glob</span><span class="w"> </span><span class="kn">import</span> <span class="n">glob</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">joblib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parallel</span><span class="p">,</span> <span class="n">delayed</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># --- Cache Configuration ---</span>
+<span class="n">CACHE_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_CACHE&quot;</span><span class="p">,</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;.cache&quot;</span> <span class="o">/</span> <span class="s2">&quot;flexlock&quot;</span><span class="p">))</span>
+<span class="n">CACHE_FILE</span> <span class="o">=</span> <span class="n">CACHE_DIR</span> <span class="o">/</span> <span class="s2">&quot;hashes.json&quot;</span>
+<span class="n">CACHE_DIR</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">DEFAULT_DIR_FILE_LIMIT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DIR_FILE_LIMIT&quot;</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># --- Helper Functions ---</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_dir_stats</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Walks a directory to get the file count and the latest modification time.</span>
+
+<span class="sd">    If the file count exceeds the limit, it returns (limit + 1, 0) to signal</span>
+<span class="sd">    that the directory is &quot;large&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">latest_mtime</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span>
+
+    <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">count</span><span class="p">,</span> <span class="mi">0</span>  <span class="c1"># Exceeded limit, fallback mode</span>
+
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">mtime</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">mtime</span> <span class="o">&gt;</span> <span class="n">latest_mtime</span><span class="p">:</span>
+                    <span class="n">latest_mtime</span> <span class="o">=</span> <span class="n">mtime</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="c1"># File might be a broken symlink, etc.</span>
+                <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">count</span><span class="p">,</span> <span class="n">latest_mtime</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_cache</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Loads the hash cache from the JSON file.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">CACHE_FILE</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">CACHE_FILE</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">IOError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_save_cache</span><span class="p">(</span><span class="n">cache</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Saves the hash cache to the JSON file.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">CACHE_FILE</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">CACHE_FILE</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">cache</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not save flexlock hash cache: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_hash_file</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hashes a single file.&quot;&quot;&quot;</span>
+    <span class="n">hasher</span> <span class="o">=</span> <span class="n">algorithm</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hasher</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="dirhash">
+<a class="viewcode-back" href="../../api.html#flexlock.data_hash.dirhash">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dirhash</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">65536</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes a hash of the directory content using pathlib.glob for filtering.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">base_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&#39; is not a valid directory.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Default match to all files recursively if not specified</span>
+    <span class="n">match_pattern</span> <span class="o">=</span> <span class="n">match</span> <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;**/*&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">match_pattern</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">match_pattern</span> <span class="o">=</span> <span class="p">[</span><span class="n">match_pattern</span><span class="p">]</span>
+
+    <span class="n">ignore_patterns</span> <span class="o">=</span> <span class="n">ignore</span> <span class="k">if</span> <span class="n">ignore</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ignore_patterns</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">ignore_patterns</span> <span class="o">=</span> <span class="p">[</span><span class="n">ignore_patterns</span><span class="p">]</span>
+
+    <span class="n">included_files_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">match_pattern</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">base_path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">pattern</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">included_files_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="n">excluded_files_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">ignore_patterns</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">base_path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">pattern</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">excluded_files_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="n">files_to_hash</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">included_files_set</span> <span class="o">-</span> <span class="n">excluded_files_set</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">files_to_hash</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">algorithm</span><span class="p">()</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+    <span class="n">file_hashes</span> <span class="o">=</span> <span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="n">jobs</span><span class="p">)(</span>
+        <span class="n">delayed</span><span class="p">(</span><span class="n">_hash_file</span><span class="p">)(</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">algorithm</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files_to_hash</span>
+    <span class="p">)</span>
+
+    <span class="n">final_hasher</span> <span class="o">=</span> <span class="n">algorithm</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">file_hashes</span><span class="p">):</span>
+        <span class="n">final_hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">final_hasher</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="hash_data">
+<a class="viewcode-back" href="../../api.html#flexlock.data_hash.hash_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">hash_data</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">,</span>
+    <span class="n">match</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">ignore</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">jobs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">algorithm</span><span class="o">=</span><span class="n">xxhash</span><span class="o">.</span><span class="n">xxh3_64</span><span class="p">,</span>
+    <span class="n">chunk_size</span><span class="o">=</span><span class="mi">2</span><span class="o">**</span><span class="mi">18</span><span class="p">,</span>
+    <span class="n">use_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes a hash for a file or a directory, using a cache to avoid re-computation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">use_cache</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_NO_CACHE&quot;</span><span class="p">,</span> <span class="n">use_cache</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;true&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;True&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">dir_file_limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_CACHE_DIR_FILE_LIMIT&quot;</span><span class="p">,</span> <span class="n">DEFAULT_DIR_FILE_LIMIT</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="n">_load_cache</span><span class="p">()</span>
+        <span class="n">path_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">path_str</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
+            <span class="n">cached_entry</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">path_str</span><span class="p">]</span>
+            <span class="n">current_stats</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">current_stats</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mtime&quot;</span><span class="p">:</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">}</span>
+            <span class="k">elif</span> <span class="n">path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+                <span class="n">file_count</span><span class="p">,</span> <span class="n">latest_mtime</span> <span class="o">=</span> <span class="n">_get_dir_stats</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">dir_file_limit</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">file_count</span> <span class="o">&gt;</span> <span class="n">dir_file_limit</span><span class="p">:</span>
+                    <span class="c1"># Large directory fallback</span>
+                    <span class="n">current_stats</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mtime&quot;</span><span class="p">:</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">}</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Directory &#39;</span><span class="si">{</span><span class="n">path_str</span><span class="si">}</span><span class="s2">&#39; has over </span><span class="si">{</span><span class="n">dir_file_limit</span><span class="si">}</span><span class="s2"> files. &quot;</span>
+                        <span class="s2">&quot;Falling back to less accurate timestamp caching. Use `touch` on the &quot;</span>
+                        <span class="s2">&quot;directory or set FLEXLOCK_NO_CACHE=1 to force a re-hash if inner content changed.&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">current_stats</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">&quot;file_count&quot;</span><span class="p">:</span> <span class="n">file_count</span><span class="p">,</span>
+                        <span class="s2">&quot;latest_mtime&quot;</span><span class="p">:</span> <span class="n">latest_mtime</span><span class="p">,</span>
+                    <span class="p">}</span>
+
+            <span class="k">if</span> <span class="n">current_stats</span> <span class="ow">and</span> <span class="n">cached_entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stats&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">current_stats</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">cached_entry</span><span class="p">[</span><span class="s2">&quot;hash&quot;</span><span class="p">]</span>
+
+    <span class="c1"># If not in cache or cache is invalid/disabled, compute the hash</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The specified path does not exist: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">new_hash</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="n">new_hash</span> <span class="o">=</span> <span class="n">_hash_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="n">new_hash</span> <span class="o">=</span> <span class="n">dirhash</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span>
+            <span class="n">match</span><span class="o">=</span><span class="n">match</span><span class="p">,</span>
+            <span class="n">ignore</span><span class="o">=</span><span class="n">ignore</span><span class="p">,</span>
+            <span class="n">jobs</span><span class="o">=</span><span class="n">jobs</span><span class="p">,</span>
+            <span class="n">algorithm</span><span class="o">=</span><span class="n">algorithm</span><span class="p">,</span>
+            <span class="n">chunk_size</span><span class="o">=</span><span class="n">chunk_size</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">new_hash</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not compute hash for path: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Update and save the cache if enabled</span>
+    <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
+        <span class="n">stats_to_cache</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="n">stats_to_cache</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mtime&quot;</span><span class="p">:</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">}</span>
+        <span class="k">elif</span> <span class="n">path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="n">file_count</span><span class="p">,</span> <span class="n">latest_mtime</span> <span class="o">=</span> <span class="n">_get_dir_stats</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">dir_file_limit</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">file_count</span> <span class="o">&gt;</span> <span class="n">dir_file_limit</span><span class="p">:</span>
+                <span class="n">stats_to_cache</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mtime&quot;</span><span class="p">:</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">stats_to_cache</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;file_count&quot;</span><span class="p">:</span> <span class="n">file_count</span><span class="p">,</span>
+                    <span class="s2">&quot;latest_mtime&quot;</span><span class="p">:</span> <span class="n">latest_mtime</span><span class="p">,</span>
+                <span class="p">}</span>
+
+        <span class="n">cache</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;stats&quot;</span><span class="p">:</span> <span class="n">stats_to_cache</span><span class="p">,</span> <span class="s2">&quot;hash&quot;</span><span class="p">:</span> <span class="n">new_hash</span><span class="p">}</span>
+        <span class="n">_save_cache</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">new_hash</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># --- Example Usage ---</span>
+
+    <span class="c1"># 1. Create some dummy files and directories for testing</span>
+    <span class="n">test_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./test_dir_for_dirhash&quot;</span><span class="p">)</span>
+    <span class="n">test_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">test_dir</span> <span class="o">/</span> <span class="s2">&quot;file1.txt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;content of file 1&quot;</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">test_dir</span> <span class="o">/</span> <span class="s2">&quot;file2.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;import os</span><span class="se">\n</span><span class="s2">print(&#39;hello&#39;)&quot;</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">test_dir</span> <span class="o">/</span> <span class="s2">&quot;sub_dir&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">test_dir</span> <span class="o">/</span> <span class="s2">&quot;sub_dir&quot;</span> <span class="o">/</span> <span class="s2">&quot;file3.txt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;another file&quot;</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">test_dir</span> <span class="o">/</span> <span class="s2">&quot;sub_dir&quot;</span> <span class="o">/</span> <span class="s2">&quot;ignore_me.log&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;log content&quot;</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">test_dir</span> <span class="o">/</span> <span class="s2">&quot;temp_file.tmp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;temporary data&quot;</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">test_dir</span> <span class="o">/</span> <span class="s2">&quot;.gitignore&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="s2">&quot;*.tmp</span><span class="se">\n</span><span class="s2">*.log&quot;</span>
+    <span class="p">)</span>  <span class="c1"># This file itself can be ignored or included</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hashing directory: </span><span class="si">{</span><span class="n">test_dir</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Basic hash of all files</span>
+    <span class="n">hash1</span> <span class="o">=</span> <span class="n">dirhash</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Default hash (all files, md5): </span><span class="si">{</span><span class="n">hash1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Hash with specific algorithm</span>
+    <span class="n">hash2</span> <span class="o">=</span> <span class="n">dirhash</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SHA256 hash (all files): </span><span class="si">{</span><span class="n">hash2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Hash ignoring certain files</span>
+    <span class="n">hash3</span> <span class="o">=</span> <span class="n">dirhash</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="n">ignore</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*.log&quot;</span><span class="p">,</span> <span class="s2">&quot;*.tmp&quot;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hash ignoring .log and .tmp files: </span><span class="si">{</span><span class="n">hash3</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Hash matching only .txt files</span>
+    <span class="n">hash4</span> <span class="o">=</span> <span class="n">dirhash</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s2">&quot;**/*.txt&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hash only .txt files: </span><span class="si">{</span><span class="n">hash4</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Hash with multiple match patterns</span>
+    <span class="n">hash5</span> <span class="o">=</span> <span class="n">dirhash</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;**/*.py&quot;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hash .txt and .py files: </span><span class="si">{</span><span class="n">hash5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Hash with multiple ignore patterns</span>
+    <span class="n">hash6</span> <span class="o">=</span> <span class="n">dirhash</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="n">ignore</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*.tmp&quot;</span><span class="p">,</span> <span class="s2">&quot;sub_dir/*&quot;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hash ignoring .tmp and contents of sub_dir: </span><span class="si">{</span><span class="n">hash6</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Demonstrate changes affecting the hash</span>
+    <span class="p">(</span><span class="n">test_dir</span> <span class="o">/</span> <span class="s2">&quot;file1.txt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;updated content of file 1&quot;</span><span class="p">)</span>
+    <span class="n">hash1_updated</span> <span class="o">=</span> <span class="n">dirhash</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Updated default hash (file1 changed): </span><span class="si">{</span><span class="n">hash1_updated</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hashes are different after change: </span><span class="si">{</span><span class="n">hash1</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">hash1_updated</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Clean up test directory</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+
+    <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Cleaned up </span><span class="si">{</span><span class="n">test_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,255 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flexlock.taskdb &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">flexlock.taskdb</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for flexlock.taskdb</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;SQLite-based task database for FlexLock parallel execution.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">_thread_local_conns</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_hash_task</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generates a SHA1 hash for a given task object.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">task</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_conn</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A thread-safe context manager for SQLite database connections.</span>
+
+<span class="sd">    This function maintains a cache of connections per thread. A new connection</span>
+<span class="sd">    is created for each unique database path and reused for subsequent calls</span>
+<span class="sd">    with the same path within that thread.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Use the absolute path as a reliable key for the connections dictionary.</span>
+    <span class="n">db_path_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">db_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+
+    <span class="c1"># Initialize the connections dictionary for the current thread if it doesn&#39;t exist.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">_thread_local_conns</span><span class="p">,</span> <span class="s2">&quot;conns&quot;</span><span class="p">):</span>
+        <span class="n">_thread_local_conns</span><span class="o">.</span><span class="n">conns</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Check if a connection for this specific db_path already exists in the thread&#39;s cache.</span>
+    <span class="k">if</span> <span class="n">db_path_str</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_thread_local_conns</span><span class="o">.</span><span class="n">conns</span><span class="p">:</span>
+        <span class="c1"># If not, create a new connection and add it to the cache.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_path_str</span><span class="p">,</span> <span class="n">check_same_thread</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="c1"># Set PRAGMA for better performance and concurrency.</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA journal_mode=WAL&quot;</span><span class="p">)</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA busy_timeout=15000&quot;</span><span class="p">)</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA foreign_keys=ON&quot;</span><span class="p">)</span> <span class="c1"># Good practice to enforce foreign key constraints</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="w">                </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                CREATE TABLE IF NOT EXISTS tasks (</span>
+<span class="sd">                    task_id TEXT PRIMARY KEY,</span>
+<span class="sd">                    task_info TEXT,</span>
+<span class="sd">                    result_info TEXT,</span>
+<span class="sd">                    status TEXT DEFAULT &#39;pending&#39;,</span>
+<span class="sd">                    node TEXT,</span>
+<span class="sd">                    error TEXT,</span>
+<span class="sd">                    ts_start DATETIME,</span>
+<span class="sd">                    ts_end DATETIME</span>
+<span class="sd">                )</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+            <span class="p">)</span>
+            <span class="n">_thread_local_conns</span><span class="o">.</span><span class="n">conns</span><span class="p">[</span><span class="n">db_path_str</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created new connection for </span><span class="si">{</span><span class="n">db_path_str</span><span class="si">}</span><span class="s2"> in thread </span><span class="si">{</span><span class="n">threading</span><span class="o">.</span><span class="n">get_ident</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error connecting to database </span><span class="si">{</span><span class="n">db_path_str</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+    <span class="c1"># Yield the connection from the thread&#39;s cache.</span>
+    <span class="c1"># A try...finally block is not strictly necessary here because @contextmanager</span>
+    <span class="c1"># handles resource cleanup, but it makes the intent clear.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">_thread_local_conns</span><span class="o">.</span><span class="n">conns</span><span class="p">[</span><span class="n">db_path_str</span><span class="p">]</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="queue_tasks">
+<a class="viewcode-back" href="../../api.html#flexlock.taskdb.queue_tasks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">queue_tasks</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">tasks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds a list of tasks to the database if they don&#39;t already exist.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">_conn</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span>
+            <span class="s2">&quot;INSERT OR IGNORE INTO tasks (task_id, task_info) VALUES (?, ?)&quot;</span><span class="p">,</span>
+            <span class="p">[(</span> <span class="n">_hash_task</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="claim_next_task">
+<a class="viewcode-back" href="../../api.html#flexlock.taskdb.claim_next_task">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">claim_next_task</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Claims the next available pending task from the database and marks it as running.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">_conn</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            UPDATE tasks SET status=&#39;running&#39;, node=?, ts_start=CURRENT_TIMESTAMP</span>
+<span class="sd">            WHERE task_id = (SELECT task_id FROM tasks WHERE status=&#39;pending&#39; LIMIT 1)</span>
+<span class="sd">            RETURNING task_info</span>
+<span class="sd">            &quot;&quot;&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">node</span><span class="p">,)</span>
+        <span class="p">)</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="finish_task">
+<a class="viewcode-back" href="../../api.html#flexlock.taskdb.finish_task">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">finish_task</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marks a task as finished (done or failed) and records its result or error.&quot;&quot;&quot;</span>
+    <span class="n">tid</span> <span class="o">=</span> <span class="n">_hash_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;failed&quot;</span> <span class="k">if</span> <span class="n">error</span> <span class="k">else</span> <span class="s2">&quot;done&quot;</span>
+    <span class="n">result_str</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">with</span> <span class="n">_conn</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;UPDATE tasks SET status=?, error=?, result_info=?, ts_end=CURRENT_TIMESTAMP WHERE task_id=?&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">status</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">result_str</span><span class="p">,</span> <span class="n">tid</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="pending_count">
+<a class="viewcode-back" href="../../api.html#flexlock.taskdb.pending_count">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pending_count</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the number of pending tasks in the database.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">_conn</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(*) FROM tasks WHERE status=&#39;pending&#39;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="dump_to_yaml">
+<a class="viewcode-back" href="../../api.html#flexlock.taskdb.dump_to_yaml">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dump_to_yaml</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">yaml_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dumps all completed (done or failed) tasks and their results to a YAML file.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">_conn</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;using </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">db_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;SELECT result_info, task_info FROM tasks WHERE status IN (&#39;done&#39;,&#39;failed&#39;) ORDER BY ts_end&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">else</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dumping </span><span class="si">{</span><span class="n">rows</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">yaml_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">_atomic_write_yaml</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">yaml_path</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_atomic_write_yaml</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span>
+    <span class="n">fd</span><span class="p">,</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.tmp-&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">default_flow_style</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
