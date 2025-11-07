@@ -1,6 +1,6 @@
 [project]
 name = "flexlock"
-version = "0.1.9"
+version = "0.2.1"
 authors = [ {name="Quentin Febvre", email="quentin.febvre@gmail.com"} ]
 description = "A lightweight and painless SciOps library"
 readme = "README.md"
@@ -9,7 +9,7 @@ license = "MIT"
 
 [tool.pixi.package]
 name = "flexlock"
-version = "0.1.9"
+version = "0.2.1"
 
 [build-system] 
 build-backend = "hatchling.build"
