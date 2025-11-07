@@ -11,6 +11,7 @@ Welcome to FlexLock's documentation!
    :caption: Contents:
 
    README
+   installation
    getting_started
    supported_configurations
    logging

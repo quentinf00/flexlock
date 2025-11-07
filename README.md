@@ -14,8 +14,7 @@ FlexLock is built on the philosophy that **explicit is better than implicit**. I
 ## Installation
 
 ```bash
-# With pixi
-pixi add flexlock
+conda install -c quentinf00 flexlock
 ```
 
 ## Quickstart
