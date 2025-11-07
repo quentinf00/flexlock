@@ -45,12 +45,16 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html#development-workflow-the-debug-decorator">Development Workflow: The Debug Decorator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supported_configurations.html">Supported Configuration Formats</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Configuration in FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel Execution in FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
-<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel Execution in FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experimental.html">Advanced Topics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 </ul>
 
@@ -87,10 +91,18 @@
 <li class="toctree-l2"><a class="reference internal" href="README.html#table-of-contents">Table of Contents</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="flexcli.html#basic-usage">Basic Usage</a></li>
-<li class="toctree-l2"><a class="reference internal" href="flexcli.html#parallelization">Parallelization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="flexcli.html#save-dir-configuration">Save dir configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#step-1-create-a-powerful-cli-with-flexcli">Step 1: Create a Powerful CLI with <code class="docutils literal notranslate"><span class="pre">flexcli</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#step-2-track-your-run-with-snapshot">Step 2: Track Your Run with <code class="docutils literal notranslate"><span class="pre">snapshot</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#step-3-optional-log-to-mlflow-with-mlflowlink">Step 3 (Optional): Log to MLflow with <code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html#development-workflow-the-debug-decorator">Development Workflow: The Debug Decorator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supported_configurations.html">Supported Configuration Formats</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="supported_configurations.html#dictionary">1. Dictionary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="supported_configurations.html#vanilla-python-classes">2. Vanilla Python Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="supported_configurations.html#dataclasses">3. Dataclasses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="supported_configurations.html#attrs-define-classes">5. attrs.define Classes</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Configuration in FlexLock</a><ul>
@@ -102,6 +114,23 @@
 <li class="toctree-l2"><a class="reference internal" href="logging.html#advanced-loguru-configuration">Advanced Loguru Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#logging-in-parallel-execution">Logging in Parallel Execution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="logging.html#key-recommendations">Key Recommendations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel Execution in FlexLock</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#running-tasks-in-parallel-locally">Running Tasks in Parallel Locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#running-tasks-with-cluster-schedulers">Running Tasks with Cluster Schedulers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#pbs-configuration-example">PBS Configuration Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#slurm-configuration-example">SLURM Configuration Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#task-distribution-and-configuration-merging">Task Distribution and Configuration Merging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#tips">Tips:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallel.html#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="flexcli.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flexcli.html#parallelization">Parallelization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="flexcli.html#save-dir-configuration">Save dir configuration</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a><ul>
@@ -123,15 +152,8 @@
 <li class="toctree-l2"><a class="reference internal" href="debugging.html#best-practices">Best Practices</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel Execution in FlexLock</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="parallel.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="parallel.html#running-tasks-in-parallel-locally">Running Tasks in Parallel Locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="parallel.html#running-tasks-with-cluster-schedulers">Running Tasks with Cluster Schedulers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="parallel.html#pbs-configuration-example">PBS Configuration Example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="parallel.html#slurm-configuration-example">SLURM Configuration Example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="parallel.html#task-distribution-and-configuration-merging">Task Distribution and Configuration Merging</a></li>
-<li class="toctree-l2"><a class="reference internal" href="parallel.html#tips">Tips:</a></li>
-<li class="toctree-l2"><a class="reference internal" href="parallel.html#troubleshooting">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experimental.html">Advanced Topics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="experimental.html#resolvers">Resolvers</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>

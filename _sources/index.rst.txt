@@ -11,12 +11,14 @@ Welcome to FlexLock's documentation!
    :caption: Contents:
 
    README
-   flexcli
+   getting_started
+   supported_configurations
    logging
+   parallel
+   flexcli
    snapshot
    mlflowlink
    debugging
-   advanced
-   parallel
+   experimental
    API Reference <api>
 

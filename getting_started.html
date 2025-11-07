@@ -1,0 +1,264 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quickstart &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/getting_started.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=38b66d78"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supported_configurations.html">Supported Configuration Formats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Configuration in FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel Execution in FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="experimental.html">Advanced Topics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quickstart</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/getting_started.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quickstart">
+<h1>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading"></a></h1>
+<p>Let’s start with a simple data processing script.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># process.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">input_path</span> <span class="o">=</span> <span class="s1">&#39;data/preprocess/input.csv&#39;</span>
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="s1">&#39;results/${vinc:process}&#39;</span> <span class="c1"># Used by flexlock: create a new results/process_000x at each run</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;experiment.log&#39;</span><span class="p">)</span> <span class="c1"># Log to file</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running with param: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Core logic</span>
+    <span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;out.txt&#39;</span>
+    <span class="n">output_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">param</span><span class="p">):</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">input_path</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output written to </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1"># Create dummy input if it doesn&#39;t exist</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;data/preprocess/input.csv&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;data/preprocess/input.csv&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;some data&quot;</span><span class="p">)</span>
+    <span class="n">process</span><span class="p">(</span><span class="n">Config</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>This is a standard Python script. Now, let’s introduce FlexLock to add reproducibility and a powerful CLI.</p>
+<section id="step-1-create-a-powerful-cli-with-flexcli">
+<h2>Step 1: Create a Powerful CLI with <code class="docutils literal notranslate"><span class="pre">flexcli</span></code><a class="headerlink" href="#step-1-create-a-powerful-cli-with-flexcli" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">&#64;flexlock.flexcli</span></code> decorator turns your configuration class into a flexible command-line interface.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># process.py</span>
+<span class="o">...</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">config_class</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Main entry point for the process.&quot;&quot;&quot;</span>
+    <span class="n">process</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This simple addition unlocks a powerful CLI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run with default config</span>
+python<span class="w"> </span>process.py
+
+<span class="c1"># Override a parameter</span>
+python<span class="w"> </span>process.py<span class="w"> </span>-o<span class="w"> </span><span class="nv">param</span><span class="o">=</span><span class="m">10</span>
+
+<span class="c1"># Provide a different config file</span>
+python<span class="w"> </span>process.py<span class="w"> </span>--config<span class="w"> </span>conf/my_config.yml
+
+<span class="c1"># Load a specific experiment from a multi-stage config file</span>
+python<span class="w"> </span>process.py<span class="w"> </span>--config<span class="w"> </span>conf/multi_stage.yml<span class="w"> </span>--experiment<span class="w"> </span>process_v2
+
+<span class="c1"># Run multiple experiments in parallel locally</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;1\n2\n3&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>tasks.txt
+python<span class="w"> </span>process.py<span class="w"> </span>--tasks<span class="w"> </span>tasks.txt<span class="w"> </span>--task_to<span class="w"> </span>param<span class="w"> </span>--n_jobs<span class="o">=</span><span class="m">3</span>
+
+<span class="c1"># Run multiple experiments in parallel in pbs or slurm</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;1\n2\n3&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>tasks.txt
+python<span class="w"> </span>process.py<span class="w"> </span>--tasks<span class="w"> </span>tasks.txt<span class="w"> </span>--task_to<span class="w"> </span>param<span class="w"> </span>--pbs_config<span class="w"> </span>configs/pbs.yml
+</pre></div>
+</div>
+</section>
+<section id="step-2-track-your-run-with-snapshot">
+<h2>Step 2: Track Your Run with <code class="docutils literal notranslate"><span class="pre">snapshot</span></code><a class="headerlink" href="#step-2-track-your-run-with-snapshot" title="Link to this heading"></a></h2>
+<p>To ensure reproducibility, we need to track the configuration, code version, and data used in a run. <code class="docutils literal notranslate"><span class="pre">flexlock.snapshot</span></code> creates a <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> file with this information.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># process.py</span>
+<span class="o">...</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="o">=</span><span class="n">Config</span><span class="p">()):</span>
+    <span class="o">...</span>
+    <span class="c1"># Your core logic here...</span>
+    <span class="o">...</span>
+    <span class="n">snapshot</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;.&#39;</span><span class="p">],</span>  <span class="c1"># Track the git version of the current repo</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">cfg</span><span class="o">.</span><span class="n">input_path</span><span class="p">],</span>  <span class="c1"># Hash the input data</span>
+        <span class="c1"># prevs=[Path(cfg.input_path).parent], # You can also track previous stages</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, running <code class="docutils literal notranslate"><span class="pre">process()</span></code> will generate a <code class="docutils literal notranslate"><span class="pre">results/process_000x/run.lock</span></code> file, giving you a complete snapshot of your run.</p>
+</section>
+<section id="step-3-optional-log-to-mlflow-with-mlflowlink">
+<h2>Step 3 (Optional): Log to MLflow with <code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code><a class="headerlink" href="#step-3-optional-log-to-mlflow-with-mlflowlink" title="Link to this heading"></a></h2>
+<p>ML Flow can provide a dashboard to track and compare different runs and experiments</p>
+<p>Logging to MLflow is isolated in a separate context manager. This decouples your core logic from your logging logic, which is useful for adding diagnostics later without re-running the entire experiment.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># log.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflowlink</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">log_run</span><span class="p">(</span><span class="n">save_dir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Logs the results of a run to MLflow.</span>
+<span class="sd">    Can be run independently from the main process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">mlflowlink</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span> <span class="k">as</span> <span class="n">run</span><span class="p">:</span>
+        <span class="c1"># This creates a new MLflow run and links it to your run directory.</span>
+        <span class="c1"># It automatically logs the contents of run.lock.</span>
+        <span class="c1"># It also deprecates older MLflow runs for the same save_dir.</span>
+
+        <span class="c1"># You can add custom logging here:</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;out.txt&#39;</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Logged artifacts for run: </span><span class="si">{</span><span class="n">run</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">run_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1"># Assuming process() has already been run</span>
+    <span class="n">log_run</span><span class="p">(</span><span class="s1">&#39;results/process&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="development-workflow-the-debug-decorator">
+<h1>Development Workflow: The Debug Decorator<a class="headerlink" href="#development-workflow-the-debug-decorator" title="Link to this heading"></a></h1>
+<p>When developing, you often want the script to drop into an interactive debugger on failure. The <code class="docutils literal notranslate"><span class="pre">&#64;debug_on_fail</span></code> decorator provides this behavior.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># process.py</span>
+<span class="o">...</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span><span class="p">,</span> <span class="n">debug_on_fail</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">config_class</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="nd">@debug_on_fail</span><span class="p">(</span><span class="n">stack_depth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">a</span>  <span class="c1"># This will raise an exception</span>
+    <span class="n">process</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now, run the function in a python/jupyter repl environment with the <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG=1</span></code> environment variable. When the exception occurs,  all the local variables (<code class="docutils literal notranslate"><span class="pre">cfg</span></code>, <code class="docutils literal notranslate"><span class="pre">a</span></code>, etc.) will be available for interactive inspection.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">FLEXLOCK_DEBUG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>ipython<span class="w"> </span>-i<span class="w"> </span>process.py
+----&gt;<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">1</span>/0
+
+ZeroDivisionError:<span class="w"> </span>division<span class="w"> </span>by<span class="w"> </span>zero
+
+In<span class="w"> </span><span class="o">[</span><span class="m">1</span><span class="o">]</span>:a
+<span class="m">0</span>
+</pre></div>
+</div>
+<p>This workflow combines the best of both worlds: the exploratory power of a notebook and the robustness of a script.</p>
+<p>NB: You can also decorate functions non top level function for the local context to bubble up</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
