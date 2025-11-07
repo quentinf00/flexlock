@@ -12,10 +12,11 @@ Welcome to FlexLock's documentation!
 
    README
    flexcli
+   logging
    snapshot
    mlflowlink
    debugging
    advanced
-   push_pull_workflow
+   parallel
    API Reference <api>
 

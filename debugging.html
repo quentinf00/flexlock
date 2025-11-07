@@ -20,7 +20,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Advanced Topics" href="advanced.html" />
+    <link rel="next" title="Parallel Execution in FlexLock" href="parallel.html" />
     <link rel="prev" title="mlflowlink: MLflow Integration" href="mlflowlink.html" /> 
 </head>
 
@@ -47,6 +47,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Configuration in FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a><ul>
@@ -55,8 +56,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced Topics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="push_pull_workflow.html">FlexLock Push/Pull Workflow for Ultimate Reproducibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel Execution in FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 </ul>
 
@@ -117,26 +117,22 @@
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Now, run the script from your terminal:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">FLEXLOCK_DEBUG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>your_script.py
+<p>Now, run the script in an interactive session (python console, jupyter notebook or else):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">FLEXLOCK_DEBUG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>-i<span class="w"> </span>your_script.py
 </pre></div>
 </div>
 <p>When the <code class="docutils literal notranslate"><span class="pre">ZeroDivisionError</span></code> occurs, you will be dropped into an IPython post-mortem debugger.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ZeroDivisionError: division by zero
-&gt; /path/to/your_script.py(7)main()
-      5     a = 1
-      6     b = 0
-----&gt; 7     c = a / b
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ne">ZeroDivisionError</span><span class="p">:</span> <span class="n">division</span> <span class="n">by</span> <span class="n">zero</span>
+<span class="o">&gt;</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">your_script</span><span class="o">.</span><span class="n">py</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span><span class="n">main</span><span class="p">()</span>
+      <span class="mi">5</span>     <span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+      <span class="mi">6</span>     <span class="n">b</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="o">----&gt;</span> <span class="mi">7</span>     <span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">/</span> <span class="n">b</span>
 
-Dropping into an interactive shell.
-The current context is available in the `ctx` dictionary.
-For example, access a with `ctx[&#39;a&#39;]`.
-
-ipdb&gt; a
-1
-ipdb&gt; b
-0
-ipdb&gt; # You can now inspect variables, run code, and debug interactively.
+<span class="o">&gt;&gt;</span> <span class="n">a</span>
+<span class="mi">1</span>
+<span class="o">&gt;&gt;</span> <span class="n">b</span>
+<span class="mi">0</span>
+<span class="o">&gt;&gt;</span> <span class="c1"># You can now inspect variables, run code, and debug interactively.</span>
 </pre></div>
 </div>
 </section>
@@ -150,8 +146,8 @@ ipdb&gt; # You can now inspect variables, run code, and debug interactively.
 <span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
     <span class="o">...</span>
 
-<span class="nd">@debug_on_fail</span>
-<span class="nd">@flexcli</span><span class="p">(</span><span class="n">default_config</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">default_config</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span> <span class="c1"># Should be at top level</span>
+<span class="nd">@debug_on_fail</span><span class="p">(</span><span class="n">stack_depth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span> <span class="c1"># Specify how many level up the locals should be injected</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
     <span class="c1"># Your code here</span>
     <span class="o">...</span>
@@ -168,7 +164,7 @@ ipdb&gt; # You can now inspect variables, run code, and debug interactively.
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="mlflowlink.html" class="btn btn-neutral float-left" title="mlflowlink: MLflow Integration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="advanced.html" class="btn btn-neutral float-right" title="Advanced Topics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="parallel.html" class="btn btn-neutral float-right" title="Parallel Execution in FlexLock" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

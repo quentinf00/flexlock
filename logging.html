@@ -1,0 +1,365 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logging Configuration in FlexLock &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/logging.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=38b66d78"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="snapshot: Experiment Tracking" href="snapshot.html" />
+    <link rel="prev" title="flexcli: Command-Line Interface" href="flexcli.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Logging Configuration in FlexLock</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#logging-best-practices">Logging Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-loguru-integration">Basic Loguru Integration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#automatic-log-persistence">Automatic Log Persistence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#automatic-mlflow-logging">Automatic MLflow Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enabling-flexlocks-internal-logging">Enabling FlexLock’s Internal Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cli-logging-options">CLI Logging Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-loguru-configuration">Advanced Loguru Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logging-in-parallel-execution">Logging in Parallel Execution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#key-recommendations">Key Recommendations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel Execution in FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Logging Configuration in FlexLock</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/logging.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="logging-configuration-in-flexlock">
+<h1>Logging Configuration in FlexLock<a class="headerlink" href="#logging-configuration-in-flexlock" title="Link to this heading"></a></h1>
+<p>FlexLock uses <a class="reference external" href="https://loguru.readthedocs.io/">Loguru</a> as its logging backend, providing a simple and powerful logging experience. This guide explains how to configure logging to take full advantage of FlexLock’s features, including log persistence and automatic MLflow logging.</p>
+<section id="logging-best-practices">
+<h2>Logging Best Practices<a class="headerlink" href="#logging-best-practices" title="Link to this heading"></a></h2>
+<section id="basic-loguru-integration">
+<h3>Basic Loguru Integration<a class="headerlink" href="#basic-loguru-integration" title="Link to this heading"></a></h3>
+<p>FlexLock works seamlessly with Loguru’s <code class="docutils literal notranslate"><span class="pre">logger</span></code> object. You can use it directly in your code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">param</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;results/experiment&quot;</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">config_class</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting experiment with param: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing in directory: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Your experiment logic here</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">param</span> <span class="o">*</span> <span class="mi">2</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Experiment completed successfully: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="automatic-log-persistence">
+<h2>Automatic Log Persistence<a class="headerlink" href="#automatic-log-persistence" title="Link to this heading"></a></h2>
+<p>To ensure your logs are persistent and available for later analysis, we recommend adding a file sink to your <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> at the beginning of your function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">param</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;results/experiment&quot;</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">config_class</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="c1"># Add file logging to save_dir for persistence</span>
+    <span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;experiment.log&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">log_file</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="s2">&quot;10 MB&quot;</span><span class="p">,</span> <span class="n">retention</span><span class="o">=</span><span class="s2">&quot;10 days&quot;</span><span class="p">)</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting experiment with param: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Your experiment logic here</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">param</span> <span class="o">*</span> <span class="mi">2</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Experiment completed successfully: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This approach:</p>
+<ul class="simple">
+<li><p>Stores logs in your experiment’s <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> for easy access</p></li>
+<li><p>Enables automatic log rotation to manage disk space</p></li>
+<li><p>Provides long-term retention for historical analysis</p></li>
+<li><p>Integrates with FlexLock’s snapshot system for complete experiment provenance</p></li>
+</ul>
+</section>
+<section id="automatic-mlflow-logging">
+<h2>Automatic MLflow Logging<a class="headerlink" href="#automatic-mlflow-logging" title="Link to this heading"></a></h2>
+<p>When you use a file sink as shown above with the filename <code class="docutils literal notranslate"><span class="pre">experiment.log</span></code>, FlexLock automatically logs this file to MLflow when you use the <code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code> context manager:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span><span class="p">,</span> <span class="n">snapshot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.mlflowlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflowlink</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">param</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;results/experiment&quot;</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">config_class</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="c1"># Add file logging for persistence and MLflow integration</span>
+    <span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;experiment.log&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">log_file</span><span class="p">)</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting experiment with param: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Your experiment logic</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">param</span> <span class="o">*</span> <span class="mi">2</span>
+    
+    <span class="c1"># Create snapshot</span>
+    <span class="n">snapshot</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
+    
+    <span class="c1"># Log to MLflow with automatic artifact logging</span>
+    <span class="k">with</span> <span class="n">mlflowlink</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="k">as</span> <span class="n">run</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Logged to MLflow run: </span><span class="si">{</span><span class="n">run</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">run_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Experiment completed successfully: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>With this setup, the <code class="docutils literal notranslate"><span class="pre">experiment.log</span></code> file will be automatically logged as an artifact to MLflow, making your logs accessible through the MLflow UI.</p>
+</section>
+<section id="enabling-flexlocks-internal-logging">
+<h2>Enabling FlexLock’s Internal Logging<a class="headerlink" href="#enabling-flexlocks-internal-logging" title="Link to this heading"></a></h2>
+<p>To see internal FlexLock logging messages, you can configure the log level for the <code class="docutils literal notranslate"><span class="pre">flexlock</span></code> module:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">param</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;results/experiment&quot;</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">config_class</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="c1"># Enable FlexLock internal logging</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;flexlock&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+    
+    <span class="c1"># Add a handler to capture flexlock logs with loguru</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;flexlock_internal.log&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="s2">&quot;flexlock&quot;</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting experiment with param: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Your experiment logic here</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="s2">&quot;Experiment completed&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="cli-logging-options">
+<h2>CLI Logging Options<a class="headerlink" href="#cli-logging-options" title="Link to this heading"></a></h2>
+<p>FlexLock’s <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code> decorator also provides built-in logging options:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Basic run with console logging and file logging to save_dir/experiment.log</span>
+python<span class="w"> </span>experiment.py
+
+<span class="c1"># Enable debug logging</span>
+python<span class="w"> </span>experiment.py<span class="w"> </span>--verbose
+<span class="c1"># Or set environment variable: FLEXLOCK_DEBUG=1 python experiment.py</span>
+
+<span class="c1"># Control log level via environment variable</span>
+<span class="nv">LOGURU_LEVEL</span><span class="o">=</span>DEBUG<span class="w"> </span>python<span class="w"> </span>experiment.py
+</pre></div>
+</div>
+</section>
+<section id="advanced-loguru-configuration">
+<h2>Advanced Loguru Configuration<a class="headerlink" href="#advanced-loguru-configuration" title="Link to this heading"></a></h2>
+<p>For more sophisticated logging setups, you can use Loguru’s full feature set:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">param</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;results/experiment&quot;</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">config_class</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="c1"># Configure multiple log handlers</span>
+    <span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;experiment.log&quot;</span>
+    
+    <span class="c1"># Add file logging with rotation and filtering</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">log_file</span><span class="p">,</span>
+        <span class="n">rotation</span><span class="o">=</span><span class="s2">&quot;500 MB&quot;</span><span class="p">,</span>      <span class="c1"># Rotate when file reaches 500MB</span>
+        <span class="n">retention</span><span class="o">=</span><span class="s2">&quot;10 days&quot;</span><span class="p">,</span>    <span class="c1"># Keep logs for 10 days</span>
+        <span class="n">level</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span>           <span class="c1"># Log INFO and above</span>
+        <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;{time:YYYY-MM-DD HH:mm:ss} | </span><span class="si">{level}</span><span class="s2"> | </span><span class="si">{function}</span><span class="s2">:</span><span class="si">{line}</span><span class="s2"> | </span><span class="si">{message}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    
+    <span class="c1"># Add console logging with different format</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+        <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;&lt;green&gt;{time:HH:mm:ss}&lt;/green&gt; | &lt;level&gt;</span><span class="si">{level}</span><span class="s2">&lt;/level&gt; | </span><span class="si">{message}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">level</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span>
+    <span class="p">)</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting experiment with param: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Your experiment logic here</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">param</span> <span class="o">*</span> <span class="mi">2</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Experiment completed successfully: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="logging-in-parallel-execution">
+<h2>Logging in Parallel Execution<a class="headerlink" href="#logging-in-parallel-execution" title="Link to this heading"></a></h2>
+<p>When running experiments in parallel, each worker will write to the same log file. To distinguish between different workers, you can include process information in your log format:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">param</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;results/experiment&quot;</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">config_class</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="n">log_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;experiment.log&quot;</span>
+    
+    <span class="c1"># Include process ID in logs for parallel execution</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">log_file</span><span class="p">,</span>
+        <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;{time:YYYY-MM-DD HH:mm:ss} | PID:</span><span class="si">{process}</span><span class="s2"> | </span><span class="si">{level}</span><span class="s2"> | </span><span class="si">{function}</span><span class="s2">:</span><span class="si">{line}</span><span class="s2"> | </span><span class="si">{message}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">enqueue</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Thread-safe logging for parallel execution</span>
+    <span class="p">)</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Process </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span><span class="si">}</span><span class="s2"> starting experiment with param: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Your experiment logic here</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Process </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span><span class="si">}</span><span class="s2"> completed successfully&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="key-recommendations">
+<h2>Key Recommendations<a class="headerlink" href="#key-recommendations" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Always add a file sink</strong>: Use <code class="docutils literal notranslate"><span class="pre">logger.add(cfg.save_dir</span> <span class="pre">/</span> <span class="pre">&quot;experiment.log&quot;)</span></code> to ensure log persistence</p></li>
+<li><p><strong>Use loguru</strong>: It’s the logging framework FlexLock is built around</p></li>
+<li><p><strong>Enable flexlock logging</strong>: Use <code class="docutils literal notranslate"><span class="pre">logging.getLogger('flexlock').setLevel()</span></code> to see internal messages</p></li>
+<li><p><strong>Enable parallel-safe logging</strong>: Use <code class="docutils literal notranslate"><span class="pre">enqueue=True</span></code> when running in parallel</p></li>
+<li><p><strong>Include context</strong>: Use structured logging with relevant configuration values</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="flexcli.html" class="btn btn-neutral float-left" title="flexcli: Command-Line Interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="snapshot.html" class="btn btn-neutral float-right" title="snapshot: Experiment Tracking" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

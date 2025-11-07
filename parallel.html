@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parallel Execution in FlexLock &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/parallel.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=38b66d78"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="FlexLock API Reference" href="api.html" />
+    <link rel="prev" title="debug_on_fail: Interactive Debugging" href="debugging.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Configuration in FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Parallel Execution in FlexLock</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-tasks-in-parallel-locally">Running Tasks in Parallel Locally</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-local-parallel-execution">Basic Local Parallel Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-the-cli-for-local-parallel-execution">Using the CLI for Local Parallel Execution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#how-local-parallel-execution-works">How Local Parallel Execution Works</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#local-execution-parameters">Local Execution Parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#running-tasks-with-cluster-schedulers">Running Tasks with Cluster Schedulers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#slurm-backend">SLURM Backend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pbs-backend">PBS Backend</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pbs-configuration-example">PBS Configuration Example</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pbs-configuration-options">PBS Configuration Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-pbs-backend-works">How PBS Backend Works</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#slurm-configuration-example">SLURM Configuration Example</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-slurm-backend-works">How SLURM Backend Works</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#task-distribution-and-configuration-merging">Task Distribution and Configuration Merging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tips">Tips:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Parallel Execution in FlexLock</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/parallel.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="parallel-execution-in-flexlock">
+<h1>Parallel Execution in FlexLock<a class="headerlink" href="#parallel-execution-in-flexlock" title="Link to this heading"></a></h1>
+<p>FlexLock provides robust support for parallel execution of tasks, enabling you to scale your experiments efficiently. The parallel execution system is built around a centralized task queue mechanism and supports multiple execution backends.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The parallel execution system works by:</p>
+<ol class="arabic simple">
+<li><p>Converting your tasks into a centralized task queue stored in a SQLite database</p></li>
+<li><p>Distributing tasks dynamically to worker processes across different backends</p></li>
+<li><p>Supporting both local execution and cluster schedulers (SLURM, PBS)</p></li>
+<li><p>Providing fault tolerance through task persistence</p></li>
+</ol>
+</section>
+<section id="running-tasks-in-parallel-locally">
+<h2>Running Tasks in Parallel Locally<a class="headerlink" href="#running-tasks-in-parallel-locally" title="Link to this heading"></a></h2>
+<p>When running tasks in parallel locally, FlexLock uses a pull-based model where multiple worker processes pull tasks from a shared SQLite database:</p>
+<section id="basic-local-parallel-execution">
+<h3>Basic Local Parallel Execution<a class="headerlink" href="#basic-local-parallel-execution" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">param</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;results/experiment&quot;</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">config_class</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="c1"># Your function that will be executed in parallel</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_task</span><span class="p">(</span><span class="n">task_param</span><span class="p">):</span>
+        <span class="c1"># Do work with task_param</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">task_param</span> <span class="o">*</span> <span class="mi">2</span>  <span class="c1"># Example processing</span>
+        <span class="k">return</span> <span class="n">result</span>
+    
+    <span class="c1"># Define your tasks</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>  <span class="c1"># List of parameters to process</span>
+    
+    <span class="c1"># Execute tasks in parallel locally</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelExecutor</span>
+    
+    <span class="n">executor</span> <span class="o">=</span> <span class="n">ParallelExecutor</span><span class="p">(</span>
+        <span class="n">func</span><span class="o">=</span><span class="n">process_task</span><span class="p">,</span>
+        <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
+        <span class="n">task_to</span><span class="o">=</span><span class="s2">&quot;param&quot;</span><span class="p">,</span>  <span class="c1"># Which config field to update with each task</span>
+        <span class="n">cfg</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+        <span class="n">n_jobs</span><span class="o">=</span><span class="mi">4</span>  <span class="c1"># Number of parallel processes</span>
+    <span class="p">)</span>
+    <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="using-the-cli-for-local-parallel-execution">
+<h3>Using the CLI for Local Parallel Execution<a class="headerlink" href="#using-the-cli-for-local-parallel-execution" title="Link to this heading"></a></h3>
+<p>You can also use the CLI to run multiple tasks in parallel:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define tasks in a text file</span>
+<span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;1\n2\n3\n4\n5&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>tasks.txt
+
+<span class="c1"># Run with 4 parallel processes</span>
+python<span class="w"> </span>script.py<span class="w"> </span>--tasks<span class="w"> </span>tasks.txt<span class="w"> </span>--task_to<span class="w"> </span>param<span class="w"> </span>--n_jobs<span class="o">=</span><span class="m">4</span>
+</pre></div>
+</div>
+<section id="how-local-parallel-execution-works">
+<h4>How Local Parallel Execution Works<a class="headerlink" href="#how-local-parallel-execution-works" title="Link to this heading"></a></h4>
+<ol class="arabic simple">
+<li><p><strong>Task Queuing</strong>: All tasks are first queued in a SQLite database (<code class="docutils literal notranslate"><span class="pre">run.lock.tasks.db</span></code>)</p></li>
+<li><p><strong>Worker Spawning</strong>: Multiple worker processes are spawned based on the <code class="docutils literal notranslate"><span class="pre">n_jobs</span></code> parameter</p></li>
+<li><p><strong>Dynamic Task Distribution</strong>: Workers continuously pull tasks from the database queue</p></li>
+<li><p><strong>Result Aggregation</strong>: Completed tasks are tracked in the database</p></li>
+<li><p><strong>Fault Tolerance</strong>: If a worker fails, its tasks remain in the queue for other workers</p></li>
+</ol>
+</section>
+</section>
+<section id="local-execution-parameters">
+<h3>Local Execution Parameters<a class="headerlink" href="#local-execution-parameters" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">n_jobs</span></code>: Number of local worker processes to spawn</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">local_workers</span></code>: Alternative way to specify the number of local workers</p></li>
+<li><p>Task distribution uses a pull model, so workers will continue working until the queue is empty</p></li>
+</ul>
+</section>
+</section>
+<section id="running-tasks-with-cluster-schedulers">
+<h2>Running Tasks with Cluster Schedulers<a class="headerlink" href="#running-tasks-with-cluster-schedulers" title="Link to this heading"></a></h2>
+<p>FlexLock supports execution on cluster schedulers like SLURM and PBS through dedicated backends.</p>
+<section id="slurm-backend">
+<h3>SLURM Backend<a class="headerlink" href="#slurm-backend" title="Link to this heading"></a></h3>
+<p>To use the SLURM backend, specify a SLURM configuration file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>script.py<span class="w"> </span>--tasks<span class="w"> </span>tasks.txt<span class="w"> </span>--task_to<span class="w"> </span>param<span class="w"> </span>--slurm_config<span class="w"> </span>slurm_config.yaml
+</pre></div>
+</div>
+</section>
+<section id="pbs-backend">
+<h3>PBS Backend<a class="headerlink" href="#pbs-backend" title="Link to this heading"></a></h3>
+<p>To use the PBS backend, specify a PBS configuration file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>script.py<span class="w"> </span>--tasks<span class="w"> </span>tasks.txt<span class="w"> </span>--task_to<span class="w"> </span>param<span class="w"> </span>--pbs_config<span class="w"> </span>pbs_config.yaml
+</pre></div>
+</div>
+</section>
+</section>
+<section id="pbs-configuration-example">
+<h2>PBS Configuration Example<a class="headerlink" href="#pbs-configuration-example" title="Link to this heading"></a></h2>
+<p>Here’s a comprehensive example of a PBS configuration file:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># pbs_config.yaml</span>
+<span class="c1"># PBS resource allocation parameters</span>
+<span class="nt">num_cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span><span class="w">                    </span><span class="c1"># Number of CPUs per node</span>
+<span class="nt">time</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;02:00:00&quot;</span><span class="w">              </span><span class="c1"># Walltime limit (HH:MM:SS)</span>
+<span class="nt">queue</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sequentiel&quot;</span><span class="w">                </span><span class="c1"># Queue name to submit to</span>
+
+<span class="c1"># Optional parameters</span>
+<span class="nt">array_parallelism</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span><span class="w">         </span><span class="c1"># Number of concurrent array jobs</span>
+<span class="nt">extra_directives</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">mem=8gb&quot;</span><span class="w">         </span><span class="c1"># Additional memory requirement</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-m</span><span class="nv"> </span><span class="s">abe&quot;</span><span class="w">             </span><span class="c1"># Email notifications on abort, begin, end</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;eval</span><span class="nv"> </span><span class="s">&quot;$(pixi</span><span class="nv"> </span><span class="s">shell-hook)&quot;&#39;</span><span class="w"> </span><span class="c1"># Activate environment</span>
+</pre></div>
+</div>
+<section id="pbs-configuration-options">
+<h3>PBS Configuration Options<a class="headerlink" href="#pbs-configuration-options" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">num_cpus</span></code>: Number of CPUs to allocate per job</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">time</span></code>: Walltime limit for the job in HH:MM:SS format</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">queue</span></code>: Name of the PBS queue to submit to</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">array_parallelism</span></code>: For array jobs, specifies number of concurrent tasks</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extra_directives</span></code>: List of additional PBS directives to include</p></li>
+<li><p>Additional custom parameters are passed through to the PBS script</p></li>
+</ul>
+</section>
+<section id="how-pbs-backend-works">
+<h3>How PBS Backend Works<a class="headerlink" href="#how-pbs-backend-works" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Task Serialization</strong>: Each task is serialized using cloudpickle</p></li>
+<li><p><strong>PBS Script Generation</strong>: FlexLock generates a PBS submission script with appropriate directives</p></li>
+<li><p><strong>Job Submission</strong>: The script is submitted to PBS using <code class="docutils literal notranslate"><span class="pre">qsub</span></code></p></li>
+<li><p><strong>Array Job Support</strong>: For multiple tasks, FlexLock can submit a single PBS array job</p></li>
+<li><p><strong>Task Distribution</strong>: Each array job reads the task parameters using <code class="docutils literal notranslate"><span class="pre">PBS_ARRAY_INDEX</span></code></p></li>
+</ol>
+</section>
+</section>
+<section id="slurm-configuration-example">
+<h2>SLURM Configuration Example<a class="headerlink" href="#slurm-configuration-example" title="Link to this heading"></a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># slurm_config.yaml</span>
+<span class="nt">cpus_per_task</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span><span class="w">              </span><span class="c1"># Number of CPUs per task</span>
+<span class="nt">time</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;02:00:00&quot;</span><span class="w">             </span><span class="c1"># Walltime limit (HH:MM:SS)</span>
+<span class="nt">partition</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;batch&quot;</span><span class="w">           </span><span class="c1"># SLURM partition to use</span>
+
+<span class="c1"># Optional parameters</span>
+<span class="nt">array_parallelism</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span><span class="w">        </span><span class="c1"># Number of concurrent array jobs</span>
+<span class="nt">array_limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w">               </span><span class="c1"># Maximum number of concurrent array jobs running</span>
+<span class="nt">extra_directives</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--mail-type=ALL&quot;</span><span class="c1"># Email notifications</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--mail-user=user@domain.com&quot;</span><span class="w"> </span><span class="c1"># Email address</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;eval</span><span class="nv"> </span><span class="s">&quot;$(pixi</span><span class="nv"> </span><span class="s">shell-hook)&quot;&#39;</span><span class="w"> </span><span class="c1"># Activate environment</span>
+</pre></div>
+</div>
+<section id="how-slurm-backend-works">
+<h3>How SLURM Backend Works<a class="headerlink" href="#how-slurm-backend-works" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Task Serialization</strong>: Each task is serialized using cloudpickle</p></li>
+<li><p><strong>SLURM Script Generation</strong>: FlexLock generates a SLURM submission script with SBATCH directives</p></li>
+<li><p><strong>Job Submission</strong>: Script is submitted to SLURM using <code class="docutils literal notranslate"><span class="pre">sbatch</span></code></p></li>
+<li><p><strong>Module Loading</strong>: Automatically loads Python module if available</p></li>
+<li><p><strong>Array Job Support</strong>: Uses <code class="docutils literal notranslate"><span class="pre">SLURM_ARRAY_TASK_ID</span></code> to determine which task to execute</p></li>
+</ol>
+</section>
+</section>
+<section id="task-distribution-and-configuration-merging">
+<h2>Task Distribution and Configuration Merging<a class="headerlink" href="#task-distribution-and-configuration-merging" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">task_to</span></code> parameter specifies how each task parameter should be merged into the configuration:</p>
+<p>If task_to=“param” and tasks=[1, 2, 3]
+Then for the first task, cfg.param will be set to 1
+For the second task, cfg.param will be set to 2, etc.</p>
+<p>This allows for dynamic configuration updates for each task while maintaining the base configuration.</p>
+</section>
+<section id="tips">
+<h2>Tips:<a class="headerlink" href="#tips" title="Link to this heading"></a></h2>
+<p>The state of the queue can be inspected using sqlite with commands like:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sqlite3<span class="w"> </span>&lt;path/to/save_dir&gt;/run.lock.tasks.db<span class="w"> </span><span class="s1">&#39;SELECT status, count(*) as count, MIN(ts_start) as first_start, MAX(ts_end) as last_end  FROM tasks group by status;&#39;</span><span class="w"> </span>-header<span class="w"> </span>-line
+</pre></div>
+</div>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<p>The PBS script is stored in <code class="docutils literal notranslate"><span class="pre">save_dir/pbs_logs</span></code>
+If you encounter issue you can try submitting it directly with qsub or even running the small dynamically generated python scirpt in it manually.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="debugging.html" class="btn btn-neutral float-left" title="debug_on_fail: Interactive Debugging" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="FlexLock API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

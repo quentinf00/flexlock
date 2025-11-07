@@ -1,0 +1,162 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced Topics &mdash; FlexLock 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/experimental.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=38b66d78"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Configuration in FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel Execution in FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Advanced Topics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/experimental.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="advanced-topics">
+<h1>Advanced Topics<a class="headerlink" href="#advanced-topics" title="Link to this heading"></a></h1>
+<p>This section covers advanced features of FlexLock that provide more power and flexibility for complex workflows.</p>
+<section id="resolvers">
+<h2>Resolvers<a class="headerlink" href="#resolvers" title="Link to this heading"></a></h2>
+<p>Resolvers allow you to dynamically fetch information and embed it directly into your configuration. This is particularly useful for making your <code class="docutils literal notranslate"><span class="pre">snapshot</span></code> definitions more declarative.</p>
+<p>Instead of creating the <code class="docutils literal notranslate"><span class="pre">snapshot</span></code> imperatively in your Python script, you can specify the data and previous stage dependencies directly in your YAML configuration.</p>
+<section id="example">
+<h3>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h3>
+<p>Consider a training stage that depends on a preprocessing stage.</p>
+<p><strong>Configuration (<code class="docutils literal notranslate"><span class="pre">config.yml</span></code>):</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># config.yml</span>
+<span class="nt">training_data</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;${snapshot:data/preprocessed/features.csv,</span><span class="nv"> </span><span class="s">training_data}&#39;</span>
+</pre></div>
+</div>
+<p><strong>Python Script:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># train.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span><span class="p">,</span> <span class="n">snapshot</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">training_data</span><span class="p">:</span> <span class="nb">str</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">default_config</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+    <span class="c1"># ... your training logic ...</span>
+
+    <span class="c1"># The snapshot is now created from the resolved config</span>
+    <span class="n">snapshot</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span> <span class="o">**</span><span class="n">cfg</span><span class="o">.</span><span class="n">snapshot</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When you run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">train.py</span> <span class="pre">--config</span> <span class="pre">config.yml</span></code>, FlexLock’s <code class="docutils literal notranslate"><span class="pre">snapshot</span></code> resolvers will automatically:</p>
+<ol class="arabic simple">
+<li><p>add an entry in the snapshot data section (computing the hash of the path)</p></li>
+<li><p>try adding an entry in the snapshot prev section and do so if a run.lock if found</p></li>
+</ol>
+<p>The resolvers works like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">snapshot_resolver</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">_root_</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="n">path</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">path</span><span class="p">}</span>
+    <span class="n">snapshot</span><span class="p">(</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">_root_</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">item</span><span class="p">,</span>
+        <span class="n">prevs</span><span class="o">=</span><span class="p">[</span><span class="n">path</span><span class="p">],</span>
+        <span class="n">merge</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">mlflowlink</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">resolve</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span>
+</pre></div>
+</div>
+<p>This approach keeps your configuration self-contained and your Python script cleaner and more focused on logic.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -11,9 +11,15 @@ FlexLock is a lightweight Python library designed to bring clarity, reproducibil
   - [`snapshot`: Experiment Tracking](./snapshot.md)
   - [`mlflowlink`: MLflow Integration](./mlflowlink.md)
 
+- **Reference Manual**
+  - [`configuration`: Supported configurations definition](./supported_configurations.md)
+    
+
 - **Development Workflow**
   - [`debug_on_fail`: Interactive Debugging](./debugging.md)
 
 - **Advanced Topics**
   - [Resolvers](./advanced.md#resolvers)
+
+- **Next steps**
   - [Pushing and Pulling Runs](./advanced.md#persisting-runs)

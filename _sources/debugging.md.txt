@@ -35,10 +35,10 @@ if __name__ == '__main__':
     main()
 ```
 
-Now, run the script from your terminal:
+Now, run the script in an interactive session (python console, jupyter notebook or else):
 
 ```bash
-FLEXLOCK_DEBUG=1 python your_script.py
+FLEXLOCK_DEBUG=1 python -i your_script.py
 ```
 
 When the `ZeroDivisionError` occurs, you will be dropped into an IPython post-mortem debugger.
@@ -50,15 +50,11 @@ ZeroDivisionError: division by zero
       6     b = 0
 ----> 7     c = a / b
 
-Dropping into an interactive shell.
-The current context is available in the `ctx` dictionary.
-For example, access a with `ctx['a']`.
-
-ipdb> a
+>> a
 1
-ipdb> b
+>> b
 0
-ipdb> # You can now inspect variables, run code, and debug interactively.
+>> # You can now inspect variables, run code, and debug interactively.
 ```
 
 ## Best Practices
@@ -72,8 +68,8 @@ ipdb> # You can now inspect variables, run code, and debug interactively.
   class Config:
       ...
 
-  @debug_on_fail
-  @flexcli(default_config=Config)
+  @flexcli(default_config=Config) # Should be at top level
+  @debug_on_fail(stack_depth=3) # Specify how many level up the locals should be injected
   def main(cfg: Config):
       # Your code here
       ...

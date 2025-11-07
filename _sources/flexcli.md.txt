@@ -4,7 +4,9 @@ The `@flexcli` decorator is a powerful tool that bridges the gap between your Py
 
 ## Basic Usage
 
-To use `@flexcli`, you need a configuration class and a main function decorated with it.
+To use `@flexcli`, you need a configuration class with a **required `save_dir` field** and a main function decorated with it.
+
+> **Important**: Your configuration class must include a `save_dir` field, as it's required by FlexLock for organizing logs, snapshots, and results.
 
 ```python
 # process.py
@@ -13,10 +15,10 @@ from flexlock import flexcli
 class Config:
     param = 1
     input_path = 'data/input.csv'
-    save_dir = 'results/process'
+    save_dir = 'results/${vinc:process}'  # Required field (see dave_dir configuration below for more info about the ${vinc:}
 
 @flexcli(default_config=Config)
-def main(cfg: Config):
+def main(cfg: Config): # type hint useful for tab completion
     print(f"Parameter: {cfg.param}")
     print(f"Input path: {cfg.input_path}")
     print(f"Save directory: {cfg.save_dir}")
@@ -74,18 +76,17 @@ You can store multiple configurations in a single YAML file.
 
 ```yaml
 # conf/experiments.yml
-defaults:
-  - base_config
-
 base_config:
   input_path: data/input.csv
 
 experiment_a:
   param: 5
+  input_path: ${base_config.input_path} # Supports omegaconf interpolation
   save_dir: results/exp_a
 
 experiment_b:
   param: 10
+  input_path: ${base_config.input_path}
   save_dir: results/exp_b
 ```
 
@@ -141,10 +142,57 @@ python process.py --tasks tasks.txt --task_to param --pbs_config=pbs.yaml
 
 The `pbs.yaml` file contains the configuration for the PBS job (e.g., queue, nodes, walltime).
 
-## Debugging and Logging
 
-`@flexcli` also provides arguments for debugging and controlling log verbosity.
+## Save dir configuration
 
-- `--debug`: Enable debug mode with local variable injection on exceptions. This overrides the `FLEXLOCK_DEBUG` environment variable.
-- `--verbose`: Set the log level to DEBUG, providing more detailed output.
+The `save_dir` field is essential to FlexLock's functionality and serves as the primary location for organizing experiment artifacts. When a `save_dir` is specified, FlexLock automatically creates several important files and directories:
+
+### Files and Directories Created in save_dir
+
+1. **`config.yaml`**: A saved copy of the resolved configuration that was used for the run. This provides full provenance of the parameters used.
+
+2. **`run.lock`**: The run lock file created by the `snapshot` function, containing:
+   - Complete configuration state
+   - Git commit hashes for reproducibility
+   - Data hashes to track input dependencies
+   - Information about previous experiment stages
+   - Caller information (module, function, file path)
+
+3. **`run.lock.tasks.db`**: A SQLite database used for task management during parallel execution. This enables:
+   - Dynamic task distribution across multiple workers
+   - Fault tolerance (failed tasks can be resumed)
+   - Task status tracking (pending, completed, failed)
+
+4. **Backend-specific log directories**:
+   - `slurm_logs/` when using SLURM backend
+   - `pbs_logs/` when using PBS backend
+   These contain the submission scripts and output logs from the cluster scheduler.
+
+### Using Resolvers for Dynamic save_dir Generation
+
+FlexLock provides special resolvers that can be used within configuration files to generate dynamic values. Two particularly useful resolvers for `save_dir` and other path fields are `vinc` (version increment) and `now`.
+
+#### `now` Resolver
+
+The `now` resolver returns the current timestamp as a formatted string. This is useful for creating time-stamped directories.
+
+```yaml
+# config.yml
+param: 5
+save_dir: results/run_${now:%Y-%m-%d_%H-%M-%S}  # Creates timestamped directory
+```
+
+When loaded, this configuration will create a save directory like `results/run_2025-11-07_10-30-45`.
+
+#### `vinc` Resolver
+
+The `vinc` resolver finds the highest existing version of a folder/file and returns the next versioned path. This is useful for creating sequentially numbered experiment directories.
+
+```yaml
+# config.yml
+param: 5
+save_dir: results/exp_${vinc:}  # Creates exp_0001, exp_0002, etc.
+```
+
+If you already have `results/exp_0001` and `results/exp_0002`, this will create `results/exp_0003`.
 

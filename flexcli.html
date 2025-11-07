@@ -20,7 +20,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="snapshot: Experiment Tracking" href="snapshot.html" />
+    <link rel="next" title="Logging Configuration in FlexLock" href="logging.html" />
     <link rel="prev" title="FlexLock Documentation" href="README.html" /> 
 </head>
 
@@ -60,14 +60,22 @@
 <li class="toctree-l3"><a class="reference internal" href="#pbs-parallelization">3. PBS Parallelization</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#debugging-and-logging">Debugging and Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#save-dir-configuration">Save dir configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#files-and-directories-created-in-save-dir">Files and Directories Created in save_dir</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-resolvers-for-dynamic-save-dir-generation">Using Resolvers for Dynamic save_dir Generation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#now-resolver"><code class="docutils literal notranslate"><span class="pre">now</span></code> Resolver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vinc-resolver"><code class="docutils literal notranslate"><span class="pre">vinc</span></code> Resolver</a></li>
 </ul>
 </li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Configuration in FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
-<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced Topics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="push_pull_workflow.html">FlexLock Push/Pull Workflow for Ultimate Reproducibility</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel Execution in FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 </ul>
 
@@ -100,17 +108,20 @@
 <p>The <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code> decorator is a powerful tool that bridges the gap between your Python configuration classes and a command-line interface. It allows you to define your parameters in a structured class and then override them from the command line, from configuration files, or when calling the function programmatically.</p>
 <section id="basic-usage">
 <h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
-<p>To use <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>, you need a configuration class and a main function decorated with it.</p>
+<p>To use <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>, you need a configuration class with a <strong>required <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> field</strong> and a main function decorated with it.</p>
+<blockquote>
+<div><p><strong>Important</strong>: Your configuration class must include a <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> field, as it’s required by FlexLock for organizing logs, snapshots, and results.</p>
+</div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># process.py</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
     <span class="n">param</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">input_path</span> <span class="o">=</span> <span class="s1">&#39;data/input.csv&#39;</span>
-    <span class="n">save_dir</span> <span class="o">=</span> <span class="s1">&#39;results/process&#39;</span>
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="s1">&#39;results/${vinc:process}&#39;</span>  <span class="c1"># Required field (see dave_dir configuration below for more info about the ${vinc:}</span>
 
 <span class="nd">@flexcli</span><span class="p">(</span><span class="n">default_config</span><span class="o">=</span><span class="n">Config</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span> <span class="c1"># type hint useful for tab completion</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Input path: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">input_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Save directory: </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -160,18 +171,17 @@
 <h3>4. Using Multi-Stage Configuration Files<a class="headerlink" href="#using-multi-stage-configuration-files" title="Link to this heading"></a></h3>
 <p>You can store multiple configurations in a single YAML file.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># conf/experiments.yml</span>
-<span class="nt">defaults</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">base_config</span>
-
 <span class="nt">base_config</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">input_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">data/input.csv</span>
 
 <span class="nt">experiment_a</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">  </span><span class="nt">input_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${base_config.input_path}</span><span class="w"> </span><span class="c1"># Supports omegaconf interpolation</span>
 <span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">results/exp_a</span>
 
 <span class="nt">experiment_b</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">  </span><span class="nt">input_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${base_config.input_path}</span>
 <span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">results/exp_b</span>
 </pre></div>
 </div>
@@ -220,13 +230,62 @@
 <p>The <code class="docutils literal notranslate"><span class="pre">pbs.yaml</span></code> file contains the configuration for the PBS job (e.g., queue, nodes, walltime).</p>
 </section>
 </section>
-<section id="debugging-and-logging">
-<h2>Debugging and Logging<a class="headerlink" href="#debugging-and-logging" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code> also provides arguments for debugging and controlling log verbosity.</p>
+<section id="save-dir-configuration">
+<h2>Save dir configuration<a class="headerlink" href="#save-dir-configuration" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> field is essential to FlexLock’s functionality and serves as the primary location for organizing experiment artifacts. When a <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> is specified, FlexLock automatically creates several important files and directories:</p>
+<section id="files-and-directories-created-in-save-dir">
+<h3>Files and Directories Created in save_dir<a class="headerlink" href="#files-and-directories-created-in-save-dir" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">config.yaml</span></code></strong>: A saved copy of the resolved configuration that was used for the run. This provides full provenance of the parameters used.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">run.lock</span></code></strong>: The run lock file created by the <code class="docutils literal notranslate"><span class="pre">snapshot</span></code> function, containing:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--debug</span></code>: Enable debug mode with local variable injection on exceptions. This overrides the <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG</span></code> environment variable.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--verbose</span></code>: Set the log level to DEBUG, providing more detailed output.</p></li>
+<li><p>Complete configuration state</p></li>
+<li><p>Git commit hashes for reproducibility</p></li>
+<li><p>Data hashes to track input dependencies</p></li>
+<li><p>Information about previous experiment stages</p></li>
+<li><p>Caller information (module, function, file path)</p></li>
 </ul>
+</li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">run.lock.tasks.db</span></code></strong>: A SQLite database used for task management during parallel execution. This enables:</p>
+<ul class="simple">
+<li><p>Dynamic task distribution across multiple workers</p></li>
+<li><p>Fault tolerance (failed tasks can be resumed)</p></li>
+<li><p>Task status tracking (pending, completed, failed)</p></li>
+</ul>
+</li>
+<li><p><strong>Backend-specific log directories</strong>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">slurm_logs/</span></code> when using SLURM backend</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pbs_logs/</span></code> when using PBS backend
+These contain the submission scripts and output logs from the cluster scheduler.</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="using-resolvers-for-dynamic-save-dir-generation">
+<h3>Using Resolvers for Dynamic save_dir Generation<a class="headerlink" href="#using-resolvers-for-dynamic-save-dir-generation" title="Link to this heading"></a></h3>
+<p>FlexLock provides special resolvers that can be used within configuration files to generate dynamic values. Two particularly useful resolvers for <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> and other path fields are <code class="docutils literal notranslate"><span class="pre">vinc</span></code> (version increment) and <code class="docutils literal notranslate"><span class="pre">now</span></code>.</p>
+<section id="now-resolver">
+<h4><code class="docutils literal notranslate"><span class="pre">now</span></code> Resolver<a class="headerlink" href="#now-resolver" title="Link to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">now</span></code> resolver returns the current timestamp as a formatted string. This is useful for creating time-stamped directories.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># config.yml</span>
+<span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">results/run_${now:%Y-%m-%d_%H-%M-%S}</span><span class="w">  </span><span class="c1"># Creates timestamped directory</span>
+</pre></div>
+</div>
+<p>When loaded, this configuration will create a save directory like <code class="docutils literal notranslate"><span class="pre">results/run_2025-11-07_10-30-45</span></code>.</p>
+</section>
+<section id="vinc-resolver">
+<h4><code class="docutils literal notranslate"><span class="pre">vinc</span></code> Resolver<a class="headerlink" href="#vinc-resolver" title="Link to this heading"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">vinc</span></code> resolver finds the highest existing version of a folder/file and returns the next versioned path. This is useful for creating sequentially numbered experiment directories.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># config.yml</span>
+<span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">results/exp_${vinc:}</span><span class="w">  </span><span class="c1"># Creates exp_0001, exp_0002, etc.</span>
+</pre></div>
+</div>
+<p>If you already have <code class="docutils literal notranslate"><span class="pre">results/exp_0001</span></code> and <code class="docutils literal notranslate"><span class="pre">results/exp_0002</span></code>, this will create <code class="docutils literal notranslate"><span class="pre">results/exp_0003</span></code>.</p>
+</section>
+</section>
 </section>
 </section>
 
@@ -235,7 +294,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="README.html" class="btn btn-neutral float-left" title="FlexLock Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="snapshot.html" class="btn btn-neutral float-right" title="snapshot: Experiment Tracking" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="logging.html" class="btn btn-neutral float-right" title="Logging Configuration in FlexLock" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
