@@ -28,6 +28,8 @@ class PBSBackend(Backend):
             f"#PBS -l ncpus={self.kwargs.get('num_cpus',1)}",
             f"#PBS -l walltime={self.kwargs.get('time','01:00:00')}",
             f"#PBS -q {self.kwargs.get('queue','batch')}",
+            f"#PBS -o {self.folder.absolute() / 'pbs.out'}",
+            f"#PBS -e {self.folder.absolute() / 'pbs.err'}",
             f"#PBS -V",
         ]
         # Add extra directives if provided
