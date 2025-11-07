@@ -1,10 +1,11 @@
+"""Utility functions for FlexLock."""
+
 from omegaconf import OmegaConf, DictConfig
 from dataclasses import is_dataclass
 
 from typing import Any
 import warnings
-from dataclasses import is_dataclass, fields, MISSING
-from omegaconf import OmegaConf, DictConfig
+from dataclasses import fields, MISSING
 
 
 def to_dictconfig(incfg):

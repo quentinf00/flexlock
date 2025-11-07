@@ -46,6 +46,13 @@ cloudpickle = ">=3.0.0,<4"
 [tool.pixi.tasks]
 test = { cmd = "pytest" }
 
+[tool.pixi.feature.docs.dependencies]
+sphinx = "*"
+myst-parser = "*"
+
+[tool.pixi.feature.docs.pypi-dependencies]
+sphinx_rtd_theme = "*"
+
 [tool.pixi.feature.build.dependencies]
 flexlock = {path = "."}
 
@@ -77,4 +84,5 @@ cloudpickle = ">=3.0.0,<4"
 
 [tool.pixi.environments]
 build = { features = ["build"] }
-default = { features = ["test"] }
+default = { features = ["test", "mlflow"] }
+docs = { features = ["test", "docs"] }

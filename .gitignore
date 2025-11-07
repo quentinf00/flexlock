@@ -10,3 +10,6 @@ trash
 mlruns
 .env
 dist
+doc/_build
+docs/_build
+docs/_build

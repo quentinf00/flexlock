@@ -171,15 +171,6 @@ python process.py
 python process.py --verbose
 # Or set environment variable: FLEXLOCK_DEBUG=1 python process.py
 
-# Log to a specific file
-python process.py --logfile /path/to/logfile.log
-
-# Disable FileLog to a specific file
-python process.py --nologfile 
-
-# Log to default location (save_dir/experiment.log) without console output
-python process.py --quiet
-
 # Control log level via environment variable
 LOGURU_LEVEL=DEBUG python process.py
 ```
@@ -232,3 +223,4 @@ IPython post-mortem debugger> a
 0
 ```
 This workflow combines the best of both worlds: the exploratory power of a notebook and the robustness of a script.
+

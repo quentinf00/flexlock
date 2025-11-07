@@ -1,4 +1,5 @@
-# flexlock/parallel.py
+"""Manages parallel task execution for FlexLock."""
+
 from pathlib import Path
 from omegaconf import OmegaConf, DictConfig
 from loguru import logger
@@ -30,17 +31,35 @@ def load_tasks(tasks: str, tasks_key: str, cfg: DictConfig) -> List[Any]:
 
 
 class ParallelExecutor:
+    """Manages the execution of tasks in parallel using a centralized task queue.
+
+    This class orchestrates task execution across different backends (local, Slurm, PBS)
+    by interacting with a SQLite database for task management. It supports dynamic task
+    distribution (pull model) and result aggregation.
+    """
     def __init__(
         self,
         func,
-        tasks,
-        task_to: str,
+        tasks: List[Any],
+        task_to: str | None,
         cfg: DictConfig,
         n_jobs: int = 1,
         slurm_config: str | None = None,
         pbs_config: str | None = None,
         local_workers: int | None = None,
     ):
+        """Initializes the ParallelExecutor.
+
+        Args:
+            func: The function to execute for each task.
+            tasks: A list of tasks to be executed.
+            task_to: The OmegaConf path to merge task-specific configurations into.
+            cfg: The base OmegaConf configuration.
+            n_jobs: Number of parallel jobs for local execution.
+            slurm_config: Path to the Slurm configuration file.
+            pbs_config: Path to the PBS configuration file.
+            local_workers: Number of local worker processes to spawn.
+        """
         self.func = func
         self.tasks = tasks
         self.task_to = task_to
@@ -96,7 +115,7 @@ class ParallelExecutor:
                 if self.array_size > 1:
                     # Launch array_size identical workers
                     jobs = self.backend.map_array(worker_loop, [fixed_args] * self.array_size)
-                    logger.info(f"Submitted {self.backend.__class__.__name__} array with {len(jobs)} sub-jobs")
+                    logger.info(f"Submitted {self.backend.__class__.__name__} array with {len(jobs)} sub-jobs from {jobs[0].job_id} to {jobs[-1].job_id}")
                     # TODO: Add a mechanism to wait for array jobs to complete
                 else:
                     job = self.backend.submit(worker_loop, *fixed_args)

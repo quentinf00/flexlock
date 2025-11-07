@@ -1,4 +1,5 @@
-# flexlock/taskdb.py
+"""SQLite-based task database for FlexLock parallel execution."""
+
 from pathlib import Path
 import sqlite3
 import threading
@@ -14,6 +15,7 @@ _thread_local_conns = threading.local()
 
 
 def _hash_task(task: Any) -> str:
+    """Generates a SHA1 hash for a given task object."""
     return hashlib.sha1(str(task).encode()).hexdigest()
 
 @contextmanager
@@ -70,6 +72,7 @@ def _conn(db_path: Path):
         pass
 
 def queue_tasks(db_path: Path, tasks: List[Any]) -> None:
+    """Adds a list of tasks to the database if they don't already exist."""
     with _conn(db_path) as c:
         c.executemany(
             "INSERT OR IGNORE INTO tasks (task_id, task_info) VALUES (?, ?)",
@@ -79,6 +82,7 @@ def queue_tasks(db_path: Path, tasks: List[Any]) -> None:
 
 
 def claim_next_task(db_path: Path, node: str) -> Any | None:
+    """Claims the next available pending task from the database and marks it as running."""
     with _conn(db_path) as c:
         cur = c.execute(
             """
@@ -96,6 +100,7 @@ def claim_next_task(db_path: Path, node: str) -> Any | None:
 
 
 def finish_task(db_path: Path, task: Any, error: str | None = None, result: Any | None = None) -> None:
+    """Marks a task as finished (done or failed) and records its result or error."""
     tid = _hash_task(task)
     status = "failed" if error else "done"
     result_str = yaml.dump(result) if result is not None else None
@@ -108,11 +113,13 @@ def finish_task(db_path: Path, task: Any, error: str | None = None, result: Any 
 
 
 def pending_count(db_path: Path) -> int:
+    """Returns the number of pending tasks in the database."""
     with _conn(db_path) as c:
         return c.execute("SELECT COUNT(*) FROM tasks WHERE status='pending'").fetchone()[0]
 
 
 def dump_to_yaml(db_path: Path, yaml_path: Path) -> None:
+    """Dumps all completed (done or failed) tasks and their results to a YAML file."""
     with _conn(db_path) as c:
         logger.debug(f"using {c} for {db_path}")
         rows = c.execute(

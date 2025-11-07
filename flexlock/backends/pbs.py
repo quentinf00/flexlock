@@ -1,21 +1,26 @@
-# flexlock/backends/pbs.py
+"""PBS backend for FlexLock parallel execution."""
+
 import cloudpickle, subprocess, os
 from pathlib import Path
 import secrets
 from .base import Backend, Job
+from loguru import logger
 
 class PBSJob(Job):
+    """Represents a PBS job."""
     def __init__(self, job_id): self._id = job_id
     @property
     def job_id(self): return self._id
 
 class PBSBackend(Backend):
+    """Implements the FlexLock backend for PBS (Portable Batch System) job submission."""
     def __init__(self, folder: Path, **pbs_kwargs):
         self.folder = folder
         self.folder.mkdir(parents=True, exist_ok=True)
         self.kwargs = pbs_kwargs
 
     def _make_script(self, pickled_path: Path, is_array: bool = False, array_size: int = 0) -> str:
+        """Generates the PBS submission script content."""
         lines = [
             "#!/bin/bash",
             f"#PBS -N flexlock",
@@ -23,6 +28,7 @@ class PBSBackend(Backend):
             f"#PBS -l ncpus={self.kwargs.get('num_cpus',1)}",
             f"#PBS -l walltime={self.kwargs.get('time','01:00:00')}",
             f"#PBS -q {self.kwargs.get('queue','batch')}",
+            f"#PBS -V",
         ]
         # Add extra directives if provided
         extra_directives = self.kwargs.get('extra_directives', [])
@@ -34,7 +40,8 @@ class PBSBackend(Backend):
             lines.append(f"#PBS -J 0-{array_size-1}")
 
         lines += [
-            "module load python 2>/dev/null || true",
+            "cd $PBS_O_WORKDIR \n"
+            ""
             f"python - <<'PY'\nimport cloudpickle, sys, os\n"
             f"with open('{pickled_path}', 'rb') as f:\n"
             f"    data = cloudpickle.load(f)\n"
@@ -49,6 +56,7 @@ class PBSBackend(Backend):
         return "\n".join(lines)
 
     def submit(self, fn, *args, **kwargs):
+        """Submits a single function for execution as a PBS job."""
         data = (fn, args, kwargs)
         pkl_path = self.folder / f"task_{secrets.token_hex(4)}.pkl"
         with open(pkl_path, 'wb') as f:
@@ -62,6 +70,7 @@ class PBSBackend(Backend):
         return PBSJob(job_id)
 
     def map_array(self, fn, params_list: list):
+        """Submits an array of tasks for execution as a PBS job array."""
         data = [(fn, p if isinstance(p, tuple) else (p,), {}) for p in params_list]
         pkl_path = self.folder / f"array_{secrets.token_hex(4)}.pkl"
         with open(pkl_path, 'wb') as f:
@@ -75,6 +84,7 @@ class PBSBackend(Backend):
         return [PBSJob(f"{job_id}[{i}]") for i in range(len(params_list))]
 
     def environment(self):
+        """Returns a JobEnvironment object providing PBS-specific environment variables."""
         class Env:
             @property
             def global_rank(self): return int(os.getenv("OMPI_COMM_WORLD_RANK", 0))

@@ -1,21 +1,25 @@
-# flexlock/backends/slurm.py
+"""Slurm backend for FlexLock parallel execution."""
+
 import cloudpickle, subprocess, os
 from pathlib import Path
 import secrets  # Better random for filenames
 from .base import Backend, Job
 
 class SlurmJob(Job):
+    """Represents a Slurm job."""
     def __init__(self, job_id): self._id = job_id
     @property
     def job_id(self): return self._id
 
 class SlurmBackend(Backend):
+    """Implements the FlexLock backend for Slurm job submission."""
     def __init__(self, folder: Path, **slurm_kwargs):
         self.folder = folder
         self.folder.mkdir(parents=True, exist_ok=True)
         self.kwargs = slurm_kwargs
 
     def _make_script(self, pickled_path: Path, is_array: bool = False, array_size: int = 0) -> str:
+        """Generates the Slurm submission script content."""
         lines = [
             "#!/bin/bash",
             f"#SBATCH --job-name=flexlock",
@@ -49,6 +53,7 @@ class SlurmBackend(Backend):
         return "\n".join(lines)
 
     def submit(self, fn, *args, **kwargs):
+        """Submits a single function for execution as a Slurm job."""
         data = (fn, args, kwargs)
         pkl_path = self.folder / f"task_{secrets.token_hex(4)}.pkl"
         with open(pkl_path, 'wb') as f:
@@ -62,6 +67,7 @@ class SlurmBackend(Backend):
         return SlurmJob(job_id)
 
     def map_array(self, fn, params_list: list):
+        """Submits an array of tasks for execution as a Slurm job array."""
         all_same = len(params_list) > 1 and all(p == params_list[0] for p in params_list)
         data = [(fn, p if isinstance(p, tuple) else (p,), {}) for p in params_list]
         pkl_path = self.folder / f"array_{secrets.token_hex(4)}.pkl"
@@ -76,6 +82,7 @@ class SlurmBackend(Backend):
         return [SlurmJob(f"{job_id}[{i}]") for i in range(len(params_list))]
 
     def environment(self):
+        """Returns a JobEnvironment object providing Slurm-specific environment variables."""
         class Env:
             @property
             def global_rank(self): return int(os.getenv("SLURM_PROCID", 0))

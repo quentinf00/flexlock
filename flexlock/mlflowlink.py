@@ -1,3 +1,5 @@
+"""MLflow integration for FlexLock."""
+
 import logging
 import os
 from pathlib import Path
@@ -16,7 +18,14 @@ def mlflowlink(
 ):
     """
     A context manager to handle the MLflow run lifecycle.
-    ...
+
+    Args:
+        path (str | Path): The base path for the FlexLock run, typically `config.save_dir`.
+        snapshot_file (str, optional): The name of the snapshot file (e.g., 'run.lock'). Defaults to 'run.lock'.
+        log_file (str, optional): The name of the log file to be logged as an MLflow artifact. Defaults to 'experiment.log'.
+
+    Yields:
+        mlflow.ActiveRun: The active MLflow run object.
     """
     try:
         import mlflow

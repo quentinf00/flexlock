@@ -1,0 +1,10 @@
+sphinx
+sphinx-rtd-theme
+omegaconf
+loguru
+GitPython
+xxhash
+joblib
+PyYAML
+pandas
+mlflow

@@ -27,7 +27,7 @@ def log_run(save_dir):
     """
     Logs the results of a completed run to MLflow.
     """
-    with mlflowlink(save_dir) as run:
+    with mlflowlink(save_dir, snapshot_file='run.lock', log_file='experiment.log') as run:
         # 1. A new MLflow run is created.
         # 2. The `run.lock` file from `save_dir` is automatically logged as an artifact.
         # 3. The MLflow run is tagged with a `logical_run_id` corresponding to `save_dir`.

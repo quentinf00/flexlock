@@ -20,6 +20,7 @@ from loguru import logger
 def _get_caller_info(repos: dict) -> dict:
     """Gets information about the function that called snapshot."""
     try:
+        from git import Repo
         caller_frame = inspect.stack()[2]  # Go back 2 frames to get the actual caller
         caller_module = inspect.getmodule(caller_frame[0])
 
@@ -62,6 +63,8 @@ def _get_repo_info(
     """
     Gets the commit hash for each repo, creating a new commit if requested.
     """
+
+    from .git_utils import commit_cwd, get_git_commit
     if repos is None:
         return {}
 
@@ -87,7 +90,6 @@ def _atomic_write_yaml(data: dict, path: Path):
         yaml.dump(data, f, default_flow_style=False, sort_keys=False)
     os.rename(temp_path, path)
 
-@logger.catch(reraise=False)
 def snapshot(
     config: DictConfig,
     repos: dict | list | str | None = None,
@@ -125,115 +127,118 @@ def snapshot(
                                  If False, record the current commit hash. Defaults to True.
         commit_branch (str, optional): The branch to commit to if `commit=True`.
         commit_message (str, optional): The commit message to use if `commit=True`.
-        resolve (bool): wether to resolve the config (should always be true)
+        mlflowlink (bool, optional): If True, logs the snapshot to MLflow. Defaults to False.
+        resolve (bool, optional): Whether to resolve the OmegaConf config before snapshotting. Defaults to True.
+        prevs_from_data (bool, optional): If True, automatically adds paths from the `data` argument to `prevs`. Defaults to True.
+        force (bool, optional): If True, forces the creation of a new snapshot even if `run.lock` exists. Defaults to False.
     """
-    from git import Repo
-    from .git_utils import commit_cwd, get_git_commit
-    config = to_dictconfig(config)
-    if snapshot_path:
-        lock_file = Path(snapshot_path)
-    elif "save_dir" in config:
-        lock_file = Path(config.save_dir) / "run.lock"
-    else:
-        raise ValueError(
-            "Either `snapshot_path` must be provided or `config` must have a `save_dir` key."
-        )
-    if lock_file.exists() and (merge or force):
-        logger.info(
-            f"File '{lock_file}' exists exiting (set force or merge to True to force execution or append to existing)."
-        )
-        return
 
-    lock_file.parent.mkdir(parents=True, exist_ok=True)
-
-    if resolve:
-        OmegaConf.resolve(config)
-
-    run_data = {}
-    if merge and lock_file.exists():
-        with open(lock_file, "r") as f:
-            run_data = yaml.safe_load(f) or {}
-
-    # --- Process flexible 'repos' and 'data' arguments ---
-    def _process_arg(arg, is_repo=False):
-        if not arg:
-            return {}
-        if isinstance(arg, str):
-            arg = [arg]
-        if isinstance(arg, list):
-            new_dict = {}
-            for path_str in arg:
-                path = Path(path_str)
-                key = path.absolute().name
-                if key in new_dict:
-                    logger.error(
-                        f"Key '{key}' is being overridden in {'repos' if is_repo else 'data'} use dict syntax to specify unique key for arg."
-                    )
-                    raise Exception(
-                        f"Runlock key collision {'repos' if is_repo else 'data'}"
-                    )
-                new_dict[key] = str(path)
-            return new_dict
-        return arg
-
-    repos = _process_arg(repos, is_repo=True)
-    data = _process_arg(data)
-
-    # --- Capture Caller and Repo Info First ---
-    run_data["caller"] = _get_caller_info(repos)
-
-    if repos:
-        repo_info = _get_repo_info(repos, commit, commit_branch, commit_message)
-        run_data.setdefault("repos", {}).update(repo_info)
-
-    # --- Update with other information ---
-    run_data["config"] = OmegaConf.to_container(config, resolve=True)
-
-    if data:
-        data_hashes = {name: hash_data(path) for name, path in data.items()}
-        run_data.setdefault("data", {}).update(data_hashes)
-
-    if prevs:
-        if isinstance(prevs, str):
-            prevs = [prevs]
-    if prevs_from_data:
-        if prevs:
-            prevs = prevs + list(data.values())
+    with logger.catch(reraise=False):
+        config = to_dictconfig(config)
+        if snapshot_path:
+            lock_file = Path(snapshot_path)
+        elif "save_dir" in config:
+            lock_file = Path(config.save_dir) / "run.lock"
         else:
-            prevs = list(data.values())
+            raise ValueError(
+                "Either `snapshot_path` must be provided or `config` must have a `save_dir` key."
+            )
+        if lock_file.exists() and (merge or force):
+            logger.info(
+                f"File '{lock_file}' exists exiting (set force or merge to True to force execution or append to existing)."
+            )
+            return
 
-    if prevs:
+        lock_file.parent.mkdir(parents=True, exist_ok=True)
 
-        def _find_snapshot_dir(start_path: Path) -> Path | None:
-            """Search for `run.lock` in `start_path` and its parents."""
-            p = start_path.resolve()
-            if p.is_file():
-                p = p.parent
+        if resolve:
+            OmegaConf.resolve(config)
 
-            while p != p.parent:  # Stop at the root directory
-                if (p / "run.lock").exists():
-                    return p
-                p = p.parent
-            return None
+        run_data = {}
+        if merge and lock_file.exists():
+            with open(lock_file, "r") as f:
+                run_data = yaml.safe_load(f) or {}
 
-        previous_stages_data = {}
-        for path_str in prevs:
-            snapshot_dir = _find_snapshot_dir(Path(path_str))
-            if snapshot_dir:
-                stage_data = load_stage_from_path(str(snapshot_dir))
-                # The key from load_stage_from_path is the full path,
-                # we want to use the directory name as the key.
-                original_key = next(iter(stage_data))
-                previous_stages_data[snapshot_dir.name] = stage_data[original_key]
+        # --- Process flexible 'repos' and 'data' arguments ---
+        def _process_arg(arg, is_repo=False):
+            if not arg:
+                return {}
+            if isinstance(arg, str):
+                arg = [arg]
+            if isinstance(arg, list):
+                new_dict = {}
+                for path_str in arg:
+                    path = Path(path_str)
+                    key = path.absolute().name
+                    if key in new_dict:
+                        logger.error(
+                            f"Key '{key}' is being overridden in {'repos' if is_repo else 'data'} use dict syntax to specify unique key for arg."
+                        )
+                        raise Exception(
+                            f"Runlock key collision {'repos' if is_repo else 'data'}"
+                        )
+                    new_dict[key] = str(path)
+                return new_dict
+            return arg
+
+        repos = _process_arg(repos, is_repo=True)
+        data = _process_arg(data)
+
+        # --- Capture Caller and Repo Info First ---
+        run_data["caller"] = _get_caller_info(repos)
+
+        if repos:
+            repo_info = _get_repo_info(repos, commit, commit_branch, commit_message)
+            run_data.setdefault("repos", {}).update(repo_info)
+
+        # --- Update with other information ---
+        run_data["config"] = OmegaConf.to_container(config, resolve=True)
+
+        if data:
+            data_hashes = {name: hash_data(path) for name, path in data.items()}
+            run_data.setdefault("data", {}).update(data_hashes)
+
+        if prevs:
+            if isinstance(prevs, str):
+                prevs = [prevs]
+        if prevs_from_data:
+            if prevs:
+                prevs = prevs + list(data.values())
             else:
-                logger.warning(
-                    f"Could not find a 'run.lock' file for the previous stage at or above '{path_str}'."
-                )
+                prevs = list(data.values())
 
-        run_data.setdefault("prevs", {}).update(previous_stages_data)
+        if prevs:
 
-    # Write the file atomically
-    _atomic_write_yaml(run_data, lock_file)
+            def _find_snapshot_dir(start_path: Path) -> Path | None:
+                """Search for `run.lock` in `start_path` and its parents."""
+                p = start_path.resolve()
+                if p.is_file():
+                    p = p.parent
+
+                while p != p.parent:  # Stop at the root directory
+                    if (p / "run.lock").exists():
+                        return p
+                    p = p.parent
+                return None
+
+            previous_stages_data = {}
+            for path_str in prevs:
+                snapshot_dir = _find_snapshot_dir(Path(path_str))
+                if snapshot_dir:
+                    stage_data = load_stage_from_path(str(snapshot_dir))
+                    # The key from load_stage_from_path is the full path,
+                    # we want to use the directory name as the key.
+                    original_key = next(iter(stage_data))
+                    previous_stages_data[snapshot_dir.name] = stage_data[original_key]
+                else:
+                    logger.warning(
+                        f"Could not find a 'run.lock' file for the previous stage at or above '{path_str}'."
+                    )
+
+            run_data.setdefault("prevs", {}).update(previous_stages_data)
+
+        # Write the file atomically
+        _atomic_write_yaml(run_data, lock_file)
 
     # Dump any pending tasks from database to the YAML file (in case tasks were added before snapshot creation)
     if mlflowlink:

@@ -26,7 +26,15 @@ def main(cfg: Config = Config()):
     # Create the snapshot after the process has successfully completed.
     snapshot(
         config=cfg,
-        snapshot_path=Path(cfg.save_dir) / 'run.lock' # (default if save_dir is in config)
+        snapshot_path=Path(cfg.save_dir) / 'run.lock', # (default if save_dir is in config)
+        merge=True, # Merge with existing run.lock if it exists
+        commit=True, # Commit changes to git before snapshotting
+        commit_branch="flexlock-run-logs", # Branch to commit to
+        commit_message="FlexLock: Auto-snapshot", # Commit message
+        mlflowlink=False, # Log to MLflow
+        resolve=True, # Resolve OmegaConf config before snapshotting
+        prevs_from_data=True, # Automatically add data paths to prevs
+        force=False, # Force new snapshot even if run.lock exists
     )
 
 if __name__ == '__main__':

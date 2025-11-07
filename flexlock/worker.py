@@ -1,4 +1,5 @@
-# flexlock/worker.py
+"""Worker process for executing FlexLock tasks."""
+
 import os
 import time
 from loguru import logger
@@ -7,6 +8,7 @@ from .taskdb import claim_next_task, finish_task, pending_count
 from flexlock.utils import merge_task_into_cfg
 
 def worker_loop(func, cfg, task_to: str, db_path):
+    """A worker loop that continuously claims and executes tasks from the task database."""
     node = os.getenv("HOSTNAME") or "local"
     while True:
         task = claim_next_task(db_path, node)

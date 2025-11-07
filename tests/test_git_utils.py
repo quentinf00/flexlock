@@ -3,7 +3,7 @@ from git import Repo
 from pathlib import Path
 import os
 
-from flexlock.snapshot import get_git_commit, commit_cwd
+from flexlock.git_utils import get_git_commit, commit_cwd
 
 @pytest.fixture
 def git_repo(tmp_path):
