@@ -12,7 +12,7 @@ The parallel execution system works by:
 
 ## Running Tasks in Parallel Locally
 
-When running tasks in parallel locally, FlexLock uses a pull-based model where multiple worker processes pull tasks from a shared SQLite database:
+Local parallel execution is ideal for development and smaller-scale experiments on a single machine. FlexLock uses a pull-based model where multiple worker processes pull tasks from a shared SQLite database.
 
 ### Basic Local Parallel Execution
 
@@ -59,23 +59,9 @@ echo -e "1\n2\n3\n4\n5" > tasks.txt
 python script.py --tasks tasks.txt --task_to param --n_jobs=4
 ```
 
-#### How Local Parallel Execution Works
-
-1. **Task Queuing**: All tasks are first queued in a SQLite database (`run.lock.tasks.db`)
-2. **Worker Spawning**: Multiple worker processes are spawned based on the `n_jobs` parameter
-3. **Dynamic Task Distribution**: Workers continuously pull tasks from the database queue
-4. **Result Aggregation**: Completed tasks are tracked in the database
-5. **Fault Tolerance**: If a worker fails, its tasks remain in the queue for other workers
-
-### Local Execution Parameters
-
-- `n_jobs`: Number of local worker processes to spawn
-- `local_workers`: Alternative way to specify the number of local workers
-- Task distribution uses a pull model, so workers will continue working until the queue is empty
-
 ## Running Tasks with Cluster Schedulers
 
-FlexLock supports execution on cluster schedulers like SLURM and PBS through dedicated backends.
+For large--scale experiments, FlexLock supports execution on cluster schedulers like SLURM and PBS. The configuration is managed through a single YAML file, giving you full control over the job submission script.
 
 ### SLURM Backend
 
@@ -93,81 +79,113 @@ To use the PBS backend, specify a PBS configuration file:
 python script.py --tasks tasks.txt --task_to param --pbs_config pbs_config.yaml
 ```
 
-## PBS Configuration Example
+## HPC Backend Configuration
 
-Here's a comprehensive example of a PBS configuration file:
+The configuration for both SLURM and PBS backends follows the same structure, allowing you to define scheduler directives, logging, and containerization options.
 
-```yaml
-# pbs_config.yaml
-# PBS resource allocation parameters
-num_cpus: 4                    # Number of CPUs per node
-time: "02:00:00"              # Walltime limit (HH:MM:SS)
-queue: "sequentiel"                # Queue name to submit to
+- `startup_lines`: A list of strings that will be placed at the top of the submission script. This is where you define all your scheduler directives (e.g., `#SBATCH`, `#PBS`), environment setup, and module loads.
+- `configure_logging`: (Optional, default: `True`) If true, FlexLock will automatically add directives to write the job's stdout and stderr to files in the backend's log directory (e.g., `save_dir/slurm_logs/`).
+- `containerization`: (Optional) Set to `singularity` or `docker` to run the job in a container.
+- `container_image`: (Required if `containerization` is set) The path to the container image file (e.g., a `.sif` file for Singularity).
+- `bind_mounts`: (Optional) A list of paths to bind mount into the container, in the format `host_path:container_path`. The directory containing the task data is always mounted automatically.
 
-# Optional parameters
-array_parallelism: 10         # Number of concurrent array jobs
-extra_directives:
-  - "#PBS -l mem=8gb"         # Additional memory requirement
-  - "#PBS -m abe"             # Email notifications on abort, begin, end
-  - 'eval "$(pixi shell-hook)"' # Activate environment
+### SLURM Configuration Example
 
-```
-
-### PBS Configuration Options
-
-- `num_cpus`: Number of CPUs to allocate per job
-- `time`: Walltime limit for the job in HH:MM:SS format
-- `queue`: Name of the PBS queue to submit to
-- `array_parallelism`: For array jobs, specifies number of concurrent tasks
-- `extra_directives`: List of additional PBS directives to include
-- Additional custom parameters are passed through to the PBS script
-
-### How PBS Backend Works
-
-1. **Task Serialization**: Each task is serialized using cloudpickle
-2. **PBS Script Generation**: FlexLock generates a PBS submission script with appropriate directives
-3. **Job Submission**: The script is submitted to PBS using `qsub`
-4. **Array Job Support**: For multiple tasks, FlexLock can submit a single PBS array job
-5. **Task Distribution**: Each array job reads the task parameters using `PBS_ARRAY_INDEX`
-
-## SLURM Configuration Example
+This example submits a 10-task job array, with each task requesting 4 CPUs and 8GB of memory.
 
 ```yaml
 # slurm_config.yaml
-cpus_per_task: 4              # Number of CPUs per task
-time: "02:00:00"             # Walltime limit (HH:MM:SS)
-partition: "batch"           # SLURM partition to use
+startup_lines:
+  - "#SBATCH --partition=batch"
+  - "#SBATCH --job-name=flexlock-experiment"
+  - "#SBATCH --nodes=1"
+  - "#SBATCH --ntasks=1"
+  - "#SBATCH --cpus-per-task=4"
+  - "#SBATCH --mem=8gb"
+  - "#SBATCH --time=02:00:00"
+  # Submit as a 10-task job array
+  - "#SBATCH --array=0-9"
+  # Activate pixi environment
+  - 'eval "$(pixi shell-hook)"'
 
-# Optional parameters
-array_parallelism: 10        # Number of concurrent array jobs
-array_limit: 5               # Maximum number of concurrent array jobs running
-extra_directives:
-  - "#SBATCH --mail-type=ALL"# Email notifications
-  - "#SBATCH --mail-user=user@domain.com" # Email address
-  - 'eval "$(pixi shell-hook)"' # Activate environment
+# FlexLock will add #SBATCH --output and --error directives
+configure_logging: true
+```
+
+### PBS Configuration Example
+
+This example submits a job to the `sequentiel` queue with a 2-hour walltime.
+
+```yaml
+# pbs_config.yaml
+startup_lines:
+  - "#PBS -N flexlock-experiment"
+  - "#PBS -l nodes=1:ncpus=4"
+  - "#PBS -l walltime=02:00:00"
+  - "#PBS -l mem=8gb"
+  - "#PBS -q sequentiel"
+  - "#PBS -m abe" # Email notifications
+  # Activate pixi environment
+  - 'eval "$(pixi shell-hook)"'
+```
+
+## Containerized Execution
+
+FlexLock supports running jobs in Singularity or Docker containers for maximum reproducibility.
+
+### Container Configuration Example (Singularity)
+
+This configuration will execute the job inside a Singularity container, bind-mounting a dataset directory.
+
+```yaml
+# slurm_config_singularity.yaml
+startup_lines:
+  - "#SBATCH --partition=batch"
+  - "#SBATCH --cpus-per-task=2"
+  - "#SBATCH --mem=4gb"
+  - "#SBATCH --array=0-9"
+
+# Container settings
+containerization: singularity
+container_image: /path/to/your/flexlock_env.sif
+bind_mounts:
+  - /path/to/host/data:/data
 
 ```
 
-### How SLURM Backend Works
+### Building the Container
 
-1. **Task Serialization**: Each task is serialized using cloudpickle
-2. **SLURM Script Generation**: FlexLock generates a SLURM submission script with SBATCH directives
-3. **Job Submission**: Script is submitted to SLURM using `sbatch`
-4. **Module Loading**: Automatically loads Python module if available
-5. **Array Job Support**: Uses `SLURM_ARRAY_TASK_ID` to determine which task to execute
+You can use the `singularity.def` and `Dockerfile` provided in the project to build a container image with your `pixi` environment pre-installed.
+
+**Singularity:**
+```bash
+# (May require sudo depending on system config)
+singularity build flexlock.sif singularity.def
+```
+
+**Docker:**
+```bash
+docker build -t flexlock-env .
+```
+
+## How the HPC Backends Work
+
+1. **Task Serialization**: The worker function and its arguments are serialized using `cloudpickle`.
+2. **Script Generation**: FlexLock generates a submission script. It combines your `startup_lines` with a Python snippet that deserializes and executes the task.
+3. **Job Submission**: The script is submitted to the scheduler using `sbatch` (Slurm) or `qsub` (PBS).
+4. **Task Execution**: Inside the job, the Python snippet is executed. If it's a job array, the environment variable (`SLURM_ARRAY_TASK_ID` or `PBS_ARRAY_INDEX`) is used to identify which worker it is, though the workers themselves pull tasks dynamically from the central queue.
 
 ## Task Distribution and Configuration Merging
 
 The `task_to` parameter specifies how each task parameter should be merged into the configuration:
 
-If task_to="param" and tasks=[1, 2, 3]
-Then for the first task, cfg.param will be set to 1
-For the second task, cfg.param will be set to 2, etc.
+If `task_to="param"` and `tasks=[1, 2, 3]`:
+- For the first task, `cfg.param` will be set to 1.
+- For the second task, `cfg.param` will be set to 2, and so on.
 
 This allows for dynamic configuration updates for each task while maintaining the base configuration.
 
-
-## Tips:
+## Tips
 The state of the queue can be inspected using sqlite with commands like:
 
 ```bash
@@ -175,6 +193,5 @@ sqlite3 <path/to/save_dir>/run.lock.tasks.db 'SELECT status, count(*) as count, 
 ```
 
 ## Troubleshooting
-The PBS script is stored in `save_dir/pbs_logs`
-If you encounter issue you can try submitting it directly with qsub or even running the small dynamically generated python scirpt in it manually.
+The submission scripts and logs are stored in `save_dir/slurm_logs` or `save_dir/pbs_logs`. If you encounter issues, you can inspect the generated script and try submitting it directly or even running the Python code within it manually.
 
