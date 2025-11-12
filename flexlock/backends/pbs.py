@@ -14,47 +14,66 @@ class PBSJob(Job):
 
 class PBSBackend(Backend):
     """Implements the FlexLock backend for PBS (Portable Batch System) job submission."""
-    def __init__(self, folder: Path, **pbs_kwargs):
+
+    def __init__(
+        self,
+        folder: Path,
+        startup_lines: list[str],
+        configure_logging: bool = True,
+        containerization: str | None = None,
+        container_image: str | None = None,
+        bind_mounts: list[str] | None = None,
+    ):
         self.folder = folder
         self.folder.mkdir(parents=True, exist_ok=True)
-        self.kwargs = pbs_kwargs
+        self.startup_lines = startup_lines
+        self.configure_logging = configure_logging
+        self.containerization = containerization
+        self.container_image = container_image
+        self.bind_mounts = bind_mounts or []
 
-    def _make_script(self, pickled_path: Path, is_array: bool = False, array_size: int = 0) -> str:
+    def _make_script(
+        self, pickled_path: Path
+    ) -> str:
         """Generates the PBS submission script content."""
-        lines = [
-            "#!/bin/bash",
-            f"#PBS -N flexlock",
-            f"#PBS -l nodes=1",
-            f"#PBS -l ncpus={self.kwargs.get('num_cpus',1)}",
-            f"#PBS -l walltime={self.kwargs.get('time','01:00:00')}",
-            f"#PBS -q {self.kwargs.get('queue','batch')}",
-            f"#PBS -o {self.folder.absolute() / 'pbs.out'}",
-            f"#PBS -e {self.folder.absolute() / 'pbs.err'}",
-            f"#PBS -V",
-        ]
-        # Add extra directives if provided
-        extra_directives = self.kwargs.get('extra_directives', [])
-        if isinstance(extra_directives, str):
-            extra_directives = [extra_directives]
-        lines.extend(extra_directives)
+        lines = ["#!/bin/bash"]
+        lines.extend(self.startup_lines)
 
-        if is_array and array_size > 1:
-            lines.append(f"#PBS -J 0-{array_size-1}")
-
-        lines += [
-            "cd $PBS_O_WORKDIR \n"
-            ""
-            f"python - <<'PY'\nimport cloudpickle, sys, os\n"
-            f"with open('{pickled_path}', 'rb') as f:\n"
-            f"    data = cloudpickle.load(f)\n"
-            f"if isinstance(data, list):\n"
-            f"    all_same = all(d == data[0] for d in data) if len(data) > 1 else True\n"
-            f"    idx = int(os.getenv('PBS_ARRAY_INDEX', 0))\n"
-            f"    fn, a, kw = data[0] if all_same else data[idx]\n"
-            f"else:\n"
-            f"    fn, a, kw = data\n"
-            f"fn(*a, **kw)\nPY",
+        if self.configure_logging:
+            lines.extend(
+                [
+                    f"#PBS -o {self.folder.absolute() / 'pbs.out'}",
+                    f"#PBS -e {self.folder.absolute() / 'pbs.err'}",
+                ]
+            )
+        python_script = [
+            "import cloudpickle, sys, os",
+            f"with open('{pickled_path}', 'rb') as f:",
+            "    fn, a, kw = cloudpickle.load(f)",
+            "fn(*a, **kw)",
         ]
+        python_code = "\n".join(python_script)
+
+        # Always bind the folder containing the pickled task
+        all_bind_mounts = list(set([str(self.folder.absolute())] + self.bind_mounts))
+        bind_str = " ".join(f"--bind {p}" for p in all_bind_mounts)
+
+        if self.containerization == "singularity":
+            lines.append(
+                f"singularity exec {bind_str} {self.container_image} python - <<'PY'\n{python_code}\nPY"
+            )
+        elif self.containerization == "docker":
+            bind_str = " ".join(f"-v {p}:{p}" for p in all_bind_mounts)
+            lines.append(
+                f"docker exec {bind_str} {self.container_image} python - <<'PY'\n{python_code}\nPY"
+            )
+        else:
+            lines.extend(
+                [
+                    f"python - <<'PY'\n{python_code}\nPY",
+                ]
+            )
+
         return "\n".join(lines)
 
     def submit(self, fn, *args, **kwargs):
@@ -70,20 +89,6 @@ class PBSBackend(Backend):
         out = subprocess.check_output(["qsub", str(script_path)], text=True).strip()
         job_id = out
         return PBSJob(job_id)
-
-    def map_array(self, fn, params_list: list):
-        """Submits an array of tasks for execution as a PBS job array."""
-        data = [(fn, p if isinstance(p, tuple) else (p,), {}) for p in params_list]
-        pkl_path = self.folder / f"array_{secrets.token_hex(4)}.pkl"
-        with open(pkl_path, 'wb') as f:
-            cloudpickle.dump(data, f)
-
-        script_path = self.folder / f"array_job_{secrets.token_hex(4)}.pbs"
-        script_path.write_text(self._make_script(pkl_path, is_array=True, array_size=len(params_list)))
-
-        out = subprocess.check_output(["qsub", str(script_path)], text=True).strip()
-        job_id = out  # e.g., "12345[]"
-        return [PBSJob(f"{job_id}[{i}]") for i in range(len(params_list))]
 
     def environment(self):
         """Returns a JobEnvironment object providing PBS-specific environment variables."""

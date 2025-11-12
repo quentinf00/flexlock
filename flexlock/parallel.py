@@ -75,14 +75,11 @@ class ParallelExecutor:
 
         # ----- backend -----
         self.backend = None
-        self.array_size = 1
         if slurm_config:
             p = OmegaConf.to_container(OmegaConf.load(slurm_config), resolve=True)
-            self.array_size = p.pop("array_parallelism", 1)
             self.backend = SlurmBackend(folder=self.save_dir / "slurm_logs", **p)
         elif pbs_config:
             p = OmegaConf.to_container(OmegaConf.load(pbs_config), resolve=True)
-            self.array_size = p.pop("array_parallelism", 1)
             self.backend = PBSBackend(folder=self.save_dir / "pbs_logs", **p)
 
     def _run_locally(self):
@@ -111,16 +108,9 @@ class ParallelExecutor:
             else:
                 # Fixed args for worker_loop (as tuple for *args)
                 fixed_args = (self.func, self.cfg, self.task_to, self.db_path)
-
-                if self.array_size > 1:
-                    # Launch array_size identical workers
-                    jobs = self.backend.map_array(worker_loop, [fixed_args] * self.array_size)
-                    logger.info(f"Submitted {self.backend.__class__.__name__} array with {len(jobs)} sub-jobs from {jobs[0].job_id} to {jobs[-1].job_id}")
-                    # TODO: Add a mechanism to wait for array jobs to complete
-                else:
-                    job = self.backend.submit(worker_loop, *fixed_args)
-                    logger.info(f"Submitted {self.backend.__class__.__name__} job {job.job_id}")
-                    # TODO: Add a mechanism to wait for single job to complete
+                job = self.backend.submit(worker_loop, *fixed_args)
+                logger.info(f"Submitted {self.backend.__class__.__name__} job {job.job_id}")
+                # TODO: Add a mechanism to wait for single job to complete
         finally:
             # Dump tasks to YAML after all jobs are submitted (or completed locally)
             dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks")

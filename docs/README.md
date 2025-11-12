@@ -10,7 +10,7 @@ FlexLock is a lightweight Python library designed to bring clarity, reproducibil
   - [Install](./installation.md)
   - [Overview](./getting_started.md)
   - [Supported configurations definition](./supported_configurations.md)
-  - [Parallel runs](./parallel.md)
+  - [Parallel runs (including containerization with Singularity/Docker)](./parallel.md)
   - [Logging](./supported_configurations.md)
 
 - **Core Components**
