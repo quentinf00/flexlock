@@ -35,7 +35,6 @@ class PBSBackend(Backend):
     ) -> str:
         """Generates the PBS submission script content."""
         lines = ["#!/bin/bash"]
-        lines.extend(self.startup_lines)
 
         if self.configure_name:
             lines.extend(
@@ -50,6 +49,7 @@ class PBSBackend(Backend):
                     f"#PBS -e {self.folder.absolute() / 'pbs.err'}",
                 ]
             )
+        lines.extend(self.startup_lines)
         python_script = [
             "import cloudpickle, sys, os",
             f"with open('{pickled_path}', 'rb') as f:",
