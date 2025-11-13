@@ -20,17 +20,13 @@ class PBSBackend(Backend):
         folder: Path,
         startup_lines: list[str],
         configure_logging: bool = True,
-        containerization: str | None = None,
-        container_image: str | None = None,
-        bind_mounts: list[str] | None = None,
+        python_exe: str  = "python",
     ):
         self.folder = folder
         self.folder.mkdir(parents=True, exist_ok=True)
         self.startup_lines = startup_lines
         self.configure_logging = configure_logging
-        self.containerization = containerization
-        self.container_image = container_image
-        self.bind_mounts = bind_mounts or []
+        self.python_exe = python_exe
 
     def _make_script(
         self, pickled_path: Path
@@ -54,25 +50,11 @@ class PBSBackend(Backend):
         ]
         python_code = "\n".join(python_script)
 
-        # Always bind the folder containing the pickled task
-        all_bind_mounts = list(set([str(self.folder.absolute())] + self.bind_mounts))
-        bind_str = " ".join(f"--bind {p}" for p in all_bind_mounts)
-
-        if self.containerization == "singularity":
-            lines.append(
-                f"singularity exec {bind_str} {self.container_image} python - <<'PY'\n{python_code}\nPY"
-            )
-        elif self.containerization == "docker":
-            bind_str = " ".join(f"-v {p}:{p}" for p in all_bind_mounts)
-            lines.append(
-                f"docker exec {bind_str} {self.container_image} python - <<'PY'\n{python_code}\nPY"
-            )
-        else:
-            lines.extend(
-                [
-                    f"python - <<'PY'\n{python_code}\nPY",
-                ]
-            )
+        lines.extend(
+            [
+                f"{self.python_exe} - <<'PY'\n{python_code}\nPY",
+            ]
+        )
 
         return "\n".join(lines)
 
