@@ -20,12 +20,14 @@ class PBSBackend(Backend):
         folder: Path,
         startup_lines: list[str],
         configure_logging: bool = True,
+        configure_name: bool = True,
         python_exe: str  = "python",
     ):
         self.folder = folder
         self.folder.mkdir(parents=True, exist_ok=True)
         self.startup_lines = startup_lines
         self.configure_logging = configure_logging
+        self.configure_name = configure_name
         self.python_exe = python_exe
 
     def _make_script(
@@ -35,6 +37,12 @@ class PBSBackend(Backend):
         lines = ["#!/bin/bash"]
         lines.extend(self.startup_lines)
 
+        if self.configure_name:
+            lines.extend(
+                [
+                    f"#PBS -N {self.folder.parent.stem}",
+                ]
+            )
         if self.configure_logging:
             lines.extend(
                 [
