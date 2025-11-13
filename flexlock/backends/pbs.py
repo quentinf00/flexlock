@@ -3,7 +3,7 @@
 import cloudpickle, subprocess, os
 from pathlib import Path
 import secrets
-from .base import Backend, Job
+from .base import Backend, Job, JobEnvironment
 from loguru import logger
 
 class PBSJob(Job):
@@ -74,7 +74,7 @@ class PBSBackend(Backend):
 
     def environment(self):
         """Returns a JobEnvironment object providing PBS-specific environment variables."""
-        class Env:
+        class Env(JobEnvironment):
             @property
             def global_rank(self): return int(os.getenv("OMPI_COMM_WORLD_RANK", 0))
             @property
