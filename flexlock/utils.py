@@ -5,7 +5,7 @@ from dataclasses import is_dataclass
 
 from typing import Any
 import warnings
-from dataclasses import fields, MISSING
+from dataclasses import fields
 
 
 def to_dictconfig(incfg):

@@ -1,8 +1,8 @@
 """FlexLock: A lightweight library for reproducible ML experiments."""
 
 from loguru import logger
-
 logger.disable("flexlock")
+
 from .flexcli import flexcli
 from .snapshot import snapshot
 from .mlflowlink import mlflowlink
