@@ -7,6 +7,7 @@ from multiprocessing import Process
 from .taskdb import claim_next_task, finish_task, pending_count
 from flexlock.utils import merge_task_into_cfg
 
+
 def worker_loop(func, cfg, task_to: str, db_path):
     """A worker loop that continuously claims and executes tasks from the task database."""
     node = os.getenv("HOSTNAME") or "local"

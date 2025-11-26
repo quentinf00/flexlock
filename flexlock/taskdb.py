@@ -18,6 +18,7 @@ def _hash_task(task: Any) -> str:
     """Generates a SHA1 hash for a given task object."""
     return hashlib.sha1(str(task).encode()).hexdigest()
 
+
 @contextmanager
 def _conn(db_path: Path):
     """
@@ -42,7 +43,9 @@ def _conn(db_path: Path):
             # Set PRAGMA for better performance and concurrency.
             c.execute("PRAGMA journal_mode=WAL")
             c.execute("PRAGMA busy_timeout=15000")
-            c.execute("PRAGMA foreign_keys=ON") # Good practice to enforce foreign key constraints
+            c.execute(
+                "PRAGMA foreign_keys=ON"
+            )  # Good practice to enforce foreign key constraints
             c.execute(
                 """
                 CREATE TABLE IF NOT EXISTS tasks (
@@ -58,7 +61,9 @@ def _conn(db_path: Path):
                 """
             )
             _thread_local_conns.conns[db_path_str] = c
-            logger.debug(f"Created new connection for {db_path_str} in thread {threading.get_ident()}")
+            logger.debug(
+                f"Created new connection for {db_path_str} in thread {threading.get_ident()}"
+            )
         except sqlite3.Error as e:
             logger.error(f"Error connecting to database {db_path_str}: {e}")
             raise
@@ -71,12 +76,13 @@ def _conn(db_path: Path):
     finally:
         pass
 
+
 def queue_tasks(db_path: Path, tasks: List[Any]) -> None:
     """Adds a list of tasks to the database if they don't already exist."""
     with _conn(db_path) as c:
         c.executemany(
             "INSERT OR IGNORE INTO tasks (task_id, task_info) VALUES (?, ?)",
-            [( _hash_task(t), yaml.dump(t) ) for t in tasks],
+            [(_hash_task(t), yaml.dump(t)) for t in tasks],
         )
         c.commit()
 
@@ -90,7 +96,7 @@ def claim_next_task(db_path: Path, node: str) -> Any | None:
             WHERE task_id = (SELECT task_id FROM tasks WHERE status='pending' LIMIT 1)
             RETURNING task_info
             """,
-            (node,)
+            (node,),
         )
         row = cur.fetchone()
         if row:
@@ -99,7 +105,9 @@ def claim_next_task(db_path: Path, node: str) -> Any | None:
     return None
 
 
-def finish_task(db_path: Path, task: Any, error: str | None = None, result: Any | None = None) -> None:
+def finish_task(
+    db_path: Path, task: Any, error: str | None = None, result: Any | None = None
+) -> None:
     """Marks a task as finished (done or failed) and records its result or error."""
     tid = _hash_task(task)
     status = "failed" if error else "done"
@@ -115,7 +123,9 @@ def finish_task(db_path: Path, task: Any, error: str | None = None, result: Any 
 def pending_count(db_path: Path) -> int:
     """Returns the number of pending tasks in the database."""
     with _conn(db_path) as c:
-        return c.execute("SELECT COUNT(*) FROM tasks WHERE status='pending'").fetchone()[0]
+        return c.execute(
+            "SELECT COUNT(*) FROM tasks WHERE status='pending'"
+        ).fetchone()[0]
 
 
 def dump_to_yaml(db_path: Path, yaml_path: Path) -> None:
@@ -125,7 +135,11 @@ def dump_to_yaml(db_path: Path, yaml_path: Path) -> None:
         rows = c.execute(
             "SELECT result_info, task_info FROM tasks WHERE status IN ('done','failed') ORDER BY ts_end"
         ).fetchall()
-        data = [yaml.safe_load(r[0]) if r[0] else yaml.safe_load(r[1]) for r in rows if r[0] or r[1]]
+        data = [
+            yaml.safe_load(r[0]) if r[0] else yaml.safe_load(r[1])
+            for r in rows
+            if r[0] or r[1]
+        ]
         logger.debug(f"dumping {rows} to {yaml_path}")
 
     _atomic_write_yaml(data, yaml_path)
@@ -133,6 +147,7 @@ def dump_to_yaml(db_path: Path, yaml_path: Path) -> None:
 
 def _atomic_write_yaml(data: list, path: Path):
     import tempfile, os
+
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.tmp-")
     with os.fdopen(fd, "w") as f:
         yaml.dump(data, f, default_flow_style=False, sort_keys=False)

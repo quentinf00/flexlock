@@ -37,6 +37,7 @@ class ParallelExecutor:
     by interacting with a SQLite database for task management. It supports dynamic task
     distribution (pull model) and result aggregation.
     """
+
     def __init__(
         self,
         func,
@@ -87,15 +88,17 @@ class ParallelExecutor:
         procs = [
             Process(
                 target=worker_loop,
-                args=(self.func, self.cfg, self.task_to, self.db_path)
+                args=(self.func, self.cfg, self.task_to, self.db_path),
             )
             for _ in range(num_workers)
         ]
-        for p in procs: p.start()
-        for p in procs: p.join()
+        for p in procs:
+            p.start()
+        for p in procs:
+            p.join()
 
     def run(self):
-        from flexlock.taskdb import dump_to_yaml # Import dump_to_yaml here
+        from flexlock.taskdb import dump_to_yaml  # Import dump_to_yaml here
 
         if pending_count(self.db_path) == 0:
             logger.info("All tasks already completed.")
@@ -109,9 +112,10 @@ class ParallelExecutor:
                 # Fixed args for worker_loop (as tuple for *args)
                 fixed_args = (self.func, self.cfg, self.task_to, self.db_path)
                 job = self.backend.submit(worker_loop, *fixed_args)
-                logger.info(f"Submitted {self.backend.__class__.__name__} job {job.job_id}")
+                logger.info(
+                    f"Submitted {self.backend.__class__.__name__} job {job.job_id}"
+                )
                 # TODO: Add a mechanism to wait for single job to complete
         finally:
             # Dump tasks to YAML after all jobs are submitted (or completed locally)
             dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks")
-

@@ -59,7 +59,7 @@ def merge_task_into_cfg(cfg: DictConfig, task: Any, task_to: str | None) -> Dict
     """Merge a task into the config."""
     # Create a minimal config with just the task structure
 
-    if (task_to is not None) and (task_to != '.') :
+    if (task_to is not None) and (task_to != "."):
         task_branch = OmegaConf.create({})
         OmegaConf.update(task_branch, task_to, task, force_add=True)
         task = task_branch

@@ -172,7 +172,7 @@ def flexcli(default_config=None, description=None, debug=None):
 
             else:
                 logger.info("Warning: No 'save_dir' found in the final configuration.")
-            
+
             main_fn = debug_on_fail(fn, stack_depth=2) if debug_enabled else fn
             # --- Execution Logic ---
             # 1. Handle single run case first
@@ -184,7 +184,9 @@ def flexcli(default_config=None, description=None, debug=None):
             logger.info(f"{len(tasks)} tasks loaded")
 
             if not tasks:
-                logger.warning("--tasks or --tasks-key provided, but no tasks were loaded. Running once.")
+                logger.warning(
+                    "--tasks or --tasks-key provided, but no tasks were loaded. Running once."
+                )
                 return main_fn(cfg)
 
             if not cli_args.task_to:
@@ -192,15 +194,17 @@ def flexcli(default_config=None, description=None, debug=None):
 
             # 3. Handle debug sequential run
             if debug_enabled:
-                logger.warning("Debug mode is enabled, parallel execution is disabled. Running tasks sequentially.")
+                logger.warning(
+                    "Debug mode is enabled, parallel execution is disabled. Running tasks sequentially."
+                )
                 for task in tasks:
                     task_cfg = merge_task_into_cfg(cfg, task, cli_args.task_to)
-                    main_fn(task_cfg) #  debug wrapper
+                    main_fn(task_cfg)  #  debug wrapper
                 return None
 
             # 4. Handle parallel execution
             executor = ParallelExecutor(
-                func=main_fn, # not debug wrapper
+                func=main_fn,  # not debug wrapper
                 tasks=tasks,
                 task_to=cli_args.task_to,
                 cfg=cfg,

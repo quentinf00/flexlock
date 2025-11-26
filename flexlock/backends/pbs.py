@@ -6,11 +6,17 @@ import secrets
 from .base import Backend, Job, JobEnvironment
 from loguru import logger
 
+
 class PBSJob(Job):
     """Represents a PBS job."""
-    def __init__(self, job_id): self._id = job_id
+
+    def __init__(self, job_id):
+        self._id = job_id
+
     @property
-    def job_id(self): return self._id
+    def job_id(self):
+        return self._id
+
 
 class PBSBackend(Backend):
     """Implements the FlexLock backend for PBS (Portable Batch System) job submission."""
@@ -21,7 +27,7 @@ class PBSBackend(Backend):
         startup_lines: list[str],
         configure_logging: bool = True,
         configure_name: bool = True,
-        python_exe: str  = "python",
+        python_exe: str = "python",
     ):
         self.folder = folder
         self.folder.mkdir(parents=True, exist_ok=True)
@@ -30,9 +36,7 @@ class PBSBackend(Backend):
         self.configure_name = configure_name
         self.python_exe = python_exe
 
-    def _make_script(
-        self, pickled_path: Path
-    ) -> str:
+    def _make_script(self, pickled_path: Path) -> str:
         """Generates the PBS submission script content."""
         lines = ["#!/bin/bash"]
 
@@ -70,7 +74,7 @@ class PBSBackend(Backend):
         """Submits a single function for execution as a PBS job."""
         data = (fn, args, kwargs)
         pkl_path = self.folder / f"task_{secrets.token_hex(4)}.pkl"
-        with open(pkl_path, 'wb') as f:
+        with open(pkl_path, "wb") as f:
             cloudpickle.dump(data, f)
 
         script_path = self.folder / f"job_{secrets.token_hex(4)}.pbs"
@@ -82,9 +86,14 @@ class PBSBackend(Backend):
 
     def environment(self):
         """Returns a JobEnvironment object providing PBS-specific environment variables."""
+
         class Env(JobEnvironment):
             @property
-            def global_rank(self): return int(os.getenv("OMPI_COMM_WORLD_RANK", 0))
+            def global_rank(self):
+                return int(os.getenv("OMPI_COMM_WORLD_RANK", 0))
+
             @property
-            def world_size(self): return int(os.getenv("OMPI_COMM_WORLD_SIZE", 1))
+            def world_size(self):
+                return int(os.getenv("OMPI_COMM_WORLD_SIZE", 1))
+
         return Env()

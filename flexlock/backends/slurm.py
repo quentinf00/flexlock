@@ -5,11 +5,17 @@ from pathlib import Path
 import secrets  # Better random for filenames
 from .base import Backend, Job, JobEnvironment
 
+
 class SlurmJob(Job):
     """Represents a Slurm job."""
-    def __init__(self, job_id): self._id = job_id
+
+    def __init__(self, job_id):
+        self._id = job_id
+
     @property
-    def job_id(self): return self._id
+    def job_id(self):
+        return self._id
+
 
 class SlurmBackend(Backend):
     """Implements the FlexLock backend for Slurm job submission."""
@@ -19,7 +25,7 @@ class SlurmBackend(Backend):
         folder: Path,
         startup_lines: list[str],
         configure_logging: bool = True,
-        python_exe = "python",
+        python_exe="python",
     ):
         self.folder = folder
         self.folder.mkdir(parents=True, exist_ok=True)
@@ -27,9 +33,7 @@ class SlurmBackend(Backend):
         self.configure_logging = configure_logging
         self.python_exe = python_exe
 
-    def _make_script(
-        self, pickled_path: Path
-    ) -> str:
+    def _make_script(self, pickled_path: Path) -> str:
         """Generates the Slurm submission script content."""
         lines = ["#!/bin/bash"]
         lines.extend(self.startup_lines)
@@ -61,7 +65,7 @@ class SlurmBackend(Backend):
         """Submits a single function for execution as a Slurm job."""
         data = (fn, args, kwargs)
         pkl_path = self.folder / f"task_{secrets.token_hex(4)}.pkl"
-        with open(pkl_path, 'wb') as f:
+        with open(pkl_path, "wb") as f:
             cloudpickle.dump(data, f)
 
         script_path = self.folder / f"job_{secrets.token_hex(4)}.slurm"
@@ -73,9 +77,14 @@ class SlurmBackend(Backend):
 
     def environment(self):
         """Returns a JobEnvironment object providing Slurm-specific environment variables."""
+
         class Env(JobEnvironment):
             @property
-            def global_rank(self): return int(os.getenv("SLURM_PROCID", 0))
+            def global_rank(self):
+                return int(os.getenv("SLURM_PROCID", 0))
+
             @property
-            def world_size(self): return int(os.getenv("SLURM_NTASKS", 1))
+            def world_size(self):
+                return int(os.getenv("SLURM_NTASKS", 1))
+
         return Env()

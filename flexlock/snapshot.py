@@ -17,6 +17,7 @@ def _get_caller_info(repos: dict) -> dict:
     """Gets information about the function that called snapshot."""
     try:
         from git import Repo
+
         caller_frame = inspect.stack()[2]  # Go back 2 frames to get the actual caller
         caller_module = inspect.getmodule(caller_frame[0])
 
@@ -61,6 +62,7 @@ def _get_repo_info(
     """
 
     from .git_utils import commit_cwd, get_git_commit
+
     if repos is None:
         return {}
 
@@ -85,6 +87,7 @@ def _atomic_write_yaml(data: dict, path: Path):
     with os.fdopen(temp_fd, "w") as f:
         yaml.dump(data, f, default_flow_style=False, sort_keys=False)
     os.rename(temp_path, path)
+
 
 def snapshot(
     config: DictConfig,
@@ -243,6 +246,3 @@ def snapshot(
         with mlflowlink(str(lock_file.parent)) as _:
             pass
         pass
-
-
-
