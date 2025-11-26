@@ -14,7 +14,13 @@ from joblib import Parallel, delayed
 log = logging.getLogger(__name__)
 
 # --- Cache Configuration ---
-CACHE_DIR = Path(os.environ.get("FLEXLOCK_CACHE", Path.home() / ".cache" / "flexlock"))
+CACHE_DIR = Path(
+        os.environ.get(
+            "FLEXLOCK_CACHE",
+            os.environ.get(
+                "XDG_CACHE_HOME", Path.home() / ".cache" )
+        )
+) / "flexlock"
 CACHE_FILE = CACHE_DIR / "hashes.json"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_DIR_FILE_LIMIT = os.environ.get("FLEXLOCK_DIR_FILE_LIMIT", 1000)
