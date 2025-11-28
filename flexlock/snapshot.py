@@ -98,7 +98,7 @@ def snapshot(
     merge: bool = False,
     commit: bool = True,
     commit_branch: str = "flexlock-run-logs",
-    commit_message: str = "FlexLock: Auto-snapshot",
+    commit_message: str | None = None,
     mlflowlink: bool = False,
     resolve: bool = True,
     prevs_from_data: bool = True,
@@ -187,6 +187,8 @@ def snapshot(
         run_data["caller"] = _get_caller_info(repos)
 
         if repos:
+            if commit_message is None:
+                commit_message = f"Snapshot {OmegaConf.select(config, 'save_dir')}"
             repo_info = _get_repo_info(repos, commit, commit_branch, commit_message)
             run_data.setdefault("repos", {}).update(repo_info)
 

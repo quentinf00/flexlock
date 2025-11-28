@@ -109,7 +109,7 @@ def test_snapshot_with_commit_true(setup_test_env):
     assert new_commit_hash != initial_commit.hexsha
     
     new_commit = repo.commit(new_commit_hash)
-    assert "FlexLock: Auto-snapshot" in new_commit.message
+    assert "Snapshot " + str(env["save_dir"]) in new_commit.message
 
 def test_snapshot_caller_info(setup_test_env):
     """Test that caller information (module, function, filepath) is captured."""
