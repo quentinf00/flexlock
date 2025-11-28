@@ -85,7 +85,8 @@ The configuration for both SLURM and PBS backends follows the same structure, al
 
 - `startup_lines`: A list of strings that will be placed at the top of the submission script. This is where you define all your scheduler directives (e.g., `#SBATCH`, `#PBS`), environment setup, and module loads.
 - `configure_logging`: (Optional, default: `True`) If true, FlexLock will automatically add directives to write the job's stdout and stderr to files in the backend's log directory (e.g., `save_dir/slurm_logs/`).
-- `containerization`: (Optional) Set to `singularity` or `docker` to run the job in a container.
+- `python_exe`: (Optional, default: `"python"`) The python executable to use. This is particularly useful for containerized execution, where it can be set to a `singularity run` command.
+- `containerization`: (Optional) Set to `singularity` or `docker` to run the job in a container. Note: For the PBS backend, containerization is configured via the `python_exe` parameter.
 - `container_image`: (Required if `containerization` is set) The path to the container image file (e.g., a `.sif` file for Singularity).
 - `bind_mounts`: (Optional) A list of paths to bind mount into the container, in the format `host_path:container_path`. The directory containing the task data is always mounted automatically.
 
@@ -114,17 +115,22 @@ configure_logging: true
 
 ### PBS Configuration Example
 
-This example submits a job to the `sequentiel` queue with a 2-hour walltime.
+This example submits a 2-task job array to the `sequentiel` queue with a 5-minute walltime. Note that by default, FlexLock will add the `#PBS -N`, `#PBS -o` and `#PBS -e` directives.
 
 ```yaml
 # pbs_config.yaml
 startup_lines:
-  - "#PBS -N flexlock-experiment"
-  - "#PBS -l nodes=1:ncpus=4"
-  - "#PBS -l walltime=02:00:00"
-  - "#PBS -l mem=8gb"
-  - "#PBS -q sequentiel"
-  - "#PBS -m abe" # Email notifications
+  - "#PBS -l select=mem=4gb:ncpus=1"
+  - '#PBS -l walltime=00:05:00'
+  - '#PBS -q sequentiel'
+  # Submit as a 2-task job array
+  - '#PBS -J 0-1'
+  # Merge stdout and stderr
+  - '#PBS -k oe'
+  # Make environment variables available to the job
+  - '#PBS -V'
+  # Change to the submission directory
+  - 'cd $PBS_O_WORKDIR'
   # Activate pixi environment
   - 'eval "$(pixi shell-hook)"'
 ```
@@ -133,7 +139,7 @@ startup_lines:
 
 FlexLock supports running jobs in Singularity or Docker containers for maximum reproducibility.
 
-### Container Configuration Example (Singularity)
+### Container Configuration Example (Singularity with SLURM)
 
 This configuration will execute the job inside a Singularity container, bind-mounting a dataset directory.
 
@@ -150,6 +156,28 @@ containerization: singularity
 container_image: /path/to/your/flexlock_env.sif
 bind_mounts:
   - /path/to/host/data:/data
+```
+
+### Container Configuration Example (Singularity with PBS)
+
+For the PBS backend, containerization is achieved by setting the `python_exe` to the `singularity` command.
+
+```yaml
+# pbs_config_singularity.yaml
+startup_lines:
+  - "#PBS -l select=mem=4gb:ncpus=1"
+  - '#PBS -l walltime=00:05:00'
+  - '#PBS -q sequentiel'
+  - '#PBS -J 0-1'
+  - '#PBS -k oe'
+  - 'cd $PBS_O_WORKDIR'
+
+python_exe: >-
+  singularity run
+  --bind $(pwd)/my_project:/app/my_project
+  --bind $(pwd):/workspace 
+  --pwd /workspace
+  env.sif python
 
 ```
 
@@ -158,6 +186,50 @@ bind_mounts:
 You can use the `singularity.def` and `Dockerfile` provided in the project to build a container image with your `pixi` environment pre-installed.
 
 **Singularity:**
+
+A `singularity.def` file defines the recipe for building your container. Here is an example that starts from an Ubuntu base, installs pixi, and sets up the project environment.
+
+```singularity
+Bootstrap: docker
+From: ubuntu:24.04
+
+%files
+    # Copy the project files required to build the environment into /app
+    pyproject.toml /app/
+    pixi.lock /app/
+    README.md /app/
+
+%post
+    # Navigate to the app directory
+    cd /app
+    mkdir /app/my_awesome_project
+    
+    # Install the pixi environment based on the lock file.
+    # This creates the environment inside the container at /app/.pixi
+    apt-get update && apt-get install -y curl
+    export PIXI_HOME=/pixi
+    curl -fsSL https://pixi.sh/install.sh | bash
+    export PATH=$PIXI_HOME/bin:$PATH
+    pixi global install git
+    echo which git
+    pixi install --locked
+    rm -rf $HOME/.cache
+
+%environment
+    # Set the default working directory for when the container runs
+    export SINGULARITY_WORKDIR=/app
+    export PIXI_HOME=/pixi
+    export PATH=$HOME/.pixi/bin:$PATH
+    eval "$(pixi  shell-hook --manifest-path /app --as-is)"
+
+
+%runscript
+    # Default command to run. The environment is already active.
+    # This script will execute any commands passed to "singularity run".
+    exec "$@"
+```
+
+You can then build the container image (`.sif` file) using:
 ```bash
 # (May require sudo depending on system config)
 singularity build flexlock.sif singularity.def
