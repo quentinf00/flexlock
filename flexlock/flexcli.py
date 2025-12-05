@@ -145,7 +145,7 @@ def flexcli(default_config=None, description=None, debug=None):
             if cli_args.config:
                 _cfg = OmegaConf.load(cli_args.config)
                 if cli_args.experiment:
-                    _cfg = OmegaConf.select(cfg, cli_args.experiment)
+                    _cfg = OmegaConf.select(_cfg, cli_args.experiment)
                     if not isinstance(cfg, DictConfig):
                         raise ValueError(
                             f"Experiment '{cli_args.experiment}' did not resolve to a dictionary in the config."
