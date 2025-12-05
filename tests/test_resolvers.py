@@ -3,7 +3,8 @@ from omegaconf import OmegaConf
 from pathlib import Path
 import time
 
-from flexlock.resolvers import now_resolver, vinc_resolver 
+from flexlock.resolvers import now_resolver, vinc_resolver
+
 
 def test_now_resolver():
     """Test the now_resolver returns a string in the correct format."""
@@ -22,6 +23,7 @@ def test_now_resolver():
         time.strptime(timestamp_custom, "%Y%m%d")
     except ValueError:
         pytest.fail("Custom timestamp format is incorrect")
+
 
 def test_vinc_resolver(tmp_path):
     """Test the vinc_resolver correctly increments version numbers."""
@@ -43,6 +45,7 @@ def test_vinc_resolver(tmp_path):
     # Next call should be experiment_0006
     path3 = vinc_resolver(str(base_path))
     assert path3 == str(tmp_path / "experiment_0006")
+
 
 def test_vinc_resolver_with_custom_format(tmp_path):
     """Test vinc_resolver with a custom format string."""

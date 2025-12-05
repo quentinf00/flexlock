@@ -6,6 +6,7 @@ import yaml
 
 from flexlock.snapshot import snapshot
 
+
 @pytest.fixture
 def setup_test_env(tmp_path):
     """
@@ -31,7 +32,7 @@ def setup_test_env(tmp_path):
     prev_stage_dir.mkdir()
     prev_snapshot_data = {
         "config": {"param": 10},
-        "repos": {"main": "prev_commit_hash"}
+        "repos": {"main": "prev_commit_hash"},
     }
     with open(prev_stage_dir / "run.lock", "w") as f:
         yaml.dump(prev_snapshot_data, f)
@@ -48,19 +49,21 @@ def setup_test_env(tmp_path):
         "save_dir": save_dir,
     }
 
+
 def test_snapshot_basic_creation(setup_test_env):
     """Test basic snapshot creation without commits, data, or prevs."""
     env = setup_test_env
     cfg = OmegaConf.create({"param": 1, "save_dir": str(env["save_dir"])})
-    
+
     snapshot(config=cfg, commit=False)
 
     lock_file = env["save_dir"] / "run.lock"
     assert lock_file.exists()
-    with open(lock_file, 'r') as f:
+    with open(lock_file, "r") as f:
         data = yaml.safe_load(f)
-    
+
     assert data["config"]["param"] == 1
+
 
 def test_snapshot_with_data_and_prevs(setup_test_env):
     """Test snapshot with data hashing and previous stage loading."""
@@ -71,12 +74,12 @@ def test_snapshot_with_data_and_prevs(setup_test_env):
         config=cfg,
         data={"my_data": str(env["data_dir"] / "dataset.csv")},
         prevs=[str(env["prev_stage_dir"])],
-        commit=False
+        commit=False,
     )
 
     lock_file = env["save_dir"] / "run.lock"
     assert lock_file.exists()
-    with open(lock_file, 'r') as f:
+    with open(lock_file, "r") as f:
         data = yaml.safe_load(f)
 
     assert "data" in data
@@ -86,7 +89,11 @@ def test_snapshot_with_data_and_prevs(setup_test_env):
 
     assert "prevs" in data
     assert str(env["prev_stage_dir"].resolve().name) in data["prevs"]
-    assert data["prevs"][str(env["prev_stage_dir"].resolve().name)]["config"]["param"] == 10
+    assert (
+        data["prevs"][str(env["prev_stage_dir"].resolve().name)]["config"]["param"]
+        == 10
+    )
+
 
 def test_snapshot_with_commit_true(setup_test_env):
     """Test that snapshot creates a new commit when commit=True."""
@@ -101,15 +108,16 @@ def test_snapshot_with_commit_true(setup_test_env):
     snapshot(config=cfg, repos={"main": str(env["repo_dir"])}, commit=True)
 
     lock_file = env["save_dir"] / "run.lock"
-    with open(lock_file, 'r') as f:
+    with open(lock_file, "r") as f:
         data = yaml.safe_load(f)
 
     assert "repos" in data
     new_commit_hash = data["repos"]["main"]
     assert new_commit_hash != initial_commit.hexsha
-    
+
     new_commit = repo.commit(new_commit_hash)
     assert "Snapshot " + str(env["save_dir"]) in new_commit.message
+
 
 def test_snapshot_caller_info(setup_test_env):
     """Test that caller information (module, function, filepath) is captured."""
@@ -120,15 +128,15 @@ def test_snapshot_caller_info(setup_test_env):
     snapshot(config=cfg, repos={"test_repo": str(env["repo_dir"])}, commit=False)
 
     lock_file = env["save_dir"] / "run.lock"
-    with open(lock_file, 'r') as f:
+    with open(lock_file, "r") as f:
         data = yaml.safe_load(f)
 
     assert "caller" in data
     caller_info = data["caller"]
-    
+
     assert caller_info["module"] == "test_snapshot"
     assert caller_info["function"] == "test_snapshot_caller_info"
-    
+
     # In some CI/test environments, the test file may not be inside the repo,
     # so we check the filepath name, which is more robust.
     assert Path(caller_info["filepath"]).name == "test_snapshot.py"
@@ -143,7 +151,7 @@ def test_snapshot_repo_as_string(setup_test_env):
 
     lock_file = env["save_dir"] / "run.lock"
     assert lock_file.exists()
-    with open(lock_file, 'r') as f:
+    with open(lock_file, "r") as f:
         data = yaml.safe_load(f)
 
     assert "repos" in data
@@ -152,17 +160,18 @@ def test_snapshot_repo_as_string(setup_test_env):
     assert repo_dir_name in data["repos"]
     assert data["repos"][repo_dir_name] == env["repo"].head.commit.hexsha
 
+
 def test_snapshot_data_as_list(setup_test_env):
     """Test snapshot with the 'data' argument provided as a list of strings."""
     env = setup_test_env
     cfg = OmegaConf.create({"param": 7, "save_dir": str(env["save_dir"])})
-    
+
     data_file_path = str(env["data_dir"] / "dataset.csv")
     snapshot(config=cfg, data=[data_file_path, str(env["data_dir"])], commit=False)
 
     lock_file = env["save_dir"] / "run.lock"
     assert lock_file.exists()
-    with open(lock_file, 'r') as f:
+    with open(lock_file, "r") as f:
         data = yaml.safe_load(f)
 
     assert "data" in data
@@ -175,7 +184,7 @@ def test_snapshot_data_as_list(setup_test_env):
 def test_snapshot_prevs_discovery(setup_test_env):
     """Test that snapshot can find a run.lock file in parent directories."""
     env = setup_test_env
-    
+
     # Create a nested directory structure inside the prev_stage_dir
     nested_dir = env["prev_stage_dir"] / "nested" / "deeply"
     nested_dir.mkdir(parents=True)
@@ -189,12 +198,10 @@ def test_snapshot_prevs_discovery(setup_test_env):
 
     lock_file = env["save_dir"] / "run.lock"
     assert lock_file.exists()
-    with open(lock_file, 'r') as f:
+    with open(lock_file, "r") as f:
         data = yaml.safe_load(f)
 
     assert "prevs" in data
     # The key should be the name of the directory containing the run.lock, which is 'prev_run'
     assert "prev_run" in data["prevs"]
     assert data["prevs"]["prev_run"]["config"]["param"] == 10
-
-

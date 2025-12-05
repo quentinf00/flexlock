@@ -39,16 +39,19 @@ def flexcli(default_config=None, description=None, debug=None):
             # --- Argument Parsing ---
             # Standard config arguments
             parser.add_argument(
+                "-c",
                 "--config",
                 default=None,
                 help="Path to the base YAML configuration file.",
             )
             parser.add_argument(
+                "-e",
                 "--experiment",
                 default=None,
                 help="Dot-separated key to select a specific experiment from the config.",
             )
             parser.add_argument(
+                "-O",
                 "--overrides_path",
                 default=None,
                 help="Path to a YAML file with configuration overrides.",
@@ -140,14 +143,14 @@ def flexcli(default_config=None, description=None, debug=None):
                 cfg = to_dictconfig(default_config)
 
             if cli_args.config:
-                cfg.merge_with(OmegaConf.load(cli_args.config))
-
-            if cli_args.experiment:
-                cfg = OmegaConf.select(cfg, cli_args.experiment)
-                if not isinstance(cfg, DictConfig):
-                    raise ValueError(
-                        f"Experiment '{cli_args.experiment}' did not resolve to a dictionary in the config."
-                    )
+                _cfg = OmegaConf.load(cli_args.config)
+                if cli_args.experiment:
+                    _cfg = OmegaConf.select(cfg, cli_args.experiment)
+                    if not isinstance(cfg, DictConfig):
+                        raise ValueError(
+                            f"Experiment '{cli_args.experiment}' did not resolve to a dictionary in the config."
+                        )
+                cfg.merge_with(_cfg)
 
             if cli_args.overrides_path:
                 cfg.merge_with(OmegaConf.load(cli_args.overrides_path))

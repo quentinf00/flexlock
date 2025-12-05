@@ -5,27 +5,30 @@ import os
 
 from flexlock.git_utils import get_git_commit, commit_cwd
 
+
 @pytest.fixture
 def git_repo(tmp_path):
     """Create a temporary git repository for testing."""
     repo_dir = tmp_path / "test_repo"
     repo_dir.mkdir()
     repo = Repo.init(repo_dir)
-    
+
     initial_file = repo_dir / "README.md"
     initial_file.write_text("Initial commit")
     repo.index.add([str(initial_file)])
     repo.config_writer().set_value("user", "name", "Test User").release()
     repo.config_writer().set_value("user", "email", "test@example.com").release()
     repo.index.commit("Initial commit")
-    
+
     return repo
+
 
 def test_get_git_commit(git_repo):
     """Test that get_git_commit returns the correct commit hash."""
     expected_hash = git_repo.head.commit.hexsha
     actual_hash = get_git_commit(path=git_repo.working_dir)
     assert actual_hash == expected_hash
+
 
 def test_commit_cwd_basic(git_repo):
     """Test that commit_cwd creates a new commit with the correct files."""
@@ -36,25 +39,24 @@ def test_commit_cwd_basic(git_repo):
     (repo_dir / "new_file.txt").write_text("new content")
 
     new_commit = commit_cwd(
-        branch="test_branch",
-        message="Test commit",
-        repo_path=str(repo_dir)
+        branch="test_branch", message="Test commit", repo_path=str(repo_dir)
     )
 
     assert new_commit != initial_commit
     assert new_commit.message.strip() == "Test commit"
-    
+
     committed_files = new_commit.stats.files.keys()
     assert "new_file.txt" in committed_files
-    assert "README.md" not in committed_files # Was not changed
+    assert "README.md" not in committed_files  # Was not changed
 
     # Check that the branch was created
     assert "test_branch" in git_repo.heads
 
+
 def test_commit_cwd_filesize_warn(git_repo):
     """Test that commit_cwd issues a warning for large files."""
     repo_dir = Path(git_repo.working_dir)
-    
+
     # Create a large file
     large_file = repo_dir / "large_file.bin"
     # Write 2KB of data, with a 1KB warning threshold
@@ -65,8 +67,9 @@ def test_commit_cwd_filesize_warn(git_repo):
             branch="large_file_branch",
             message="Large file commit",
             repo_path=str(repo_dir),
-            filesize_warn=1 * 1024 * 1024 # 1 MB
+            filesize_warn=1 * 1024 * 1024,  # 1 MB
         )
+
 
 def test_get_git_commit_error():
     """Test that get_git_commit handles non-repo paths gracefully."""
@@ -91,9 +94,7 @@ def test_commit_cwd_with_deleted_file(git_repo):
 
     # Commit the deletion
     new_commit = commit_cwd(
-        branch="delete_branch",
-        message="Delete file",
-        repo_path=str(repo_dir)
+        branch="delete_branch", message="Delete file", repo_path=str(repo_dir)
     )
 
     assert new_commit != initial_commit
@@ -103,6 +104,6 @@ def test_commit_cwd_with_deleted_file(git_repo):
     # The change type 'D' stands for 'Deleted'
     diff_against_parent = new_commit.parents[0].diff(new_commit)
     assert any(
-        change.change_type == 'D' and change.a_path == "file_to_delete.txt"
+        change.change_type == "D" and change.a_path == "file_to_delete.txt"
         for change in diff_against_parent
     )
