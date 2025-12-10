@@ -5,7 +5,10 @@ import dataclasses
 from collections import namedtuple
 from typing import Any
 import pytest
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
+import tempfile
+from pathlib import Path
+import functools
 
 try:
     import attr
@@ -14,7 +17,7 @@ try:
 except ImportError:
     ATTR_AVAILABLE = False
 
-from flexlock.utils import to_dictconfig
+from flexlock.utils import to_dictconfig, instantiate, py2cfg, log_to_file
 
 
 # --- Test Cases for to_dictconfig function ---
@@ -234,3 +237,321 @@ def test_to_dictconfig_nested_structures():
     assert result.level1.simple_value == 42
     assert result.top_level_list[0].item1 == "val1"
     assert result.top_level_list[1].item2 == "val2"
+
+
+# --- Test Cases for instantiate function ---
+
+class TestInstantiationClass:
+    """Helper class for testing instantiate function."""
+    def __init__(self, param1="default", param2=42):
+        self.param1 = param1
+        self.param2 = param2
+
+
+def test_instantiate_simple_class():
+    """Test instantiating a simple class via config."""
+    config = OmegaConf.create({
+        "_target_": "tests.test_utils.TestInstantiationClass",
+        "param1": "test_value",
+        "param2": 100
+    })
+
+    result = instantiate(config)
+    assert result.__class__.__name__ == 'TestInstantiationClass'
+    assert result.param1 == "test_value"
+    assert result.param2 == 100
+
+
+def test_instantiate_with_actual_import():
+    """Test instantiate with a class that can be imported."""
+    from argparse import Namespace
+
+    config = OmegaConf.create({
+        "_target_": "argparse.Namespace",
+        "name": "test",
+        "value": 42
+    })
+
+    result = instantiate(config)
+    assert isinstance(result, Namespace)
+    assert result.name == "test"
+    assert result.value == 42
+
+
+def test_instantiate_with_list():
+    """Test instantiate with list containing target objects."""
+    from argparse import Namespace
+
+    config = OmegaConf.create([
+        {
+            "_target_": "argparse.Namespace",
+            "name": "test1",
+            "value": 1
+        },
+        {
+            "_target_": "argparse.Namespace",
+            "name": "test2",
+            "value": 2
+        }
+    ])
+
+    result = instantiate(config)
+    assert isinstance(result, list)
+    assert len(result) == 2
+    assert isinstance(result[0], Namespace)
+    assert result[0].name == "test1"
+    assert result[0].value == 1
+    assert isinstance(result[1], Namespace)
+    assert result[1].name == "test2"
+    assert result[1].value == 2
+
+
+def test_instantiate_nested_config():
+    """Test instantiate with nested config containing targets."""
+    from argparse import Namespace
+
+    config = OmegaConf.create({
+        "namespace": {
+            "_target_": "argparse.Namespace",
+            "name": "nested",
+            "value": 99
+        },
+        "simple": "value",
+        "list": [1, 2, 3]
+    })
+
+    result = instantiate(config)
+    assert isinstance(result, dict)
+    assert isinstance(result["namespace"], Namespace)
+    assert result["namespace"].name == "nested"
+    assert result["namespace"].value == 99
+    assert result["simple"] == "value"
+    assert result["list"] == [1, 2, 3]
+
+
+def test_instantiate_partial():
+    """Test instantiate with _partial_ flag."""
+    config = OmegaConf.create({
+        "_target_": "builtins.dict",
+        "_partial_": True,
+        "param1": "test_value"
+    })
+
+    partial_func = instantiate(config)
+    assert isinstance(partial_func, functools.partial)
+
+    # Call the partial to get the actual result
+    result = partial_func(param2=200)
+    assert isinstance(result, dict)
+    assert result["param1"] == "test_value"
+    assert result["param2"] == 200
+
+
+def test_instantiate_with_runtime_args():
+    """Test instantiate with runtime arguments overriding config."""
+    config = OmegaConf.create({
+        "_target_": "builtins.dict",
+        "param1": "original",
+        "param2": "to_override"
+    })
+
+    result = instantiate(config, param2="new_value", param3="added")
+    assert isinstance(result, dict)
+    assert result["param1"] == "original"
+    assert result["param2"] == "new_value"  # Overridden by runtime arg
+    assert result["param3"] == "added"      # Added at runtime
+
+
+# --- Test Cases for py2cfg function ---
+
+def py2cfg_test_func(x=10, y="hello"):
+    """Test function for py2cfg."""
+    return f"x={x}, y={y}"
+
+
+class Py2CfgTestClass:
+    """Test class for py2cfg."""
+    def __init__(self, param1="default", param2=42):
+        self.param1 = param1
+        self.param2 = param2
+
+
+def test_py2cfg_simple_function():
+    """Test converting a simple function to config."""
+
+    config = py2cfg(py2cfg_test_func)
+
+    assert "_target_" in config
+    assert config["_target_"] == "test_utils.py2cfg_test_func"
+    assert "x" in config
+    assert "y" in config
+    assert config["x"] == 10
+    assert config["y"] == "hello"
+
+
+def test_py2cfg_simple_class():
+    """Test converting a simple class to config."""
+
+    config = py2cfg(Py2CfgTestClass)
+
+    assert "_target_" in config
+    assert config["_target_"] == "test_utils.Py2CfgTestClass"
+    assert "param1" in config
+    assert "param2" in config
+    assert config["param1"] == "default"
+    assert config["param2"] == 42
+
+
+def test_py2cfg_with_overrides():
+    """Test py2cfg with override parameters."""
+
+    def simple_func(x=10, y="hello"):
+        return f"x={x}, y={y}"
+
+    config = py2cfg(simple_func, x=99, new_param="new_value")
+
+    assert config["x"] == 99  # Overridden
+    assert config["y"] == "hello"  # Default preserved
+    assert config["new_param"] == "new_value"  # New param added
+
+
+def py2cfg_partial_test_func(x, y=10):
+    """Test function for partial py2cfg."""
+    return x + y
+
+
+def test_py2cfg_partial_function():
+    """Test converting a partial function to config."""
+
+    partial_func = functools.partial(py2cfg_partial_test_func, x=5)
+    config = py2cfg(partial_func)
+
+    assert "_target_" in config
+    assert config["_target_"] == "test_utils.py2cfg_partial_test_func"
+    assert "_partial_" in config
+    assert config["_partial_"] is True
+    assert config["x"] == 5  # Partial's fixed argument
+    assert config["y"] == 10  # Default preserved
+
+
+def test_py2cfg_no_signature():
+    """Test py2cfg with object that has no signature."""
+    # Using built-in functions that might not have inspectable signatures
+    import math
+
+    config = py2cfg(math.ceil)
+    assert "_target_" in config
+    assert config["_target_"] == "math.ceil"
+    # Should not crash even if signature inspection fails
+
+class CallableClass:
+    def __init__(self, default_value=42):
+        self.default_value = default_value
+
+    def __call__(self, x):
+        return x + self.default_value
+
+def test_py2cfg_callable_object():
+    """Test py2cfg with a callable object."""
+
+    config = py2cfg(CallableClass, default_value=10)
+
+    # The __call__ method should be the target
+    assert "_target_" in config
+    # Note: We don't test the exact path since it's a local class
+
+
+# --- Test Cases for log_to_file function ---
+
+def test_log_to_file_context_manager():
+    """Test the log_to_file context manager functionality."""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as f:
+        log_path = f.name
+
+    try:
+        # Use the context manager
+        with log_to_file(log_path):
+            from loguru import logger
+            logger.info("Test message 1")
+            logger.debug("Test message 2")
+
+        # Check that the log file contains the messages
+        with open(log_path, 'r') as f:
+            log_content = f.read()
+
+        assert "Test message 1" in log_content
+        assert "Test message 2" in log_content
+        assert "INFO" in log_content
+        assert "DEBUG" in log_content
+
+    finally:
+        # Clean up the temporary file
+        if Path(log_path).exists():
+            Path(log_path).unlink()
+
+
+def test_log_to_file_with_multiple_logs():
+    """Test logging to file with multiple context entries."""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as f:
+        log_path = f.name
+
+    try:
+        # Log something
+        with log_to_file(log_path):
+            from loguru import logger
+            logger.info("First message")
+
+        # Log something else to same file
+        with log_to_file(log_path):
+            from loguru import logger
+            logger.warning("Second message")
+
+        # Check that both messages are in the file
+        with open(log_path, 'r') as f:
+            log_content = f.read()
+
+        assert "First message" in log_content
+        assert "Second message" in log_content
+        assert "INFO" in log_content
+        assert "WARNING" in log_content
+
+    finally:
+        # Clean up the temporary file
+        if Path(log_path).exists():
+            Path(log_path).unlink()
+
+
+def test_log_to_file_different_files():
+    """Test logging to different files."""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as f1:
+        log_path1 = f1.name
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.log', delete=False) as f2:
+        log_path2 = f2.name
+
+    try:
+        # Log to first file
+        with log_to_file(log_path1):
+            from loguru import logger
+            logger.info("Message for file 1")
+
+        # Log to second file
+        with log_to_file(log_path2):
+            from loguru import logger
+            logger.info("Message for file 2")
+
+        # Check that each file has its own message
+        with open(log_path1, 'r') as f:
+            content1 = f.read()
+        with open(log_path2, 'r') as f:
+            content2 = f.read()
+
+        assert "Message for file 1" in content1
+        assert "Message for file 2" not in content1
+        assert "Message for file 2" in content2
+        assert "Message for file 1" not in content2
+
+    finally:
+        # Clean up the temporary files
+        for path in [log_path1, log_path2]:
+            if Path(path).exists():
+                Path(path).unlink()

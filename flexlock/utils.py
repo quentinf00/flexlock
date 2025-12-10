@@ -131,33 +131,36 @@ def instantiate(config, *args, **kwargs):
 
     return target_class(*args, **init_args)
 
+
 def py2cfg(obj, **overrides):
     """
     Converts a class, function, or partial into a configuration dictionary
     with a "_target_" key and default arguments.
-    
+
     Args:
         obj: The class, function, or functools.partial object.
         **overrides: Key-value pairs to override defaults or add fixed values.
     """
-    
+
     # 1. Handle functools.partial
     # If it's a partial, we unwrap it, capture the fixed args, and mark as _partial_
     if isinstance(obj, functools.partial):
         config = py2cfg(obj.func)
         config["_partial_"] = True
-        config.update(obj.keywords) # Add bound arguments
-        config.update(overrides)    # Apply runtime overrides
+        config.update(obj.keywords)  # Add bound arguments
+        config.update(overrides)  # Apply runtime overrides
         return config
 
     # 2. Extract the dot-path string
     if not hasattr(obj, "__module__") or not hasattr(obj, "__qualname__"):
-        raise ValueError(f"Cannot determine target path for {obj}. It must be a class or function.")
-    
+        raise ValueError(
+            f"Cannot determine target path for {obj}. It must be a class or function."
+        )
+
     # Handle case where class is defined in the main script
     module = obj.__module__
     target_path = f"{module}.{obj.__qualname__}"
-    
+
     config = {"_target_": target_path}
 
     # 3. Inspect signature to get default values
@@ -167,15 +170,15 @@ def py2cfg(obj, **overrides):
             # We only care about parameters that have defaults
             if param.default is not param.empty:
                 val = param.default
-                
+
                 # OPTIONAL: Recursive handling
                 # If a default value is itself a class/function, convert it too.
                 if inspect.isclass(val) or inspect.isfunction(val):
-                     try:
-                         val = py2cfg(val)
-                     except ValueError:
-                         pass # Keep original if conversion fails
-                
+                    try:
+                        val = py2cfg(val)
+                    except ValueError:
+                        pass  # Keep original if conversion fails
+
                 config[name] = val
     except (ValueError, TypeError):
         # Some built-ins allow signature inspection, others don't.
@@ -183,5 +186,5 @@ def py2cfg(obj, **overrides):
 
     # 4. Apply overrides
     config.update(overrides)
-    
+
     return config
