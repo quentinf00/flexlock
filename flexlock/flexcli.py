@@ -152,6 +152,9 @@ def flexcli(default_config=None, description=None, debug=None):
                             f"Experiment '{cli_args.experiment}' did not resolve to a dictionary in the config."
                         )
                 cfg.merge_with(_cfg)
+                # sticking with the parent config
+                _cfg.merge_with(cfg)
+                cfg = _cfg
 
             if cli_args.overrides_path:
                 cfg.merge_with(OmegaConf.load(cli_args.overrides_path))
