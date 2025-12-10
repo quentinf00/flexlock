@@ -1,3 +1,30 @@
+## Better multistage config handling:
+
+I want to make sure interpolation works when I use a nested config workflow like
+I have a function that takes a config
+```python
+class Cfg:
+      p: int = 1
+
+def myfn(cfg: Cfg)
+    print(cfg.p)
+```
+
+
+```yaml
+param: 1
+cfg:
+    p: ${param}
+```
+
+```python
+glob_cfg = OmegaConf.load('cfg.yaml')
+myfn(glob_cfg.cfg)
+```
+
+Please write a test for this workflow in simple run and multitask run
+And then fix the necessary code when needed in flexcli.py, utils.py and parallel.py
+
 
 ## Push/Pull Workflow Implementation
 

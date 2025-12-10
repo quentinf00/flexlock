@@ -184,9 +184,7 @@ def flexcli(default_config=None, description=None, debug=None):
                 return main_fn(cfg)
 
             # 2. Load tasks for batch execution
-            tasks = []
-            for t in cli_args.tasks:
-                tasks.extend(load_tasks(t, cli_args.tasks_key, cfg))
+            tasks = load_tasks(cli_args.tasks, cli_args.tasks_key, cfg)
             logger.info(f"{len(tasks)} tasks loaded")
 
             if not tasks:

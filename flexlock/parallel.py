@@ -15,16 +15,21 @@ from typing import Any, List
 def load_tasks(tasks: str, tasks_key: str, cfg: DictConfig) -> List[Any]:
     """Load tasks from a file or from the config."""
     if tasks:
-        p_tasks = Path(tasks)
-        if not p_tasks.exists():
-            raise FileNotFoundError(f"Tasks file not found: {tasks}")
-        if p_tasks.suffix == ".txt":
-            return [line.strip() for line in p_tasks.read_text().splitlines()]
-        elif p_tasks.suffix in [".yaml", ".yml"]:
-            with p_tasks.open() as f:
-                return yaml.safe_load(f)
-        else:
-            raise ValueError(f"Unsupported tasks file format: {p_tasks.suffix}")
+        all_tasks = []
+        for t in tasks:
+            p_tasks = Path(t)
+            if not p_tasks.exists():
+                raise FileNotFoundError(f"Tasks file not found: {t}")
+            if p_tasks.suffix == ".txt":
+                all_tasks.extend(
+                    [line.strip() for line in p_tasks.read_text().splitlines()]
+                )
+            elif p_tasks.suffix in [".yaml", ".yml"]:
+                with p_tasks.open() as f:
+                    all_tasks.extend(yaml.safe_load(f))
+            else:
+                raise ValueError(f"Unsupported tasks file format: {p_tasks.suffix}")
+        return all_tasks
     elif tasks_key:
         return OmegaConf.select(cfg, tasks_key)
     return []

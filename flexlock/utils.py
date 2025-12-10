@@ -1,7 +1,12 @@
 """Utility functions for FlexLock."""
 
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import OmegaConf, DictConfig, ListConfig
 from dataclasses import is_dataclass
+from contextlib import contextmanager
+from loguru import logger
+import importlib
+import functools
+
 
 from typing import Any
 import warnings
@@ -64,3 +69,63 @@ def merge_task_into_cfg(cfg: DictConfig, task: Any, task_to: str | None) -> Dict
         OmegaConf.update(task_branch, task_to, task, force_add=True)
         task = task_branch
     return OmegaConf.merge(cfg, task)
+
+
+@contextmanager
+def log_to_file(path):
+    # Add sink
+    lid = logger.add(path)
+    try:
+        yield
+    finally:
+        # Remove sink
+        logger.remove(lid)
+
+
+def instantiate(config, *args, **kwargs):
+    """
+    Recursively instantiate objects defined in dictionaries with a "_target_" key.
+
+    Args:
+        config: The configuration dictionary (or value).
+        *args, **kwargs: Additional arguments to pass to the root object.
+    """
+    # 1. Base case: If config is not a dict or list, return it as is.
+    if not isinstance(config, (dict, list, DictConfig, ListConfig)):
+        return config
+
+    if isinstance(config, (list, ListConfig)):
+        return [instantiate(item) for item in config]
+
+    # config is a dict
+    # 2. Check if this dict represents a target object
+    if "_target_" not in config:
+        # It's just a regular dictionary, but we should check values recursively
+        return {k: instantiate(v) for k, v in config.items()}
+
+    # 3. Prepare the configuration
+    # Copy to avoid mutating the original dict
+    conf_copy = config.copy()
+    target_path = conf_copy.pop("_target_")
+    is_partial = conf_copy.pop("_partial_", False)
+
+    # 4. recursive instantiation of arguments
+    # We instantiate the arguments BEFORE creating the main object
+    init_args = {k: instantiate(v) for k, v in conf_copy.items()}
+
+    # Merge with runtime args (kwargs override config)
+    init_args.update(kwargs)
+
+    # 5. Import the class or function
+    try:
+        module_path, class_name = target_path.rsplit(".", 1)
+        module = importlib.import_module(module_path)
+        target_class = getattr(module, class_name)
+    except (ValueError, ImportError, AttributeError) as e:
+        raise ImportError(f"Could not import target '{target_path}': {e}")
+
+    # 6. Instantiate or return partial
+    if is_partial:
+        return functools.partial(target_class, *args, **init_args)
+
+    return target_class(*args, **init_args)
