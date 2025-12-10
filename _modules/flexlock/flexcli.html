@@ -125,16 +125,19 @@
             <span class="c1"># --- Argument Parsing ---</span>
             <span class="c1"># Standard config arguments</span>
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;-c&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;--config&quot;</span><span class="p">,</span>
                 <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the base YAML configuration file.&quot;</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;-e&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;--experiment&quot;</span><span class="p">,</span>
                 <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key to select a specific experiment from the config.&quot;</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s2">&quot;-O&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;--overrides_path&quot;</span><span class="p">,</span>
                 <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a YAML file with configuration overrides.&quot;</span><span class="p">,</span>
@@ -151,6 +154,7 @@
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
                 <span class="s2">&quot;--tasks&quot;</span><span class="p">,</span>
                 <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
                 <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a file with a list of tasks (e.g., .txt, .yaml).&quot;</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
@@ -226,14 +230,17 @@
                 <span class="n">cfg</span> <span class="o">=</span> <span class="n">to_dictconfig</span><span class="p">(</span><span class="n">default_config</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
-                <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>
-
-            <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="p">:</span>
-                <span class="n">cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Experiment &#39;</span><span class="si">{</span><span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="si">}</span><span class="s2">&#39; did not resolve to a dictionary in the config.&quot;</span>
-                    <span class="p">)</span>
+                <span class="n">_cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="p">:</span>
+                    <span class="n">_cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">_cfg</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Experiment &#39;</span><span class="si">{</span><span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="si">}</span><span class="s2">&#39; did not resolve to a dictionary in the config.&quot;</span>
+                        <span class="p">)</span>
+                <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">_cfg</span><span class="p">)</span>
+                <span class="c1"># sticking with the parent config</span>
+                <span class="n">_cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+                <span class="n">cfg</span> <span class="o">=</span> <span class="n">_cfg</span>
 
             <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">overrides_path</span><span class="p">:</span>
                 <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">overrides_path</span><span class="p">))</span>
@@ -258,7 +265,7 @@
 
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Warning: No &#39;save_dir&#39; found in the final configuration.&quot;</span><span class="p">)</span>
-            
+
             <span class="n">main_fn</span> <span class="o">=</span> <span class="n">debug_on_fail</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">stack_depth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="n">debug_enabled</span> <span class="k">else</span> <span class="n">fn</span>
             <span class="c1"># --- Execution Logic ---</span>
             <span class="c1"># 1. Handle single run case first</span>
@@ -270,7 +277,9 @@
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks loaded&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;--tasks or --tasks-key provided, but no tasks were loaded. Running once.&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;--tasks or --tasks-key provided, but no tasks were loaded. Running once.&quot;</span>
+                <span class="p">)</span>
                 <span class="k">return</span> <span class="n">main_fn</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">task_to</span><span class="p">:</span>
@@ -278,15 +287,17 @@
 
             <span class="c1"># 3. Handle debug sequential run</span>
             <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Debug mode is enabled, parallel execution is disabled. Running tasks sequentially.&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Debug mode is enabled, parallel execution is disabled. Running tasks sequentially.&quot;</span>
+                <span class="p">)</span>
                 <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
                     <span class="n">task_cfg</span> <span class="o">=</span> <span class="n">merge_task_into_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">task_to</span><span class="p">)</span>
-                    <span class="n">main_fn</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">)</span> <span class="c1">#  debug wrapper</span>
+                    <span class="n">main_fn</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">)</span>  <span class="c1">#  debug wrapper</span>
                 <span class="k">return</span> <span class="kc">None</span>
 
             <span class="c1"># 4. Handle parallel execution</span>
             <span class="n">executor</span> <span class="o">=</span> <span class="n">ParallelExecutor</span><span class="p">(</span>
-                <span class="n">func</span><span class="o">=</span><span class="n">main_fn</span><span class="p">,</span> <span class="c1"># not debug wrapper</span>
+                <span class="n">func</span><span class="o">=</span><span class="n">main_fn</span><span class="p">,</span>  <span class="c1"># not debug wrapper</span>
                 <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
                 <span class="n">task_to</span><span class="o">=</span><span class="n">cli_args</span><span class="o">.</span><span class="n">task_to</span><span class="p">,</span>
                 <span class="n">cfg</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>

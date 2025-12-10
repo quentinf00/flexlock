@@ -69,7 +69,8 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#containerized-execution">Containerized Execution</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#container-configuration-example-singularity">Container Configuration Example (Singularity)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#container-configuration-example-singularity-with-slurm">Container Configuration Example (Singularity with SLURM)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#container-configuration-example-singularity-with-pbs">Container Configuration Example (Singularity with PBS)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#building-the-container">Building the Container</a></li>
 </ul>
 </li>
@@ -196,7 +197,8 @@ python<span class="w"> </span>script.py<span class="w"> </span>--tasks<span clas
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">startup_lines</span></code>: A list of strings that will be placed at the top of the submission script. This is where you define all your scheduler directives (e.g., <code class="docutils literal notranslate"><span class="pre">#SBATCH</span></code>, <code class="docutils literal notranslate"><span class="pre">#PBS</span></code>), environment setup, and module loads.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">configure_logging</span></code>: (Optional, default: <code class="docutils literal notranslate"><span class="pre">True</span></code>) If true, FlexLock will automatically add directives to write the job’s stdout and stderr to files in the backend’s log directory (e.g., <code class="docutils literal notranslate"><span class="pre">save_dir/slurm_logs/</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">containerization</span></code>: (Optional) Set to <code class="docutils literal notranslate"><span class="pre">singularity</span></code> or <code class="docutils literal notranslate"><span class="pre">docker</span></code> to run the job in a container.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">python_exe</span></code>: (Optional, default: <code class="docutils literal notranslate"><span class="pre">&quot;python&quot;</span></code>) The python executable to use. This is particularly useful for containerized execution, where it can be set to a <code class="docutils literal notranslate"><span class="pre">singularity</span> <span class="pre">run</span></code> command.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">containerization</span></code>: (Optional) Set to <code class="docutils literal notranslate"><span class="pre">singularity</span></code> or <code class="docutils literal notranslate"><span class="pre">docker</span></code> to run the job in a container. Note: For the PBS backend, containerization is configured via the <code class="docutils literal notranslate"><span class="pre">python_exe</span></code> parameter.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">container_image</span></code>: (Required if <code class="docutils literal notranslate"><span class="pre">containerization</span></code> is set) The path to the container image file (e.g., a <code class="docutils literal notranslate"><span class="pre">.sif</span></code> file for Singularity).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">bind_mounts</span></code>: (Optional) A list of paths to bind mount into the container, in the format <code class="docutils literal notranslate"><span class="pre">host_path:container_path</span></code>. The directory containing the task data is always mounted automatically.</p></li>
 </ul>
@@ -224,15 +226,20 @@ python<span class="w"> </span>script.py<span class="w"> </span>--tasks<span clas
 </section>
 <section id="pbs-configuration-example">
 <h3>PBS Configuration Example<a class="headerlink" href="#pbs-configuration-example" title="Link to this heading"></a></h3>
-<p>This example submits a job to the <code class="docutils literal notranslate"><span class="pre">sequentiel</span></code> queue with a 2-hour walltime.</p>
+<p>This example submits a 2-task job array to the <code class="docutils literal notranslate"><span class="pre">sequentiel</span></code> queue with a 5-minute walltime. Note that by default, FlexLock will add the <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-N</span></code>, <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-o</span></code> and <code class="docutils literal notranslate"><span class="pre">#PBS</span> <span class="pre">-e</span></code> directives.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># pbs_config.yaml</span>
 <span class="nt">startup_lines</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-N</span><span class="nv"> </span><span class="s">flexlock-experiment&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">nodes=1:ncpus=4&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=02:00:00&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">mem=8gb&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-q</span><span class="nv"> </span><span class="s">sequentiel&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-m</span><span class="nv"> </span><span class="s">abe&quot;</span><span class="w"> </span><span class="c1"># Email notifications</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=mem=4gb:ncpus=1&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=00:05:00&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-q</span><span class="nv"> </span><span class="s">sequentiel&#39;</span>
+<span class="w">  </span><span class="c1"># Submit as a 2-task job array</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-J</span><span class="nv"> </span><span class="s">0-1&#39;</span>
+<span class="w">  </span><span class="c1"># Merge stdout and stderr</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-k</span><span class="nv"> </span><span class="s">oe&#39;</span>
+<span class="w">  </span><span class="c1"># Make environment variables available to the job</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-V&#39;</span>
+<span class="w">  </span><span class="c1"># Change to the submission directory</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&#39;</span>
 <span class="w">  </span><span class="c1"># Activate pixi environment</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;eval</span><span class="nv"> </span><span class="s">&quot;$(pixi</span><span class="nv"> </span><span class="s">shell-hook)&quot;&#39;</span>
 </pre></div>
@@ -242,8 +249,8 @@ python<span class="w"> </span>script.py<span class="w"> </span>--tasks<span clas
 <section id="containerized-execution">
 <h2>Containerized Execution<a class="headerlink" href="#containerized-execution" title="Link to this heading"></a></h2>
 <p>FlexLock supports running jobs in Singularity or Docker containers for maximum reproducibility.</p>
-<section id="container-configuration-example-singularity">
-<h3>Container Configuration Example (Singularity)<a class="headerlink" href="#container-configuration-example-singularity" title="Link to this heading"></a></h3>
+<section id="container-configuration-example-singularity-with-slurm">
+<h3>Container Configuration Example (Singularity with SLURM)<a class="headerlink" href="#container-configuration-example-singularity-with-slurm" title="Link to this heading"></a></h3>
 <p>This configuration will execute the job inside a Singularity container, bind-mounting a dataset directory.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># slurm_config_singularity.yaml</span>
 <span class="nt">startup_lines</span><span class="p">:</span>
@@ -260,10 +267,72 @@ python<span class="w"> </span>script.py<span class="w"> </span>--tasks<span clas
 </pre></div>
 </div>
 </section>
+<section id="container-configuration-example-singularity-with-pbs">
+<h3>Container Configuration Example (Singularity with PBS)<a class="headerlink" href="#container-configuration-example-singularity-with-pbs" title="Link to this heading"></a></h3>
+<p>For the PBS backend, containerization is achieved by setting the <code class="docutils literal notranslate"><span class="pre">python_exe</span></code> to the <code class="docutils literal notranslate"><span class="pre">singularity</span></code> command.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># pbs_config_singularity.yaml</span>
+<span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=mem=4gb:ncpus=1&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=00:05:00&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-q</span><span class="nv"> </span><span class="s">sequentiel&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-J</span><span class="nv"> </span><span class="s">0-1&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-k</span><span class="nv"> </span><span class="s">oe&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&#39;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">  </span><span class="no">singularity run</span>
+<span class="w">  </span><span class="no">--bind $(pwd)/my_project:/app/my_project</span>
+<span class="w">  </span><span class="no">--bind $(pwd):/workspace </span>
+<span class="w">  </span><span class="no">--pwd /workspace</span>
+<span class="w">  </span><span class="no">env.sif python</span>
+</pre></div>
+</div>
+</section>
 <section id="building-the-container">
 <h3>Building the Container<a class="headerlink" href="#building-the-container" title="Link to this heading"></a></h3>
 <p>You can use the <code class="docutils literal notranslate"><span class="pre">singularity.def</span></code> and <code class="docutils literal notranslate"><span class="pre">Dockerfile</span></code> provided in the project to build a container image with your <code class="docutils literal notranslate"><span class="pre">pixi</span></code> environment pre-installed.</p>
 <p><strong>Singularity:</strong></p>
+<p>A <code class="docutils literal notranslate"><span class="pre">singularity.def</span></code> file defines the recipe for building your container. Here is an example that starts from an Ubuntu base, installs pixi, and sets up the project environment.</p>
+<div class="highlight-singularity notranslate"><div class="highlight"><pre><span></span><span class="k">Bootstrap</span>:<span class="w"> </span>docker
+<span class="k">From</span>:<span class="w"> </span>ubuntu:<span class="m">24.04</span>
+
+<span class="gh">%files</span>
+<span class="w">    </span><span class="c1"># Copy the project files required to build the environment into /app</span>
+<span class="w">    </span>pyproject.toml<span class="w"> </span>/app/
+<span class="w">    </span>pixi.lock<span class="w"> </span>/app/
+<span class="w">    </span>README.md<span class="w"> </span>/app/
+
+<span class="gh">%post</span>
+<span class="w">    </span><span class="c1"># Navigate to the app directory</span>
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span>/app
+<span class="w">    </span>mkdir<span class="w"> </span>/app/my_awesome_project
+<span class="w">    </span>
+<span class="w">    </span><span class="c1"># Install the pixi environment based on the lock file.</span>
+<span class="w">    </span><span class="c1"># This creates the environment inside the container at /app/.pixi</span>
+<span class="w">    </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>curl
+<span class="w">    </span><span class="nb">export</span><span class="w"> </span><span class="nv">PIXI_HOME</span><span class="o">=</span>/pixi
+<span class="w">    </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://pixi.sh/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
+<span class="w">    </span><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PIXI_HOME</span>/bin:<span class="nv">$PATH</span>
+<span class="w">    </span>pixi<span class="w"> </span>global<span class="w"> </span>install<span class="w"> </span>git
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span>which<span class="w"> </span>git
+<span class="w">    </span>pixi<span class="w"> </span>install<span class="w"> </span>--locked
+<span class="w">    </span>rm<span class="w"> </span>-rf<span class="w"> </span><span class="nv">$HOME</span>/.cache
+
+<span class="gh">%environment</span>
+<span class="w">    </span><span class="c1"># Set the default working directory for when the container runs</span>
+<span class="w">    </span><span class="nb">export</span><span class="w"> </span><span class="nv">SINGULARITY_WORKDIR</span><span class="o">=</span>/app
+<span class="w">    </span><span class="nb">export</span><span class="w"> </span><span class="nv">PIXI_HOME</span><span class="o">=</span>/pixi
+<span class="w">    </span><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$HOME</span>/.pixi/bin:<span class="nv">$PATH</span>
+<span class="w">    </span><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>pixi<span class="w">  </span>shell-hook<span class="w"> </span>--manifest-path<span class="w"> </span>/app<span class="w"> </span>--as-is<span class="k">)</span><span class="s2">&quot;</span>
+
+
+<span class="gh">%runscript</span>
+<span class="w">    </span><span class="c1"># Default command to run. The environment is already active.</span>
+<span class="w">    </span><span class="c1"># This script will execute any commands passed to &quot;singularity run&quot;.</span>
+<span class="w">    </span><span class="nb">exec</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>You can then build the container image (<code class="docutils literal notranslate"><span class="pre">.sif</span></code> file) using:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># (May require sudo depending on system config)</span>
 singularity<span class="w"> </span>build<span class="w"> </span>flexlock.sif<span class="w"> </span>singularity.def
 </pre></div>

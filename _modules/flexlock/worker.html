@@ -91,6 +91,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">claim_next_task</span><span class="p">,</span> <span class="n">finish_task</span><span class="p">,</span> <span class="n">pending_count</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_task_into_cfg</span>
 
+
 <div class="viewcode-block" id="worker_loop">
 <a class="viewcode-back" href="../../api.html#flexlock.worker.worker_loop">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">worker_loop</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">task_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">db_path</span><span class="p">):</span>

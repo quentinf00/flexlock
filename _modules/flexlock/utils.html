@@ -84,12 +84,18 @@
   <h1>Source code for flexlock.utils</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Utility functions for FlexLock.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">fields</span><span class="p">,</span> <span class="n">MISSING</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">fields</span>
 
 
 <div class="viewcode-block" id="to_dictconfig">
@@ -148,11 +154,138 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge a task into the config.&quot;&quot;&quot;</span>
     <span class="c1"># Create a minimal config with just the task structure</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">task_to</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">task_to</span> <span class="o">!=</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="p">:</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">task_to</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">task_to</span> <span class="o">!=</span> <span class="s2">&quot;.&quot;</span><span class="p">):</span>
         <span class="n">task_branch</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">({})</span>
         <span class="n">OmegaConf</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">task_branch</span><span class="p">,</span> <span class="n">task_to</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">force_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">task</span> <span class="o">=</span> <span class="n">task_branch</span>
     <span class="k">return</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="log_to_file">
+<a class="viewcode-back" href="../../api.html#flexlock.utils.log_to_file">[docs]</a>
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_to_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="c1"># Add sink</span>
+    <span class="n">lid</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c1"># Remove sink</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">lid</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="instantiate">
+<a class="viewcode-back" href="../../api.html#flexlock.utils.instantiate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Recursively instantiate objects defined in dictionaries with a &quot;_target_&quot; key.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: The configuration dictionary (or value).</span>
+<span class="sd">        *args, **kwargs: Additional arguments to pass to the root object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 1. Base case: If config is not a dict or list, return it as is.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">config</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">instantiate</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">config</span><span class="p">]</span>
+
+    <span class="c1"># config is a dict</span>
+    <span class="c1"># 2. Check if this dict represents a target object</span>
+    <span class="k">if</span> <span class="s2">&quot;_target_&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+        <span class="c1"># It&#39;s just a regular dictionary, but we should check values recursively</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">instantiate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="c1"># 3. Prepare the configuration</span>
+    <span class="c1"># Copy to avoid mutating the original dict</span>
+    <span class="n">conf_copy</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">target_path</span> <span class="o">=</span> <span class="n">conf_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_target_&quot;</span><span class="p">)</span>
+    <span class="n">is_partial</span> <span class="o">=</span> <span class="n">conf_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_partial_&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># 4. recursive instantiation of arguments</span>
+    <span class="c1"># We instantiate the arguments BEFORE creating the main object</span>
+    <span class="n">init_args</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">instantiate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">conf_copy</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="c1"># Merge with runtime args (kwargs override config)</span>
+    <span class="n">init_args</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># 5. Import the class or function</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">module_path</span><span class="p">,</span> <span class="n">class_name</span> <span class="o">=</span> <span class="n">target_path</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span>
+        <span class="n">target_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">class_name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">ImportError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not import target &#39;</span><span class="si">{</span><span class="n">target_path</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 6. Instantiate or return partial</span>
+    <span class="k">if</span> <span class="n">is_partial</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">target_class</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">init_args</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">target_class</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">init_args</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="py2cfg">
+<a class="viewcode-back" href="../../api.html#flexlock.utils.py2cfg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">py2cfg</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">overrides</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a class, function, or partial into a configuration dictionary</span>
+<span class="sd">    with a &quot;_target_&quot; key and default arguments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        obj: The class, function, or functools.partial object.</span>
+<span class="sd">        **overrides: Key-value pairs to override defaults or add fixed values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># 1. Handle functools.partial</span>
+    <span class="c1"># If it&#39;s a partial, we unwrap it, capture the fixed args, and mark as _partial_</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">):</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;_partial_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>  <span class="c1"># Add bound arguments</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>  <span class="c1"># Apply runtime overrides</span>
+        <span class="k">return</span> <span class="n">config</span>
+
+    <span class="c1"># 2. Extract the dot-path string</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;__module__&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;__qualname__&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Cannot determine target path for </span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">. It must be a class or function.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Handle case where class is defined in the main script</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span>
+    <span class="n">target_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;_target_&quot;</span><span class="p">:</span> <span class="n">target_path</span><span class="p">}</span>
+
+    <span class="c1"># 3. Inspect signature to get default values</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># We only care about parameters that have defaults</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">param</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span>
+
+                <span class="c1"># OPTIONAL: Recursive handling</span>
+                <span class="c1"># If a default value is itself a class/function, convert it too.</span>
+                <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="ow">or</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">val</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                        <span class="k">pass</span>  <span class="c1"># Keep original if conversion fails</span>
+
+                <span class="n">config</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="c1"># Some built-ins allow signature inspection, others don&#39;t.</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># 4. Apply overrides</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">config</span></div>
 
 </pre></div>
 
