@@ -108,6 +108,9 @@ def instantiate(config, *args, **kwargs):
     # Copy to avoid mutating the original dict
     conf_copy = config.copy()
     target_path = conf_copy.pop("_target_")
+
+    # Handle positional arguments
+    config_args = conf_copy.pop("_args_", [])
     is_partial = conf_copy.pop("_partial_", False)
 
     # 4. recursive instantiation of arguments
@@ -125,11 +128,15 @@ def instantiate(config, *args, **kwargs):
     except (ValueError, ImportError, AttributeError) as e:
         raise ImportError(f"Could not import target '{target_path}': {e}")
 
-    # 6. Instantiate or return partial
-    if is_partial:
-        return functools.partial(target_class, *args, **init_args)
+    # 6. Combine positional arguments
+    # First config args, then runtime args
+    all_args = instantiate(config_args) + list(args)
 
-    return target_class(*args, **init_args)
+    # 7. Instantiate or return partial
+    if is_partial:
+        return functools.partial(target_class, *all_args, **init_args)
+
+    return target_class(*all_args, **init_args)
 
 
 def py2cfg(obj, **overrides):
@@ -147,7 +154,10 @@ def py2cfg(obj, **overrides):
     if isinstance(obj, functools.partial):
         config = py2cfg(obj.func)
         config["_partial_"] = True
-        config.update(obj.keywords)  # Add bound arguments
+        # Add positional arguments as _args_ if they exist
+        if obj.args:
+            config["_args_"] = list(obj.args)
+        config.update(obj.keywords)  # Add bound keyword arguments
         config.update(overrides)  # Apply runtime overrides
         return config
 
@@ -166,7 +176,14 @@ def py2cfg(obj, **overrides):
     # 3. Inspect signature to get default values
     try:
         sig = inspect.signature(obj)
-        for name, param in sig.parameters.items():
+        # Check if obj is bound to an instance (has 'self' as first parameter)
+        if obj.__name__ != '__init__' and hasattr(obj, '__self__'):
+            # If this is a bound method, skip 'self' parameter
+            params = list(sig.parameters.values())[1:]  # Skip first param (self)
+        else:
+            params = sig.parameters.values()
+
+        for param in params:
             # We only care about parameters that have defaults
             if param.default is not param.empty:
                 val = param.default
@@ -179,7 +196,7 @@ def py2cfg(obj, **overrides):
                     except ValueError:
                         pass  # Keep original if conversion fails
 
-                config[name] = val
+                config[param.name] = val
     except (ValueError, TypeError):
         # Some built-ins allow signature inspection, others don't.
         pass

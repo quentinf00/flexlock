@@ -78,7 +78,7 @@ def flexcli(default_config=None, description=None, debug=None):
             )
             parser.add_argument(
                 "--task-to",
-                default=None,
+                default='.',
                 help="Dot-separated key where to merge the task in the config.",
             )
             parser.add_argument(

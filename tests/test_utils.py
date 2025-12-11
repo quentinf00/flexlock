@@ -248,6 +248,14 @@ class TestInstantiationClass:
         self.param2 = param2
 
 
+class TestClassWithPositionalArgs:
+    """Helper class for testing positional args functionality."""
+    def __init__(self, a, b, c=None):
+        self.a = a
+        self.b = b
+        self.c = c
+
+
 def test_instantiate_simple_class():
     """Test instantiating a simple class via config."""
     config = OmegaConf.create({
@@ -347,6 +355,47 @@ def test_instantiate_partial():
     assert result["param2"] == 200
 
 
+def test_instantiate_with_positional_args():
+    """Test instantiate with positional arguments via _args_."""
+
+    config = OmegaConf.create({
+        "_target_": "builtins.tuple",
+        "_args_": [[1, 2, 3]]
+    })
+
+    result = instantiate(config)
+    assert result == (1, 2, 3)
+    assert isinstance(result, tuple)
+
+
+def test_instantiate_with_args_and_kwargs():
+    """Test instantiate with both positional and keyword arguments."""
+
+    config = OmegaConf.create({
+        "_target_": "tests.test_utils.TestClassWithPositionalArgs",
+        "_args_": [10, 20],
+        "c": "keyword_value"
+    })
+
+    result = instantiate(config)
+    assert result.__class__.__name__ ==  'TestClassWithPositionalArgs'
+    assert result.a == 10
+    assert result.b == 20
+    assert result.c == "keyword_value"
+
+
+def test_instantiate_with_args_and_runtime_args():
+    """Test instantiate with _args_ from config and runtime args."""
+
+    config = OmegaConf.create({
+        "_target_": "builtins.sum",
+        "_args_": [[1, 2, 3]]  # Sum of [1, 2, 3] should be 6
+    })
+
+    result = instantiate(config)
+    assert result == 6
+
+
 def test_instantiate_with_runtime_args():
     """Test instantiate with runtime arguments overriding config."""
     config = OmegaConf.create({
@@ -415,6 +464,11 @@ def test_py2cfg_with_overrides():
     assert config["new_param"] == "new_value"  # New param added
 
 
+def py2cfg_args_test_func(a, b, c=None):
+    """Test function for args py2cfg."""
+    return a, b, c
+
+
 def py2cfg_partial_test_func(x, y=10):
     """Test function for partial py2cfg."""
     return x + y
@@ -451,14 +505,30 @@ class CallableClass:
     def __call__(self, x):
         return x + self.default_value
 
+
 def test_py2cfg_callable_object():
     """Test py2cfg with a callable object."""
 
-    config = py2cfg(CallableClass, default_value=10)
+    config = py2cfg(CallableClass.__call__, self=py2cfg(CallableClass, default_value=10))
 
-    # The __call__ method should be the target
     assert "_target_" in config
-    # Note: We don't test the exact path since it's a local class
+
+
+def test_py2cfg_partial_with_positional_args():
+    """Test py2cfg with a partial function that has positional arguments."""
+
+    def test_func(a, b, c=None):
+        return a + b if c is None else a + b + c
+
+    partial_func = functools.partial(test_func, 5, 10)  # (a=5, b=10)
+    config = py2cfg(partial_func)
+
+    assert "_target_" in config
+    assert config["_target_"] == "test_utils.test_py2cfg_partial_with_positional_args.<locals>.test_func"
+    assert "_partial_" in config
+    assert config["_partial_"] is True
+    assert "_args_" in config
+    assert config["_args_"] == [5, 10]  # Positional args should be captured
 
 
 # --- Test Cases for log_to_file function ---

@@ -60,3 +60,91 @@ def test_vinc_resolver_with_custom_format(tmp_path):
     # Second call
     path2 = vinc_resolver(str(base_path), fmt=fmt)
     assert path2 == str(tmp_path / "run-v01")
+
+
+def test_latest_resolver(tmp_path):
+    """Test the latest_resolver returns the most recently modified path."""
+    from flexlock.resolvers import latest_resolver
+    import time
+
+    # Create test directories with different modification times
+    dir1 = tmp_path / "results_0001"
+    dir2 = tmp_path / "results_0002"
+    dir3 = tmp_path / "results_0003"
+
+    # Create in sequence to ensure different modification times
+    dir1.mkdir()
+    time.sleep(0.01)  # Small delay to ensure different timestamp
+    dir2.mkdir()
+    time.sleep(0.01)  # Small delay to ensure different timestamp
+    dir3.mkdir()
+
+    # Test with glob pattern
+    pattern = str(tmp_path / "results_*")
+    latest = latest_resolver(pattern)
+
+    # Should return the most recently created/modified directory
+    assert latest == str(dir3)
+
+
+def test_latest_resolver_with_files(tmp_path):
+    """Test the latest_resolver works with files too."""
+    from flexlock.resolvers import latest_resolver
+    import time
+
+    # Create test files with different modification times
+    file1 = tmp_path / "data_v1.txt"
+    file2 = tmp_path / "data_v2.txt"
+    file3 = tmp_path / "data_v3.txt"
+
+    # Create files in sequence
+    file1.write_text("content1")
+    time.sleep(0.01)
+    file2.write_text("content2")
+    time.sleep(0.01)
+    file3.write_text("content3")
+
+    # Test with glob pattern
+    pattern = str(tmp_path / "data_v*.txt")
+    latest = latest_resolver(pattern)
+
+    # Should return the most recently created/modified file
+    assert latest == str(file3)
+
+
+def test_latest_resolver_no_matches():
+    """Test the latest_resolver returns the pattern when no matches are found."""
+    from flexlock.resolvers import latest_resolver
+
+    # Use a pattern that won't match anything
+    pattern = "/nonexistent/directory/*.txt"
+    result = latest_resolver(pattern)
+
+    # Should return the original pattern when no matches
+    assert result == pattern
+
+
+def test_latest_resolver_with_globbing_patterns(tmp_path):
+    """Test latest_resolver with different globbing patterns."""
+    from flexlock.resolvers import latest_resolver
+    import time
+
+    # Create a nested directory structure
+    subdir1 = tmp_path / "subdir1"
+    subdir2 = tmp_path / "subdir2"
+    subdir1.mkdir()
+    subdir2.mkdir()
+
+    # Create files in both subdirectories
+    file1 = subdir1 / "file.txt"
+    file2 = subdir2 / "file.txt"
+    file1.write_text("content1")
+    time.sleep(0.01)
+    file2.write_text("content2")
+
+    # Use recursive pattern
+    pattern = str(tmp_path / "**" / "file.txt")
+    latest = latest_resolver(pattern)
+
+    # Should return the most recently created file
+    assert latest == str(file2)

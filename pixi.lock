@@ -1493,13 +1493,13 @@ packages:
   timestamp: 1749615415615
 - pypi: ./
   name: flexlock
-  version: 0.2.16
-  sha256: 81e2c41dbcb3c8ed1140a1bfb64143c49a7f6e90d3f64d55ebb685a8c7b81ed7
+  version: 0.2.17
+  sha256: 21d8e09a9e44ba476edf45abef80499a447f33d6e08c447ee8e34bdea7f78694
   requires_python: '>=3.11'
   editable: true
 - conda: .
   name: flexlock
-  version: 0.2.16
+  version: 0.2.17
   build: pyh4616a5c_0
   subdir: noarch
   depends:
@@ -1514,7 +1514,7 @@ packages:
   - cloudpickle >=3.0.0,<4
   license: MIT
   input:
-    hash: bc2059d1f7435028054efd00bd4f03cb8424aa4250c1dd915416f073781a907d
+    hash: 59f5d13b27a13f3f9ef160da5b1f5731fee8d0873e87aacd95502c2faa6bebc5
     globs:
     - pyproject.toml
 - conda: https://conda.anaconda.org/conda-forge/linux-64/fonttools-4.60.1-py311h3778330_0.conda

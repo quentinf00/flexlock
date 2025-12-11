@@ -1,3 +1,50 @@
+## Improvements 
+### CLI interface
+# FlexLock CLI Refactoring Plan
+
+## 1. Interface & Arguments Renaming
+- [ ] **Rename Selection Argument**
+    - Change `-e, --experiment` to **`-s, --select`**.
+    - Description: "Dot-separated key to select a sub-node from the base configuration."
+- [ ] **Implement Two-Stage File Merging**
+    - Rename/Add **`-m, --merge`**: Path to YAML file merged into the **Outer/Root** config (before selection).
+    - Rename/Add **`-M, --merge-after-select`**: Path to YAML file merged into the **Inner/Selected** config (after selection).
+- [ ] **Implement Two-Stage Dotlist Overrides**
+    - Rename/Add **`-o, --overrides`**: Dot-list args applied to the **Outer/Root** config (before selection).
+    - Rename/Add **`-O, --overrides-after-select`**: Dot-list args applied to the **Inner/Selected** config (after selection).
+
+## 2. Configuration Loading Pipeline (Logic Refactor)
+- [ ] **Step 1: Base Loading**
+    - Load base config from `-c, --config`.
+    - If no config file is provided, start with an empty `OmegaConf` object.
+- [ ] **Step 2: Outer Overrides (Pre-Selection)**
+    - Apply files from `-m / --merge`.
+    - Apply dot-list from `-o / --overrides`.
+    - *Result*: `outer_cfg` (Used for interpolation resolution and task lookup).
+- [ ] **Step 3: Task Extraction**
+    - If `--tasks-key` is provided, look it up inside `outer_cfg`.
+    - If `--tasks` (file) is provided, load it.
+    - Consolidate into a list of task config objects.
+- [ ] **Step 4: Selection**
+    - If `-s / --select` is present, extract the sub-node from `outer_cfg`.
+    - If not present, `inner_cfg = outer_cfg`.
+- [ ] **Step 5: Inner Overrides (Post-Selection)**
+    - Apply files from `-M / --merge-after-select` to `inner_cfg`.
+    - Apply dot-list from `-O / --overrides-after-select` to `inner_cfg`.
+- [ ] **Step 6: Schema Application**
+    - If `default_config` (dataclass) was provided to the decorator:
+        - Convert `default_config` to DictConfig.
+        - Merge `inner_cfg` *into* this default schema to ensure defaults are preserved and types are correct.
+    - *Result*: `final_cfg` (The template used for execution).
+
+
+## 4. Housekeeping & Validation
+- [ ] **Conflict Checks**
+    - Ensure `ipykernel` / `pytest` detection still works for determining CLI vs Programmatic mode.
+    - Ensure `save_dir` resolution happens on the `final_cfg` (after all merges/selections).
+- [ ] **Help Message**
+    - Group arguments in `argparse` help (e.g., "Configuration Selection", "Global Overrides", "Local Overrides") to make the difference between `-o` and `-O` clear to the user.
+
 ## Push/Pull Workflow Implementation
 
 - [ ] **`runlock` Function Enhancement**:
