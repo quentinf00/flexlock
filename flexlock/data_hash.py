@@ -1,17 +1,13 @@
 """Data hashing utilities for FlexLock."""
 
 import os
-import json
-import logging
+import sqlite3
+import threading
 from pathlib import Path
 import xxhash
 import hashlib
-import os
-from pathlib import Path
-from glob import glob
 from joblib import Parallel, delayed
-
-log = logging.getLogger(__name__)
+from contextlib import contextmanager
 
 # --- Cache Configuration ---
 CACHE_DIR = (
@@ -22,11 +18,73 @@ CACHE_DIR = (
     )
     / "flexlock"
 )
-CACHE_FILE = CACHE_DIR / "hashes.json"
+CACHE_DB = CACHE_DIR / "hashes.db"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_DIR_FILE_LIMIT = os.environ.get("FLEXLOCK_DIR_FILE_LIMIT", 1000)
 
-# --- Helper Functions ---
+# Thread-local storage for database connections
+_thread_local_conns = threading.local()
+
+
+@contextmanager
+def _get_db():
+    """
+    A thread-safe context manager for SQLite database connections.
+
+    This function maintains a cache of connections per thread. A new connection
+    is created for each unique database path and reused for subsequent calls
+    with the same path within that thread.
+    """
+    # Use the absolute path as a reliable key for the connections dictionary.
+    db_path_str = str(CACHE_DB.resolve())
+
+    # Initialize the connections dictionary for the current thread if it doesn't exist.
+    if not hasattr(_thread_local_conns, "conns"):
+        _thread_local_conns.conns = {}
+
+    # Check if a connection for this specific db_path already exists in the thread's cache.
+    if db_path_str not in _thread_local_conns.conns:
+        # If not, create a new connection and add it to the cache.
+        try:
+            c = sqlite3.connect(db_path_str, check_same_thread=False)
+            # Set PRAGMA for better performance and concurrency.
+            c.execute("PRAGMA journal_mode=WAL")
+            c.execute("PRAGMA busy_timeout=15000")
+            c.execute(
+                "PRAGMA foreign_keys=ON"
+            )  # Good practice to enforce foreign key constraints
+            c.execute(
+                """
+                CREATE TABLE IF NOT EXISTS cache (
+                    path TEXT PRIMARY KEY,
+                    mtime REAL,
+                    file_count INTEGER,
+                    latest_mtime REAL,
+                    hash TEXT,
+                    is_dir INTEGER
+                )
+                """
+            )
+            _thread_local_conns.conns[db_path_str] = c
+        except sqlite3.Error as e:
+            print(f"Error connecting to database {db_path_str}: {e}")
+            raise
+
+    # Yield the connection from the thread's cache.
+    try:
+        yield _thread_local_conns.conns[db_path_str]
+    finally:
+        # Don't close the connection since we're caching it for reuse
+        pass
+
+
+def _hash_file_content(path):
+    """Hashes a single file using XXHash."""
+    hasher = xxhash.xxh64()
+    with open(path, "rb") as f:
+        while chunk := f.read(65536):
+            hasher.update(chunk)
+    return hasher.hexdigest()
 
 
 def _get_dir_stats(path: Path, limit: int):
@@ -45,48 +103,15 @@ def _get_dir_stats(path: Path, limit: int):
             return count, 0  # Exceeded limit, fallback mode
 
         for name in files:
-            filepath = os.path.join(root, name)
+            filepath = Path(root) / name
             try:
-                mtime = os.path.getmtime(filepath)
+                mtime = filepath.stat().st_mtime
                 if mtime > latest_mtime:
                     latest_mtime = mtime
             except OSError:
                 # File might be a broken symlink, etc.
                 pass
     return count, latest_mtime
-
-
-def _load_cache():
-    """Loads the hash cache from the JSON file."""
-    if not CACHE_FILE.exists():
-        return {}
-    try:
-        with open(CACHE_FILE, "r") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, IOError):
-        return {}
-
-
-def _save_cache(cache):
-    """Saves the hash cache to the JSON file."""
-    try:
-        CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(CACHE_FILE, "w") as f:
-            json.dump(cache, f, indent=2)
-    except IOError as e:
-        log.warning(f"Could not save flexlock hash cache: {e}")
-
-
-def _hash_file(filepath, algorithm, chunk_size):
-    """Hashes a single file."""
-    hasher = algorithm()
-    with open(filepath, "rb") as f:
-        while True:
-            data = f.read(chunk_size)
-            if not data:
-                break
-            hasher.update(data)
-    return hasher.hexdigest()
 
 
 def dirhash(
@@ -108,25 +133,43 @@ def dirhash(
     if isinstance(ignore_patterns, str):
         ignore_patterns = [ignore_patterns]
 
-    included_files_set = set()
+    import glob
+    from pathlib import Path as p_path
+
+    # Find all files matching patterns
+    files_to_hash = []
     for pattern in match_pattern:
-        for f in base_path.glob(pattern):
-            if f.is_file():
-                included_files_set.add(f)
+        files_to_hash.extend(base_path.glob(pattern))
 
-    excluded_files_set = set()
-    for pattern in ignore_patterns:
-        for f in base_path.glob(pattern):
-            if f.is_file():
-                excluded_files_set.add(f)
+    files_to_hash = [f for f in files_to_hash if f.is_file()]
 
-    files_to_hash = sorted(list(included_files_set - excluded_files_set))
+    # Apply ignore patterns
+    final_files = []
+    for f in files_to_hash:
+        should_ignore = False
+        for pattern in ignore_patterns:
+            if f.match(pattern):
+                should_ignore = True
+                break
+        if not should_ignore:
+            final_files.append(f)
 
-    if not files_to_hash:
+    if not final_files:
         return algorithm().hexdigest()
 
+    def _hash_file(filepath, algorithm, chunk_size):
+        """Hashes a single file."""
+        hasher = algorithm()
+        with open(filepath, "rb") as f:
+            while True:
+                data = f.read(chunk_size)
+                if not data:
+                    break
+                hasher.update(data)
+        return hasher.hexdigest()
+
     file_hashes = Parallel(n_jobs=jobs)(
-        delayed(_hash_file)(str(f), algorithm, chunk_size) for f in files_to_hash
+        delayed(_hash_file)(str(f), algorithm, chunk_size) for f in final_files
     )
 
     final_hasher = algorithm()
@@ -141,12 +184,12 @@ def hash_data(
     match=None,
     ignore=None,
     jobs=4,
-    algorithm=xxhash.xxh3_64,
+    algorithm=xxhash.xxh64,
     chunk_size=2**18,
     use_cache=True,
 ):
     """
-    Computes a hash for a file or a directory, using a cache to avoid re-computation.
+    Computes a hash for a file or a directory, using an SQLite cache to avoid re-computation.
     """
     path = Path(path).resolve()
     use_cache = os.environ.get("FLEXLOCK_NO_CACHE", use_cache) not in (
@@ -158,35 +201,44 @@ def hash_data(
         os.environ.get("FLEXLOCK_CACHE_DIR_FILE_LIMIT", DEFAULT_DIR_FILE_LIMIT)
     )
 
-    cache = {}
     if use_cache:
-        cache = _load_cache()
-        path_str = str(path)
-
-        if path_str in cache:
-            cached_entry = cache[path_str]
-            current_stats = None
+        with _get_db() as conn:
+            cursor = conn.cursor()
 
             if path.is_file():
-                current_stats = {"mtime": path.stat().st_mtime}
-            elif path.is_dir():
-                file_count, latest_mtime = _get_dir_stats(path, dir_file_limit)
-                if file_count > dir_file_limit:
-                    # Large directory fallback
-                    current_stats = {"mtime": path.stat().st_mtime}
-                    log.warning(
-                        f"Directory '{path_str}' has over {dir_file_limit} files. "
-                        "Falling back to less accurate timestamp caching. Use `touch` on the "
-                        "directory or set FLEXLOCK_NO_CACHE=1 to force a re-hash if inner content changed."
-                    )
-                else:
-                    current_stats = {
-                        "file_count": file_count,
-                        "latest_mtime": latest_mtime,
-                    }
+                # Check cache for file
+                cursor.execute(
+                    "SELECT hash, mtime FROM cache WHERE path=? AND is_dir=0",
+                    (str(path),)
+                )
+                row = cursor.fetchone()
 
-            if current_stats and cached_entry.get("stats") == current_stats:
-                return cached_entry["hash"]
+                if row:
+                    cached_hash, cached_mtime = row
+                    current_mtime = path.stat().st_mtime
+                    if cached_mtime == current_mtime:
+                        return cached_hash
+            elif path.is_dir():
+                # Check cache for directory
+                cursor.execute(
+                    "SELECT hash, mtime, file_count, latest_mtime FROM cache WHERE path=? AND is_dir=1",
+                    (str(path),)
+                )
+                row = cursor.fetchone()
+
+                if row:
+                    cached_hash, cached_mtime, cached_file_count, cached_latest_mtime = row
+                    file_count, latest_mtime = _get_dir_stats(path, dir_file_limit)
+
+                    if file_count > dir_file_limit:
+                        # Large directory fallback
+                        current_mtime = path.stat().st_mtime
+                        if cached_mtime == current_mtime:
+                            return cached_hash
+                    else:
+                        if (cached_file_count == file_count and
+                            cached_latest_mtime == latest_mtime):
+                            return cached_hash
 
     # If not in cache or cache is invalid/disabled, compute the hash
     if not path.exists():
@@ -194,7 +246,7 @@ def hash_data(
 
     new_hash = None
     if path.is_file():
-        new_hash = _hash_file(path, algorithm, chunk_size)
+        new_hash = _hash_file_content(path)
     elif path.is_dir():
         new_hash = dirhash(
             path,
@@ -210,75 +262,29 @@ def hash_data(
 
     # Update and save the cache if enabled
     if use_cache:
-        stats_to_cache = None
-        if path.is_file():
-            stats_to_cache = {"mtime": path.stat().st_mtime}
-        elif path.is_dir():
-            file_count, latest_mtime = _get_dir_stats(path, dir_file_limit)
-            if file_count > dir_file_limit:
-                stats_to_cache = {"mtime": path.stat().st_mtime}
-            else:
-                stats_to_cache = {
-                    "file_count": file_count,
-                    "latest_mtime": latest_mtime,
-                }
-
-        cache[str(path)] = {"stats": stats_to_cache, "hash": new_hash}
-        _save_cache(cache)
+        with _get_db() as conn:
+            cursor = conn.cursor()
+            if path.is_file():
+                mtime = path.stat().st_mtime
+                cursor.execute(
+                    "INSERT OR REPLACE INTO cache VALUES (?, ?, NULL, NULL, ?, 0)",
+                    (str(path), mtime, new_hash)
+                )
+            elif path.is_dir():
+                file_count, latest_mtime = _get_dir_stats(path, dir_file_limit)
+                mtime = path.stat().st_mtime
+                if file_count > dir_file_limit:
+                    # For large directories, use just the directory's mtime
+                    cursor.execute(
+                        "INSERT OR REPLACE INTO cache VALUES (?, ?, NULL, NULL, ?, 1)",
+                        (str(path), mtime, new_hash)
+                    )
+                else:
+                    # For smaller directories, cache more detailed stats
+                    cursor.execute(
+                        "INSERT OR REPLACE INTO cache VALUES (?, ?, ?, ?, ?, 1)",
+                        (str(path), mtime, file_count, latest_mtime, new_hash)
+                    )
+            conn.commit()
 
     return new_hash
-
-
-if __name__ == "__main__":
-    # --- Example Usage ---
-
-    # 1. Create some dummy files and directories for testing
-    test_dir = Path("./test_dir_for_dirhash")
-    test_dir.mkdir(exist_ok=True)
-    (test_dir / "file1.txt").write_text("content of file 1")
-    (test_dir / "file2.py").write_text("import os\nprint('hello')")
-    (test_dir / "sub_dir").mkdir(exist_ok=True)
-    (test_dir / "sub_dir" / "file3.txt").write_text("another file")
-    (test_dir / "sub_dir" / "ignore_me.log").write_text("log content")
-    (test_dir / "temp_file.tmp").write_text("temporary data")
-    (test_dir / ".gitignore").write_text(
-        "*.tmp\n*.log"
-    )  # This file itself can be ignored or included
-
-    print(f"Hashing directory: {test_dir.resolve()}")
-
-    # Basic hash of all files
-    hash1 = dirhash(test_dir)
-    print(f"Default hash (all files, md5): {hash1}")
-
-    # Hash with specific algorithm
-    hash2 = dirhash(test_dir, algorithm=hashlib.sha256)
-    print(f"SHA256 hash (all files): {hash2}")
-
-    # Hash ignoring certain files
-    hash3 = dirhash(test_dir, ignore=["*.log", "*.tmp"])
-    print(f"Hash ignoring .log and .tmp files: {hash3}")
-
-    # Hash matching only .txt files
-    hash4 = dirhash(test_dir, match="**/*.txt")
-    print(f"Hash only .txt files: {hash4}")
-
-    # Hash with multiple match patterns
-    hash5 = dirhash(test_dir, match=["*.txt", "**/*.py"])
-    print(f"Hash .txt and .py files: {hash5}")
-
-    # Hash with multiple ignore patterns
-    hash6 = dirhash(test_dir, ignore=["*.tmp", "sub_dir/*"])
-    print(f"Hash ignoring .tmp and contents of sub_dir: {hash6}")
-
-    # Demonstrate changes affecting the hash
-    (test_dir / "file1.txt").write_text("updated content of file 1")
-    hash1_updated = dirhash(test_dir)
-    print(f"Updated default hash (file1 changed): {hash1_updated}")
-    print(f"Hashes are different after change: {hash1 != hash1_updated}")
-
-    # Clean up test directory
-    import shutil
-
-    shutil.rmtree(test_dir)
-    print(f"\nCleaned up {test_dir}")

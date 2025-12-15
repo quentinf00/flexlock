@@ -110,6 +110,13 @@ class ParallelExecutor:
             dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks")
             return
         try:
+            logger.info(
+                f"""Use the following command to display job status: 
+                
+                sqlite3  {self.db_path} 'SELECT status, count(*) as count, MIN(ts_start) as first_start, MAX(ts_end) as last_end  FROM tasks group by status; -header -box'
+                
+                """
+            )
             if self.backend is None:
                 logger.info("Running locally (pull-from-DB)")
                 self._run_locally()

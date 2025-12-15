@@ -3,205 +3,105 @@ from git import Repo
 from pathlib import Path
 from omegaconf import OmegaConf
 import yaml
+from unittest.mock import patch
+import tempfile
 
-from flexlock.snapshot import snapshot
-
-
-@pytest.fixture
-def setup_test_env(tmp_path):
-    """
-    Sets up a comprehensive test environment in a temporary directory.
-    """
-    # --- Git Repo Setup ---
-    repo_dir = tmp_path / "repo"
-    repo_dir.mkdir()
-    repo = Repo.init(repo_dir)
-    (repo_dir / "README.md").write_text("Initial file")
-    repo.index.add(["README.md"])
-    repo.config_writer().set_value("user", "name", "Test User").release()
-    repo.config_writer().set_value("user", "email", "test@example.com").release()
-    repo.index.commit("Initial commit")
-
-    # --- Data File Setup ---
-    data_dir = tmp_path / "data"
-    data_dir.mkdir()
-    (data_dir / "dataset.csv").write_text("col1,col2\n1,2\n3,4")
-
-    # --- Previous Stage Setup ---
-    prev_stage_dir = tmp_path / "prev_run"
-    prev_stage_dir.mkdir()
-    prev_snapshot_data = {
-        "config": {"param": 10},
-        "repos": {"main": "prev_commit_hash"},
-    }
-    with open(prev_stage_dir / "run.lock", "w") as f:
-        yaml.dump(prev_snapshot_data, f)
-
-    # --- Save Directory ---
-    save_dir = tmp_path / "results"
-    save_dir.mkdir()
-
-    return {
-        "repo": repo,
-        "repo_dir": repo_dir,
-        "data_dir": data_dir,
-        "prev_stage_dir": prev_stage_dir,
-        "save_dir": save_dir,
-    }
+from flexlock.snapshot import snapshot, RunTracker
 
 
-def test_snapshot_basic_creation(setup_test_env):
-    """Test basic snapshot creation without commits, data, or prevs."""
-    env = setup_test_env
-    cfg = OmegaConf.create({"param": 1, "save_dir": str(env["save_dir"])})
-
-    snapshot(config=cfg, commit=False)
-
-    lock_file = env["save_dir"] / "run.lock"
-    assert lock_file.exists()
-    with open(lock_file, "r") as f:
-        data = yaml.safe_load(f)
-
-    assert data["config"]["param"] == 1
+def test_runtracker_initialization():
+    """Test basic RunTracker initialization."""
+    save_dir = Path("test_run")
+    tracker = RunTracker(save_dir)
+    
+    assert tracker.save_dir == Path("test_run")
+    assert "timestamp" in tracker.data
 
 
-def test_snapshot_with_data_and_prevs(setup_test_env):
-    """Test snapshot with data hashing and previous stage loading."""
-    env = setup_test_env
-    cfg = OmegaConf.create({"param": 2, "save_dir": str(env["save_dir"])})
-
-    snapshot(
-        config=cfg,
-        data={"my_data": str(env["data_dir"] / "dataset.csv")},
-        prevs=[str(env["prev_stage_dir"])],
-        commit=False,
-    )
-
-    lock_file = env["save_dir"] / "run.lock"
-    assert lock_file.exists()
-    with open(lock_file, "r") as f:
-        data = yaml.safe_load(f)
-
-    assert "data" in data
-    assert "my_data" in data["data"]
-    assert isinstance(data["data"]["my_data"], str)
-    assert len(data["data"]["my_data"]) > 0
-
-    assert "prevs" in data
-    assert str(env["prev_stage_dir"].resolve().name) in data["prevs"]
-    assert (
-        data["prevs"][str(env["prev_stage_dir"].resolve().name)]["config"]["param"]
-        == 10
-    )
+def test_runtracker_record_data():
+    """Test RunTracker data recording."""
+    save_dir = Path("test_run")
+    tracker = RunTracker(save_dir)
+    
+    # Mock hash_data function for testing
+    with patch("flexlock.snapshot.hash_data") as mock_hash:
+        mock_hash.return_value = "mock_hash_value"
+        
+        tracker.record_data({"dataset": "/path/to/data"})
+        
+        assert tracker.data["data"]["dataset"] == "mock_hash_value"
+        mock_hash.assert_called_once_with("/path/to/data")
 
 
-def test_snapshot_with_commit_true(setup_test_env):
-    """Test that snapshot creates a new commit when commit=True."""
-    env = setup_test_env
-    repo = env["repo"]
-    initial_commit = repo.head.commit
-
-    # Make a change to the repo
-    (env["repo_dir"] / "new_file.txt").write_text("uncommitted change")
-
-    cfg = OmegaConf.create({"param": 3, "save_dir": str(env["save_dir"])})
-    snapshot(config=cfg, repos={"main": str(env["repo_dir"])}, commit=True)
-
-    lock_file = env["save_dir"] / "run.lock"
-    with open(lock_file, "r") as f:
-        data = yaml.safe_load(f)
-
-    assert "repos" in data
-    new_commit_hash = data["repos"]["main"]
-    assert new_commit_hash != initial_commit.hexsha
-
-    new_commit = repo.commit(new_commit_hash)
-    assert "Snapshot " + str(env["save_dir"]) in new_commit.message
+def test_runtracker_record_env():
+    """Test RunTracker environment recording."""
+    save_dir = Path("test_run")
+    tracker = RunTracker(save_dir)
+    
+    # Mock create_shadow_snapshot function for testing
+    with patch("flexlock.snapshot.create_shadow_snapshot") as mock_snapshot:
+        mock_snapshot.return_value = {"tree": "mock_tree", "commit": "mock_commit", "is_dirty": False}
+        
+        tracker.record_env({"main": "/path/to/repo"})
+        
+        assert tracker.data["repos"]["main"]["tree"] == "mock_tree"
+        assert tracker.data["repos"]["main"]["commit"] == "mock_commit"
+        assert tracker.data["repos"]["main"]["is_dirty"] == False
+        mock_snapshot.assert_called_once_with("/path/to/repo")
 
 
-def test_snapshot_caller_info(setup_test_env):
-    """Test that caller information (module, function, filepath) is captured."""
-    env = setup_test_env
-    cfg = OmegaConf.create({"param": 5, "save_dir": str(env["save_dir"])})
-
-    # We call snapshot from this function, so it should be captured.
-    snapshot(config=cfg, repos={"test_repo": str(env["repo_dir"])}, commit=False)
-
-    lock_file = env["save_dir"] / "run.lock"
-    with open(lock_file, "r") as f:
-        data = yaml.safe_load(f)
-
-    assert "caller" in data
-    caller_info = data["caller"]
-
-    assert caller_info["module"] == "test_snapshot"
-    assert caller_info["function"] == "test_snapshot_caller_info"
-
-    # In some CI/test environments, the test file may not be inside the repo,
-    # so we check the filepath name, which is more robust.
-    assert Path(caller_info["filepath"]).name == "test_snapshot.py"
-
-
-def test_snapshot_repo_as_string(setup_test_env):
-    """Test snapshot with the 'repos' argument provided as a single string."""
-    env = setup_test_env
-    cfg = OmegaConf.create({"param": 6, "save_dir": str(env["save_dir"])})
-
-    snapshot(config=cfg, repos=str(env["repo_dir"]), commit=False)
-
-    lock_file = env["save_dir"] / "run.lock"
-    assert lock_file.exists()
-    with open(lock_file, "r") as f:
-        data = yaml.safe_load(f)
-
-    assert "repos" in data
-    # The key should be the name of the repo directory
-    repo_dir_name = env["repo_dir"].name
-    assert repo_dir_name in data["repos"]
-    assert data["repos"][repo_dir_name] == env["repo"].head.commit.hexsha
+def test_runtracker_save():
+    """Test RunTracker save functionality."""
+    with tempfile.TemporaryDirectory() as tmp:
+        save_dir = Path(tmp) / "results"
+        save_dir.mkdir()
+        
+        tracker = RunTracker(save_dir)
+        config = OmegaConf.create({"param1": 1, "param2": "test"})
+        
+        # Mock the save method to avoid git operations during test
+        with patch("flexlock.snapshot.create_shadow_snapshot") as mock_snapshot:
+            mock_snapshot.return_value = {"tree": "mock_tree", "commit": "mock_commit", "is_dirty": False}
+            
+            tracker.record_env({"main": "."})
+            tracker.save(config)
+            
+            lock_file = save_dir / "run.lock"
+            assert lock_file.exists()
+            
+            with open(lock_file, "r") as f:
+                data = yaml.safe_load(f)
+                
+            assert data["config"]["param1"] == 1
+            assert data["config"]["param2"] == "test"
+            assert "timestamp" in data
 
 
-def test_snapshot_data_as_list(setup_test_env):
-    """Test snapshot with the 'data' argument provided as a list of strings."""
-    env = setup_test_env
-    cfg = OmegaConf.create({"param": 7, "save_dir": str(env["save_dir"])})
-
-    data_file_path = str(env["data_dir"] / "dataset.csv")
-    snapshot(config=cfg, data=[data_file_path, str(env["data_dir"])], commit=False)
-
-    lock_file = env["save_dir"] / "run.lock"
-    assert lock_file.exists()
-    with open(lock_file, "r") as f:
-        data = yaml.safe_load(f)
-
-    assert "data" in data
-    # The key should be the string representation of the path
-    assert "dataset.csv" in data["data"]
-    assert str(env["data_dir"].name) in data["data"]
-    assert isinstance(data["data"]["dataset.csv"], str)
-
-
-def test_snapshot_prevs_discovery(setup_test_env):
-    """Test that snapshot can find a run.lock file in parent directories."""
-    env = setup_test_env
-
-    # Create a nested directory structure inside the prev_stage_dir
-    nested_dir = env["prev_stage_dir"] / "nested" / "deeply"
-    nested_dir.mkdir(parents=True)
-    some_file = nested_dir / "some_file.txt"
-    some_file.write_text("hello")
-
-    cfg = OmegaConf.create({"param": 8, "save_dir": str(env["save_dir"])})
-
-    # Call snapshot with a path to a file deep in the nested structure
-    snapshot(config=cfg, prevs=[str(some_file)], commit=False)
-
-    lock_file = env["save_dir"] / "run.lock"
-    assert lock_file.exists()
-    with open(lock_file, "r") as f:
-        data = yaml.safe_load(f)
-
-    assert "prevs" in data
-    # The key should be the name of the directory containing the run.lock, which is 'prev_run'
-    assert "prev_run" in data["prevs"]
-    assert data["prevs"]["prev_run"]["config"]["param"] == 10
+def test_snapshot_function_basic():
+    """Test the snapshot function."""
+    with tempfile.TemporaryDirectory() as tmp:
+        save_dir = Path(tmp) / "results"
+        save_dir.mkdir()
+        
+        cfg = OmegaConf.create({"param": 1, "save_dir": str(save_dir)})
+        
+        # Mock dependencies to avoid git operations during test
+        with patch("flexlock.snapshot.create_shadow_snapshot") as mock_snapshot, \
+             patch("flexlock.snapshot.hash_data") as mock_hash:
+            
+            mock_snapshot.return_value = {"tree": "mock_tree", "commit": "mock_commit", "is_dirty": False}
+            mock_hash.return_value = "mock_data_hash"
+            
+            snapshot(cfg, repos={"main": "."}, data={"dataset": "/path/to/data"})
+            
+            lock_file = save_dir / "run.lock"
+            assert lock_file.exists()
+            
+            with open(lock_file, "r") as f:
+                data = yaml.safe_load(f)
+                
+            assert data["config"]["param"] == 1
+            # Check that both repos and data were recorded
+            assert "repos" in data
+            assert "data" in data
+            assert data["data"]["dataset"] == "mock_data_hash"

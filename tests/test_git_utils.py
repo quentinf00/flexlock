@@ -3,7 +3,7 @@ from git import Repo
 from pathlib import Path
 import os
 
-from flexlock.git_utils import get_git_commit, commit_cwd
+from flexlock.git_utils import get_git_commit, commit_cwd, create_shadow_snapshot
 
 
 @pytest.fixture
@@ -107,3 +107,69 @@ def test_commit_cwd_with_deleted_file(git_repo):
         change.change_type == "D" and change.a_path == "file_to_delete.txt"
         for change in diff_against_parent
     )
+
+
+def test_create_shadow_snapshot_basic(git_repo):
+    """Test basic shadow snapshot creation."""
+    repo_dir = Path(git_repo.working_dir)
+    
+    result = create_shadow_snapshot(repo_path=str(repo_dir))
+    
+    assert "commit" in result
+    assert "tree" in result
+    assert "is_dirty" in result
+    assert isinstance(result["commit"], str)
+    assert isinstance(result["tree"], str)
+    assert isinstance(result["is_dirty"], bool)
+    assert len(result["commit"]) > 0
+    assert len(result["tree"]) > 0
+
+
+def test_create_shadow_snapshot_with_changes(git_repo):
+    """Test shadow snapshot with uncommitted changes."""
+    repo_dir = Path(git_repo.working_dir)
+    
+    # Make changes to the repo
+    new_file = repo_dir / "new_file.txt"
+    new_file.write_text("new content")
+    
+    # Create initial snapshot
+    result1 = create_shadow_snapshot(repo_path=str(repo_dir))
+    
+    # Change the file content
+    new_file.write_text("updated content")
+    
+    # Create another snapshot
+    result2 = create_shadow_snapshot(repo_path=str(repo_dir))
+    
+    # Tree hashes should be different due to the content change
+    assert result1["tree"] != result2["tree"]
+    assert result1["is_dirty"] is True  # First snapshot should show dirty
+    assert result2["is_dirty"] is True  # Second snapshot should show dirty
+
+
+def test_shadow_snapshot_ignores_patterns(git_repo):
+    """Test shadow snapshot with ignore patterns."""
+    repo_dir = Path(git_repo.working_dir)
+    
+    # Create files to be ignored
+    (repo_dir / "temp_file.tmp").write_text("temp content")
+    (repo_dir / "secret.txt").write_text("secret content")
+    
+    # Create a file that should not be ignored
+    (repo_dir / "important.txt").write_text("important content")
+    
+    # Create snapshot with ignores
+    result_with_ignore = create_shadow_snapshot(
+        repo_path=str(repo_dir),
+        ignore_patterns=["*.tmp", "secret.txt"]
+    )
+    
+    # Create another file that should not be ignored
+    (repo_dir / "another_important.txt").write_text("more important content")
+    
+    result_without_ignore = create_shadow_snapshot(repo_path=str(repo_dir))
+    
+    # Since we're ignoring temp and secret files, the tree hash should be the same
+    # when they're modified but different when important files change
+    assert result_with_ignore["tree"] != result_without_ignore["tree"]

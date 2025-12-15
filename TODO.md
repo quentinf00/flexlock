@@ -1,8 +1,6 @@
 ## Improvements 
 ### CLI interface
-# FlexLock CLI Refactoring Plan
-
-## 1. Interface & Arguments Renaming
+#### 1. Interface & Arguments Renaming
 - [ ] **Rename Selection Argument**
     - Change `-e, --experiment` to **`-s, --select`**.
     - Description: "Dot-separated key to select a sub-node from the base configuration."
@@ -13,7 +11,7 @@
     - Rename/Add **`-o, --overrides`**: Dot-list args applied to the **Outer/Root** config (before selection).
     - Rename/Add **`-O, --overrides-after-select`**: Dot-list args applied to the **Inner/Selected** config (after selection).
 
-## 2. Configuration Loading Pipeline (Logic Refactor)
+#### 2. Configuration Loading Pipeline (Logic Refactor)
 - [ ] **Step 1: Base Loading**
     - Load base config from `-c, --config`.
     - If no config file is provided, start with an empty `OmegaConf` object.
@@ -38,12 +36,23 @@
     - *Result*: `final_cfg` (The template used for execution).
 
 
-## 4. Housekeeping & Validation
+
+#### 4. Housekeeping & Validation
 - [ ] **Conflict Checks**
     - Ensure `ipykernel` / `pytest` detection still works for determining CLI vs Programmatic mode.
     - Ensure `save_dir` resolution happens on the `final_cfg` (after all merges/selections).
 - [ ] **Help Message**
     - Group arguments in `argparse` help (e.g., "Configuration Selection", "Global Overrides", "Local Overrides") to make the difference between `-o` and `-O` clear to the user.
+
+### Release script
+- [] Dynamic version for pyproject.toml, read from docs/conf.py
+- [] Release script:
+    - [] bump version (patch per default)
+    - [] commit, tag, push
+    - [] pixi build, anaconda upload
+    - [] build doc, docs/upload_docs
+    - upload
+
 
 ## Push/Pull Workflow Implementation
 

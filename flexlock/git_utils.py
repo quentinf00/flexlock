@@ -2,16 +2,83 @@
 
 import fnmatch
 import os
+import shutil
+import uuid
 import warnings
+from pathlib import Path
+from contextlib import contextmanager
 from git.repo import Repo as GitRepo
+
+
+@contextmanager
+def shadow_index(repo: GitRepo):
+    """Context manager for Git Plumbing operations without touching user index."""
+    git_dir = Path(repo.git_dir)
+    temp_index = git_dir / f"index_shadow_{uuid.uuid4().hex}"
+
+    # Clone current index to temp file for speed
+    try:
+        if (git_dir / "index").exists():
+            shutil.copy2(git_dir / "index", temp_index)
+    except Exception:
+        pass
+
+    env = os.environ.copy()
+    env["GIT_INDEX_FILE"] = str(temp_index)
+
+    try:
+        yield env
+    finally:
+        if temp_index.exists():
+            temp_index.unlink()
+
+
+def create_shadow_snapshot(repo_path: str = ".", ignore_patterns: list | None = None):
+    """
+    Creates a Shadow Commit.
+    Returns: {commit_hash, tree_hash, is_dirty}
+    """
+    repo = GitRepo(repo_path, search_parent_directories=True)
+    ignore_patterns = ignore_patterns or []
+
+    with shadow_index(repo) as shadow_env:
+        git = repo.git
+
+        # 1. Stage everything (Modified + Untracked) into Shadow Index
+        git.add("--all", env=shadow_env)
+
+        # 2. Remove ignored patterns from Shadow Index
+        if ignore_patterns:
+            try:
+                git.rm("--cached", "-r", "--ignore-unmatch", *ignore_patterns, env=shadow_env)
+            except Exception:
+                pass
+
+        # 3. Write Tree (This is the content fingerprint)
+        tree_hash = git.write_tree(env=shadow_env)
+
+        # 4. Create Shadow Commit (Lineage)
+        parent = repo.head.commit.hexsha
+        msg = f"FlexLock Shadow: {parent[:7]} + Changes"
+        shadow_commit = git.commit_tree(tree_hash, "-p", parent, "-m", msg, env=shadow_env)
+
+        # 5. Save Ref (Prevent Garbage Collection)
+        ref_name = f"refs/flexlock/runs/{shadow_commit}"
+        git.update_ref(ref_name, shadow_commit)
+
+        return {
+            "commit": shadow_commit,
+            "tree": tree_hash, # <--- The key for Equality Checks
+            "is_dirty": repo.is_dirty(untracked_files=True)
+        }
 
 
 def commit_cwd(
     branch: str,
     message: str,
     repo_path: str = ".",
-    include: list = None,
-    exclude: list = None,
+    include: list | None = None,
+    exclude: list | None = None,
     filesize_warn: int = 1 * 1024 * 1024,  # 1MB
 ):
     """

@@ -1,15 +1,15 @@
 """Utility functions for FlexLock."""
 
+import inspect
+import importlib
+import sys
+import functools
+from pathlib import Path
+from typing import Any
 from omegaconf import OmegaConf, DictConfig, ListConfig
 from dataclasses import is_dataclass
 from contextlib import contextmanager
 from loguru import logger
-import importlib
-import inspect
-import functools
-
-
-from typing import Any
 import warnings
 from dataclasses import fields
 
@@ -59,6 +59,87 @@ def to_dictconfig(incfg):
 
     # Fallback: try creating directly
     return OmegaConf.create(incfg)
+
+
+def py2cfg(obj, **overrides):
+    """
+    Generates a default configuration dict from a function or class signature.
+    Supports nested py2cfg calls and handles decorated functions.
+    """
+    # 1. Unwrap decorated functions
+    if hasattr(obj, "_original_fn"):
+        obj = obj._original_fn
+
+    # 1. Handle functools.partial
+    # If it's a partial, we unwrap it, capture the fixed args, and mark as _partial_
+    if isinstance(obj, functools.partial):
+        config = py2cfg(obj.func)
+        config["_partial_"] = True
+        # Add positional arguments as _args_ if they exist
+        if obj.args:
+            config["_args_"] = list(obj.args)
+        config.update(obj.keywords)  # Add bound keyword arguments
+        config.update(overrides)  # Apply runtime overrides
+        return config
+
+    # 2. Determine target and signature source
+    if inspect.isclass(obj):
+        target = f"{obj.__module__}.{obj.__qualname__}"
+        sig_obj = obj.__init__
+    elif inspect.isroutine(obj):
+        target = f"{obj.__module__}.{obj.__qualname__}"
+        sig_obj = obj
+    else:
+        raise ValueError(f"py2cfg expects class or function, got {type(obj)}")
+
+    # 3. Build Config
+    config = {"_target_": target}
+
+    try:
+        sig = inspect.signature(sig_obj)
+        params = list(sig.parameters.values())
+
+        # Skip 'self' for classes or bound methods
+        if inspect.isclass(obj) or (hasattr(sig_obj, '__self__') and sig_obj.__name__ != '__init__'):
+            if params and params[0].name == 'self':
+                params = params[1:]
+
+        for param in params:
+            if param.default is not param.empty:
+                # We generally only capture primitive defaults here.
+                # Complex defaults (classes) should be handled via explicit overrides
+                # or None defaults in the function signature.
+                val = param.default
+                # If a default value is itself a class/function, convert it too.
+                if inspect.isclass(val) or inspect.isfunction(val):
+                    try:
+                        val = py2cfg(val)
+                    except ValueError:
+                        pass  # Keep original if conversion fails
+                config[param.name] = val
+    except (ValueError, TypeError):
+        pass
+
+    # 4. Apply overrides (nested py2cfg calls happen here)
+    config.update(overrides)
+    return config
+
+
+def load_python_defaults(import_path: str):
+    """Dynamically imports a module or file path to retrieve 'defaults'."""
+    if ":" in import_path:
+        # Path based: "configs/my_conf.py:defaults"
+        path_str, var_name = import_path.split(":")
+        file_path = Path(path_str).resolve()
+        spec = importlib.util.spec_from_file_location("dynamic_defaults", file_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return getattr(module, var_name)
+    else:
+        # Module based: "pkg.config.defaults"
+        module_name, var_name = import_path.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        return getattr(module, var_name)
 
 
 def merge_task_into_cfg(cfg: DictConfig, task: Any, task_to: str | None) -> DictConfig:
@@ -137,71 +218,3 @@ def instantiate(config, *args, **kwargs):
         return functools.partial(target_class, *all_args, **init_args)
 
     return target_class(*all_args, **init_args)
-
-
-def py2cfg(obj, **overrides):
-    """
-    Converts a class, function, or partial into a configuration dictionary
-    with a "_target_" key and default arguments.
-
-    Args:
-        obj: The class, function, or functools.partial object.
-        **overrides: Key-value pairs to override defaults or add fixed values.
-    """
-
-    # 1. Handle functools.partial
-    # If it's a partial, we unwrap it, capture the fixed args, and mark as _partial_
-    if isinstance(obj, functools.partial):
-        config = py2cfg(obj.func)
-        config["_partial_"] = True
-        # Add positional arguments as _args_ if they exist
-        if obj.args:
-            config["_args_"] = list(obj.args)
-        config.update(obj.keywords)  # Add bound keyword arguments
-        config.update(overrides)  # Apply runtime overrides
-        return config
-
-    # 2. Extract the dot-path string
-    if not hasattr(obj, "__module__") or not hasattr(obj, "__qualname__"):
-        raise ValueError(
-            f"Cannot determine target path for {obj}. It must be a class or function."
-        )
-
-    # Handle case where class is defined in the main script
-    module = obj.__module__
-    target_path = f"{module}.{obj.__qualname__}"
-
-    config = {"_target_": target_path}
-
-    # 3. Inspect signature to get default values
-    try:
-        sig = inspect.signature(obj)
-        # Check if obj is bound to an instance (has 'self' as first parameter)
-        if obj.__name__ != '__init__' and hasattr(obj, '__self__'):
-            # If this is a bound method, skip 'self' parameter
-            params = list(sig.parameters.values())[1:]  # Skip first param (self)
-        else:
-            params = sig.parameters.values()
-
-        for param in params:
-            # We only care about parameters that have defaults
-            if param.default is not param.empty:
-                val = param.default
-
-                # OPTIONAL: Recursive handling
-                # If a default value is itself a class/function, convert it too.
-                if inspect.isclass(val) or inspect.isfunction(val):
-                    try:
-                        val = py2cfg(val)
-                    except ValueError:
-                        pass  # Keep original if conversion fails
-
-                config[param.name] = val
-    except (ValueError, TypeError):
-        # Some built-ins allow signature inspection, others don't.
-        pass
-
-    # 4. Apply overrides
-    config.update(overrides)
-
-    return config

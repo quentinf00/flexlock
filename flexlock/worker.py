@@ -6,10 +6,14 @@ from loguru import logger
 from multiprocessing import Process
 from .taskdb import claim_next_task, finish_task, pending_count
 from flexlock.utils import merge_task_into_cfg
+from .snapshot import snapshot
+from flexlock.utils import instantiate
 
 
 def worker_loop(func, cfg, task_to: str, db_path):
     """A worker loop that continuously claims and executes tasks from the task database."""
+    if func is None:
+        func = instantiate
     node = os.getenv("HOSTNAME") or "local"
     while True:
         task = claim_next_task(db_path, node)
@@ -24,7 +28,9 @@ def worker_loop(func, cfg, task_to: str, db_path):
         logger.info(f"Worker {node} running task {task}")
         try:
             task_cfg = merge_task_into_cfg(cfg, task, task_to)
+            # Use instantiate instead of the original func directly for proper instantiation
             result = func(task_cfg)
+            logger.info(f"Task successful: {task_cfg}")
             finish_task(db_path, task, result=result)
         except Exception as e:
             logger.error(f"Task failed: {e}", exc_info=True)

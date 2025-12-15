@@ -133,10 +133,10 @@ def dump_to_yaml(db_path: Path, yaml_path: Path) -> None:
     with _conn(db_path) as c:
         logger.debug(f"using {c} for {db_path}")
         rows = c.execute(
-            "SELECT result_info, task_info FROM tasks WHERE status IN ('done','failed') ORDER BY ts_end"
+            "SELECT result_info, task_info, status FROM tasks WHERE status IN ('done','failed') ORDER BY ts_end"
         ).fetchall()
         data = [
-            yaml.safe_load(r[0]) if r[0] else yaml.safe_load(r[1])
+            dict(task = yaml.safe_load(r[0]), status = r[2]) if r[0] else dict(task = yaml.safe_load(r[1]), status = r[2])
             for r in rows
             if r[0] or r[1]
         ]

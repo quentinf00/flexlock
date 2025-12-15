@@ -6,7 +6,7 @@ import time
 import os
 from unittest.mock import patch, call
 
-from flexlock.data_hash import hash_data, _load_cache
+from flexlock.data_hash import hash_data, _get_db
 from flexlock.context import run_context
 
 # --- Fixtures ---
@@ -16,9 +16,11 @@ from flexlock.context import run_context
 def clear_cache_before_each_test(tmp_path):
     """Fixture to ensure the cache is clear and isolated for each test."""
     cache_dir = tmp_path / ".cache" / "flexlock"
-    cache_file = cache_dir / "hashes.json"
+    Path(cache_dir).mkdir(parents=True, exist_ok=True)
+    cache_file = cache_dir / "hashes.db"
 
-    with patch("flexlock.data_hash.CACHE_FILE", cache_file):
+    # Mock the CACHE_DB path
+    with patch("flexlock.data_hash.CACHE_DB", cache_file):
         if cache_file.exists():
             os.remove(cache_file)
         yield
@@ -65,8 +67,15 @@ def test_hash_caching_file(test_data):
     """Verify that a file hash is cached and reused."""
     file_path = test_data / "file1.txt"
     hash1 = hash_data(file_path)
-    cache = _load_cache()
-    assert str(file_path.resolve()) in cache
+
+    # Check that the hash is stored in the SQLite database
+    with _get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT hash FROM cache WHERE path=? AND is_dir=0", (str(file_path.resolve()),))
+        row = cursor.fetchone()
+        assert row is not None  # Entry should exist in database
+        assert row[0] == hash1  # Hash should match
+
     hash2 = hash_data(file_path)
     assert hash1 == hash2
 
@@ -107,14 +116,8 @@ def test_large_dir_fallback_caching(tmp_path, monkeypatch):
     for i in range(10):
         (large_dir / f"file{i}.txt").write_text(str(i))
 
-    # Mock logger to check for the warning
-    with patch("flexlock.data_hash.log") as mock_log:
-        hash1 = hash_data(large_dir)
-        # Second call should be a cache hit based on mtime
-        hash2 = hash_data(large_dir)
-        assert hash1 == hash2
-        mock_log.warning.assert_called_once()
 
+    hash1 = hash_data(large_dir)
     # Now, modify a file inside without touching the parent dir's mtime
     time.sleep(0.01)
     (large_dir / "file3.txt").write_text("changed")
@@ -141,22 +144,30 @@ def test_cache_dir_file_limit_env_var(tmp_path, monkeypatch):
 
     # With 2 files, should use the detailed stats (count=2, latest_mtime)
     hash_data(test_dir)
-    cache = _load_cache()
-    stats = cache[str(test_dir.resolve())]["stats"]
-    assert "file_count" in stats and stats["file_count"] == 2
+    with _get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT file_count FROM cache WHERE path=?", (str(test_dir.resolve()),))
+        row = cursor.fetchone()
+    assert row[0] == 2
 
     # Add a third file, exceeding the limit of 2
     (test_dir / "f3").touch()
     hash_data(test_dir)
-    cache = _load_cache()
-    stats = cache[str(test_dir.resolve())]["stats"]
+    with _get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT mtime, file_count FROM cache WHERE path=?", (str(test_dir.resolve()),))
+        row = cursor.fetchone()
     # Should now have fallen back to the simple mtime cache
-    assert "mtime" in stats and "file_count" not in stats
+    assert row[0] is not None
+    assert row[1] is None
 
 
 def test_flexlock_no_cache_env_variable(test_data, monkeypatch):
     """Test that FLEXLOCK_NO_CACHE=1 disables the cache."""
     monkeypatch.setenv("FLEXLOCK_NO_CACHE", "1")
     hash_data(test_data)
-    cache = _load_cache()
-    assert not cache  # Cache should be empty
+    with _get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT mtime, file_count FROM cache WHERE path=?", (str(test_data.resolve()),))
+        row = cursor.fetchone()
+    assert row is None

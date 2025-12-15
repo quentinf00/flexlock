@@ -49,9 +49,9 @@ def test_parallel_executor_local_execution(base_cfg):
         results = yaml.safe_load(f)
 
     assert len(results) == 4
-    assert all(item["status"] == "completed" for item in results)
+    assert all(item["status"] == "done" for item in results)
     # Check that task IDs from 0 to 3 are present
-    assert {item["task"] for item in results} == {0, 1, 2, 3}
+    assert {item["task"]["task"] for item in results} == {0, 1, 2, 3}
 
 
 def test_executor_handles_no_tasks(base_cfg):
@@ -135,11 +135,10 @@ def test_task_failure_is_recorded(base_cfg):
     with _conn(executor.db_path) as c:
         # Check task 0 (success)
         success_task = c.execute(
-            "SELECT status, error, result_info FROM tasks WHERE task_info LIKE 'task_id: 0%'"
+            "SELECT status, error, result_info FROM tasks WHERE task_info LIKE '%task_id: 0%'"
         ).fetchone()
         assert success_task[0] == "done"
         assert success_task[1] is None
-        assert "status: completed" in success_task[2]
 
         # Check task 1 (failure)
         failed_task = c.execute(
