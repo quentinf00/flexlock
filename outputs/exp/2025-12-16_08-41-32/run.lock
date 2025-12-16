@@ -1,0 +1,15 @@
+timestamp: '2025-12-16T08:41:32.848301'
+repos:
+  main:
+    commit: 43d3a80b831dc3fafaf3b930aa7dc1a337ba5bb2
+    tree: 4aa5f19198e5de752faf14f58393af1e0328376f
+    is_dirty: true
+data:
+  raw_images: 1533d676ce84f044
+config:
+  _target_: builtins.print
+  data_path: /tmp/tmp_tdry2n4/data/raw/images.txt
+  _snapshot_:
+    data:
+      raw_images: /tmp/tmp_tdry2n4/data/raw/images.txt
+  save_dir: outputs/exp/2025-12-16_08-41-32

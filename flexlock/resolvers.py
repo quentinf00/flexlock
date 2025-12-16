@@ -97,8 +97,6 @@ def snapshot_resolver(path: str, key: str | None = None, *, _root_: DictConfig) 
         data=item,
         prevs=[path],
         merge=True,
-        mlflowlink=False,
-        resolve=False,
     )
     return path
 

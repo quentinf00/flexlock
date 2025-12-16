@@ -3,7 +3,7 @@ from git import Repo
 from pathlib import Path
 import os
 
-from flexlock.git_utils import get_git_commit, commit_cwd, create_shadow_snapshot
+from flexlock.git_utils import get_git_commit, commit_cwd, create_shadow_snapshot, get_git_tree_hash
 
 
 @pytest.fixture
@@ -69,6 +69,19 @@ def test_commit_cwd_filesize_warn(git_repo):
             repo_path=str(repo_dir),
             filesize_warn=1 * 1024 * 1024,  # 1 MB
         )
+
+
+def test_get_git_tree_hash(git_repo):
+    """Test that get_git_tree_hash returns the correct tree hash."""
+    expected_tree_hash = git_repo.head.commit.tree.hexsha
+    actual_hash = get_git_tree_hash(path=git_repo.working_dir)
+    assert actual_hash == expected_tree_hash
+
+
+def test_get_git_tree_hash_nonexistent_path():
+    """Test that get_git_tree_hash handles nonexistent paths."""
+    result = get_git_tree_hash(path="/nonexistent/path")
+    assert result.startswith("Error getting git tree hash")
 
 
 def test_get_git_commit_error():
@@ -151,25 +164,24 @@ def test_create_shadow_snapshot_with_changes(git_repo):
 def test_shadow_snapshot_ignores_patterns(git_repo):
     """Test shadow snapshot with ignore patterns."""
     repo_dir = Path(git_repo.working_dir)
-    
+
     # Create files to be ignored
     (repo_dir / "temp_file.tmp").write_text("temp content")
     (repo_dir / "secret.txt").write_text("secret content")
-    
+
     # Create a file that should not be ignored
     (repo_dir / "important.txt").write_text("important content")
-    
+
     # Create snapshot with ignores
     result_with_ignore = create_shadow_snapshot(
         repo_path=str(repo_dir),
         ignore_patterns=["*.tmp", "secret.txt"]
     )
-    
+
     # Create another file that should not be ignored
     (repo_dir / "another_important.txt").write_text("more important content")
-    
+
     result_without_ignore = create_shadow_snapshot(repo_path=str(repo_dir))
-    
-    # Since we're ignoring temp and secret files, the tree hash should be the same
-    # when they're modified but different when important files change
+
+    # The tree hashes should be different since we're including all files in the second case
     assert result_with_ignore["tree"] != result_without_ignore["tree"]

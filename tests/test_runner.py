@@ -20,23 +20,25 @@ def test_flexlockrunner_initialization():
 def test_flexlockrunner_load_config_with_defaults():
     """Test loading config with defaults."""
     runner = FlexLockRunner()
-    
+
     # Create a temporary defaults file
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
         f.write('defaults = {"param1": 1, "nested": {"value": 10}}\n')
         temp_file = f.name
-    
+
     try:
         args = ['--defaults', f'{temp_file}:defaults']
         parsed = runner.parser.parse_args(args)
         config = runner.load_config(parsed)
-        
+
         assert 'param1' in config
         assert config['param1'] == 1
         assert 'nested' in config
         assert config['nested']['value'] == 10
     finally:
         Path(temp_file).unlink()
+
+
 
 
 def test_flexlockrunner_prepare_node_injects_save_dir():
@@ -108,7 +110,7 @@ def test_flexlockrunner_load_config_with_outer_overrides():
 def test_flexlockrunner_load_config_with_selection():
     """Test loading config with node selection."""
     runner = FlexLockRunner()
-    
+
     # Create a temporary defaults file
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
         f.write('''
@@ -118,17 +120,18 @@ defaults =  {
 }
 ''')
         temp_file = f.name
-    
+
     try:
         args = ['--defaults', f'{temp_file}:defaults', '--select', 'stage1']
         parsed = runner.parser.parse_args(args)
         # Instead of running the full loader, we test the selection separately
         root_cfg = runner.load_config(parsed)
         node_cfg = runner.parser.parse_args(args)  # This is how selection would work in the actual run method
-        
+
         # For this test, we focus on the selection logic
         selected = OmegaConf.select(root_cfg, 'stage1')
         assert selected['param1'] == 1
         assert selected['nested']['value'] == 10
     finally:
         Path(temp_file).unlink()
+

@@ -1,251 +1,209 @@
 """
-Tests for multistage config handling with interpolation.
-This tests the specific case mentioned in TODO.md where nested config
-interpolation should work properly when passed to functions.
+Tests for FlexLock configuration handling, focusing on:
+1. Interpolation context preservation (Outer -> Inner).
+2. Selection logic.
+3. Sweep execution with interpolated values.
 """
 
+import sys
 import tempfile
-from pathlib import Path
-from omegaconf import OmegaConf
-from dataclasses import dataclass
-from flexlock.flexcli import flexcli
-from flexlock.parallel import load_tasks
 import pytest
+from pathlib import Path
+from unittest.mock import patch, MagicMock
+from omegaconf import OmegaConf
+from flexlock import flexcli
+from loguru import logger
+logger.enable("flexlock")
+# --- Helpers ---
 
+@pytest.fixture
+def temp_yaml():
+    """Creates a temporary YAML file and cleans it up."""
+    f = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
+    path = Path(f.name)
+    yield f, path
+    f.close()
+    if path.exists():
+        path.unlink()
 
-def test_nested_config_interpolation_simple_run():
-    """Test that nested config interpolation works in a simple run."""
+def mock_argv(args):
+    """Context manager to patch sys.argv."""
+    return patch.object(sys, "argv", ["script.py"] + args)
 
-    @dataclass
-    class Cfg:
-        p: int = 1
+# --- Tests ---
 
-    def myfn(cfg: Cfg):
-        # Access the interpolated value
-        return cfg.p
+# Define the application logic
+@flexcli
+def main(p, save_dir=None):
+    return p
 
-    # Create a YAML config with interpolation
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write("""
-param: 5
-cfg:
-    p: ${param}
-""")
-        config_path = f.name
+def test_interpolation_with_selection(temp_yaml):
+    """
+    Test that selecting a sub-node (Inner Config) retains access to 
+    variables defined in the Root (Outer Config) via interpolation.
+    """
+    f, config_path = temp_yaml
+    
+    # Define a config where the experiment depends on a global parameter
+    f.write("""
+global_param: 42
 
-    try:
-        # Load the global config
-        glob_cfg = OmegaConf.load(config_path)
-
-        # The cfg.p should be resolved to 5 when accessed, but it might not work if
-        # interpolation context is lost when passing glob_cfg.cfg
-        assert OmegaConf.select(glob_cfg, "cfg.p") == 5  # Still contains reference
-
-        # This should resolve to the value of 'param' which is 5
-        resolved_cfg = OmegaConf.to_container(glob_cfg, resolve=True)
-        expected_value = resolved_cfg["cfg"]["p"]
-        assert expected_value == 5, f"Expected 5, got {expected_value}"
-
-        # Now test the actual function call - this is the key issue
-        result = myfn(glob_cfg.cfg)
-        assert result == 5, f"Function should receive resolved value 5, got {result}"
-
-    finally:
-        Path(config_path).unlink()
-
-
-def test_nested_config_interpolation_with_experiment_selection():
-    """Test config with --experiment selection and interpolation."""
-
-    @dataclass
-    class Config:
-        p: int = 1
-
-    @flexcli(default_config=Config)
-    def main(cfg: Config):
-        return cfg
-
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write("""
-param: 10
 experiments:
-  exp1:
-    p: ${param}
+  exp_a:
+    # This interpolation requires access to the root node
+    p: ${global_param}
+    save_dir: "/tmp/flexlock_test/exp_a"
 """)
-        config_path = f.name
-
-    import sys
-    from unittest.mock import patch
-
-    try:
-        with patch.object(
-            sys,
-            "argv",
-            ["script.py", "--config", config_path, "--experiment", "experiments.exp1"],
-        ):
-            cfg = main()
-            # cfg.p should resolve to 10 from ${param}
-            assert cfg.p == 10, f"Expected cfg.p to resolve to 10, got {cfg.p}"
-
-    finally:
-        Path(config_path).unlink()
+    f.close()
 
 
-def test_nested_config_interpolation_multitask_run():
-    """Test nested config interpolation works in multitask runs."""
+    # Run with selection
+    with mock_argv(["-c", str(config_path), "-s", "experiments.exp_a"]):
+        result = main()
+    
+    assert result == 42, "Failed to resolve root interpolation after selection."
 
-    @dataclass
-    class Config:
-        p: int = 1
-        some_param: str = "???"
-        save_dir: str = "/tmp/test_multitask"
+# Capture results to verify sweep execution
+results = []
 
-    results = []
+@flexcli
+def main3(p, save_dir):
+    logger.info(f"Running with p={p}, save_dir={save_dir}")
+    results.append(p)
+    return p
 
-    @flexcli(default_config=Config)
-    def main(cfg: Config):
-        results.append(cfg.p)
-        return cfg.p
+def test_interpolation_in_sweep_list(temp_yaml):
+    """
+    Test that items in a sweep list (defined in root) can interpolate 
+    values from the root config when injected into the selected node.
+    """
+    f, config_path = temp_yaml
+    
+    # 1. global_mult is 10
+    # 2. base_exp has p=1
+    # 3. grid has two tasks: 
+    #    - p=5
+    #    - p=${global_mult} (Should resolve to 10)
+    f.write("""
+global_mult: 10
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write("""
-param: 20
-cfg:
-    p: ${param}
-    some_param: 1
-    save_dir: /tmp/test_multitask
+base_exp:
+  p: 1
+  save_dir: "${vinc:/tmp/flexlock_test}"
+
+grid:
+  - p: 5
+  - p: ${global_mult}
 """)
-        config_path = f.name
-
-    # Create a tasks file
-    tasks_file = Path(config_path).with_name("tasks.txt")
-    tasks_file.write_text("1\n2")
-
-    import sys
-    from unittest.mock import patch
-
-    try:
-        # Test that this doesn't work as expected currently - the nested cfg.p
-        # may not resolve to 20 due to loss of interpolation context
-        with patch.object(
-            sys,
-            "argv",
-            [
-                "script.py",
-                "--config",
-                config_path,
-                "--experiment",
-                "cfg",
-                "--tasks",
-                str(tasks_file),
-                "--task-to",
-                "some_param",  # Not merging into root to avoid conflicts
-            ],
-        ):
-            main()
-
-        # We're mainly testing that the config loading doesn't fail
-        # The results list should have values for each task processed
-        # For now, just ensure no exception is raised during config processing
-
-    finally:
-        Path(config_path).unlink()
-        if tasks_file.exists():
-            tasks_file.unlink()
+    f.close()
 
 
-def test_multitask_with_experiment_and_interpolation():
-    """Test the specific multitask scenario with experiment selection and interpolation."""
+    # Run sweep
+    with mock_argv([
+        "-c", str(config_path),
+        "-s", "base_exp",
+        "--sweep-key", "grid",
+        "--n_jobs", "1" 
+    ]):
+        main3()
 
-    @dataclass
-    class Config:
-        p: int = 1
-        save_dir: str = "/tmp/test_exp_multitask"
+    # Expecting [5, 10]
+    assert 5 in results
+    assert 10 in results, "Interpolation inside sweep list failed to resolve to global var."
+    assert len(results) == 2
 
-    task_results = []
+@flexcli
+def main2(param, other, save_dir):
+    return param, other
 
-    @flexcli(default_config=Config)
-    def main(cfg: Config):
-        task_results.append(cfg.p)
-        return cfg.p
-
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write("""
-param: 30
-experiments:
-  exp1:
-    p: ${param}
-    save_dir: /tmp/test_exp_multitask
+def test_inner_vs_outer_overrides(temp_yaml):
+    """
+    Test the distinction between:
+    - Outer Overrides (-o): Affect global config (before selection).
+    - Inner Overrides (-O): Affect selected config (after selection).
+    """
+    f, config_path = temp_yaml
+    f.write("""
+global_val: 10
+nested:
+  param: ${global_val}
+  other: 0
 """)
-        config_path = f.name
-
-    # Create a tasks file
-    tasks_file = Path(config_path).with_name("tasks2.txt")
-    tasks_file.write_text("task1\ntask2")
-
-    import sys
-    from unittest.mock import patch
-
-    try:
-        # This should work once we fix the interpolation context issue
-        with patch.object(
-            sys,
-            "argv",
-            [
-                "script.py",
-                "--config",
-                config_path,
-                "--experiment",
-                "experiments.exp1",
-                "--tasks",
-                str(tasks_file),
-                "--task-to",
-                "task_id",  # Add task-specific field
-                "--n_jobs",
-                "1",
-            ],
-        ):
-            main()
-
-        # Each task should have processed successfully
-        # The cfg.p should have resolved to 30 from ${param}
-        # This will only work correctly once the fix is implemented
-
-    finally:
-        Path(config_path).unlink()
-        if tasks_file.exists():
-            tasks_file.unlink()
+    f.close()
 
 
-def test_interpolation_context_preservation():
-    """Test that interpolation context is preserved when extracting nested configs."""
+    # Case 1: Override Global Value (Outer)
+    # Changing global_val to 99 should update nested.param via interpolation
+    with mock_argv([
+        "-c", str(config_path),
+        "-s", "nested",
+        "-o", "global_val=99" # Outer override
+    ]):
+        p, _ = main2()
+        assert p == 99, "Outer override failed to update interpolated value."
 
+    # Case 2: Override Selected Value (Inner)
+    # We select 'nested', then override 'other'. 
+    # (global_val stays 10 from file)
+    with mock_argv([
+        "-c", str(config_path),
+        "-s", "nested",
+        "-O", "other=5" # Inner override
+    ]):
+        p, o = main2()
+        assert p == 10  # Original file value
+        assert o == 5   # Overridden value
+
+
+# 1. Function with defaults (Schema)
+@flexcli
+def train(lr=0.01, epochs=10, save_dir='/tmp/flexlock_test'):
+    return {"lr": lr, "epochs": epochs}
+
+def test_py2cfg_defaults_and_overrides():
+    """
+    Test that function signature defaults are preserved and can be overridden.
+    This validates the 'implicit schema' philosophy.
+    """
+    
+
+    # Case A: Run with defaults (No args)
+    with mock_argv([]):
+        res = train()
+        assert res["lr"] == 0.01
+        assert res["epochs"] == 10
+
+    # Case B: Override via CLI (Inner overrides implicit root)
+    with mock_argv(["-O", "lr=0.05", "epochs=50"]):
+        res = train()
+        assert res["lr"] == 0.05
+        assert res["epochs"] == 50
+
+
+def test_context_preservation_sanity():
+    """
+    Direct OmegaConf sanity check to ensure the library behavior 
+    matches our assumptions about selection and parent pointers.
+    """
     yaml_content = """
-param: 42
-cfg:
-    p: ${param}
-    nested:
-        value: ${param}
-other_param: 99
-"""
-
+    root_val: 100
+    level1:
+        val: ${root_val}
+        level2:
+            val: ${root_val}
+    """
     cfg = OmegaConf.create(yaml_content)
 
-    # Access nested config directly - this should still have interpolation context
-    nested_cfg = cfg.cfg
+    # 1. Select level1.level2
+    # Note: OmegaConf.select preserves the parent graph by default
+    node = OmegaConf.select(cfg, "level1.level2")
+    
+    assert node.val == 100
+    
+    # 2. Modify root, ensure node updates (dynamic interpolation)
+    cfg.root_val = 200
+    assert node.val == 200
 
-    # The nested config should still be able to resolve interpolations
-    # However, if the resolution context is lost, this won't work
-    assert OmegaConf.is_missing(nested_cfg, "p") == False  # Should be resolvable
-
-    # Get the resolved value
-    resolved = OmegaConf.to_container(nested_cfg, resolve=True)
-    assert resolved["p"] == 42
-    assert resolved["nested"]["value"] == 42
-
-
-if __name__ == "__main__":
-    test_nested_config_interpolation_simple_run()
-    test_nested_config_interpolation_with_experiment_selection()
-    test_interpolation_context_preservation()
-    print("All tests passed!")
+    # 3. Ensure converting to container resolves correctly
+    container = OmegaConf.to_container(node, resolve=True)
+    assert container["val"] == 200

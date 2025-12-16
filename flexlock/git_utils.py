@@ -154,6 +154,25 @@ def commit_cwd(
     return commit
 
 
+def get_git_tree_hash(path: str = ".") -> str:
+    """
+    Gets the current git tree hash for a repository without creating a new commit.
+    This represents the content fingerprint of the repository.
+
+    Args:
+        path (str): The path to the git repository.
+
+    Returns:
+        str: The tree hash, or an error message if it fails.
+    """
+    try:
+        repo = GitRepo(path, search_parent_directories=True)
+        # Get the tree hash of the current commit
+        return repo.head.commit.tree.hexsha
+    except Exception as e:
+        return f"Error getting git tree hash: {e}"
+
+
 def get_git_commit(path: str = ".") -> str:
     """
     Gets the current commit hash for a git repository without creating a new commit.

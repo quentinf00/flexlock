@@ -10,6 +10,7 @@ from flexlock.backends.pbs import PBSBackend
 from multiprocessing import Process
 import yaml
 from typing import Any, List
+from flexlock.snapshot import snapshot
 
 
 def load_tasks(tasks: str, tasks_key: str, cfg: DictConfig) -> List[Any]:
@@ -47,7 +48,7 @@ class ParallelExecutor:
         self,
         func,
         tasks: List[Any],
-        task_to: str | None,
+        task_target: str | None,
         cfg: DictConfig,
         n_jobs: int = 1,
         slurm_config: str | None = None,
@@ -59,7 +60,7 @@ class ParallelExecutor:
         Args:
             func: The function to execute for each task.
             tasks: A list of tasks to be executed.
-            task_to: The OmegaConf path to merge task-specific configurations into.
+            task_target: The OmegaConf path to merge task-specific configurations into.
             cfg: The base OmegaConf configuration.
             n_jobs: Number of parallel jobs for local execution.
             slurm_config: Path to the Slurm configuration file.
@@ -68,7 +69,7 @@ class ParallelExecutor:
         """
         self.func = func
         self.tasks = tasks
-        self.task_to = task_to
+        self.task_target = task_target
         self.cfg = cfg
         self.n_jobs = n_jobs
         self.local_workers = local_workers
@@ -88,19 +89,41 @@ class ParallelExecutor:
             p = OmegaConf.to_container(OmegaConf.load(pbs_config), resolve=True)
             self.backend = PBSBackend(folder=self.save_dir / "pbs_logs", **p)
 
+    def _extract_tracking_info(self, cfg):
+        """
+        Extract tracking info from config for master snapshot.
+        """
+        repos = {"main": "."}  # Default
+        data = {}
+        
+        # Check if the config has tracking instructions
+        if "_snapshot_" in cfg:
+            snap_cfg = cfg._snapshot_
+            
+            if "repos" in snap_cfg:
+                repos.update(OmegaConf.to_container(snap_cfg.repos, resolve=True))
+            
+            if "data" in snap_cfg:
+                data.update(OmegaConf.to_container(snap_cfg.data, resolve=True))
+
+        return repos, data
+
     def _run_locally(self):
-        num_workers = self.local_workers or self.n_jobs or 1
-        procs = [
-            Process(
-                target=worker_loop,
-                args=(self.func, self.cfg, self.task_to, self.db_path),
-            )
-            for _ in range(num_workers)
-        ]
-        for p in procs:
-            p.start()
-        for p in procs:
-            p.join()
+        num_workers = self.local_workers or self.n_jobs 
+        if num_workers == 1:
+            worker_loop(self.func, self.cfg, self.task_target, self.db_path)
+        else:
+            procs = [
+                Process(
+                    target=worker_loop,
+                    args=(self.func, self.cfg, self.task_target, self.db_path),
+                )
+                for _ in range(num_workers)
+            ]
+            for p in procs:
+                p.start()
+            for p in procs:
+                p.join()
 
     def run(self):
         from flexlock.taskdb import dump_to_yaml  # Import dump_to_yaml here
@@ -109,6 +132,26 @@ class ParallelExecutor:
             logger.info("All tasks already completed.")
             dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks")
             return
+        
+        # 1. Prepare Root Directory
+        root_dir = Path(self.cfg.save_dir) # e.g., outputs/sweep_name
+        root_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 2. CREATE MASTER SNAPSHOT
+        # This captures the Code state ONCE for the whole sweep
+        # We assume the Main Process has the correct context (repos, etc.)
+        repos, data = self._extract_tracking_info(self.cfg)
+        snapshot(
+            self.cfg,
+            repos=repos,
+            data=data,
+            save_path=root_dir / "run.lock"
+        )
+        
+        # 3. Populate SQLite DB
+        # Store 'root_dir' in the DB so workers know where the Master Lock is.
+        # This is handled by the existing queue_tasks call in __init__
+        
         try:
             logger.info(
                 f"""Use the following command to display job status: 
@@ -122,7 +165,7 @@ class ParallelExecutor:
                 self._run_locally()
             else:
                 # Fixed args for worker_loop (as tuple for *args)
-                fixed_args = (self.func, self.cfg, self.task_to, self.db_path)
+                fixed_args = (self.func, self.cfg, self.task_target, self.db_path)
                 job = self.backend.submit(worker_loop, *fixed_args)
                 logger.info(
                     f"Submitted {self.backend.__class__.__name__} job {job.job_id}"

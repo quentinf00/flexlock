@@ -1,0 +1,15 @@
+timestamp: '2025-12-16T08:45:14.339928'
+repos:
+  main:
+    commit: e193ba1610796bc27ff2876e18c1e1e1ec0baf42
+    tree: 71f3b8c1c3a1da7c57859e2fea679fa04b4a2b96
+    is_dirty: true
+data:
+  raw_images: 1533d676ce84f044
+config:
+  _target_: test_snapshot_implementation.simple_train
+  data_path: /tmp/tmp57w9imeg/data/raw/images.txt
+  _snapshot_:
+    data:
+      raw_images: /tmp/tmp57w9imeg/data/raw/images.txt
+  save_dir: outputs/exp/2025-12-16_08-45-14

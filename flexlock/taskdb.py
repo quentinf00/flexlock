@@ -30,6 +30,7 @@ def _conn(db_path: Path):
     """
     # Use the absolute path as a reliable key for the connections dictionary.
     db_path_str = str(db_path.resolve())
+    db_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Initialize the connections dictionary for the current thread if it doesn't exist.
     if not hasattr(_thread_local_conns, "conns"):

@@ -61,7 +61,7 @@ def to_dictconfig(incfg):
     return OmegaConf.create(incfg)
 
 
-def py2cfg(obj, **overrides):
+def py2cfg(obj, *pos, **overrides):
     """
     Generates a default configuration dict from a function or class signature.
     Supports nested py2cfg calls and handles decorated functions.
@@ -122,7 +122,11 @@ def py2cfg(obj, **overrides):
 
     # 4. Apply overrides (nested py2cfg calls happen here)
     config.update(overrides)
-    return config
+    
+    if len(pos) > 0:
+        config.update(OmegaConf.create(dict(_args_=list(pos))))  # Add positional arguments if any
+    
+    return OmegaConf.create(config)
 
 
 def load_python_defaults(import_path: str):
@@ -173,7 +177,10 @@ def instantiate(config, *args, **kwargs):
         *args, **kwargs: Additional arguments to pass to the root object.
     """
     # 1. Base case: If config is not a dict or list, return it as is.
+    print(config)
+    logger.info(f"Instantiating config: {config} of type {type(config)}")
     if not isinstance(config, (dict, list, DictConfig, ListConfig)):
+        logger.info(f"Returning primitive config: {config}")
         return config
 
     if isinstance(config, (list, ListConfig)):

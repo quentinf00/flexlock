@@ -54,14 +54,14 @@ def test_project_submit_single():
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
         f.write('defaults = {"_target_": "builtins.dict", "a": 1, "b": 2}\n')
         temp_file = f.name
-    
+
     try:
         project = Project(defaults=f'{temp_file}:defaults')
         config = project.get("")  # Get the root config
-        
+
         # Submit for single execution - should instantiate the config
         result = project.submit(config)
-        
+
         # Check that instantiation worked
         assert isinstance(result, dict)
         assert result['a'] == 1

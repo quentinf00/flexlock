@@ -35,7 +35,7 @@ def test_parallel_executor_local_execution(base_cfg):
     executor = ParallelExecutor(
         func=dummy_task_func,
         tasks=tasks,
-        task_to=".",  # Merge task dict into the root of the config
+        task_target=".",  # Merge task dict into the root of the config
         cfg=base_cfg,
         n_jobs=2,
     )
@@ -58,7 +58,7 @@ def test_executor_handles_no_tasks(base_cfg):
     """Tests that the executor exits gracefully when given an empty task list."""
     results_file = Path(base_cfg.save_dir) / "run.lock.tasks"
     executor = ParallelExecutor(
-        func=dummy_task_func, tasks=[], task_to=".", cfg=base_cfg, n_jobs=1
+        func=dummy_task_func, tasks=[], task_target=".", cfg=base_cfg, n_jobs=1
     )
     logger.info(executor.db_path)
     executor.run()
@@ -78,7 +78,7 @@ def test_executor_selects_slurm_backend(mock_slurm_backend, base_cfg, tmp_path):
     executor = ParallelExecutor(
         func=dummy_task_func,
         tasks=tasks,
-        task_to=".",
+        task_target=".",
         cfg=base_cfg,
         slurm_config=str(slurm_config_path),
     )
@@ -100,7 +100,7 @@ def test_executor_selects_pbs_backend(mock_pbs_backend, base_cfg, tmp_path):
     executor = ParallelExecutor(
         func=dummy_task_func,
         tasks=tasks,
-        task_to=".",
+        task_target=".",
         cfg=base_cfg,
         pbs_config=str(pbs_config_path),
     )
@@ -123,7 +123,7 @@ def test_task_failure_is_recorded(base_cfg):
 
     # The executor should not raise an exception, but handle it gracefully
     executor = ParallelExecutor(
-        func=failing_func, tasks=tasks, task_to=".", cfg=base_cfg, n_jobs=1
+        func=failing_func, tasks=tasks, task_target=".", cfg=base_cfg, n_jobs=1
     )
     executor.run()
 
