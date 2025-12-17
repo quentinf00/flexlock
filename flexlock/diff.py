@@ -1,15 +1,64 @@
 """Diff utilities for FlexLock."""
 
-from omegaconf import OmegaConf
+from typing import Any, Dict, Set
+from omegaconf import OmegaConf, DictConfig, ListConfig
+from loguru import logger
 
 
 class RunDiff:
-    def __init__(self, current, target):
+    def __init__(
+        self,
+        current: dict,
+        target: dict,
+        ignore_keys: list = None,
+        current_save_dir: str = None,
+        target_save_dir: str = None
+    ):
+        """
+        Initialize RunDiff for comparing two run snapshots.
+
+        Args:
+            current: Current/proposed run snapshot
+            target: Target/existing run snapshot
+            ignore_keys: Additional keys to ignore during comparison
+            current_save_dir: Save directory of current run (for normalization)
+            target_save_dir: Save directory of target run (for normalization)
+        """
         self.current = current
         self.target = target
+
+        # Keys to strictly ignore during config comparison
+        self.ignore_keys = set(ignore_keys or []) | {
+            "save_dir", "timestamp", "system", "job_id", "work_dir", "cwd",
+            "_snapshot_", "date", "time", "datetime"
+        }
+
+        # For value normalization (handling interpolation)
+        self.c_dir = str(current_save_dir) if current_save_dir else None
+        self.t_dir = str(target_save_dir) if target_save_dir else None
+
         self.diffs = {}
 
+    def _normalize_val(self, val: Any, root_dir: str) -> Any:
+        """
+        If the value is a string and contains the save_dir path,
+        replace it with a placeholder <SAVE_DIR> to allow comparison.
+
+        Args:
+            val: Value to normalize
+            root_dir: Root directory path to replace
+
+        Returns:
+            Normalized value
+        """
+        logger.debug(f"Normalizing value: {val} with root_dir: {root_dir}, {type(val)} {type(root_dir)}")
+        if root_dir and isinstance(val, str) and root_dir in val:
+            logger.debug(f"Value '{val}' contains root_dir '{root_dir}', normalizing.")
+            return val.replace(root_dir, "<SAVE_DIR>")
+        return val
+
     def compare_git(self):
+        """Compare git tree hashes."""
         diff = []
         c_repos = self.current.get("repos", {})
         t_repos = self.target.get("repos", {})
@@ -22,59 +71,75 @@ class RunDiff:
 
             # The Magic: Compare Tree Hashes (Content Identity)
             if c_info.get("tree") != t_info.get("tree"):
-                 diff.append(f"Repo {name}: Content changed")
+                diff.append(f"Repo {name}: Content changed")
 
-        if diff: self.diffs["git"] = diff
+        if diff:
+            self.diffs["git"] = diff
         return len(diff) == 0
 
     def compare_config(self):
-        """Compare configurations, ignoring save_dir and timestamps."""
-        c_config = self.current.get("config", {})
-        t_config = self.target.get("config", {})
-        
-        # Create copies to avoid modifying original data
-        c_config_copy = OmegaConf.to_container(OmegaConf.create(c_config))
-        t_config_copy = OmegaConf.to_container(OmegaConf.create(t_config))
-        
-        # Remove or normalize fields that should not be compared
-        def remove_ignored_fields(config):
-            if isinstance(config, dict):
-                # Remove save_dir and timestamp-related fields
-                config.pop("save_dir", None)
-                config.pop("timestamp", None)
-                # Remove any timestamp-like keys (e.g., datetime fields)
-                keys_to_remove = [k for k in config.keys() if k in ["timestamp", "date", "time", "datetime"]]
-                for k in keys_to_remove:
-                    config.pop(k, None)
-                # Recursively process nested dictionaries
-                for k, v in config.items():
-                    if isinstance(v, dict):
-                        remove_ignored_fields(v)
-            return config
-        
-        c_clean = remove_ignored_fields(c_config_copy)
-        t_clean = remove_ignored_fields(t_config_copy)
-        
-        # Convert to string representation for comparison
-        import json
-        c_str = json.dumps(c_clean, sort_keys=True, default=str)
-        t_str = json.dumps(t_clean, sort_keys=True, default=str)
-        
-        config_match = c_str == t_str
-        if not config_match:
-            self.diffs["config"] = ["Configuration differs"]
-        
-        return config_match
+        """
+        Compare configurations with recursive diff, ignoring specified keys
+        and normalizing path values.
+        """
+        c_cfg = self.current.get("config", {})
+        t_cfg = self.target.get("config", {})
+
+        def _recursive_diff(d1, d2, path=""):
+            """Recursively compare two config structures."""
+            diff = []
+
+            # Handle DictConfigs vs Primitives
+            if isinstance(d1, (dict, DictConfig)) and isinstance(d2, (dict, DictConfig)):
+                all_keys = set(d1.keys()) | set(d2.keys())
+                for k in all_keys:
+                    if k in self.ignore_keys:
+                        continue
+
+                    new_path = f"{path}.{k}" if path else k
+
+                    if k not in d1:
+                        diff.append(f"Missing in current: {new_path}")
+                    elif k not in d2:
+                        diff.append(f"Extra in current: {new_path}")
+                    else:
+                        diff.extend(_recursive_diff(d1[k], d2[k], new_path))
+
+            elif isinstance(d1, (list, tuple, ListConfig)) and isinstance(d2, (list, tuple, ListConfig)):
+                if len(d1) != len(d2):
+                    diff.append(f"List length mismatch {path}: {len(d1)} vs {len(d2)}")
+                else:
+                    for i, (v1, v2) in enumerate(zip(d1, d2)):
+                        diff.extend(_recursive_diff(v1, v2, f"{path}[{i}]"))
+
+            else:
+                # Value Comparison with Normalization
+                logger.debug(f"Comparing values at {path}: {d1} vs {d2} after normalization with dirs {self.c_dir}, {self.t_dir}")
+
+                v1_norm = self._normalize_val(d1, self.c_dir)
+                v2_norm = self._normalize_val(d2, self.t_dir)
+
+                if v1_norm != v2_norm:
+                    diff.append(f"Value mismatch {path}: {v1_norm} != {v2_norm}")
+
+            return diff
+
+        diff = _recursive_diff(c_cfg, t_cfg)
+
+        if diff:
+            self.diffs["config"] = diff
+
+        return len(diff) == 0
 
     def compare_data(self):
         """Compare data hashes."""
         c_data = self.current.get("data", {})
         t_data = self.target.get("data", {})
-        
+
         data_match = c_data == t_data
         if not data_match:
             self.diffs["data"] = ["Data differs"]
-        
+
         return data_match
 
     def is_match(self):

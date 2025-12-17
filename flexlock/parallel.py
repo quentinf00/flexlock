@@ -145,7 +145,7 @@ class ParallelExecutor:
             self.cfg,
             repos=repos,
             data=data,
-            save_path=root_dir / "run.lock"
+            save_path=root_dir 
         )
         
         # 3. Populate SQLite DB

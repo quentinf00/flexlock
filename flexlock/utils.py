@@ -6,7 +6,7 @@ import sys
 import functools
 from pathlib import Path
 from typing import Any
-from omegaconf import OmegaConf, DictConfig, ListConfig
+from omegaconf import OmegaConf, DictConfig, ListConfig, open_dict
 from dataclasses import is_dataclass
 from contextlib import contextmanager
 from loguru import logger
@@ -177,16 +177,19 @@ def instantiate(config, *args, **kwargs):
         *args, **kwargs: Additional arguments to pass to the root object.
     """
     # 1. Base case: If config is not a dict or list, return it as is.
-    print(config)
-    logger.info(f"Instantiating config: {config} of type {type(config)}")
+    logger.debug(f"Instantiating config: {config} of type {type(config)}")
     if not isinstance(config, (dict, list, DictConfig, ListConfig)):
-        logger.info(f"Returning primitive config: {config}")
+        logger.debug(f"Returning primitive config: {config}")
         return config
 
     if isinstance(config, (list, ListConfig)):
         return [instantiate(item) for item in config]
 
     # config is a dict
+    if "_snapshot_" in config:
+        with open_dict(config):
+            del config["_snapshot_"]
+
     # 2. Check if this dict represents a target object
     if "_target_" not in config:
         # It's just a regular dictionary, but we should check values recursively

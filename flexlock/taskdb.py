@@ -61,6 +61,15 @@ def _conn(db_path: Path):
                 )
                 """
             )
+
+            # Auto-migration: Add snapshot column if it doesn't exist
+            cursor = c.execute("PRAGMA table_info(tasks)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if "snapshot" not in columns:
+                logger.debug(f"Adding snapshot column to {db_path_str}")
+                c.execute("ALTER TABLE tasks ADD COLUMN snapshot TEXT")
+                c.commit()
+
             _thread_local_conns.conns[db_path_str] = c
             logger.debug(
                 f"Created new connection for {db_path_str} in thread {threading.get_ident()}"
@@ -144,6 +153,74 @@ def dump_to_yaml(db_path: Path, yaml_path: Path) -> None:
         logger.debug(f"dumping {rows} to {yaml_path}")
 
     _atomic_write_yaml(data, yaml_path)
+
+
+def update_task_snapshot(db_path: Path, task_id: str, snapshot_data: dict) -> None:
+    """
+    Updates the snapshot column for a specific task.
+
+    Args:
+        db_path: Path to SQLite database
+        task_id: Hash of the task (from _hash_task)
+        snapshot_data: Complete snapshot dictionary
+    """
+    import json
+    with _conn(db_path) as c:
+        c.execute(
+            "UPDATE tasks SET snapshot=? WHERE task_id=?",
+            (json.dumps(snapshot_data), task_id)
+        )
+        c.commit()
+
+
+def get_task_snapshot(db_path: Path, task_id: str) -> dict | None:
+    """
+    Retrieves the snapshot for a specific task from the database.
+
+    Args:
+        db_path: Path to SQLite database
+        task_id: Hash of the task (from _hash_task)
+
+    Returns:
+        dict: Snapshot data, or None if not found
+    """
+    import json
+    with _conn(db_path) as c:
+        cur = c.execute(
+            "SELECT snapshot FROM tasks WHERE task_id=?",
+            (task_id,)
+        )
+        row = cur.fetchone()
+        if row and row[0]:
+            return json.loads(row[0])
+    return None
+
+
+def list_task_snapshots(db_path: Path, status: str = None) -> List[tuple]:
+    """
+    Lists all tasks with their snapshots.
+
+    Args:
+        db_path: Path to SQLite database
+        status: Optional filter by status (pending, running, done, failed)
+
+    Returns:
+        List of tuples: (task_id, snapshot_dict, status)
+    """
+    import json
+    with _conn(db_path) as c:
+        if status:
+            cur = c.execute(
+                "SELECT task_id, snapshot, status FROM tasks WHERE status=? AND snapshot IS NOT NULL",
+                (status,)
+            )
+        else:
+            cur = c.execute(
+                "SELECT task_id, snapshot, status FROM tasks WHERE snapshot IS NOT NULL"
+            )
+
+        rows = cur.fetchall()
+        return [(r[0], json.loads(r[1]) if r[1] else None, r[2]) for r in rows]
 
 
 def _atomic_write_yaml(data: list, path: Path):

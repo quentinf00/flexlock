@@ -185,6 +185,7 @@ class FlexLockRunner:
              path = Path("outputs") / name / ts
              with open_dict(cfg):
                  cfg.save_dir = str(path)
+        cfg.save_dir = cfg.save_dir
         return cfg
 
     def _extract_tracking_info(self, cfg):
@@ -215,7 +216,7 @@ class FlexLockRunner:
 
         # "prevs_from_data": Automatically treat hashed data paths as lineage candidates
         # This matches the logic: if we use a file, check if it came from a FlexLock run
-        prevs.extend(data.values())
+        prevs.extend(list(data.values()))
 
         return repos, data, prevs
 
@@ -272,32 +273,12 @@ class FlexLockRunner:
             print("Run already exists and matches current configuration. Skipping.")
             return
 
-        # Normalize tasks based on target
-        normalized_tasks = []
-        if args.sweep_target:
-            # Injection Mode: Wrap value into {target: value}
-            for val in tasks:
-                wrapper = OmegaConf.create()
-                OmegaConf.update(wrapper, args.sweep_target, val)
-                normalized_tasks.append(OmegaConf.to_container(wrapper))
-        else:
-            # Root Merge Mode: Values MUST be dicts
-            for i, task in enumerate(tasks):
-                if not isinstance(task, dict):
-                    logger.error(
-                        f"Sweep item #{i} ({task}) is not a dictionary. "
-                        f"You must provide --sweep-target to inject primitive values."
-                    )
-                    import sys
-                    sys.exit(1)
-                normalized_tasks.append(task)
-
-        if normalized_tasks:
-            logger.info(f"Running sweep with {len(normalized_tasks)} tasks.")
+        if tasks:
+            logger.info(f"Running sweep with {len(tasks)} tasks.")
             # Batch execution
             executor = ParallelExecutor(
                 func=instantiate,
-                tasks=normalized_tasks,
+                tasks=tasks,
                 task_target=args.sweep_target,  # Use sweep_target as task_target
                 cfg=node_cfg,
                 n_jobs=args.n_jobs

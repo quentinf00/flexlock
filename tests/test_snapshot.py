@@ -397,7 +397,7 @@ timestamp: 2023-01-01T00:00:00
             logger.debug("Starting snapshot with data for lineage discovery")
             snapshot(
                 cfg,
-                data={"model": str(data_file)}
+                data={"model": str(data_file)},
                 prevs=[data_file]
             )
             

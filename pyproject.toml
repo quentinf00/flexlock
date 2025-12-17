@@ -7,6 +7,11 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 
+[project.scripts]
+flexlock-export = "flexlock.export:main"
+flexlock-diff = "flexlock.diff_cli:main"
+flexlock-run = "flexlock.run_cli:main"
+
 [tool.pixi.package]
 name = "flexlock"
 version = "0.2.17"

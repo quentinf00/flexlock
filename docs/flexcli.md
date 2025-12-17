@@ -142,6 +142,122 @@ python process.py --tasks tasks.txt --task_to param --pbs_config=pbs.yaml
 
 The `pbs.yaml` file contains the configuration for the PBS job (e.g., queue, nodes, walltime).
 
+---
+
+## Advanced: Sweep Support
+
+While `@flexcli` supports basic task-based parallelization with `--tasks`, for more advanced sweep capabilities (grids, conditional sweeps, multi-parameter sweeps), consider using [FlexLockRunner](./runner.md).
+
+### Comparison: Tasks vs. Sweeps
+
+The `--tasks` approach in `@flexcli` is designed for simple parameter sweeps:
+
+**`--tasks` (flexcli):**
+- ✅ Simple list of values from a text file
+- ✅ Maps to single config parameter via `--task_to`
+- ✅ Good for one-dimensional parameter sweeps
+- ✅ Easy to use for straightforward parallelization
+- ❌ Limited to single parameter at a time
+- ❌ No complex grid search support
+
+**Sweeps (FlexLockRunner):**
+- ✅ Complex grids and multi-parameter sweeps
+- ✅ Sweep from config keys, external files, or CLI
+- ✅ Three sweep modes: config-based, file-based, CLI-based
+- ✅ Automatic type inference for parameters
+- ✅ Conditional and nested sweep support
+- ✅ Full control over sweep configuration
+- 📚 See [FlexLockRunner documentation](./runner.md) for details
+
+### Example: Task-Based Sweep with @flexcli
+
+The `--tasks` flag is perfect for simple parameter sweeps:
+
+**Create a task file:**
+```bash
+# learning_rates.txt
+0.001
+0.01
+0.1
+```
+
+**Run the sweep:**
+```bash
+python train.py --tasks learning_rates.txt --task_to training.lr --n_jobs 3
+```
+
+This runs 3 experiments in parallel, each with a different learning rate.
+
+### When to Upgrade to FlexLockRunner
+
+Consider migrating to [FlexLockRunner](./runner.md) when you need:
+
+1. **Multi-parameter sweeps**: Vary multiple parameters simultaneously
+   ```yaml
+   # With FlexLockRunner
+   - training.lr: 0.001
+     training.batch_size: 32
+   - training.lr: 0.01
+     training.batch_size: 64
+   ```
+
+2. **Grid searches**: Cross-product of parameter values
+   ```python
+   # Generate grid with FlexLockRunner
+   lrs = [0.001, 0.01, 0.1]
+   batch_sizes = [32, 64, 128]
+   grid = [{"lr": lr, "bs": bs} for lr in lrs for bs in batch_sizes]
+   ```
+
+3. **Declarative sweep configuration**: Define sweeps in YAML
+   ```yaml
+   # With FlexLockRunner
+   sweep_configs:
+     - model.type: "small"
+       training.lr: 0.001
+     - model.type: "large"
+       training.lr: 0.01
+   ```
+
+4. **Check if run exists**: Skip already-completed experiments
+   ```bash
+   # With FlexLockRunner
+   python train.py --sweep-file sweep.yaml --check-exists
+   ```
+
+### Migration Example
+
+**Current (using @flexcli):**
+```python
+@flexcli(default_config=Config)
+def main(cfg: Config):
+    train(cfg)
+```
+
+```bash
+python train.py --tasks params.txt --task_to param --n_jobs 4
+```
+
+**Upgraded (using FlexLockRunner):**
+```python
+from flexlock import FlexLockRunner
+
+def main(cfg):
+    train(cfg)
+
+if __name__ == "__main__":
+    runner = FlexLockRunner()
+    runner.run()
+```
+
+```bash
+# More powerful sweep options
+python train.py --sweep-file complex_sweep.yaml --n_jobs 4 --check-exists
+```
+
+See the complete [FlexLockRunner documentation](./runner.md) for comprehensive sweep examples and advanced features.
+
+---
 
 ## Save dir configuration
 

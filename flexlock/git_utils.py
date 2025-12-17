@@ -33,7 +33,7 @@ def shadow_index(repo: GitRepo):
             temp_index.unlink()
 
 
-def create_shadow_snapshot(repo_path: str = ".", ignore_patterns: list | None = None):
+def create_shadow_snapshot(repo_path: str = ".", ignore_patterns: list | None = None, ref_name: str | None = None) -> dict:
     """
     Creates a Shadow Commit.
     Returns: {commit_hash, tree_hash, is_dirty}
@@ -63,7 +63,7 @@ def create_shadow_snapshot(repo_path: str = ".", ignore_patterns: list | None = 
         shadow_commit = git.commit_tree(tree_hash, "-p", parent, "-m", msg, env=shadow_env)
 
         # 5. Save Ref (Prevent Garbage Collection)
-        ref_name = f"refs/flexlock/runs/{shadow_commit}"
+        ref_name = f"refs/flexlock/runs/{ref_name or shadow_commit}"
         git.update_ref(ref_name, shadow_commit)
 
         return {
