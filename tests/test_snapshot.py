@@ -62,7 +62,7 @@ def test_runtracker_record_env():
         assert tracker.data["repos"]["main"]["tree"] == "mock_tree"
         assert tracker.data["repos"]["main"]["commit"] == "mock_commit"
         assert tracker.data["repos"]["main"]["is_dirty"] == False
-        mock_snapshot.assert_called_once_with("/path/to/repo")
+        mock_snapshot.assert_called_once_with("/path/to/repo", ref_name='test_run')
 
 
 def test_runtracker_record_env_with_parent():

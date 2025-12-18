@@ -223,6 +223,98 @@ def list_task_snapshots(db_path: Path, status: str = None) -> List[tuple]:
         return [(r[0], json.loads(r[1]) if r[1] else None, r[2]) for r in rows]
 
 
+def get_status_counts(db_path: Path) -> dict:
+    """
+    Get counts of tasks by status.
+
+    Returns:
+        dict: Status counts {'pending': N, 'running': N, 'done': N, 'failed': N}
+    """
+    with _conn(db_path) as c:
+        rows = c.execute(
+            "SELECT status, COUNT(*) as count FROM tasks GROUP BY status"
+        ).fetchall()
+        return {row[0]: row[1] for row in rows}
+
+
+def get_failed_tasks(db_path: Path) -> list:
+    """
+    Get details of all failed tasks.
+
+    Returns:
+        list: List of dicts with task info, error, and timestamps
+    """
+    with _conn(db_path) as c:
+        rows = c.execute(
+            """
+            SELECT task_info, error, ts_start, ts_end, node
+            FROM tasks WHERE status='failed'
+            ORDER BY ts_end DESC
+            """
+        ).fetchall()
+
+        failed_tasks = []
+        for row in rows:
+            task_info = yaml.safe_load(row[0]) if row[0] else {}
+            failed_tasks.append({
+                "task": task_info,
+                "error": row[1],
+                "ts_start": row[2],
+                "ts_end": row[3],
+                "node": row[4]
+            })
+        return failed_tasks
+
+
+def get_all_tasks(db_path: Path, status: str = None) -> list:
+    """
+    Get all tasks, optionally filtered by status.
+
+    Args:
+        db_path: Path to database
+        status: Optional status filter ('pending', 'running', 'done', 'failed')
+
+    Returns:
+        list: List of dicts with task details
+    """
+    with _conn(db_path) as c:
+        if status:
+            rows = c.execute(
+                """
+                SELECT task_id, task_info, result_info, status, error,
+                       ts_start, ts_end, node
+                FROM tasks WHERE status=?
+                ORDER BY ts_start DESC
+                """,
+                (status,)
+            ).fetchall()
+        else:
+            rows = c.execute(
+                """
+                SELECT task_id, task_info, result_info, status, error,
+                       ts_start, ts_end, node
+                FROM tasks
+                ORDER BY ts_start DESC
+                """
+            ).fetchall()
+
+        tasks = []
+        for row in rows:
+            task_info = yaml.safe_load(row[1]) if row[1] else {}
+            result_info = yaml.safe_load(row[2]) if row[2] else {}
+            tasks.append({
+                "task_id": row[0],
+                "task": task_info,
+                "result": result_info,
+                "status": row[3],
+                "error": row[4],
+                "ts_start": row[5],
+                "ts_end": row[6],
+                "node": row[7]
+            })
+        return tasks
+
+
 def _atomic_write_yaml(data: list, path: Path):
     import tempfile, os
 

@@ -4,6 +4,7 @@ import argparse
 import json
 import csv
 import yaml
+import os
 from pathlib import Path
 from typing import List, Any, Dict
 from omegaconf import OmegaConf, open_dict, ListConfig, DictConfig
@@ -77,6 +78,10 @@ class FlexLockRunner:
             "--check-exists", action="store_true",
             help="Check if run already exists and skip if so."
         )
+        parser.add_argument(
+            "--debug", action="store_true",
+            help="Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks)."
+        )
 
         return parser
 
@@ -97,7 +102,9 @@ class FlexLockRunner:
             cfg.merge_with(OmegaConf.load(args.merge))
         if args.overrides:
             cfg.merge_with(OmegaConf.from_dotlist(args.overrides))
-
+        
+        if args.debug:
+            logger.debug(f"Final Root Config: {cfg}")
         return cfg
 
     def _parse_cli_sweep(self, sweep_str: str) -> List[Any]:
@@ -238,6 +245,12 @@ class FlexLockRunner:
 
     def run(self, cli_args=None, base_cfg=None):
         args = self.parser.parse_args(cli_args)
+
+        # ACTIVATE DEBUGGING GLOBALLY
+        if args.debug:
+            os.environ["FLEXLOCK_DEBUG"] = "true"
+            logger.info("Debug mode enabled (FLEXLOCK_DEBUG=true)")
+
         root_cfg = self.load_config(args)
         logger.info(f"Loaded root config: {root_cfg}")
         # Select Node

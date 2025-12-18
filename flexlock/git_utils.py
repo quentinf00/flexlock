@@ -33,6 +33,13 @@ def shadow_index(repo: GitRepo):
             temp_index.unlink()
 
 
+def sanitize_ref_name(name: str) -> str:
+    """Sanitize a string to be a valid git ref name."""
+    invalid_chars = [' ', '~', '^', ':', '?', '*', '[', '\\', '..', '@{', '//']
+    for char in invalid_chars:
+        name = name.replace(char, '_')
+    return name
+
 def create_shadow_snapshot(repo_path: str = ".", ignore_patterns: list | None = None, ref_name: str | None = None) -> dict:
     """
     Creates a Shadow Commit.
@@ -64,7 +71,7 @@ def create_shadow_snapshot(repo_path: str = ".", ignore_patterns: list | None = 
 
         # 5. Save Ref (Prevent Garbage Collection)
         ref_name = f"refs/flexlock/runs/{ref_name or shadow_commit}"
-        git.update_ref(ref_name, shadow_commit)
+        git.update_ref(sanitize_ref_name(ref_name), shadow_commit)
 
         return {
             "commit": shadow_commit,

@@ -11,6 +11,7 @@ license = "MIT"
 flexlock-export = "flexlock.export:main"
 flexlock-diff = "flexlock.diff_cli:main"
 flexlock-run = "flexlock.run_cli:main"
+flexlock-status = "flexlock.status_cli:main"
 
 [tool.pixi.package]
 name = "flexlock"

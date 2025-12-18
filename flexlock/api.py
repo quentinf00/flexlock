@@ -257,7 +257,9 @@ class Project:
         n_jobs: int = 1,
         smart_run: bool = True,
         search_dirs: List[str] = None,
-        wait: bool = True
+        wait: bool = True,
+        pbs_config: str = None,
+        slurm_config: str = None
     ) -> ExecutionResult | List[ExecutionResult]:
         """
         Submit a configuration for execution.
@@ -266,12 +268,19 @@ class Project:
             config: The configuration to execute (from py2cfg or get())
             sweep: Optional list of override dicts for parameter sweep
             n_jobs: Number of parallel workers (for sweeps)
-            wait: If True, blocks until completion (currently always True)
+            wait: If True, blocks until completion
             smart_run: If True, checks for existing runs before executing
             search_dirs: Directories to search for cached runs (for smart_run)
+            pbs_config: Path to PBS configuration YAML (for HPC execution)
+            slurm_config: Path to Slurm configuration YAML (for HPC execution)
 
         Returns:
             ExecutionResult (single run) or List[ExecutionResult] (sweep)
+
+        Notes:
+            - Use pbs_config or slurm_config for HPC backend execution
+            - For Singularity containers, specify python_exe in the backend config
+            - wait=True will poll job status until completion (for HPC backends)
         """
         # Ensure config is a DictConfig
         if not isinstance(config, DictConfig):
@@ -279,7 +288,7 @@ class Project:
 
         # Handle sweep execution
         if sweep:
-            return self._submit_sweep(config, sweep, n_jobs, smart_run, search_dirs)
+            return self._submit_sweep(config, sweep, n_jobs, smart_run, search_dirs, pbs_config, slurm_config, wait)
 
         # Single execution path
         # Check for existing run if smart_run is enabled
@@ -289,33 +298,80 @@ class Project:
                 logger.info(f"Skipping execution, using cached result from {match_dir}")
                 return self.get_result(config, search_dirs)
 
-        # Extract tracking info
-        repos, data, prevs = self._extract_tracking_info(config)
+        # Check if using HPC backend
+        use_hpc = pbs_config is not None or slurm_config is not None
 
-        # Create snapshot before execution
-        if "save_dir" in config:
-            snapshot(config, repos=repos, data=data, prevs=prevs)
+        if use_hpc:
+            # Execute via HPC backend
+            logger.info(f"Submitting to HPC backend...")
 
-        # Execute the function
-        logger.info(f"Executing configuration...")
-        result = instantiate(config)
+            # Use ParallelExecutor with a single task
+            from .parallel import ParallelExecutor
 
-        # Save results if save_dir is specified
-        save_dir = config.get("save_dir", ".")
-        if "save_dir" in config:
-            results_file = Path(save_dir) / "results.json"
-            try:
-                with open(results_file, 'w') as f:
-                    json.dump(result if isinstance(result, dict) else {"result": result}, f, indent=2)
-            except Exception as e:
-                logger.warning(f"Could not save results to {results_file}: {e}")
+            save_dir = config.get("save_dir", "outputs/job")
+            executor_cfg = OmegaConf.create({
+                "save_dir": str(save_dir),
+                "_snapshot_": config.get("_snapshot_", {})
+            })
 
-        return ExecutionResult(
-            save_dir=str(save_dir),
-            status="SUCCESS",
-            result=result,
-            cfg=config
-        )
+            executor = ParallelExecutor(
+                func=instantiate,
+                tasks=[config],  # Single task as a list
+                task_target=None,
+                cfg=executor_cfg,
+                n_jobs=1,
+                pbs_config=pbs_config,
+                slurm_config=slurm_config,
+                local_workers=None
+            )
+
+            # Run with wait parameter (executor handles waiting)
+            success = executor.run(wait=wait, timeout=3600 if wait else None)
+
+            # Load result
+            result_data = None
+            if "save_dir" in config:
+                results_file = Path(config.save_dir) / "results.json"
+                if results_file.exists():
+                    with open(results_file, 'r') as f:
+                        result_data = json.load(f)
+
+            return ExecutionResult(
+                save_dir=str(save_dir),
+                status="SUCCESS" if wait else "SUBMITTED",
+                result=result_data,
+                cfg=config
+            )
+
+        else:
+            # Local execution
+            # Extract tracking info
+            repos, data, prevs = self._extract_tracking_info(config)
+
+            # Create snapshot before execution
+            if "save_dir" in config:
+                snapshot(config, repos=repos, data=data, prevs=prevs)
+
+            # Execute the function
+            logger.info(f"Executing configuration...")
+            result = instantiate(config)
+
+            # Save results if save_dir is specified
+            save_dir = config.get("save_dir", ".")
+            if "save_dir" in config:
+                results_file = Path(save_dir) / "results.json"
+                try:
+                    with open(results_file, 'w') as f:
+                        json.dump(result if isinstance(result, dict) else {"result": result}, f, indent=2)
+                except Exception as e:
+                    logger.warning(f"Could not save results to {results_file}: {e}")
+
+            return ExecutionResult(
+                save_dir=str(save_dir),
+                status="SUCCESS",
+                result=result,
+                cfg=config
+            )
 
     def _submit_sweep(
         self,
@@ -323,7 +379,10 @@ class Project:
         sweep: List[Dict],
         n_jobs: int,
         smart_run: bool,
-        search_dirs: List[str]
+        search_dirs: List[str],
+        pbs_config: str = None,
+        slurm_config: str = None,
+        wait: bool = True
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -334,6 +393,9 @@ class Project:
             n_jobs: Number of parallel workers
             smart_run: Whether to check for cached runs
             search_dirs: Directories to search for cached runs
+            pbs_config: Path to PBS configuration YAML
+            slurm_config: Path to Slurm configuration YAML
+            wait: Whether to wait for jobs to complete
 
         Returns:
             List of ExecutionResult objects
@@ -366,42 +428,66 @@ class Project:
 
         # Execute remaining configs
         if configs_to_run:
-            if n_jobs == 1:
-                # Sequential execution
-                for i, cfg in configs_to_run:
-                    logger.info(f"Executing sweep {i}/{len(sweep)}")
-                    result = self.submit(cfg, sweep=None, smart_run=False, wait=True)
-                    results.append((i, result))
-            else:
-                # Parallel execution using ParallelExecutor
-                logger.info(f"Executing {len(configs_to_run)} sweep configs with {n_jobs} parallel workers")
+            # Decide whether to use HPC backend or local execution
+            use_hpc = pbs_config is not None or slurm_config is not None
+
+            if use_hpc or (n_jobs > 1 and len(configs_to_run) > 1):
+                # Parallel execution using ParallelExecutor (local or HPC)
+                logger.info(f"Executing {len(configs_to_run)} sweep configs with ParallelExecutor")
 
                 # Extract just configs for parallel execution
                 task_configs = [cfg for _, cfg in configs_to_run]
                 indices = [i for i, _ in configs_to_run]
 
-                # Use ParallelExecutor
-                # We need to create a wrapper function that extracts _target_ and instantiates
-                def execute_config(task_cfg):
-                    repos, data, prevs = self._extract_tracking_info(task_cfg)
-                    if "save_dir" in task_cfg:
-                        snapshot(task_cfg, repos=repos, data=data, prevs=prevs)
-                    result = instantiate(task_cfg)
+                # Prepare a common save_dir for the sweep master
+                # Use the first config's save_dir as base
+                if "save_dir" in task_configs[0]:
+                    sweep_save_dir = Path(task_configs[0].save_dir).parent
+                else:
+                    sweep_save_dir = Path("outputs/sweep")
 
-                    # Save result
-                    if "save_dir" in task_cfg:
-                        results_file = Path(task_cfg.save_dir) / "results.json"
-                        results_file.parent.mkdir(parents=True, exist_ok=True)
-                        with open(results_file, 'w') as f:
-                            json.dump(result if isinstance(result, dict) else {"result": result}, f, indent=2)
+                # Create a wrapper config that ParallelExecutor can work with
+                # The task configs are what ParallelExecutor will execute
+                executor_cfg = OmegaConf.create({
+                    "save_dir": str(sweep_save_dir),
+                    "_snapshot_": base_config.get("_snapshot_", {})
+                })
 
-                    return result
+                # Use ParallelExecutor with backend support
+                executor = ParallelExecutor(
+                    func=instantiate,  # The function to execute
+                    tasks=task_configs,  # List of configs to execute
+                    task_target=None,  # Each task is already a complete config
+                    cfg=executor_cfg,  # Master config for tracking
+                    n_jobs=n_jobs,
+                    pbs_config=pbs_config,
+                    slurm_config=slurm_config,
+                    local_workers=n_jobs if not use_hpc else None
+                )
 
-                # Create temporary wrapper config for ParallelExecutor
-                # This is a workaround - ideally ParallelExecutor would handle this
-                logger.warning("Parallel sweep execution with n_jobs > 1 requires ParallelExecutor, "
-                             "falling back to sequential execution")
+                # Run the sweep (executor handles waiting based on wait parameter)
+                success = executor.run(wait=wait, timeout=None)
+
+                # Collect results from executed configs
+                for idx, cfg in zip(indices, task_configs):
+                    # Try to load results
+                    result_data = None
+                    if "save_dir" in cfg:
+                        results_file = Path(cfg.save_dir) / "results.json"
+                        if results_file.exists():
+                            with open(results_file, 'r') as f:
+                                result_data = json.load(f)
+
+                    results.append((idx, ExecutionResult(
+                        save_dir=str(cfg.get("save_dir", ".")),
+                        status="SUCCESS",
+                        result=result_data,
+                        cfg=cfg
+                    )))
+            else:
+                # Sequential execution (no backend, n_jobs=1)
                 for i, cfg in configs_to_run:
+                    logger.info(f"Executing sweep {i}/{len(sweep)}")
                     result = self.submit(cfg, sweep=None, smart_run=False, wait=True)
                     results.append((i, result))
 

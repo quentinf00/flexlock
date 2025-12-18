@@ -1,225 +1,341 @@
 # FlexLock
 
-FlexLock is a lightweight Python library designed to bring clarity, reproducibility, and scalability to your computational experiments. It provides a set of explicit, composable tools to handle the boilerplate of experiment tracking, so you can focus on your core logic.
+**Reproducible, Composable, and Scalable Computational Experiments**
 
-FlexLock is built on the philosophy that **explicit is better than implicit**. Instead of magical decorators, you use clear, standalone functions and context managers to manage the lifecycle of your run.
+[![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://quentinf00.github.io/flexlock/)
+[![PyPI version](https://badge.fury.io/py/flexlock.svg)](https://badge.fury.io/py/flexlock)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Core Components
+FlexLock is a Python library that makes your computational experiments reproducible, composable, and efficient. It automatically tracks everything (code, config, data), detects when you're rerunning identical experiments (and skips them), and helps you build multi-stage pipelines that just work.
 
-- **`flexlock.flexcli`**: A decorator to effortlessly create powerful command-line interfaces from your Python configuration classes.
-- **`flexlock.snapshot`**: A function to create a `run.lock` file—a definitive receipt of your experiment containing the config, data hashes, Git commits, and dependencies.
-- **`flexlock.mlflowlink`**: A context manager that handles the MLflow run lifecycle, including run creation, artifact logging, and logical run management.
-- **`flexlock.debug_on_fail`**: A helper decorator for seamless debugging, dropping you into an interactive session with full context when an exception occurs.
+## Why FlexLock?
+
+### The Problem
+
+You're running ML experiments and:
+- **Lost track**: "Which hyperparameters gave me that 95% accuracy?"
+- **Can't reproduce**: "This worked last week, what changed?"
+- **Wasting compute**: Running the same preprocessing 10 times
+- **Pipeline chaos**: Multi-stage workflows that break constantly
+
+### The FlexLock Solution
+
+```python
+from flexlock import flexcli
+
+@flexcli
+def train(lr=0.01, epochs=10):
+    # ... your training code ...
+    return {"accuracy": accuracy}
+```
+
+That's it! You now have:
+- ✅ **Automatic tracking**: Code, config, and data snapshots
+- ✅ **Smart caching**: Never rerun identical experiments
+- ✅ **CLI for free**: `python train.py -o lr=0.1`
+- ✅ **Parameter sweeps**: `--sweep "0.001,0.01,0.1" --n_jobs 3`
+- ✅ **Perfect reproducibility**: `flexlock diff` shows exactly what changed
+
+## Quick Start
+
+### Install
+
+```bash
+pip install flexlock
+```
+
+### Example 1: Simple Script
+
+```python
+# train.py
+from flexlock import flexcli
+
+@flexcli
+def train(lr: float = 0.01, epochs: int = 10):
+    """Train a model."""
+    print(f"Training with lr={lr} for {epochs} epochs")
+    # ... training code ...
+    return {"accuracy": 0.95}
+
+if __name__ == "__main__":
+    train()
+```
+
+Run it:
+
+```bash
+# Default run
+$ python train.py
+Training with lr=0.01 for 10 epochs
+✓ Results saved to: results/train/run_0001/
+
+# Override parameters
+$ python train.py -o lr=0.1 epochs=20
+
+# Parameter sweep (runs 3 experiments in parallel)
+$ python train.py --sweep "0.001,0.01,0.1" --sweep-target lr --n_jobs 3
+```
+
+### Example 2: Multi-Stage Pipeline
+
+```python
+# pipeline.py
+from flexlock.api import Project
+
+# Load configurations
+proj = Project(defaults='configs.defaults')
+
+# Stage 1: Preprocess
+preprocess_result = proj.submit(proj.get('preprocess'))
+
+# Stage 2: Train (uses preprocess output)
+train_cfg = proj.get('train')
+train_cfg.data_dir = preprocess_result.output_dir
+train_result = proj.submit(train_cfg)
+
+# Stage 3: Evaluate
+eval_cfg = proj.get('evaluate')
+eval_cfg.model_dir = train_result.save_dir
+eval_result = proj.submit(eval_cfg)
+
+print(f"Final accuracy: {eval_result.accuracy}")
+```
+
+Run it again? FlexLock automatically skips unchanged stages:
+
+```bash
+$ python pipeline.py
+⚡ Cache Hit! Preprocess already done
+⚡ Cache Hit! Training already done
+⚡ Cache Hit! Evaluation already done
+Final accuracy: 0.95
+```
+
+## Key Features
+
+### 🔒 Automatic Reproducibility
+
+Every run creates a snapshot with:
+- **Git tree hash**: Exact code state (not just commit)
+- **Full configuration**: All parameters used
+- **Data fingerprints**: Input data hashes
+- **Environment**: System info
+
+Compare any two runs:
+
+```bash
+$ flexlock diff run_0001 run_0002
+Differences found:
+  Config:
+    optimizer.lr: 0.001 → 0.01
+  Code:
+    Git tree: abc123 → def456 (model.py modified)
+```
+
+### ⚡ Smart Run Detection
+
+FlexLock never wastes computation. It automatically detects when you're rerunning an experiment with identical inputs and reuses the cached result:
+
+```python
+# First run: executes
+result1 = proj.submit(config)
+
+# Second run with same config: instant cache hit!
+result2 = proj.submit(config)  # ⚡ Skipped!
+```
+
+This works even:
+- Across different machines (with shared storage)
+- Weeks later
+- With different result directories (paths are normalized)
+
+### 🔄 Composable Pipelines
+
+Build complex workflows from simple stages:
+
+```python
+# Each stage is a function
+def preprocess(input_data, output_dir): ...
+def train(data_dir, model_type, lr): ...
+def evaluate(model_dir, test_data): ...
+
+# Compose them into a pipeline
+proj = Project(defaults='configs.defaults')
+
+prep = proj.submit(proj.get('preprocess'))
+train_cfg = proj.get('train')
+train_cfg.data_dir = prep.output_dir
+model = proj.submit(train_cfg)
+
+eval_cfg = proj.get('evaluate')
+eval_cfg.model_dir = model.save_dir
+results = proj.submit(eval_cfg)
+```
+
+Failed at train? Fix it and rerun - FlexLock skips the successful preprocess stage.
+
+### 🚀 Parallel Execution
+
+Run sweeps in parallel automatically:
+
+```python
+# Define sweep
+sweep = [
+    {"lr": 0.001, "batch_size": 32},
+    {"lr": 0.01, "batch_size": 32},
+    {"lr": 0.1, "batch_size": 64}
+]
+
+# Run in parallel (local multiprocessing)
+results = proj.submit(config, sweep=sweep, n_jobs=4)
+
+# Or on a cluster (Slurm, PBS)
+results = proj.submit(config, sweep=sweep, slurm_config="slurm.yaml")
+```
+
+### 📊 Configuration Management
+
+Three ways to configure, all type-safe:
+
+```python
+# Method 1: @flexcli (simplest)
+@flexcli
+def train(lr=0.01, epochs=10): ...
+
+# Method 2: Python configs (most powerful)
+from flexlock import py2cfg
+config = py2cfg(
+    train,
+    model=py2cfg(Transformer, layers=12, hidden_size=768),
+    optimizer=py2cfg(Adam, lr=0.001),
+    epochs=100
+)
+
+# Method 3: YAML (declarative)
+# config.yaml
+train:
+  model:
+    layers: 12
+    hidden_size: 768
+  optimizer:
+    type: adam
+    lr: 0.001
+  epochs: 100
+```
+
+## Philosophy
+
+FlexLock is built on three principles:
+
+1. **Configuration is Code**: Use Python's full expressiveness or YAML's simplicity
+2. **Automatic Reproducibility**: Every run is tracked, no manual logging needed
+3. **Smart Execution**: Never rerun identical experiments
+
+Read more in the [Philosophy & Design](https://quentinf00.github.io/flexlock/philosophy.html) docs.
+
+## Documentation
+
+- **[Quickstart Guide](https://quentinf00.github.io/flexlock/quickstart.html)**: Get started in 5 minutes
+- **[Tutorials](https://quentinf00.github.io/flexlock/tutorials/)**: Learn by example
+  - [01. Basics](https://quentinf00.github.io/flexlock/tutorials/01_basics.html): `@flexcli`, CLI args, sweeps
+  - [02. Reproducibility](https://quentinf00.github.io/flexlock/tutorials/02_reproducibility.html): Snapshots, diffs
+  - [03. YAML Configs](https://quentinf00.github.io/flexlock/tutorials/03_yaml_config.html): Multi-stage YAML
+  - [04. Python Configs](https://quentinf00.github.io/flexlock/tutorials/04_python_config.html): `py2cfg`, nested objects
+  - [05. Pipelines](https://quentinf00.github.io/flexlock/tutorials/05_pipeline.html): Multi-stage workflows
+- **[User Guide](https://quentinf00.github.io/flexlock/getting_started.html)**: In-depth feature docs
+- **[API Reference](https://quentinf00.github.io/flexlock/api.html)**: Complete API documentation
 
 ## Installation
+
+### From PyPI
+
+```bash
+pip install flexlock
+```
+
+### From Conda
 
 ```bash
 conda install -c quentinf00 flexlock
 ```
 
-## Quickstart
-
-Let's start with a simple data processing script.
-
-```python
-# process.py
-from pathlib import Path
-
-class Config:
-    param = 1
-    input_path = 'data/preprocess/input.csv'
-    save_dir = 'results/process'
-
-def process(cfg: Config=Config()):
-    print(f"Running with param: {cfg.param}")
-    # Create dummy input if it doesn't exist
-    Path(cfg.input_path).parent.mkdir(parents=True, exist_ok=True)
-    Path(cfg.input_path).write_text("some data")
-
-    # Core logic
-    output_path = Path(cfg.save_dir) / 'out.txt'
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, 'w') as f:
-        for _ in range(cfg.param):
-            f.write(Path(cfg.input_path).read_text())
-    print(f"Output written to {output_path}")
-
-if __name__ == '__main__':
-    process()
-```
-
-This is a standard Python script. Now, let's introduce FlexLock to add reproducibility and a powerful CLI.
-
-### Step 1: Track Your Run with `snapshot`
-
-To ensure reproducibility, we need to track the configuration, code version, and data used in a run. `flexlock.snapshot` creates a `run.lock` file with this information.
-
-```python
-# process.py
-...
-from flexlock import snapshot
-
-def process(cfg: Config=Config()):
-    ...
-    # Your core logic here...
-    ...
-    snapshot(
-        config=cfg,
-        repos=['.'],  # Track the git version of the current repo
-        data=[cfg.input_path],  # Hash the input data
-        # prevs=[Path(cfg.input_path).parent], # You can also track previous stages
-        snapshot_path=Path(cfg.save_dir) / 'run.lock'
-    )
-```
-
-Now, running `process()` will generate a `results/process/run.lock` file, giving you a complete snapshot of your run.
-
-### Step 2: Log to MLflow with `mlflowlink`
-
-Logging to MLflow is isolated in a separate context manager. This decouples your core logic from your logging logic, which is useful for adding diagnostics later without re-running the entire experiment.
-
-```python
-# log.py
-from pathlib import Path
-import mlflow
-from flexlock import mlflowlink
-
-def log_run(save_dir):
-    """
-    Logs the results of a run to MLflow.
-    Can be run independently from the main process.
-    """
-    with mlflowlink(save_dir) as run:
-        # This creates a new MLflow run and links it to your run directory.
-        # It automatically logs the contents of run.lock.
-        # It also deprecates older MLflow runs for the same save_dir.
-
-        # You can add custom logging here:
-        mlflow.log_artifact(str(Path(save_dir) / 'out.txt'))
-        print(f"Logged artifacts for run: {run.info.run_id}")
-
-if __name__ == '__main__':
-    # Assuming process() has already been run
-    log_run('results/process')
-```
-
-### Step 3: Create a Powerful CLI with `flexcli`
-
-The `@flexlock.flexcli` decorator turns your configuration class into a flexible command-line interface.
-
-```python
-# process.py
-...
-from flexlock import flexcli
-
-@flexcli(config_class=Config)
-def main(cfg: Config):
-    """Main entry point for the process."""
-    process(cfg)
-
-if __name__ == '__main__':
-    main()
-```
-
-This simple addition unlocks a powerful CLI:
+### From Source
 
 ```bash
-# Run with default config
-python process.py
-
-# Override a parameter
-python process.py -o param=10
-
-# Provide a different config file
-python process.py --config conf/my_config.yml
-
-# Load a specific experiment from a multi-stage config file
-python process.py --config conf/multi_stage.yml --experiment process_v2
-
-# Run multiple experiments in parallel
-echo "1\n2\n3" > tasks.txt
-python process.py --tasks tasks.txt --task_to param --n_jobs=3
+git clone https://github.com/quentinf00/flexlock.git
+cd flexlock
+pip install -e .
 ```
 
-## Logging with Loguru
+## Requirements
 
-FlexLock uses [Loguru](https://loguru.readthedocs.io/) for logging, providing a simple and powerful logging experience. The CLI automatically sets up logging with both console and file output.
+- Python 3.8+
+- OmegaConf
+- Loguru
+- PyYAML
 
-### CLI Logging Options
+## Use Cases
 
-The `@flexcli` decorator supports several logging options:
+### ✅ Perfect For:
 
-```python
-# process.py
-from flexlock import flexcli
+- **ML Research**: Hyperparameter tuning, ablation studies, architecture search
+- **Data Science**: Exploratory analysis with automatic tracking
+- **Scientific Computing**: Parameter sweeps, reproducible experiments
+- **Data Pipelines**: Multi-stage ETL with dependency tracking
+- **AutoML**: Large-scale hyperparameter optimization
 
-@flexcli(config_class=Config)
-def main(cfg: Config):
-    # Your main function
-    process(cfg)
+### ⚠️ Less Suitable For:
 
-if __name__ == '__main__':
-    main()
+- **Production APIs**: Use Flask/FastAPI for serving models
+- **Real-time Systems**: FlexLock is for offline experiments
+- **Simple One-Off Scripts**: Adds overhead for single-run scripts
+
+## Comparison with Other Tools
+
+| Feature | FlexLock | Hydra | MLflow | DVC |
+|---------|----------|-------|--------|-----|
+| **Configuration** | Python + YAML | YAML | Code | YAML |
+| **Reproducibility** | Automatic | Manual | Partial | Partial |
+| **Smart Caching** | ✅ | ❌ | ❌ | ✅ |
+| **Multi-stage Pipelines** | ✅ | ❌ | ❌ | ✅ |
+| **Parallel Sweeps** | ✅ | ✅ | ❌ | ❌ |
+| **Learning Curve** | Low | Medium | Low | High |
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
+
+## Citation
+
+If you use FlexLock in your research, please cite:
+
+```bibtex
+@software{flexlock2024,
+  title = {FlexLock: Reproducible, Composable, and Scalable Computational Experiments},
+  author = {FlexLock Team},
+  year = {2024},
+  url = {https://github.com/quentinf00/flexlock}
+}
 ```
 
-```bash
-# Basic run with console logging and file logging to save_dir/experiment.log
-python process.py
+## Acknowledgments
 
-# Enable debug logging
-python process.py --verbose
-# Or set environment variable: FLEXLOCK_DEBUG=1 python process.py
+FlexLock builds on ideas from:
+- **Hydra**: Configuration composition patterns
+- **MLflow**: Experiment tracking concepts
+- **DVC**: Pipeline dependency tracking
+- **Sacred**: Experiment observation patterns
 
-# Control log level via environment variable
-LOGURU_LEVEL=DEBUG python process.py
-```
+## Support
 
-### Manual Logging
+- **Documentation**: [https://quentinf00.github.io/flexlock/](https://quentinf00.github.io/flexlock/)
+- **GitHub Issues**: [Report bugs](https://github.com/quentinf00/flexlock/issues)
+- **Discussions**: [Ask questions](https://github.com/quentinf00/flexlock/discussions)
 
-You can also use loguru directly in your code:
+---
 
-```python
-from loguru import logger
-
-def process(cfg):
-    logger.info(f"Processing with param: {cfg.param}")
-    logger.debug(f"Input path: {cfg.input_path}")
-    
-    # Your logic here...
-    
-    logger.success("Processing completed successfully!")
-```
-
-## Development Workflow: The Debug Decorator
-
-When developing, you often want the script to drop into an interactive debugger on failure. The `@debug_on_fail` decorator provides this behavior.
-
-```python
-# process.py
-...
-from flexlock import flexcli, debug_on_fail
-
-@debug_on_fail
-@flexcli(config_class=Config)
-def main(cfg: Config):
-    a = 0
-    b = 1 / a  # This will raise an exception
-    process(cfg)
-
-if __name__ == '__main__':
-    main()
-```
-
-Now, run the function in a python/jupyter repl environment with the `FLEXLOCK_DEBUG=1` environment variable. When the exception occurs,  all the local variables (`cfg`, `a`, etc.) will be available for interactive inspection.
-
-```bash
-FLEXLOCK_DEBUG=1 ipython -i process.py
-# ... Exception occurs ...
-# Dropping into an interactive shell.
-# The current context is available in the `ctx` dictionary.
-# For example, access the config with `ctx['cfg']`.
-IPython post-mortem debugger> a
-0
-```
-This workflow combines the best of both worlds: the exploratory power of a notebook and the robustness of a script.
-
+Made with ❤️ by the FlexLock team

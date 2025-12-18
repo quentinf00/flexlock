@@ -1,12 +1,14 @@
 """Configuration decorator for FlexLock with progressive framework support."""
 
 import sys
+import os
 import functools
 from loguru import logger
 import inspect
 from typing import Dict, Optional
 from .runner import FlexLockRunner
 from .utils import py2cfg
+from .debug import debug_on_fail
 
 
 def flexcli(_func=None, snapshot_config: Optional[Dict] = None, **defaults):
@@ -38,11 +40,19 @@ def flexcli(_func=None, snapshot_config: Optional[Dict] = None, **defaults):
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
             if len(args) > 0 or len(kwargs) > 0:
-                return fn(*args, **kwargs)
+                # Direct call with arguments - apply debug wrapper if enabled
+                if os.environ.get("FLEXLOCK_DEBUG", "false").lower() in ("1", "true"):
+                    # Stack depth 2 because:
+                    # 1. debug_wrapper
+                    # 2. flexcli_wrapper
+                    # 3. <User's Notebook Cell>
+                    return debug_on_fail(fn, stack_depth=2)(*args, **kwargs)
+                else:
+                    return fn(*args, **kwargs)
 
             # 1. Build Base Config from signature + defaults
             base_cfg = py2cfg(fn, **defaults)
-            
+
             # 2. Inject Snapshot Config if provided
             if snapshot_config:
                 base_cfg["_snapshot_"] = snapshot_config

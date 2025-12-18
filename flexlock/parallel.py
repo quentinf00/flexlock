@@ -125,18 +125,82 @@ class ParallelExecutor:
             for p in procs:
                 p.join()
 
-    def run(self):
-        from flexlock.taskdb import dump_to_yaml  # Import dump_to_yaml here
+    def _wait_for_completion(self, timeout: int = None, poll_interval: int = 10) -> bool:
+        """
+        Wait for all tasks to complete by polling the database.
+
+        Args:
+            timeout: Maximum time to wait in seconds (None = no timeout)
+            poll_interval: How often to check status in seconds
+
+        Returns:
+            bool: True if all tasks completed successfully, False on timeout or failure
+        """
+        import time
+        from .taskdb import get_status_counts
+
+        logger.info("Waiting for tasks to complete...")
+        start_time = time.time()
+        last_log_time = start_time
+
+        while True:
+            # Get current status
+            status_counts = get_status_counts(self.db_path)
+            pending = status_counts.get('pending', 0)
+            running = status_counts.get('running', 0)
+            done = status_counts.get('done', 0)
+            failed = status_counts.get('failed', 0)
+            total = pending + running + done + failed
+
+            # Check if complete
+            if pending == 0 and running == 0:
+                if failed > 0:
+                    logger.warning(f"All tasks completed with {failed} failures")
+                else:
+                    logger.success(f"All {done} tasks completed successfully")
+                return failed == 0
+
+            # Log progress periodically (every 30s)
+            elapsed = time.time() - start_time
+            if elapsed - (last_log_time - start_time) >= 30:
+                progress = (done + failed) / total * 100 if total > 0 else 0
+                logger.info(
+                    f"Progress: {progress:.1f}% "
+                    f"(pending: {pending}, running: {running}, done: {done}, failed: {failed})"
+                )
+                last_log_time = time.time()
+
+            # Check timeout
+            if timeout and elapsed > timeout:
+                logger.warning(f"Timeout after {timeout}s (pending: {pending}, running: {running})")
+                return False
+
+            # Wait before next check
+            time.sleep(poll_interval)
+
+    def run(self, wait: bool = True, timeout: int = None, poll_interval: int = 10):
+        """
+        Execute tasks via backend or locally.
+
+        Args:
+            wait: If True, blocks until all tasks complete (default: True for local, optional for HPC)
+            timeout: Maximum time to wait in seconds (None = no timeout, applies only if wait=True)
+            poll_interval: How often to check task status in seconds (applies only if wait=True)
+
+        Returns:
+            bool: True if tasks completed successfully (or not waiting), False on timeout/failure
+        """
+        from flexlock.taskdb import dump_to_yaml
 
         if pending_count(self.db_path) == 0:
             logger.info("All tasks already completed.")
             dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks")
-            return
-        
+            return True
+
         # 1. Prepare Root Directory
         root_dir = Path(self.cfg.save_dir) # e.g., outputs/sweep_name
         root_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # 2. CREATE MASTER SNAPSHOT
         # This captures the Code state ONCE for the whole sweep
         # We assume the Main Process has the correct context (repos, etc.)
@@ -145,32 +209,41 @@ class ParallelExecutor:
             self.cfg,
             repos=repos,
             data=data,
-            save_path=root_dir 
+            save_path=root_dir
         )
-        
+
         # 3. Populate SQLite DB
         # Store 'root_dir' in the DB so workers know where the Master Lock is.
         # This is handled by the existing queue_tasks call in __init__
-        
+
         try:
             logger.info(
-                f"""Use the following command to display job status: 
-                
-                sqlite3  {self.db_path} 'SELECT status, count(*) as count, MIN(ts_start) as first_start, MAX(ts_end) as last_end  FROM tasks group by status; -header -box'
-                
-                """
+                f"Use 'flexlock-status {self.db_path}' to monitor task progress"
             )
+
             if self.backend is None:
+                # Local execution - always completes synchronously
                 logger.info("Running locally (pull-from-DB)")
                 self._run_locally()
+                success = True
             else:
+                # HPC backend execution
                 # Fixed args for worker_loop (as tuple for *args)
                 fixed_args = (self.func, self.cfg, self.task_target, self.db_path)
                 job = self.backend.submit(worker_loop, *fixed_args)
                 logger.info(
                     f"Submitted {self.backend.__class__.__name__} job {job.job_id}"
                 )
-                # TODO: Add a mechanism to wait for single job to complete
+
+                # Wait for completion if requested
+                if wait:
+                    success = self._wait_for_completion(timeout, poll_interval)
+                else:
+                    logger.info("Job submitted (not waiting for completion)")
+                    success = True
+
         finally:
             # Dump tasks to YAML after all jobs are submitted (or completed locally)
             dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks")
+
+        return success
