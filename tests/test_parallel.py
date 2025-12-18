@@ -39,8 +39,12 @@ def test_parallel_executor_local_execution(base_cfg):
         cfg=base_cfg,
         n_jobs=2,
     )
-    executor.run()
+    success = executor.run()
     logger.info(executor.db_path)
+
+    # Should return True for successful execution
+    assert success is True
+
     # Verify that the final results file was created
     results_file = Path(base_cfg.save_dir) / "run.lock.tasks"
     assert results_file.exists()
@@ -82,7 +86,8 @@ def test_executor_selects_slurm_backend(mock_slurm_backend, base_cfg, tmp_path):
         cfg=base_cfg,
         slurm_config=str(slurm_config_path),
     )
-    executor.run()
+    # Don't wait - just test that backend is instantiated and called
+    executor.run(wait=False)
 
     mock_slurm_backend.assert_called_once()
     # Check that the backend's map_array or submit method was called
@@ -104,7 +109,8 @@ def test_executor_selects_pbs_backend(mock_pbs_backend, base_cfg, tmp_path):
         cfg=base_cfg,
         pbs_config=str(pbs_config_path),
     )
-    executor.run()
+    # Don't wait - just test that backend is instantiated and called
+    executor.run(wait=False)
 
     mock_pbs_backend.assert_called_once()
     backend_instance = mock_pbs_backend.return_value
@@ -125,7 +131,10 @@ def test_task_failure_is_recorded(base_cfg):
     executor = ParallelExecutor(
         func=failing_func, tasks=tasks, task_target=".", cfg=base_cfg, n_jobs=1
     )
-    executor.run()
+    success = executor.run()
+
+    # Should return False because one task failed
+    assert success is False
 
     # Check the database state directly via the dump function
     db_path = Path(base_cfg.save_dir) / "run.lock.tasks.db"
@@ -147,3 +156,129 @@ def test_task_failure_is_recorded(base_cfg):
         assert failed_task[0] == "failed"
         assert "This task is designed to fail" in failed_task[1]
         assert failed_task[2] is None
+
+
+def test_wait_parameter_with_local_execution(base_cfg):
+    """Tests that wait parameter works correctly with local execution."""
+    tasks = [{"task_id": i, "worker_id": "local"} for i in range(4)]
+
+    executor = ParallelExecutor(
+        func=dummy_task_func,
+        tasks=tasks,
+        task_target=".",
+        cfg=base_cfg,
+        n_jobs=2,
+    )
+
+    # Local execution always completes synchronously, wait is implicit
+    success = executor.run(wait=True)
+    assert success is True
+
+    # Verify all tasks completed
+    from flexlock.taskdb import get_status_counts
+    counts = get_status_counts(executor.db_path)
+    assert counts.get('done', 0) == 4
+    assert counts.get('pending', 0) == 0
+    assert counts.get('running', 0) == 0
+
+
+@patch("flexlock.parallel.PBSBackend")
+def test_wait_parameter_with_hpc_backend(mock_pbs_backend, base_cfg, tmp_path):
+    """Tests that wait parameter is passed correctly to HPC backends."""
+    pbs_config_path = tmp_path / "pbs.yaml"
+    pbs_config_path.write_text("queue: 'default'")
+
+    # Mock the backend submission
+    mock_job = MagicMock()
+    mock_job.job_id = "12345"
+    mock_backend_instance = mock_pbs_backend.return_value
+    mock_backend_instance.submit.return_value = mock_job
+
+    tasks = [{"task_id": 1}]
+    executor = ParallelExecutor(
+        func=dummy_task_func,
+        tasks=tasks,
+        task_target=".",
+        cfg=base_cfg,
+        pbs_config=str(pbs_config_path),
+    )
+
+    # Mock _wait_for_completion to immediately return True
+    with patch.object(executor, '_wait_for_completion', return_value=True) as mock_wait:
+        success = executor.run(wait=True, timeout=60)
+
+        # Verify wait was called with correct parameters (default poll_interval=10)
+        mock_wait.assert_called_once_with(60, 10)
+        assert success is True
+
+
+@patch("flexlock.parallel.PBSBackend")
+def test_no_wait_returns_immediately(mock_pbs_backend, base_cfg, tmp_path):
+    """Tests that wait=False returns immediately without blocking."""
+    pbs_config_path = tmp_path / "pbs.yaml"
+    pbs_config_path.write_text("queue: 'default'")
+
+    # Mock the backend
+    mock_job = MagicMock()
+    mock_job.job_id = "12345"
+    mock_backend_instance = mock_pbs_backend.return_value
+    mock_backend_instance.submit.return_value = mock_job
+
+    tasks = [{"task_id": 1}]
+    executor = ParallelExecutor(
+        func=dummy_task_func,
+        tasks=tasks,
+        task_target=".",
+        cfg=base_cfg,
+        pbs_config=str(pbs_config_path),
+    )
+
+    # Mock _wait_for_completion (should NOT be called)
+    with patch.object(executor, '_wait_for_completion') as mock_wait:
+        success = executor.run(wait=False)
+
+        # Verify wait was NOT called
+        mock_wait.assert_not_called()
+        assert success is True
+
+
+def test_status_helper_functions(base_cfg):
+    """Tests the new status helper functions in taskdb."""
+    from flexlock.taskdb import get_status_counts, get_failed_tasks, get_all_tasks
+
+    def failing_func(cfg):
+        if cfg.task_id == 1:
+            raise ValueError("Task 1 failed")
+        return {"task": cfg.task_id, "status": "completed"}
+
+    tasks = [{"task_id": 0}, {"task_id": 1}, {"task_id": 2}]
+
+    executor = ParallelExecutor(
+        func=failing_func, tasks=tasks, task_target=".", cfg=base_cfg, n_jobs=1
+    )
+    executor.run()
+
+    # Test get_status_counts
+    counts = get_status_counts(executor.db_path)
+    assert counts.get('done', 0) == 2
+    assert counts.get('failed', 0) == 1
+    assert counts.get('pending', 0) == 0
+
+    # Test get_failed_tasks
+    failed = get_failed_tasks(executor.db_path)
+    assert len(failed) == 1
+    assert "Task 1 failed" in failed[0]['error']
+    assert failed[0]['task']['task_id'] == 1
+
+    # Test get_all_tasks
+    all_tasks = get_all_tasks(executor.db_path)
+    assert len(all_tasks) == 3
+
+    # Test filtering by status
+    failed_only = get_all_tasks(executor.db_path, status='failed')
+    assert len(failed_only) == 1
+    assert failed_only[0]['status'] == 'failed'
+
+    done_only = get_all_tasks(executor.db_path, status='done')
+    assert len(done_only) == 2
+    assert all(t['status'] == 'done' for t in done_only)
