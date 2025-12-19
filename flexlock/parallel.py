@@ -160,9 +160,9 @@ class ParallelExecutor:
                     logger.success(f"All {done} tasks completed successfully")
                 return failed == 0
 
-            # Log progress periodically (every 30s)
+            # Log progress periodically (every 10s)
             elapsed = time.time() - start_time
-            if elapsed - (last_log_time - start_time) >= 30:
+            if elapsed - (last_log_time - start_time) >= 15:
                 progress = (done + failed) / total * 100 if total > 0 else 0
                 logger.info(
                     f"Progress: {progress:.1f}% "
@@ -225,7 +225,12 @@ class ParallelExecutor:
                 # Local execution - always completes synchronously
                 logger.info("Running locally (pull-from-DB)")
                 self._run_locally()
-                success = True
+
+                # Check if any tasks failed
+                from .taskdb import get_status_counts
+                status_counts = get_status_counts(self.db_path)
+                failed = status_counts.get('failed', 0)
+                success = failed == 0
             else:
                 # HPC backend execution
                 # Fixed args for worker_loop (as tuple for *args)
