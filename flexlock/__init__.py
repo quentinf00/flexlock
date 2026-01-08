@@ -6,7 +6,7 @@ logger.disable("flexlock")
 
 from .flexcli import flexcli
 from .snapshot import snapshot
-from .mlflowlink import mlflowlink
+from .mlflow import mlflow_context
 from .debug import debug_on_fail
 from .resolvers import register_resolvers
 from .api import Project
@@ -21,7 +21,7 @@ register_resolvers()
 __all__ = [
     "flexcli",
     "snapshot",
-    "mlflowlink",
+    "mlflow_context",
     "debug_on_fail",
     "Project",
     "py2cfg",

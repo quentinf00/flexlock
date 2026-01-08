@@ -1,6 +1,0 @@
-timestamp: '2025-12-17T14:35:25.624295'
-config:
-  param: 10
-  other: 5
-  _target_: test_multistage_config.main2
-  save_dir: outputs/exp/2025-12-17_14-35-25
