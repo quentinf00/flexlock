@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import List, Any, Dict
 from omegaconf import OmegaConf, open_dict, ListConfig, DictConfig
 from datetime import datetime
-from flexlock.utils import instantiate
-from .utils import load_python_defaults
+from .utils import load_python_defaults, instantiate, py2cfg
+from .debug import debug_on_fail
 from .parallel import ParallelExecutor
 from .snapshot import snapshot
 from .diff import RunDiff
@@ -81,6 +81,18 @@ class FlexLockRunner:
         parser.add_argument(
             "--debug", action="store_true",
             help="Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks)."
+        )
+
+        # HPC Backend Configuration
+        backend_group = parser.add_argument_group("HPC Backend Configuration")
+        backend = backend_group.add_mutually_exclusive_group()
+        backend.add_argument(
+            "--slurm-config",
+            help="Path to Slurm configuration YAML file for HPC execution"
+        )
+        backend.add_argument(
+            "--pbs-config",
+            help="Path to PBS configuration YAML file for HPC execution"
         )
 
         return parser
@@ -245,11 +257,7 @@ class FlexLockRunner:
 
     def run(self, cli_args=None, base_cfg=None):
         args = self.parser.parse_args(cli_args)
-
-        # ACTIVATE DEBUGGING GLOBALLY
-        if args.debug:
-            os.environ["FLEXLOCK_DEBUG"] = "true"
-            logger.info("Debug mode enabled (FLEXLOCK_DEBUG=true)")
+        run_func = instantiate
 
         root_cfg = self.load_config(args)
         logger.info(f"Loaded root config: {root_cfg}")
@@ -281,22 +289,41 @@ class FlexLockRunner:
         # Prepare node (inject save_dir)
         node_cfg = self._prepare_node(node_cfg)
 
+        # ACTIVATE DEBUGGING GLOBALLY
+        debug = args.debug or os.environ.get("FLEXLOCK_DEBUG", "false").lower() in ("1", "true")
+        if debug:
+            logger.info("Debug mode enabled")
+            run_func = debug_on_fail(run_func)
+
         # Check if run already exists
         if args.check_exists and self.check_if_exists(node_cfg):
             print("Run already exists and matches current configuration. Skipping.")
             return
-
         if tasks:
-            logger.info(f"Running sweep with {len(tasks)} tasks.")
-            # Batch execution
-            executor = ParallelExecutor(
-                func=instantiate,
-                tasks=tasks,
-                task_target=args.sweep_target,  # Use sweep_target as task_target
-                cfg=node_cfg,
-                n_jobs=args.n_jobs
-            )
-            return executor.run()
+            if debug:
+                logger.info(f"Running sweep with {len(tasks)} tasks in debug mode one job, no hpc.")
+                # Batch execution
+                executor = ParallelExecutor(
+                    func=run_func,
+                    tasks=tasks,
+                    task_target=args.sweep_target,  # Use sweep_target as task_target
+                    cfg=node_cfg,
+                    n_jobs=1,
+                )
+                return executor.run()
+            else:
+                logger.info(f"Running sweep with {len(tasks)} tasks.")
+                # Batch execution
+                executor = ParallelExecutor(
+                    func=run_func,
+                    tasks=tasks,
+                    task_target=args.sweep_target,  # Use sweep_target as task_target
+                    cfg=node_cfg,
+                    n_jobs=args.n_jobs,
+                    slurm_config=getattr(args, 'slurm_config', None),
+                    pbs_config=getattr(args, 'pbs_config', None)
+                )
+                return executor.run()
 
         # Single execution
         # Extract tracking info from the node config
@@ -310,4 +337,4 @@ class FlexLockRunner:
             with open_dict(node_cfg):
                 del node_cfg["_snapshot_"]
         
-        return instantiate(node_cfg)
+        return run_func(node_cfg)

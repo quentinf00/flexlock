@@ -93,7 +93,7 @@ def snapshot_resolver(path: str, key: str | None = None, *, _root_: DictConfig) 
     # The _root_ config is passed by OmegaConf to the resolver.
     # We can use it to call snapshot with the actual config.
     snapshot(
-        config=_root_,
+        cfg=_root_,
         data=item,
         prevs=[path],
         merge=True,

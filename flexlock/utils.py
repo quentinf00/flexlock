@@ -61,7 +61,7 @@ def to_dictconfig(incfg):
     return OmegaConf.create(incfg)
 
 
-def py2cfg(obj, *pos, **overrides):
+def py2cfg(obj, /, *pos, **overrides):
     """
     Generates a default configuration dict from a function or class signature.
     Supports nested py2cfg calls and handles decorated functions.
