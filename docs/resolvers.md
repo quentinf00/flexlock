@@ -4,79 +4,6 @@ FlexLock registers custom OmegaConf resolvers for dynamic configuration values.
 
 ## Available Resolvers
 
-### `${track:path}` - Hash Data Files
-
-Compute and return the hash of a data file or directory.
-
-**Usage:**
-```yaml
-_target_: myproject.train
-input_data: data/train.csv
-data_hash: ${track:${input_data}}  # Computes hash of data/train.csv
-```
-
-**Python:**
-```python
-from flexlock import py2cfg
-
-cfg = py2cfg(
-    train,
-    input_data='data/train.csv',
-    data_hash='${track:${input_data}}'
-)
-```
-
-**Behavior:**
-- For files: Computes XXHash (fast) or MD5 (fallback)
-- For directories: Recursively hashes all files
-- Uses SQLite cache (keyed by path + mtime) for speed
-- Returns hash string (e.g., `"xxh64_abc123..."`)
-
-**Use cases:**
-- Verify data hasn't changed
-- Include data version in experiment tags
-- Detect data corruption
-
----
-
-### `${stage:path}` - Load Previous Stage Info
-
-Load configuration or results from a previous FlexLock run.
-
-**Usage:**
-```yaml
-_target_: myproject.train
-preprocess_dir: outputs/preprocess/run_001
-preprocess_config: ${stage:${preprocess_dir}}  # Loads run.lock
-```
-
-**Returns:** Dictionary with keys:
-- `config`: Configuration from previous stage
-- `timestamp`: When it was run
-- `repos`: Git repo info
-- `data`: Data hashes
-
-**Example:**
-```python
-from omegaconf import OmegaConf
-
-cfg_str = """
-train:
-  preprocess_dir: outputs/preprocess/run_001
-  upstream_lr: ${stage:${preprocess_dir}.config.learning_rate}
-"""
-
-cfg = OmegaConf.create(cfg_str)
-print(cfg.train.upstream_lr)  # Retrieves lr from previous run's config
-```
-
-**Use cases:**
-- Pipeline stage dependencies
-- Inherit parameters from upstream stages
-- Validate pipeline consistency
-
----
-
 ### `${now:format}` - Current Timestamp
 
 Get current timestamp in specified format.
@@ -203,10 +130,6 @@ _target_: myproject.train
 # Dynamic timestamp
 save_dir: outputs/train_${now:%Y%m%d_%H%M%S}
 
-# Data tracking
-input_data: data/train.csv
-data_version: ${track:${input_data}}
-
 # Latest model
 pretrained_model: ${latest:models/pretrained_*.pth}
 
@@ -223,13 +146,12 @@ from omegaconf import OmegaConf
 cfg = py2cfg(
     train,
     save_dir='outputs/train_${now:%Y%m%d_%H%M%S}',
-    input_data='data/train.csv',
-    data_version='${track:${input_data}}'
+    input_data='data/train.csv'
 )
 
 # Resolve all interpolations
 resolved = OmegaConf.to_container(cfg, resolve=True)
-print(resolved['data_version'])  # "xxh64_abc123..."
+print(resolved['save_dir'])  # "outputs/train_20240115_143000"
 ```
 
 ### In Decorator
@@ -255,11 +177,11 @@ def train(input_path, save_dir=None):
 ### Nested Resolvers
 
 ```yaml
-# Chain resolvers
-latest_data_hash: ${track:${latest:data/processed_*.csv}}
-
-# Use in paths
+# Use resolvers in paths
 checkpoint: ${latest:${base_dir}/checkpoints/epoch_*.pth}
+
+# Combine timestamp and versioning
+save_dir: ${vinc:outputs/train_${now:%Y%m%d}/run}
 ```
 
 ### Conditional Logic
@@ -281,8 +203,6 @@ preprocess:
 train:
   _target_: myproject.train
   preprocess_dir: ${latest:outputs/preprocess/run_*/}
-  preprocess_hash: ${track:${preprocess_dir}}
-  upstream_config: ${stage:${preprocess_dir}}
   save_dir: ${vinc:outputs/train/run}
 ```
 
@@ -349,23 +269,7 @@ OmegaConf.register_new_resolver(
 
 ## Best Practices
 
-### 1. Use `${track:...}` for Data Inputs
-
-```python
-# Good: Track data dependencies
-cfg = py2cfg(
-    train,
-    input_data='data/train.csv',
-    snapshot_config=dict(
-        data={'train': '${...input_data}'}
-    )
-)
-
-# Bad: No tracking
-cfg = py2cfg(train, input_data='data/train.csv')
-```
-
-### 2. Use `${vinc:...}` for Sequential Runs
+### 1. Use `${vinc:...}` for Sequential Runs
 
 ```python
 # Good: Auto-versioning
@@ -375,7 +279,7 @@ cfg = py2cfg(train, save_dir='${vinc:outputs/exp/run}')
 cfg = py2cfg(train, save_dir='outputs/exp/run_0042')
 ```
 
-### 3. Use `${latest:...}` for Pipeline Stages
+### 2. Use `${latest:...}` for Pipeline Stages
 
 ```python
 # Good: Automatically finds latest upstream
@@ -388,20 +292,32 @@ train_cfg = py2cfg(
 train_cfg = py2cfg(train, preprocess_dir='outputs/preprocess/run_0001')
 ```
 
-### 4. Combine Resolvers for Powerful Patterns
+### 3. Combine Resolvers for Powerful Patterns
 
 ```yaml
 # Auto-versioned run with timestamp in name
 save_dir: ${vinc:outputs/train_${now:%Y%m%d}/run}
 
-# Latest data file with version tracking
+# Latest data file reference
 input_data: ${latest:data/processed_*.csv}
-data_hash: ${track:${input_data}}
 
-# Pipeline stage with dependency tracking
+# Pipeline stage with dependency
 upstream_dir: ${latest:outputs/stage1/run_*/}
-upstream_config: ${stage:${upstream_dir}}
-upstream_lr: ${stage:${upstream_dir}.config.lr}
+```
+
+### 4. Track Data with Snapshot Config
+
+For data tracking, use the `snapshot_config` in `@flexcli` or `py2cfg`:
+
+```python
+cfg = py2cfg(
+    train,
+    input_data='data/train.csv',
+    snapshot_config=dict(
+        repos={'main': '.'},
+        data={'train': '${...input_data}'}
+    )
+)
 ```
 
 ---
@@ -409,6 +325,5 @@ upstream_lr: ${stage:${upstream_dir}.config.lr}
 ## See Also
 
 - [OmegaConf Documentation](https://omegaconf.readthedocs.io/) - Interpolation syntax
-- [Snapshot System](./snapshot.md) - How `${track:...}` integrates with snapshots
 - [Python API](./python_api.md) - Using resolvers programmatically
 - [CLI Reference](./cli_reference.md) - Resolver usage in CLI workflows

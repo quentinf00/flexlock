@@ -5,39 +5,10 @@ import time
 from loguru import logger
 from multiprocessing import Process
 from .taskdb import claim_next_task, finish_task, pending_count
-from flexlock.utils import merge_task_into_cfg
-from flexlock.utils import instantiate
+from flexlock.utils import merge_task_into_cfg, instantiate, extract_tracking_info
 from flexlock.snapshot import snapshot
 from pathlib import Path
 from omegaconf import OmegaConf
-
-
-def _extract_tracking_info(cfg):
-    """
-    Extract tracking info from config for task snapshots.
-    """
-    data = {}
-    prevs = []
-
-    # Check if the node has tracking instructions
-    if "_snapshot_" in cfg:
-        snap_cfg = cfg._snapshot_
-        
-        if "data" in snap_cfg:
-            data.update(OmegaConf.to_container(snap_cfg.data, resolve=True))
-
-        # Explicit lineage paths (files we want to link but not hash)
-        if "prevs" in snap_cfg:
-            p = OmegaConf.to_container(snap_cfg.prevs, resolve=True)
-            if isinstance(p, list):
-                prevs.extend(p)
-            else:
-                prevs.append(p)
-
-    # "prevs_from_data": Automatically treat hashed data paths as lineage candidates
-    # This matches the logic: if we use a file, check if it came from a FlexLock run
-    prevs.extend(data.values())
-    return data, prevs
 
 
 def worker_loop(func, cfg, task_to: str, db_path):
@@ -73,7 +44,7 @@ def worker_loop(func, cfg, task_to: str, db_path):
             # 3. Resolve Data Dependencies (Just-in-Time)
             # We re-run resolution because task overrides might change data paths
             # e.g. override="data.fold=1" changes ${input:data/fold_${data.fold}}
-            data, prevs = _extract_tracking_info(task_cfg)
+            _, data, prevs = extract_tracking_info(task_cfg)
 
             # 4. Create DELTA Snapshot (DB storage only)
             # We pass the path to the Master Lock

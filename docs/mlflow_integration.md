@@ -33,7 +33,7 @@ pixi add mlflow
 
 ```python
 from flexlock import flexcli
-from flexlock.mlflowlink import mlflow_context
+from flexlock import mlflow_context
 import mlflow
 
 @flexcli
@@ -166,7 +166,7 @@ You see only Run C (the latest), with all inherited artifacts and latest metrics
 Context manager for MLflow logging with automatic run management.
 
 ```python
-from flexlock.mlflowlink import mlflow_context
+from flexlock import mlflow_context
 
 with mlflow_context(
     save_dir: str | Path,
@@ -221,7 +221,7 @@ Yields `mlflow.ActiveRun` object, or `None` if MLflow not installed.
 #### Example
 
 ```python
-from flexlock.mlflowlink import mlflow_context
+from flexlock import mlflow_context
 from pathlib import Path
 import mlflow
 
@@ -257,7 +257,7 @@ with mlflow_context(
 
 ```python
 from flexlock import flexcli
-from flexlock.mlflowlink import mlflow_context
+from flexlock import mlflow_context
 import mlflow
 
 @flexcli
@@ -332,7 +332,7 @@ python train.py -c config.yaml
 ```python
 # diagnose.py
 from flexlock import flexcli
-from flexlock.mlflowlink import mlflow_context
+from flexlock import mlflow_context
 import mlflow
 import matplotlib.pyplot as plt
 
@@ -387,7 +387,7 @@ python diagnose.py save_dir=outputs/my_exp/2024-01-15_10-30-45/
 
 ```python
 from flexlock import flexcli
-from flexlock.mlflowlink import mlflow_context
+from flexlock import mlflow_context
 import mlflow
 
 @flexcli
@@ -463,7 +463,7 @@ tags.optimizer = 'adam'
 
 ```python
 from flexlock import Project
-from flexlock.mlflowlink import mlflow_context
+from flexlock import mlflow_context
 import mlflow
 
 proj = Project("pipeline.yaml")
@@ -566,7 +566,7 @@ tags.project = 'image_classification' AND tags.`model.architecture` = 'resnet50'
 Only log to MLflow in certain conditions:
 
 ```python
-from flexlock.mlflowlink import mlflow_context
+from flexlock import mlflow_context
 import mlflow
 
 @flexcli
@@ -933,82 +933,14 @@ tags.flexlock.status = 'active'
 
 ---
 
-## Migration Guide
-
-### From `mlflowlink()` to `mlflow_context()`
-
-FlexLock's original `mlflowlink()` function is now deprecated. Use `mlflow_context()` instead.
-
-#### Old Code
-
-```python
-from flexlock.mlflowlink import mlflowlink
-import mlflow
-
-with mlflowlink(
-    path=cfg.save_dir,
-    snapshot_file="run.lock",
-    log_file="experiment.log"
-):
-    mlflow.log_metric("accuracy", 0.95)
-```
-
-#### New Code
-
-```python
-from flexlock.mlflowlink import mlflow_context
-import mlflow
-
-with mlflow_context(
-    save_dir=cfg.save_dir,
-    experiment_name="MyExperiment",  # NEW: organize experiments
-    run_name="my_run",              # NEW: custom run names
-    tags={"model": "resnet"},       # NEW: custom tags
-    log_config=True,                # Same as before
-    log_artifacts=True,             # Same as before
-):
-    mlflow.log_metric("accuracy", 0.95)
-```
-
-#### Migration Checklist
-
-- [ ] Replace `mlflowlink` with `mlflow_context`
-- [ ] Change `path` parameter to `save_dir`
-- [ ] Add `experiment_name` parameter
-- [ ] Remove `snapshot_file` parameter (always uses `run.lock`)
-- [ ] Remove `log_file` parameter (auto-logs standard files)
-- [ ] Consider adding `tags` for better filtering
-- [ ] Update MLflow UI filters to use new tag names:
-  - `flexlock.logical_run_id` → `flexlock.dir`
-  - `flexlock.run_status` → `flexlock.status`
-  - `flexlock.supersedes_run_id` → `flexlock.supersedes`
-  - `flexlock.superseded_by_run_id` → `flexlock.superseded_by`
-
-#### Backward Compatibility
-
-The old `mlflowlink()` function still works but shows a deprecation warning:
-
-```
-mlflowlink() is deprecated. Use mlflow_context() instead for better control.
-```
-
-**Timeline:**
-- **Now**: Both functions work, `mlflowlink()` shows warning
-- **Future**: `mlflowlink()` will be removed (exact version TBD)
-
-**Recommendation:** Migrate to `mlflow_context()` at your earliest convenience.
-
----
-
 ## Summary
 
 FlexLock's MLflow integration provides:
 
-✅ **Shadow Run Pattern** - Clean dashboard with one active run per experiment
-✅ **Automatic Logging** - Config and artifacts logged from disk
-✅ **Iterative Diagnostics** - Run diagnostics 50 times, see only latest
-✅ **Flexible Filtering** - Powerful tags for organizing experiments
-✅ **Easy Migration** - Simple upgrade path from legacy `mlflowlink()`
+- **Shadow Run Pattern** - Clean dashboard with one active run per experiment
+- **Automatic Logging** - Config and artifacts logged from disk
+- **Iterative Diagnostics** - Run diagnostics 50 times, see only latest
+- **Flexible Filtering** - Powerful tags for organizing experiments
 
 **Key Takeaway:** With `mlflow_context()`, you can separate expensive computation from iterative diagnostics while maintaining a clean, organized MLflow dashboard!
 
@@ -1016,10 +948,9 @@ FlexLock's MLflow integration provides:
 
 ## Next Steps
 
-- **Tutorial**: See [Tutorial 07: MLflow Integration](./tutorials/07_mlflow_logging.md) for hands-on examples
 - **HPC Integration**: Scale experiments with [HPC Integration Guide](./hpc_integration.md)
-- **Pipelines**: Build complex workflows with [Tutorial 05: Pipelines](./tutorials/05_pipeline.md)
-- **Debugging**: Use interactive debugging with [Tutorial 06: Debugging](./tutorials/06_debugging.md)
+- **Debugging**: Use interactive debugging with [Debugging Guide](./debugging.md)
+- **Python API**: See [Python API Reference](./python_api.md) for programmatic usage
 
 ---
 

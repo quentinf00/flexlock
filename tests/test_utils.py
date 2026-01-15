@@ -625,3 +625,78 @@ def test_log_to_file_different_files():
         for path in [log_path1, log_path2]:
             if Path(path).exists():
                 Path(path).unlink()
+
+# --- Test Cases for extract_tracking_info function ---
+
+
+def test_extract_tracking_info_basic():
+    """Test extract_tracking_info with basic repos and data."""
+    from flexlock.utils import extract_tracking_info
+    
+    cfg = OmegaConf.create({
+        '_snapshot_': {
+            'repos': {'main': '.', 'lib': './lib'},
+            'data': {'input': 'data/train.csv', 'model': 'models/best.pt'}
+        }
+    })
+    
+    repos, data, prevs = extract_tracking_info(cfg)
+    
+    assert repos == {'main': '.', 'lib': './lib'}
+    assert data == {'input': 'data/train.csv', 'model': 'models/best.pt'}
+    # prevs should include data paths
+    assert 'data/train.csv' in prevs
+    assert 'models/best.pt' in prevs
+
+
+def test_extract_tracking_info_no_snapshot():
+    """Test extract_tracking_info when _snapshot_ is missing."""
+    from flexlock.utils import extract_tracking_info
+    
+    cfg = OmegaConf.create({'model': 'resnet', 'lr': 0.001})
+    
+    repos, data, prevs = extract_tracking_info(cfg)
+    
+    assert repos == {}
+    assert data == {}
+    assert prevs == []
+
+
+def test_extract_tracking_info_with_prevs():
+    """Test extract_tracking_info with explicit prevs."""
+    from flexlock.utils import extract_tracking_info
+    
+    cfg = OmegaConf.create({
+        '_snapshot_': {
+            'repos': {'main': '.'},
+            'data': {'input': 'data/train.csv'},
+            'prevs': ['outputs/exp1/run.lock', 'outputs/exp2/run.lock']
+        }
+    })
+    
+    repos, data, prevs = extract_tracking_info(cfg)
+    
+    assert repos == {'main': '.'}
+    assert data == {'input': 'data/train.csv'}
+    # prevs should include both explicit prevs and data paths
+    assert 'outputs/exp1/run.lock' in prevs
+    assert 'outputs/exp2/run.lock' in prevs
+    assert 'data/train.csv' in prevs
+
+
+def test_extract_tracking_info_singular_repo_raises_error():
+    """Test that using 'repo' (singular) raises FlexLockConfigError."""
+    from flexlock.utils import extract_tracking_info
+    from flexlock.exceptions import FlexLockConfigError
+    
+    cfg = OmegaConf.create({
+        '_snapshot_': {
+            'repo': '.',  # Using singular 'repo' - should raise error
+            'data': {'input': 'data/train.csv'}
+        }
+    })
+    
+    with pytest.raises(FlexLockConfigError, match="Found 'repo' \\(singular\\)"):
+        extract_tracking_info(cfg)
+
+

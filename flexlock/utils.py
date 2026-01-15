@@ -5,13 +5,93 @@ import importlib
 import sys
 import functools
 from pathlib import Path
-from typing import Any
+from typing import Any, Tuple, Dict, List
 from omegaconf import OmegaConf, DictConfig, ListConfig, open_dict
 from dataclasses import is_dataclass
 from contextlib import contextmanager
 from loguru import logger
 import warnings
 from dataclasses import fields
+
+
+def extract_tracking_info(cfg) -> Tuple[Dict, Dict, List]:
+    """
+    Extract tracking information from config's _snapshot_ field.
+
+    This is a unified function used across FlexLock to extract repository
+    tracking, data hashing, and lineage information from configurations.
+
+    Args:
+        cfg: OmegaConf DictConfig with optional _snapshot_ field
+
+    Returns:
+        tuple: (repos, data, prevs) where:
+            - repos: dict of {name: path} for git repositories to track
+            - data: dict of {name: path} for data files/dirs to hash
+            - prevs: list of paths to check for upstream FlexLock runs
+
+    Raises:
+        FlexLockConfigError: If _snapshot_ contains invalid keys like 'repo' (singular)
+
+    Examples:
+        >>> cfg = OmegaConf.create({
+        ...     '_snapshot_': {
+        ...         'repos': {'main': '.'},
+        ...         'data': {'input': 'data/train.csv'}
+        ...     }
+        ... })
+        >>> repos, data, prevs = extract_tracking_info(cfg)
+        >>> repos
+        {'main': '.'}
+    """
+    from .exceptions import FlexLockConfigError
+
+    repos = {}
+    data = {}
+    prevs = []
+
+    if "_snapshot_" not in cfg:
+        return repos, data, prevs
+
+    snap_cfg = cfg._snapshot_
+
+    # Extract repos (only plural supported)
+    if "repos" in snap_cfg:
+        repos_raw = snap_cfg.repos
+        repos = OmegaConf.to_container(repos_raw, resolve=True)
+    elif "repo" in snap_cfg:
+        # Singular 'repo' no longer supported - raise clear error
+        raise FlexLockConfigError(
+            "Found 'repo' (singular) in _snapshot_ configuration. "
+            "Please use 'repos' (plural) instead. "
+            "Example: _snapshot_={'repos': {'main': '.'}}"
+        )
+
+    # Extract data
+    if "data" in snap_cfg:
+        data_raw = snap_cfg.data
+        if not isinstance(data_raw, (dict, DictConfig)):
+            raise FlexLockConfigError(
+                "snapshot's data should be a mapping"
+                "Example: _snapshot_={'data': {'dataset': 'data/dataset.csv'}}"
+            )
+        data = OmegaConf.to_container(data_raw, resolve=True)
+
+    # Extract prevs (lineage paths)
+    if "prevs" in snap_cfg:
+        prevs_raw = snap_cfg.prevs
+        if not isinstance(prevs_raw, (list, ListConfig)):
+            raise FlexLockConfigError(
+                "snapshot's prevs should be a list"
+                "Example: _snapshot_={'prevs': ['path/to/run/toto']}"
+            )
+        prevs = OmegaConf.to_container(prevs_raw, resolve=True)
+
+    # "prevs_from_data": Automatically treat data paths as lineage candidates
+    # This allows checking if data files came from FlexLock runs
+    prevs.extend(list(data.values()))
+
+    return repos, data, prevs
 
 
 def to_dictconfig(incfg):

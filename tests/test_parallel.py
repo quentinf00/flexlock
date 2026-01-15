@@ -208,7 +208,7 @@ def test_wait_parameter_with_hpc_backend(mock_pbs_backend, base_cfg, tmp_path):
         success = executor.run(wait=True, timeout=60)
 
         # Verify wait was called with correct parameters (default poll_interval=10)
-        mock_wait.assert_called_once_with(60, 10)
+        mock_wait.assert_called_once_with(60, None)
         assert success is True
 
 
@@ -282,3 +282,75 @@ def test_status_helper_functions(base_cfg):
     done_only = get_all_tasks(executor.db_path, status='done')
     assert len(done_only) == 2
     assert all(t['status'] == 'done' for t in done_only)
+
+
+def test_keyboard_interrupt_handling():
+    """Test that KeyboardInterrupt is handled gracefully during wait."""
+    from flexlock.parallel import ParallelExecutor
+    from omegaconf import OmegaConf
+    from pathlib import Path
+    import tempfile
+    from unittest.mock import patch
+    
+    # Create a temporary directory for the test
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cfg = OmegaConf.create({
+            'save_dir': tmpdir,
+            'model': 'test'
+        })
+        
+        def dummy_func(cfg):
+            return cfg.model
+        
+        executor = ParallelExecutor(
+            func=dummy_func,
+            tasks=[{'param': 1}],
+            task_target='.',
+            cfg=cfg,
+            n_jobs=1
+        )
+        
+        # Mock time.sleep to raise KeyboardInterrupt
+        with patch('time.sleep', side_effect=KeyboardInterrupt()):
+            success = executor._wait_for_completion(timeout=None)
+            
+        # Should return False and not raise the exception
+        assert success is False
+
+
+def test_config_constants_used():
+    """Test that config constants are used for defaults."""
+    from flexlock.parallel import ParallelExecutor
+    from flexlock import config
+    from omegaconf import OmegaConf
+    from pathlib import Path
+    import tempfile
+    
+    # Create a temporary directory
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cfg = OmegaConf.create({
+            'save_dir': tmpdir,
+            'model': 'test'
+        })
+        
+        def dummy_func(cfg):
+            return cfg.model
+        
+        executor = ParallelExecutor(
+            func=dummy_func,
+            tasks=[],
+            task_target='.',
+            cfg=cfg,
+            n_jobs=1
+        )
+        
+        # Test that run() accepts None for poll_interval (uses config default)
+        # We can't easily test the actual value without running the executor,
+        # but we can verify the method signature accepts None
+        import inspect
+        sig = inspect.signature(executor.run)
+        assert sig.parameters['poll_interval'].default is None
+        
+        # Test _wait_for_completion also accepts None
+        sig2 = inspect.signature(executor._wait_for_completion)
+        assert sig2.parameters['poll_interval'].default is None

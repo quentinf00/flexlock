@@ -9,11 +9,13 @@ from pathlib import Path
 from typing import List, Any, Dict
 from omegaconf import OmegaConf, open_dict, ListConfig, DictConfig
 from datetime import datetime
-from .utils import load_python_defaults, instantiate, py2cfg
+from .utils import load_python_defaults, instantiate, py2cfg, extract_tracking_info
 from .debug import debug_on_fail
 from .parallel import ParallelExecutor
 from .snapshot import snapshot
 from .diff import RunDiff
+from .exceptions import FlexLockValidationError, FlexLockConfigError
+from . import config
 from loguru import logger
 
 
@@ -73,7 +75,7 @@ class FlexLockRunner:
         )
 
         # Execution
-        parser.add_argument("--n_jobs", type=int, default=1, help="Number of parallel jobs")
+        parser.add_argument("--n_jobs", type=int, default=config.DEFAULT_N_JOBS, help="Number of parallel jobs")
         parser.add_argument(
             "--check-exists", action="store_true",
             help="Check if run already exists and skip if so."
@@ -120,7 +122,26 @@ class FlexLockRunner:
         return cfg
 
     def _parse_cli_sweep(self, sweep_str: str) -> List[Any]:
-        """Parses a comma-separated string into a list of values or dicts."""
+        """
+        Parse comma-separated sweep values from CLI.
+
+        Handles:
+        - Simple values: "1,2,3" → [1, 2, 3]
+        - Key=value pairs: "lr=0.1,lr=0.2" → [{'lr': 0.1}, {'lr': 0.2}]
+        - Quoted strings: '"a,b",c' → ['a,b', 'c']
+
+        Args:
+            sweep_str: Comma-separated sweep values
+
+        Returns:
+            List of parsed values (int, float, dict, or str)
+
+        Examples:
+            >>> _parse_cli_sweep("1,2,3")
+            [1, 2, 3]
+            >>> _parse_cli_sweep("lr=0.1,lr=0.2")
+            [{'lr': 0.1}, {'lr': 0.2}]
+        """
         # Use csv reader to handle quoted strings correctly
         reader = csv.reader([sweep_str], skipinitialspace=True)
         items = next(reader)
@@ -151,16 +172,32 @@ class FlexLockRunner:
         """
         Extracts and normalizes the sweep list based on CLI arguments.
         Returns a list of Dictionaries (Tasks).
+
+        Raises:
+            FlexLockValidationError: If multiple sweep sources are provided
         """
+        # Validate mutual exclusivity of sweep sources
+        sources_provided = sum([
+            args.sweep_key is not None,
+            args.sweep_file is not None,
+            args.sweep is not None
+        ])
+
+        if sources_provided > 1:
+            raise FlexLockValidationError(
+                "Multiple sweep sources provided. "
+                "Use only ONE of: --sweep-key, --sweep-file, or --sweep"
+            )
+
         raw_tasks = None
 
         # 1. Determine Source
         if args.sweep_key:
             raw_tasks = OmegaConf.select(root_cfg, args.sweep_key)
             if raw_tasks is None:
-                logger.error(f"Sweep key '{args.sweep_key}' not found in config.")
-                import sys
-                sys.exit(1)
+                raise FlexLockValidationError(
+                    f"Sweep key '{args.sweep_key}' not found in config."
+                )
             # Convert ListConfig to primitive list
             if isinstance(raw_tasks, (ListConfig, DictConfig)):
                 raw_tasks = OmegaConf.to_container(raw_tasks, resolve=True)
@@ -168,9 +205,9 @@ class FlexLockRunner:
         elif args.sweep_file:
             fpath = Path(args.sweep_file)
             if not fpath.exists():
-                logger.error(f"Sweep file '{fpath}' not found.")
-                import sys
-                sys.exit(1)
+                raise FlexLockConfigError(
+                    f"Sweep file '{fpath}' not found."
+                )
 
             if fpath.suffix in ['.yaml', '.yml']:
                 raw_tasks = OmegaConf.to_container(OmegaConf.load(fpath), resolve=True)
@@ -198,46 +235,27 @@ class FlexLockRunner:
         return raw_tasks
 
     def _prepare_node(self, cfg, name="exp"):
+        """
+        Prepare node config by ensuring it has a save_dir.
+
+        If save_dir is missing or None, generates a timestamped directory
+        path: outputs/{name}/{timestamp}
+
+        Args:
+            cfg: Configuration node to prepare
+            name: Name prefix for auto-generated save_dir (default: "exp")
+
+        Returns:
+            DictConfig: Updated configuration with save_dir set
+        """
         # Inject save_dir if missing
         if "save_dir" not in cfg or cfg.save_dir is None:
-             ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+             ts = datetime.now().strftime(config.TIMESTAMP_FORMAT)
              path = Path("outputs") / name / ts
              with open_dict(cfg):
                  cfg.save_dir = str(path)
         cfg.save_dir = cfg.save_dir
         return cfg
-
-    def _extract_tracking_info(self, cfg):
-        """
-        Looks for _snapshot_ inside the specific config node being executed.
-        """
-        repos = OmegaConf.create({})  # Default
-        data = OmegaConf.create({})
-        prevs = OmegaConf.create([])
-
-        # Check if the node has tracking instructions
-        if "_snapshot_" in cfg:
-            snap_cfg = cfg._snapshot_
-            
-            if "repos" in snap_cfg:
-                repos.merge_with(OmegaConf.to_container(snap_cfg.repos, resolve=True))
-            
-            if "data" in snap_cfg:
-                data.merge_with(OmegaConf.to_container(snap_cfg.data, resolve=True))
-
-            # Explicit lineage paths (files we want to link but not hash)
-            if "prevs" in snap_cfg:
-                p = OmegaConf.to_container(snap_cfg.prevs, resolve=True)
-                if isinstance(p, list):
-                    prevs.extend(p)
-                else:
-                    prevs.append(p)
-
-        # "prevs_from_data": Automatically treat hashed data paths as lineage candidates
-        # This matches the logic: if we use a file, check if it came from a FlexLock run
-        prevs.extend(list(data.values()))
-
-        return repos, data, prevs
 
     def check_if_exists(self, cfg):
         """Check if a run with the same configuration already exists."""
@@ -268,9 +286,9 @@ class FlexLockRunner:
             logger.debug(f"Loaded node config: {node_cfg}")
 
             if node_cfg is None:
-                logger.error(f"Selection '{args.select}' returned None.")
-                import sys
-                sys.exit(1)
+                raise FlexLockValidationError(
+                    f"Selection '{args.select}' returned None."
+                )
 
         if base_cfg is not None:
             _b = base_cfg.copy()
@@ -327,7 +345,7 @@ class FlexLockRunner:
 
         # Single execution
         # Extract tracking info from the node config
-        repos, data, prevs = self._extract_tracking_info(node_cfg)
+        repos, data, prevs = extract_tracking_info(node_cfg)
         
         # Snapshot before run
         snapshot(node_cfg, repos=repos, data=data, prevs=prevs)

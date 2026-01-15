@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
 ```bash
 $ python train.py
-Training with lr=0.01 for {10} epochs
+Training with lr=0.01 for 10 epochs
 ✓ Results saved to: results/train/run_0001/
 ```
 

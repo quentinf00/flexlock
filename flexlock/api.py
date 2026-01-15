@@ -6,9 +6,10 @@ from loguru import logger
 from typing import List, Dict, Any, Optional
 import yaml
 import json
-from .utils import instantiate, load_python_defaults
+from .utils import instantiate, load_python_defaults, extract_tracking_info
 from .snapshot import snapshot, RunTracker
 from .diff import RunDiff
+from . import config
 
 
 class ExecutionResult:
@@ -86,36 +87,13 @@ class Project:
         else:
             raise KeyError(f"Key '{key}' not found in defaults")
 
-    def _extract_tracking_info(self, cfg: DictConfig):
-        """Extract repos, data, prevs from config _snapshot_ field."""
-        repos = None
-        data = None
-        prevs = None
-
-        if "_snapshot_" in cfg:
-            snap_cfg = cfg._snapshot_
-
-            if "repos" in snap_cfg or "repo" in snap_cfg:
-                repos_raw = snap_cfg.get("repos") or snap_cfg.get("repo")
-                repos = OmegaConf.to_container(repos_raw, resolve=True)
-
-            if "data" in snap_cfg:
-                data = OmegaConf.to_container(snap_cfg.data, resolve=True)
-
-            if "prevs" in snap_cfg:
-                prevs = OmegaConf.to_container(snap_cfg.prevs, resolve=True)
-
-
-
-        return repos, data, prevs
-
     def _generate_fingerprint(self, cfg: DictConfig) -> dict:
         """
         Generate a fingerprint (proposed snapshot) for the given config.
 
         This is used for smart run logic to check if a run already exists.
         """
-        repos, data, prevs = self._extract_tracking_info(cfg)
+        repos, data, prevs = extract_tracking_info(cfg)
 
         # Use RunTracker to generate snapshot without writing to disk
         # We pass a dummy save_dir since we won't actually save
@@ -148,6 +126,13 @@ class Project:
 
         # Determine where to search
         if search_dirs is None:
+            if config.WARN_SMART_RUN_NO_SEARCH_DIRS:
+                logger.warning(
+                    "smart_run=True but search_dirs=None. "
+                    "Defaulting to parent of save_dir. "
+                    "This may not find all cached runs. "
+                    "Set FLEXLOCK_WARN_SMART_RUN=0 to disable this warning."
+                )
             if "save_dir" in cfg:
                 search_dirs = [str(Path(cfg.save_dir).parent)]
             else:
@@ -319,14 +304,14 @@ class Project:
                 tasks=[config],  # Single task as a list
                 task_target=None,
                 cfg=executor_cfg,
-                n_jobs=1,
+                n_jobs=config.DEFAULT_N_JOBS,
                 pbs_config=pbs_config,
                 slurm_config=slurm_config,
                 local_workers=None
             )
 
             # Run with wait parameter (executor handles waiting)
-            success = executor.run(wait=wait, timeout=3600 if wait else None)
+            success = executor.run(wait=wait, timeout=config.DEFAULT_TIMEOUT if wait else None)
 
             # Load result
             result_data = None
@@ -346,7 +331,7 @@ class Project:
         else:
             # Local execution
             # Extract tracking info
-            repos, data, prevs = self._extract_tracking_info(config)
+            repos, data, prevs = extract_tracking_info(config)
 
             # Create snapshot before execution
             if "save_dir" in config:

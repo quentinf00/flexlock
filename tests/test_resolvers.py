@@ -4,6 +4,7 @@ from pathlib import Path
 import time
 
 from flexlock.resolvers import now_resolver, vinc_resolver
+from flexlock import config
 
 
 def test_now_resolver():
@@ -12,7 +13,7 @@ def test_now_resolver():
     timestamp = now_resolver()
     assert isinstance(timestamp, str)
     try:
-        time.strptime(timestamp, "%Y-%m-%d_%H-%M-%S")
+        time.strptime(timestamp, config.TIMESTAMP_FORMAT)
     except ValueError:
         pytest.fail("Default timestamp format is incorrect")
 

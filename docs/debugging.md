@@ -113,33 +113,13 @@ After the crash, if running in an interactive environment or with a debugger:
 (1000, 10)
 ```
 
-### Advanced: Stack Depth Control
-
-By default, `debug_on_fail` injects variables into the immediate caller's frame (stack depth = 1). You can customize this:
-
-```python
-from flexlock import debug_on_fail
-
-# Inject 2 frames up (useful when decorator wraps other decorators)
-@debug_on_fail(stack_depth=2)
-def train_model(lr=0.01):
-    # ...
-    pass
-```
-
-**When to use different stack depths:**
-
-- `stack_depth=1` (default): Direct function calls
-- `stack_depth=2`: When using with `@flexcli` or other decorators
-- `stack_depth=0`: Inject into the function's own frame (rarely useful)
-
 ### Example: Combined with @flexcli
 
 ```python
 from flexlock import flexcli, debug_on_fail
 
 @flexcli
-@debug_on_fail(stack_depth=2)  # Note: stack_depth=2 for decorator composition
+@debug_on_fail
 def train(
     data_path: str = "data/train.csv",
     lr: float = 0.01,
@@ -180,6 +160,21 @@ FLEXLOCK_DEBUG=1 python train.py
 # When it crashes:
 # - data, model, epoch, predictions, loss are all available
 # - You can inspect them in an interactive Python session or debugger
+```
+
+### Debug Strategy Control
+
+Control debugging behavior via environment variable:
+
+```bash
+# Auto-detect environment (default)
+FLEXLOCK_DEBUG_STRATEGY=auto python train.py
+
+# Force PDB post-mortem
+FLEXLOCK_DEBUG_STRATEGY=pdb python train.py
+
+# Force variable injection (for notebooks/interactive)
+FLEXLOCK_DEBUG_STRATEGY=inject python train.py
 ```
 
 ### Use Cases

@@ -7,26 +7,18 @@ from datetime import datetime
 import re
 from pathlib import Path
 from functools import wraps
+from . import config
 
 
-def track_resolver(path: str) -> str:
-    """
-    OmegaConf resolver that computes and returns the hash of a data path.
-    """
-    return hash_data(path)
-
-
-def stage_resolver(path: str) -> dict:
-    """
-    OmegaConf resolver that loads a previous stage's run.lock and returns its content.
-    """
-    return load_stage_from_path(path)
-
-
-def now_resolver(fmt: str = "%Y-%m-%d_%H-%M-%S") -> str:
+def now_resolver(fmt: str = None) -> str:
     """
     OmegaConf resolver that returns the current time as a formatted string.
+
+    Args:
+        fmt: Format string for strftime (defaults to config.TIMESTAMP_FORMAT)
     """
+    if fmt is None:
+        fmt = config.TIMESTAMP_FORMAT
     return datetime.now().strftime(fmt)
 
 def latest_resolver(path_glob: str) -> str:
@@ -36,6 +28,7 @@ def latest_resolver(path_glob: str) -> str:
     from glob import glob
     import os
     from pathlib import Path
+    from loguru import logger
 
     # Expand user (~) and resolve the path
     path_glob = os.path.expanduser(path_glob)
@@ -44,7 +37,8 @@ def latest_resolver(path_glob: str) -> str:
     matching_paths = glob(path_glob, recursive=True)
 
     if not matching_paths:
-        # If no matches are found, return the original pattern
+        # If no matches are found, warn and return the original pattern
+        logger.warning(f"No paths found matching pattern: {path_glob}")
         return path_glob
 
     # Find the latest path by modification time
@@ -82,32 +76,11 @@ def vinc_resolver(path: str, fmt: str = "_{i:04d}") -> str:
     return str(parent_dir / f"{base_name}{version_str}")
 
 
-def snapshot_resolver(path: str, key: str | None = None, *, _root_: DictConfig) -> str:
-    """
-    OmegaConf resolver that adds a path to the snapshot's data and prevs sections.
-    """
-    from .snapshot import snapshot
-
-    item = path if key is None else {key: path}
-
-    # The _root_ config is passed by OmegaConf to the resolver.
-    # We can use it to call snapshot with the actual config.
-    snapshot(
-        cfg=_root_,
-        data=item,
-        prevs=[path],
-        merge=True,
-    )
-    return path
-
 
 def register_resolvers():
     """
     Registers the flexlock resolvers with OmegaConf.
     """
-    OmegaConf.register_new_resolver("track", track_resolver)
-    OmegaConf.register_new_resolver("stage", stage_resolver)
     OmegaConf.register_new_resolver("now", now_resolver)
     OmegaConf.register_new_resolver("vinc", vinc_resolver)
-    OmegaConf.register_new_resolver("snapshot", snapshot_resolver)
     OmegaConf.register_new_resolver("latest", latest_resolver)

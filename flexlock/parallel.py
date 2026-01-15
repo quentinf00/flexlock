@@ -11,6 +11,8 @@ from multiprocessing import Process
 import yaml
 from typing import Any, List
 from flexlock.snapshot import snapshot
+from flexlock.utils import extract_tracking_info
+from flexlock import config
 
 
 def load_tasks(tasks: str, tasks_key: str, cfg: DictConfig) -> List[Any]:
@@ -89,25 +91,6 @@ class ParallelExecutor:
             p = OmegaConf.to_container(OmegaConf.load(pbs_config), resolve=True)
             self.backend = PBSBackend(folder=self.save_dir / "pbs_logs", **p)
 
-    def _extract_tracking_info(self, cfg):
-        """
-        Extract tracking info from config for master snapshot.
-        """
-        repos = {"main": "."}  # Default
-        data = {}
-        
-        # Check if the config has tracking instructions
-        if "_snapshot_" in cfg:
-            snap_cfg = cfg._snapshot_
-            
-            if "repos" in snap_cfg:
-                repos.update(OmegaConf.to_container(snap_cfg.repos, resolve=True))
-            
-            if "data" in snap_cfg:
-                data.update(OmegaConf.to_container(snap_cfg.data, resolve=True))
-
-        return repos, data
-
     def _run_locally(self):
         num_workers = self.local_workers or self.n_jobs 
         if num_workers == 1:
@@ -125,17 +108,19 @@ class ParallelExecutor:
             for p in procs:
                 p.join()
 
-    def _wait_for_completion(self, timeout: int = None, poll_interval: int = 10) -> bool:
+    def _wait_for_completion(self, timeout: int = None, poll_interval: int = None) -> bool:
         """
         Wait for all tasks to complete by polling the database.
 
         Args:
             timeout: Maximum time to wait in seconds (None = no timeout)
-            poll_interval: How often to check status in seconds
+            poll_interval: How often to check status in seconds (defaults to config.POLL_INTERVAL)
 
         Returns:
             bool: True if all tasks completed successfully, False on timeout or failure
         """
+        if poll_interval is None:
+            poll_interval = config.POLL_INTERVAL
         import time
         from .taskdb import get_status_counts
 
@@ -143,49 +128,57 @@ class ParallelExecutor:
         start_time = time.time()
         last_log_time = start_time
 
-        while True:
-            # Get current status
-            status_counts = get_status_counts(self.db_path)
-            pending = status_counts.get('pending', 0)
-            running = status_counts.get('running', 0)
-            done = status_counts.get('done', 0)
-            failed = status_counts.get('failed', 0)
-            total = pending + running + done + failed
+        try:
+            while True:
+                # Get current status
+                status_counts = get_status_counts(self.db_path)
+                pending = status_counts.get('pending', 0)
+                running = status_counts.get('running', 0)
+                done = status_counts.get('done', 0)
+                failed = status_counts.get('failed', 0)
+                total = pending + running + done + failed
 
-            # Check if complete
-            if pending == 0 and running == 0:
-                if failed > 0:
-                    logger.warning(f"All tasks completed with {failed} failures")
-                else:
-                    logger.success(f"All {done} tasks completed successfully")
-                return failed == 0
+                # Check if complete
+                if pending == 0 and running == 0:
+                    if failed > 0:
+                        logger.warning(f"All tasks completed with {failed} failures")
+                    else:
+                        logger.success(f"All {done} tasks completed successfully")
+                    return failed == 0
 
-            # Log progress periodically (every 10s)
-            elapsed = time.time() - start_time
-            if elapsed - (last_log_time - start_time) >= 15:
-                progress = (done + failed) / total * 100 if total > 0 else 0
-                logger.info(
-                    f"Progress: {progress:.1f}% "
-                    f"(pending: {pending}, running: {running}, done: {done}, failed: {failed})"
-                )
-                last_log_time = time.time()
+                # Log progress periodically
+                elapsed = time.time() - start_time
+                if elapsed - (last_log_time - start_time) >= config.LOG_FREQUENCY:
+                    progress = (done + failed) / total * 100 if total > 0 else 0
+                    logger.info(
+                        f"Progress: {progress:.1f}% "
+                        f"(pending: {pending}, running: {running}, done: {done}, failed: {failed})"
+                    )
+                    last_log_time = time.time()
 
-            # Check timeout
-            if timeout and elapsed > timeout:
-                logger.warning(f"Timeout after {timeout}s (pending: {pending}, running: {running})")
-                return False
+                # Check timeout
+                if timeout and elapsed > timeout:
+                    logger.warning(f"Timeout after {timeout}s (pending: {pending}, running: {running})")
+                    return False
 
-            # Wait before next check
-            time.sleep(poll_interval)
+                # Wait before next check
+                time.sleep(poll_interval)
+        except KeyboardInterrupt:
+            logger.warning(
+                "Keyboard interrupt received. "
+                "Tasks are still running. "
+                f"Check status with: flexlock-status {self.db_path}"
+            )
+            return False
 
-    def run(self, wait: bool = True, timeout: int = None, poll_interval: int = 10):
+    def run(self, wait: bool = True, timeout: int = None, poll_interval: int = None):
         """
         Execute tasks via backend or locally.
 
         Args:
             wait: If True, blocks until all tasks complete (default: True for local, optional for HPC)
             timeout: Maximum time to wait in seconds (None = no timeout, applies only if wait=True)
-            poll_interval: How often to check task status in seconds (applies only if wait=True)
+            poll_interval: How often to check task status in seconds (defaults to config.POLL_INTERVAL, applies only if wait=True)
 
         Returns:
             bool: True if tasks completed successfully (or not waiting), False on timeout/failure
@@ -204,7 +197,10 @@ class ParallelExecutor:
         # 2. CREATE MASTER SNAPSHOT
         # This captures the Code state ONCE for the whole sweep
         # We assume the Main Process has the correct context (repos, etc.)
-        repos, data = self._extract_tracking_info(self.cfg)
+        repos, data, _ = extract_tracking_info(self.cfg)
+        # Set default repos if none specified
+        if not repos:
+            repos = {"main": "."}
         snapshot(
             self.cfg,
             repos=repos,

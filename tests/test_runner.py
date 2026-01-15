@@ -135,3 +135,76 @@ defaults =  {
     finally:
         Path(temp_file).unlink()
 
+
+# --- Test Cases for new exception handling and validation ---
+
+
+def test_mutually_exclusive_sweep_args():
+    """Test that providing multiple sweep sources raises FlexLockValidationError."""
+    from flexlock.runner import FlexLockRunner
+    from flexlock.exceptions import FlexLockValidationError
+    import tempfile
+    from pathlib import Path
+    
+    runner = FlexLockRunner()
+    
+    # Create a minimal config
+    cfg = OmegaConf.create({'model': 'test'})
+    
+    # Create a temporary sweep file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        f.write('- task1\n- task2\n')
+        sweep_file = f.name
+    
+    try:
+        # Create args with multiple sweep sources
+        import argparse
+        args = argparse.Namespace(
+            sweep_key='experiments.sweep',
+            sweep_file=sweep_file,
+            sweep='1,2,3'
+        )
+        
+        # Should raise FlexLockValidationError
+        with pytest.raises(FlexLockValidationError, match="Multiple sweep sources provided"):
+            runner._load_sweep_tasks(args, cfg)
+    finally:
+        Path(sweep_file).unlink()
+
+
+def test_sweep_key_not_found_raises_error():
+    """Test that missing sweep key raises FlexLockValidationError."""
+    from flexlock.runner import FlexLockRunner
+    from flexlock.exceptions import FlexLockValidationError
+    
+    runner = FlexLockRunner()
+    cfg = OmegaConf.create({'model': 'test'})
+    
+    import argparse
+    args = argparse.Namespace(
+        sweep_key='nonexistent.key',
+        sweep_file=None,
+        sweep=None
+    )
+    
+    with pytest.raises(FlexLockValidationError, match="Sweep key.*not found"):
+        runner._load_sweep_tasks(args, cfg)
+
+
+def test_sweep_file_not_found_raises_error():
+    """Test that missing sweep file raises FlexLockConfigError."""
+    from flexlock.runner import FlexLockRunner
+    from flexlock.exceptions import FlexLockConfigError
+    
+    runner = FlexLockRunner()
+    cfg = OmegaConf.create({'model': 'test'})
+    
+    import argparse
+    args = argparse.Namespace(
+        sweep_key=None,
+        sweep_file='/nonexistent/file.yaml',
+        sweep=None
+    )
+    
+    with pytest.raises(FlexLockConfigError, match="Sweep file.*not found"):
+        runner._load_sweep_tasks(args, cfg)
