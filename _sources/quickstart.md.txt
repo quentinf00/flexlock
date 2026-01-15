@@ -158,28 +158,18 @@ result = proj.submit(config)  # ⚡ Skipped!
 
 ## What's Next?
 
-### Learn by Example
-
-Start with the tutorials:
-
-1. **[Basics](./tutorials/01_basics.md)**: `@flexcli` decorator, CLI args, sweeps
-2. **[Reproducibility](./tutorials/02_reproducibility.md)**: Snapshots, diffs, lineage
-3. **[YAML Configs](./tutorials/03_yaml_config.md)**: Multi-stage YAML setups
-4. **[Python Configs](./tutorials/04_python_config.md)**: `py2cfg`, nested objects
-5. **[Pipelines](./tutorials/05_pipeline.md)**: Multi-stage workflows with Project API
-
 ### Explore Features
 
-- **[Parallel Execution](./parallel.md)**: Slurm, PBS, Docker support
-- **[Logging](./logging.md)**: Structured logging with Loguru
-- **[MLflow Integration](./mlflowlink.md)**: Export to MLflow
+- **[Usage Guide](./usage_guide.md)**: Comprehensive usage patterns
+- **[HPC Integration](./hpc_integration.md)**: Slurm, PBS, Singularity support
+- **[MLflow Integration](./mlflow_integration.md)**: Export to MLflow
 - **[Debugging](./debugging.md)**: Interactive debugging on failure
 
 ### API Reference
 
-- **[Project API](./api/project.md)**: Pipeline orchestration
-- **[py2cfg](./api/py2cfg.md)**: Configuration management
-- **[@flexcli](./api/flexcli.md)**: Decorator reference
+- **[Python API](./python_api.md)**: Project class, py2cfg, and more
+- **[CLI Reference](./cli_reference.md)**: Command-line tools
+- **[Resolvers](./resolvers.md)**: Dynamic configuration values
 
 ## Getting Help
 
@@ -242,4 +232,4 @@ result = proj.submit(config)  # Will cache next time
 4. **Check `run.lock`** to understand what was tracked
 5. **Use sweeps for exploration**, not just grid search
 
-Ready to dive deeper? Continue with the [full tutorials](./tutorials/index.md)!
+Ready to dive deeper? Continue with the [Usage Guide](./usage_guide.md)!

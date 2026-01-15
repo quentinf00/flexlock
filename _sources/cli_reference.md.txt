@@ -466,5 +466,5 @@ flexlock-run \
 
 - [Python API Reference](./python_api.md) - Programmatic usage with `Project` class
 - [HPC Integration](./hpc_integration.md) - Detailed HPC setup guide
-- [Parallel Execution](./parallel.md) - Architecture and advanced options
 - [Debugging](./debugging.md) - Interactive debugging features
+- [Reference](./reference.md) - Environment variables and exceptions

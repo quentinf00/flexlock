@@ -683,10 +683,9 @@ flexlock-status outputs/train/run.lock.tasks.db --watch
 
 ## See Also
 
-- **[Example 08: HPC Backend](../my_awesome_project/08_hpc_backend/)**: Detailed HPC examples
-- **[Example 09: Containers](../my_awesome_project/09_container/)**: Singularity integration
-- **[Example 10: Full Workflow](../my_awesome_project/10_full_workflow/)**: Complete feature showcase
-- **[ParallelExecutor API](./api/parallel.md)**: Low-level backend control
+- **[Python API](./python_api.md)**: Project class and ParallelExecutor usage
+- **[CLI Reference](./cli_reference.md)**: Command-line tools for HPC workflows
+- **[Reference](./reference.md)**: Environment variables for parallel execution
 
 ## Summary
 

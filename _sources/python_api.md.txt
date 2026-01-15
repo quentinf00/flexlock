@@ -595,6 +595,6 @@ best = max(results, key=lambda r: r.get('accuracy', 0))
 ## See Also
 
 - [CLI Reference](./cli_reference.md) - Command-line usage
-- [Snapshot System](./snapshot.md) - Reproducibility features
 - [HPC Integration](./hpc_integration.md) - Slurm/PBS configuration
 - [Debugging](./debugging.md) - Interactive debugging
+- [Reference](./reference.md) - Environment variables and exceptions

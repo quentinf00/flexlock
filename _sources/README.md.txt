@@ -6,27 +6,18 @@ FlexLock is a lightweight Python library designed to bring clarity, reproducibil
 
 ## Table of Contents
 
-- **Reference Manual**
-  - [Install](./installation.md)
-  - [Overview](./getting_started.md)
-  - [Supported configurations definition](./supported_configurations.md)
-  - [Parallel runs (including containerization with Singularity/Docker)](./parallel.md)
-  - [Logging](./logging.md)
+- **Getting Started**
+  - [Philosophy & Design](./philosophy.md)
+  - [Quickstart Guide](./quickstart.md)
 
-- **Core Components**
-  - [`flexcli`: Command-Line Interface](./flexcli.md)
-  - [`snapshot`: Experiment Tracking](./snapshot.md)
-  - [`mlflowlink`: MLflow Integration](./mlflowlink.md)
+- **User Guide**
+  - [Usage Guide](./usage_guide.md)
+  - [Debugging](./debugging.md)
+  - [HPC Integration](./hpc_integration.md)
 
-- **Development Workflow**
-  - [`debug_on_fail`: Interactive Debugging](./debugging.md)
-
-- **Tools**
-  - [CLI Tools (diff, export)](./cli_tools.md)
-
-- **Advanced Usage**
-  - [FlexLockRunner (Advanced CLI)](./runner.md)
-
-- **Experimental features**
-  - [Resolvers](./experimental.md#resolvers)
-
+- **API Reference**
+  - [Python API](./python_api.md)
+  - [CLI Reference](./cli_reference.md)
+  - [Resolvers](./resolvers.md)
+  - [MLflow Integration](./mlflow_integration.md)
+  - [Environment Variables & Exceptions](./reference.md)
