@@ -6,15 +6,15 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlexLock Documentation &mdash; FlexLock 0.2.17 documentation</title>
+  <title>FlexLock Documentation &mdash; FlexLock 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/index.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=4031e696"></script>
+      <script src="_static/documentation_options.js?v=f129cdf0"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -247,7 +247,17 @@
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.git_utils.get_git_tree_hash"><code class="docutils literal notranslate"><span class="pre">get_git_tree_hash()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.git_utils.sanitize_ref_name"><code class="docutils literal notranslate"><span class="pre">sanitize_ref_name()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.git_utils.shadow_index"><code class="docutils literal notranslate"><span class="pre">shadow_index()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.diff.RunDiff"><code class="docutils literal notranslate"><span class="pre">RunDiff</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.diff_cli.compare_snapshots"><code class="docutils literal notranslate"><span class="pre">compare_snapshots()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.diff_cli.load_snapshot_from_db"><code class="docutils literal notranslate"><span class="pre">load_snapshot_from_db()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.diff_cli.load_snapshot_from_dir"><code class="docutils literal notranslate"><span class="pre">load_snapshot_from_dir()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.diff_cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.run_cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.export.export_all_tasks"><code class="docutils literal notranslate"><span class="pre">export_all_tasks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.export.export_task"><code class="docutils literal notranslate"><span class="pre">export_task()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.export.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.load_stage.load_stage_from_path"><code class="docutils literal notranslate"><span class="pre">load_stage_from_path()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.mlflow.mlflow_context"><code class="docutils literal notranslate"><span class="pre">mlflow_context()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.parallel.ParallelExecutor"><code class="docutils literal notranslate"><span class="pre">ParallelExecutor</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.parallel.load_tasks"><code class="docutils literal notranslate"><span class="pre">load_tasks()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.resolvers.latest_resolver"><code class="docutils literal notranslate"><span class="pre">latest_resolver()</span></code></a></li>
@@ -256,6 +266,14 @@
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.resolvers.vinc_resolver"><code class="docutils literal notranslate"><span class="pre">vinc_resolver()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.snapshot.RunTracker"><code class="docutils literal notranslate"><span class="pre">RunTracker</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.snapshot.snapshot"><code class="docutils literal notranslate"><span class="pre">snapshot()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.runner.FlexLockRunner"><code class="docutils literal notranslate"><span class="pre">FlexLockRunner</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.status_cli.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.status_cli.print_all_tasks"><code class="docutils literal notranslate"><span class="pre">print_all_tasks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.status_cli.print_failed_tasks"><code class="docutils literal notranslate"><span class="pre">print_failed_tasks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.status_cli.print_status_summary"><code class="docutils literal notranslate"><span class="pre">print_status_summary()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.status_cli.watch_status"><code class="docutils literal notranslate"><span class="pre">watch_status()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.api.ExecutionResult"><code class="docutils literal notranslate"><span class="pre">ExecutionResult</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.api.Project"><code class="docutils literal notranslate"><span class="pre">Project</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.taskdb.claim_next_task"><code class="docutils literal notranslate"><span class="pre">claim_next_task()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.taskdb.dump_to_yaml"><code class="docutils literal notranslate"><span class="pre">dump_to_yaml()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.taskdb.finish_task"><code class="docutils literal notranslate"><span class="pre">finish_task()</span></code></a></li>

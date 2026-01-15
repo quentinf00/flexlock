@@ -49,12 +49,32 @@ FlexLock API Reference
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: flexlock.diff
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: flexlock.diff_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: flexlock.run_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: flexlock.export
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: flexlock.load_stage
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: flexlock.mlflowlink
+.. automodule:: flexlock.mlflow
    :members:
    :undoc-members:
    :show-inheritance:
@@ -70,6 +90,21 @@ FlexLock API Reference
    :show-inheritance:
 
 .. automodule:: flexlock.snapshot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: flexlock.runner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: flexlock.status_cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: flexlock.api
    :members:
    :undoc-members:
    :show-inheritance:
