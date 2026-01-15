@@ -5,14 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.git_utils &mdash; FlexLock 0.1.0 documentation</title>
+  <title>flexlock.git_utils &mdash; FlexLock 0.2.17 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
   
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/git_utils.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/documentation_options.js?v=4031e696"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -39,9 +40,29 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">FlexLock Documentation</a></li>
 </ul>
 
         </div>
@@ -73,96 +94,117 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">fnmatch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">git.repo</span><span class="w"> </span><span class="kn">import</span> <span class="n">Repo</span> <span class="k">as</span> <span class="n">GitRepo</span>
 
 
-<div class="viewcode-block" id="commit_cwd">
-<a class="viewcode-back" href="../../api.html#flexlock.git_utils.commit_cwd">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">commit_cwd</span><span class="p">(</span>
-    <span class="n">branch</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">repo_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
-    <span class="n">include</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">exclude</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">filesize_warn</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">,</span>  <span class="c1"># 1MB</span>
-<span class="p">):</span>
+<div class="viewcode-block" id="shadow_index">
+<a class="viewcode-back" href="../../api.html#flexlock.shadow_index">[docs]</a>
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">shadow_index</span><span class="p">(</span><span class="n">repo</span><span class="p">:</span> <span class="n">GitRepo</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Context manager for Git Plumbing operations without touching user index.&quot;&quot;&quot;</span>
+    <span class="n">git_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">git_dir</span><span class="p">)</span>
+    <span class="n">temp_index</span> <span class="o">=</span> <span class="n">git_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;index_shadow_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="c1"># Clone current index to temp file for speed</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">git_dir</span> <span class="o">/</span> <span class="s2">&quot;index&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">git_dir</span> <span class="o">/</span> <span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="n">temp_index</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="n">env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">env</span><span class="p">[</span><span class="s2">&quot;GIT_INDEX_FILE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">temp_index</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">env</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">temp_index</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">temp_index</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="sanitize_ref_name">
+<a class="viewcode-back" href="../../api.html#flexlock.sanitize_ref_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sanitize_ref_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sanitize a string to be a valid git ref name.&quot;&quot;&quot;</span>
+    <span class="n">invalid_chars</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="s1">&#39;^&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;[&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;..&#39;</span><span class="p">,</span> <span class="s1">&#39;@{&#39;</span><span class="p">,</span> <span class="s1">&#39;//&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">invalid_chars</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">name</span></div>
+
+
+<div class="viewcode-block" id="create_shadow_snapshot">
+<a class="viewcode-back" href="../../api.html#flexlock.create_shadow_snapshot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_shadow_snapshot</span><span class="p">(</span><span class="n">repo_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">ignore_patterns</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ref_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Finds all changed/untracked files in a git repository, filters them,</span>
-<span class="sd">    and commits them to a specified branch.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        branch (str): The branch to commit to. Will be created if it doesn&#39;t exist.</span>
-<span class="sd">        message (str): The commit message.</span>
-<span class="sd">        repo_path (str): Path to the git repository.</span>
-<span class="sd">        include (list[str], optional): List of glob patterns to include.</span>
-<span class="sd">        exclude (list[str], optional): List of glob patterns to exclude.</span>
-<span class="sd">        filesize_warn (int, optional): Warn if a file to be committed is larger than this size in bytes.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        The git.Commit object of the new commit.</span>
+<span class="sd">    Creates a Shadow Commit.</span>
+<span class="sd">    Returns: {commit_hash, tree_hash, is_dirty}</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">repo</span> <span class="o">=</span> <span class="n">GitRepo</span><span class="p">(</span><span class="n">repo_path</span><span class="p">,</span> <span class="n">search_parent_directories</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ignore_patterns</span> <span class="o">=</span> <span class="n">ignore_patterns</span> <span class="ow">or</span> <span class="p">[]</span>
 
-    <span class="n">untracked_files</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">untracked_files</span><span class="p">)</span>
-    <span class="n">modified_files</span> <span class="o">=</span> <span class="p">{</span><span class="n">item</span><span class="o">.</span><span class="n">a_path</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="kc">None</span><span class="p">)}</span>
-    <span class="n">files_to_consider</span> <span class="o">=</span> <span class="n">untracked_files</span> <span class="o">|</span> <span class="n">modified_files</span>
+    <span class="k">with</span> <span class="n">shadow_index</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span> <span class="k">as</span> <span class="n">shadow_env</span><span class="p">:</span>
+        <span class="n">git</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">git</span>
 
-    <span class="k">if</span> <span class="n">include</span><span class="p">:</span>
-        <span class="n">included_files</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">include</span><span class="p">:</span>
-            <span class="n">included_files</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">files_to_consider</span><span class="p">,</span> <span class="n">pattern</span><span class="p">))</span>
-        <span class="n">files_to_consider</span> <span class="o">=</span> <span class="n">included_files</span>
+        <span class="c1"># 1. Stage everything (Modified + Untracked) into Shadow Index</span>
+        <span class="n">git</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;--all&quot;</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">shadow_env</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">exclude</span><span class="p">:</span>
-        <span class="n">excluded_files</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">:</span>
-            <span class="n">excluded_files</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">fnmatch</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">files_to_consider</span><span class="p">,</span> <span class="n">pattern</span><span class="p">))</span>
-        <span class="n">files_to_consider</span> <span class="o">-=</span> <span class="n">excluded_files</span>
+        <span class="c1"># 2. Remove ignored patterns from Shadow Index</span>
+        <span class="k">if</span> <span class="n">ignore_patterns</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">git</span><span class="o">.</span><span class="n">rm</span><span class="p">(</span><span class="s2">&quot;--cached&quot;</span><span class="p">,</span> <span class="s2">&quot;-r&quot;</span><span class="p">,</span> <span class="s2">&quot;--ignore-unmatch&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">ignore_patterns</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">shadow_env</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">files_to_consider</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">repo</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">commit</span>
+        <span class="c1"># 3. Write Tree (This is the content fingerprint)</span>
+        <span class="n">tree_hash</span> <span class="o">=</span> <span class="n">git</span><span class="o">.</span><span class="n">write_tree</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="n">shadow_env</span><span class="p">)</span>
 
-    <span class="c1"># Check file sizes before adding</span>
-    <span class="k">for</span> <span class="n">file_path</span> <span class="ow">in</span> <span class="n">files_to_consider</span><span class="p">:</span>
-        <span class="n">full_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">working_dir</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">full_path</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">full_path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">filesize_warn</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;File &#39;</span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&#39; is larger than </span><span class="si">{</span><span class="n">filesize_warn</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB. &quot;</span>
-                <span class="s2">&quot;Consider adding it to .gitignore or a flexlock-specific exclude file.&quot;</span><span class="p">,</span>
-                <span class="ne">UserWarning</span><span class="p">,</span>
-            <span class="p">)</span>
+        <span class="c1"># 4. Create Shadow Commit (Lineage)</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">commit</span><span class="o">.</span><span class="n">hexsha</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;FlexLock Shadow: </span><span class="si">{</span><span class="n">parent</span><span class="p">[:</span><span class="mi">7</span><span class="p">]</span><span class="si">}</span><span class="s2"> + Changes&quot;</span>
+        <span class="n">shadow_commit</span> <span class="o">=</span> <span class="n">git</span><span class="o">.</span><span class="n">commit_tree</span><span class="p">(</span><span class="n">tree_hash</span><span class="p">,</span> <span class="s2">&quot;-p&quot;</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">shadow_env</span><span class="p">)</span>
 
-    <span class="n">index</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">index</span>
+        <span class="c1"># 5. Save Ref (Prevent Garbage Collection)</span>
+        <span class="n">ref_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;refs/flexlock/runs/</span><span class="si">{</span><span class="n">ref_name</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">shadow_commit</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">git</span><span class="o">.</span><span class="n">update_ref</span><span class="p">(</span><span class="n">sanitize_ref_name</span><span class="p">(</span><span class="n">ref_name</span><span class="p">),</span> <span class="n">shadow_commit</span><span class="p">)</span>
 
-    <span class="c1"># Separate files into &#39;to_add&#39; and &#39;to_remove&#39;</span>
-    <span class="n">files_to_add</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">f</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files_to_consider</span>
-        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">working_dir</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
-    <span class="p">]</span>
-    <span class="n">files_to_remove</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">f</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files_to_consider</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">working_dir</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
-    <span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;commit&quot;</span><span class="p">:</span> <span class="n">shadow_commit</span><span class="p">,</span>
+            <span class="s2">&quot;tree&quot;</span><span class="p">:</span> <span class="n">tree_hash</span><span class="p">,</span> <span class="c1"># &lt;--- The key for Equality Checks</span>
+            <span class="s2">&quot;is_dirty&quot;</span><span class="p">:</span> <span class="n">repo</span><span class="o">.</span><span class="n">is_dirty</span><span class="p">(</span><span class="n">untracked_files</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">}</span></div>
 
-    <span class="k">if</span> <span class="n">files_to_add</span><span class="p">:</span>
-        <span class="n">index</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">files_to_add</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">files_to_remove</span><span class="p">:</span>
-        <span class="n">index</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">files_to_remove</span><span class="p">)</span>
 
-    <span class="n">log_branch</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">heads</span><span class="p">,</span> <span class="n">branch</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">repo</span><span class="o">.</span><span class="n">create_head</span><span class="p">(</span><span class="n">branch</span><span class="p">)</span>
-    <span class="n">parent_commit</span> <span class="o">=</span> <span class="n">log_branch</span><span class="o">.</span><span class="n">commit</span> <span class="k">if</span> <span class="n">log_branch</span><span class="o">.</span><span class="n">commit</span> <span class="k">else</span> <span class="n">repo</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">commit</span>
 
-    <span class="n">commit</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">parent_commits</span><span class="o">=</span><span class="p">[</span><span class="n">parent_commit</span><span class="p">],</span> <span class="n">head</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">log_branch</span><span class="o">.</span><span class="n">commit</span> <span class="o">=</span> <span class="n">commit</span>
-    <span class="k">return</span> <span class="n">commit</span></div>
+<div class="viewcode-block" id="get_git_tree_hash">
+<a class="viewcode-back" href="../../api.html#flexlock.get_git_tree_hash">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_git_tree_hash</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets the current git tree hash for a repository without creating a new commit.</span>
+<span class="sd">    This represents the content fingerprint of the repository.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path (str): The path to the git repository.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: The tree hash, or an error message if it fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="n">GitRepo</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">search_parent_directories</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Get the tree hash of the current commit</span>
+        <span class="k">return</span> <span class="n">repo</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">commit</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">hexsha</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Error getting git tree hash: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="get_git_commit">
-<a class="viewcode-back" href="../../api.html#flexlock.git_utils.get_git_commit">[docs]</a>
+<a class="viewcode-back" href="../../api.html#flexlock.get_git_commit">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_git_commit</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gets the current commit hash for a git repository without creating a new commit.</span>

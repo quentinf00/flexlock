@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.worker &mdash; FlexLock 0.1.0 documentation</title>
+  <title>flexlock.worker &mdash; FlexLock 0.2.17 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/worker.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=38b66d78"></script>
+      <script src="../../_static/documentation_options.js?v=4031e696"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -40,21 +40,29 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../README.html">FlexLock Documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Conda packages</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html#development-workflow-the-debug-decorator">Development Workflow: The Debug Decorator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../supported_configurations.html">Supported Configuration Formats</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../logging.html">Logging Configuration in FlexLock</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../parallel.html">Parallel Execution in FlexLock</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../experimental.html">Advanced Topics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
 </ul>
 
         </div>
@@ -89,14 +97,25 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Process</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">claim_next_task</span><span class="p">,</span> <span class="n">finish_task</span><span class="p">,</span> <span class="n">pending_count</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_task_into_cfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_task_into_cfg</span><span class="p">,</span> <span class="n">instantiate</span><span class="p">,</span> <span class="n">extract_tracking_info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span>
 
 
 <div class="viewcode-block" id="worker_loop">
 <a class="viewcode-back" href="../../api.html#flexlock.worker.worker_loop">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">worker_loop</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">task_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">db_path</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A worker loop that continuously claims and executes tasks from the task database.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="n">instantiate</span>
     <span class="n">node</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;HOSTNAME&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;local&quot;</span>
+    
+    <span class="c1"># Find the master lock file (parent lock)</span>
+    <span class="c1"># The master lock should be in the parent directory of the db_path</span>
+    <span class="n">db_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+    <span class="n">master_lock</span> <span class="o">=</span> <span class="n">db_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span>
+    
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">task</span> <span class="o">=</span> <span class="n">claim_next_task</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -108,9 +127,53 @@
             <span class="k">continue</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Worker </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2"> running task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Get task_id for DB operations</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">_hash_task</span>
+        <span class="n">task_id</span> <span class="o">=</span> <span class="n">_hash_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="n">task_cfg</span> <span class="o">=</span> <span class="n">merge_task_into_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">task_to</span><span class="p">)</span>
+
+            <span class="c1"># 3. Resolve Data Dependencies (Just-in-Time)</span>
+            <span class="c1"># We re-run resolution because task overrides might change data paths</span>
+            <span class="c1"># e.g. override=&quot;data.fold=1&quot; changes ${input:data/fold_${data.fold}}</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span> <span class="o">=</span> <span class="n">extract_tracking_info</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">)</span>
+
+            <span class="c1"># 4. Create DELTA Snapshot (DB storage only)</span>
+            <span class="c1"># We pass the path to the Master Lock</span>
+            <span class="n">task_save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">task_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="n">db_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;task_</span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="n">task_save_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Get snapshot data without writing file</span>
+            <span class="n">snapshot_data</span> <span class="o">=</span> <span class="n">snapshot</span><span class="p">(</span>
+                <span class="n">task_cfg</span><span class="p">,</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>  <span class="c1"># Capture task-specific data</span>
+                <span class="n">prevs</span><span class="o">=</span><span class="n">prevs</span><span class="p">,</span>
+                <span class="n">repos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Skip repos, we rely on Parent</span>
+                <span class="n">parent_lock</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">master_lock</span><span class="p">)</span> <span class="k">if</span> <span class="n">master_lock</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">return_snapshot</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Return data for DB storage instead of writing file</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Store snapshot in database</span>
+            <span class="k">if</span> <span class="n">snapshot_data</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">update_task_snapshot</span>
+                <span class="n">update_task_snapshot</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">snapshot_data</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stored snapshot for task </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2"> in database&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Write marker file for lineage discovery</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+            <span class="n">marker_file</span> <span class="o">=</span> <span class="n">task_save_dir</span> <span class="o">/</span> <span class="s2">&quot;.flexlock_marker&quot;</span>
+            <span class="n">marker_data</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;db&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">task_save_dir</span><span class="o">.</span><span class="n">parent</span><span class="p">)),</span>
+                <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task_id</span>
+            <span class="p">}</span>
+            <span class="n">marker_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">marker_data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrote marker file at </span><span class="si">{</span><span class="n">marker_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># 5. Execute</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task successful: </span><span class="si">{</span><span class="n">task_cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">finish_task</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

@@ -1,0 +1,311 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flexlock.mlflow &mdash; FlexLock 0.2.17 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/mlflow.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=4031e696"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">flexlock.mlflow</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for flexlock.mlflow</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;MLflow integration for FlexLock.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_flatten_dict</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">parent_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flatten a nested dictionary into a single-level dict with dot-separated keys.&quot;&quot;&quot;</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">new_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">parent_key</span><span class="si">}{</span><span class="n">sep</span><span class="si">}{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">parent_key</span> <span class="k">else</span> <span class="n">k</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_flatten_dict</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="n">sep</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_key</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="mlflow_context">
+<a class="viewcode-back" href="../../api.html#flexlock.mlflow_context">[docs]</a>
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mlflow_context</span><span class="p">(</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MLFLOW_EXPERIMENT_NAME&#39;</span><span class="p">,</span> <span class="s2">&quot;Default&quot;</span><span class="p">),</span>
+    <span class="n">run_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">log_config</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">log_artifacts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manages a &quot;Shadow Run&quot; in MLflow linked to a physical directory.</span>
+
+<span class="sd">    This context manager implements the &quot;Always New + Deprecate Old&quot; strategy,</span>
+<span class="sd">    treating the MLflow Run as a temporary view of the persistent physical state</span>
+<span class="sd">    (the save_dir).</span>
+
+<span class="sd">    Behavior:</span>
+<span class="sd">    1. SEARCH: Finds the currently &#39;active&#39; run for this directory.</span>
+<span class="sd">    2. CREATE: Starts a completely new run.</span>
+<span class="sd">    3. INHERIT: Logs existing config/artifacts found in save_dir to the new run.</span>
+<span class="sd">    4. INHERIT TAGS: Copies user tags (e.g., pipeline tags) from previous run.</span>
+<span class="sd">    5. SWAP: Marks new run &#39;active&#39;, marks old run &#39;deprecated&#39;.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        save_dir: The directory containing the run data (e.g., outputs/exp/run_01)</span>
+<span class="sd">        experiment_name: MLflow experiment name (default: &quot;Default&quot;)</span>
+<span class="sd">        run_name: Name for this MLflow run (default: save_dir.name)</span>
+<span class="sd">        tags: Additional tags to add to the run (overrides inherited tags)</span>
+<span class="sd">        log_config: If True, logs parameters from run.lock file</span>
+<span class="sd">        log_artifacts: If True, logs standard artifacts (logs, lock file)</span>
+
+<span class="sd">    Yields:</span>
+<span class="sd">        mlflow.ActiveRun: The active MLflow run object, or None if MLflow not available</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        User tags (not starting with &#39;flexlock.&#39; or &#39;mlflow.&#39;) are automatically</span>
+<span class="sd">        inherited from the previous active run. This is useful for pipeline workflows</span>
+<span class="sd">        where you want tags like &#39;pipeline_run=xyz&#39; to persist across stages.</span>
+<span class="sd">        Explicitly passing a tag via the `tags` parameter will override the inherited value.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; # Stage 1: Train (creates run with pipeline tag)</span>
+<span class="sd">        &gt;&gt;&gt; with mlflow_context(save_dir, tags={&quot;pipeline_run&quot;: &quot;run_001&quot;}):</span>
+<span class="sd">        ...     mlflow.log_metric(&quot;train_loss&quot;, 0.32)</span>
+<span class="sd">        ...</span>
+<span class="sd">        &gt;&gt;&gt; # Stage 2: Evaluate (inherits pipeline_run tag automatically)</span>
+<span class="sd">        &gt;&gt;&gt; with mlflow_context(save_dir):  # pipeline_run=run_001 inherited!</span>
+<span class="sd">        ...     mlflow.log_metric(&quot;test_accuracy&quot;, 0.95)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">mlflow.tracking</span><span class="w"> </span><span class="kn">import</span> <span class="n">MlflowClient</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;MLflow not installed. To use mlflow_context, install with: pip install mlflow&quot;</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="kc">None</span>
+        <span class="k">return</span>
+
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">logical_id</span> <span class="o">=</span> <span class="n">save_dir</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">MlflowClient</span><span class="p">()</span>
+
+    <span class="c1"># Ensure Experiment Exists</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">set_experiment</span><span class="p">(</span><span class="n">experiment_name</span><span class="p">)</span>
+    <span class="n">exp</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_experiment_by_name</span><span class="p">(</span><span class="n">experiment_name</span><span class="p">)</span>
+
+    <span class="c1"># 1. FIND PREVIOUS ACTIVE RUN</span>
+    <span class="c1"># We look for runs pointing to this directory that are currently active</span>
+    <span class="n">prev_run_id</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">prev_run_tags</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">filter_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;tags.`flexlock.dir` = &#39;</span><span class="si">{</span><span class="n">logical_id</span><span class="si">}</span><span class="s2">&#39; AND tags.`flexlock.status` = &#39;active&#39;&quot;</span>
+        <span class="n">runs</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">search_runs</span><span class="p">(</span>
+            <span class="n">experiment_ids</span><span class="o">=</span><span class="p">[</span><span class="n">exp</span><span class="o">.</span><span class="n">experiment_id</span><span class="p">],</span>
+            <span class="n">filter_string</span><span class="o">=</span><span class="n">filter_str</span><span class="p">,</span>
+            <span class="n">max_results</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">order_by</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;start_time DESC&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">runs</span><span class="p">:</span>
+            <span class="n">prev_run_id</span> <span class="o">=</span> <span class="n">runs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">run_id</span>
+            <span class="c1"># Get the previous run&#39;s tags to inherit user tags (like pipeline tags)</span>
+            <span class="n">prev_run</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_run</span><span class="p">(</span><span class="n">prev_run_id</span><span class="p">)</span>
+            <span class="n">prev_run_tags</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">prev_run</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;flexlock.&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;mlflow.&#39;</span><span class="p">)</span>
+            <span class="p">}</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found previous active run: </span><span class="si">{</span><span class="n">prev_run_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">prev_run_tags</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Inheriting tags from previous run: </span><span class="si">{</span><span class="n">prev_run_tags</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No previous run found or search failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 2. START NEW RUN</span>
+    <span class="c1"># Always a fresh ID</span>
+    <span class="n">run</span> <span class="o">=</span> <span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">(</span><span class="n">run_name</span><span class="o">=</span><span class="n">run_name</span> <span class="ow">or</span> <span class="n">save_dir</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">run_id</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">run_id</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Started new MLflow run </span><span class="si">{</span><span class="n">run_id</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">logical_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># 3. SET METADATA</span>
+        <span class="n">default_tags</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;flexlock.dir&quot;</span><span class="p">:</span> <span class="n">logical_id</span><span class="p">,</span>
+            <span class="s2">&quot;flexlock.status&quot;</span><span class="p">:</span> <span class="s2">&quot;active&quot;</span><span class="p">,</span>  <span class="c1"># It claims the throne immediately</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">prev_run_id</span><span class="p">:</span>
+            <span class="n">default_tags</span><span class="p">[</span><span class="s2">&quot;flexlock.supersedes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prev_run_id</span>
+
+        <span class="c1"># Inherit user tags from previous run (e.g., pipeline tags)</span>
+        <span class="c1"># These act as defaults that can be overridden by explicit tags parameter</span>
+        <span class="n">inherited_and_current_tags</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">prev_run_tags</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">tags</span> <span class="ow">or</span> <span class="p">{})}</span>
+        <span class="n">default_tags</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">inherited_and_current_tags</span><span class="p">)</span>
+
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">set_tags</span><span class="p">(</span><span class="n">default_tags</span><span class="p">)</span>
+
+        <span class="c1"># 4. INHERIT STATE (Pull forward artifacts from disk)</span>
+        <span class="c1"># This solves the &quot;Empty Run&quot; problem. Even if this is just a plotting script,</span>
+        <span class="c1"># we log the run.lock and logs from the folder so this run looks complete.</span>
+        <span class="k">if</span> <span class="n">log_config</span><span class="p">:</span>
+            <span class="n">lock_path</span> <span class="o">=</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span>
+            <span class="k">if</span> <span class="n">lock_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Log Config Params</span>
+                    <span class="n">cfg_obj</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">lock_path</span><span class="p">)</span>
+                    <span class="n">content</span> <span class="o">=</span> <span class="n">cfg_obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config&quot;</span><span class="p">,</span> <span class="n">cfg_obj</span><span class="p">)</span>  <span class="c1"># Handle nested or flat</span>
+                    <span class="n">flat_params</span> <span class="o">=</span> <span class="n">_flatten_dict</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+                    <span class="c1"># Sanitize (truncate long strings to avoid MLflow param length limits)</span>
+                    <span class="n">clean_params</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)[:</span><span class="mi">250</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">flat_params</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_params</span><span class="p">(</span><span class="n">clean_params</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Logged parameters from </span><span class="si">{</span><span class="n">lock_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                    <span class="c1"># Log the lock file itself</span>
+                    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">lock_path</span><span class="p">))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Logged artifact: </span><span class="si">{</span><span class="n">lock_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MLflow config logging warning: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">log_artifacts</span><span class="p">:</span>
+            <span class="c1"># Auto-log standard files if they exist on disk</span>
+            <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;experiment.log&quot;</span><span class="p">,</span> <span class="s2">&quot;stderr.log&quot;</span><span class="p">,</span> <span class="s2">&quot;stdout.log&quot;</span><span class="p">]:</span>
+                <span class="n">fpath</span> <span class="o">=</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="n">fname</span>
+                <span class="k">if</span> <span class="n">fpath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fpath</span><span class="p">))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Logged artifact: </span><span class="si">{</span><span class="n">fpath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Yield control to user code (to log metrics, plots, etc.)</span>
+        <span class="k">yield</span> <span class="n">run</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="c1"># If user code crashes, we let it fail normally</span>
+        <span class="k">raise</span>
+
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">end_run</span><span class="p">()</span>
+
+        <span class="c1"># 5. DEPRECATE OLD RUN (The atomic swap)</span>
+        <span class="c1"># Only do this if the new run finished successfully (reached this block)</span>
+        <span class="k">if</span> <span class="n">prev_run_id</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">client</span><span class="o">.</span><span class="n">set_tag</span><span class="p">(</span><span class="n">prev_run_id</span><span class="p">,</span> <span class="s2">&quot;flexlock.status&quot;</span><span class="p">,</span> <span class="s2">&quot;deprecated&quot;</span><span class="p">)</span>
+                <span class="n">client</span><span class="o">.</span><span class="n">set_tag</span><span class="p">(</span><span class="n">prev_run_id</span><span class="p">,</span> <span class="s2">&quot;flexlock.superseded_by&quot;</span><span class="p">,</span> <span class="n">run_id</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Superseded previous MLflow run </span><span class="si">{</span><span class="n">prev_run_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to deprecate run </span><span class="si">{</span><span class="n">prev_run_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

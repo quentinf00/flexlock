@@ -1,0 +1,1158 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MLflow Integration Guide &mdash; FlexLock 0.2.17 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/mlflow_integration.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4031e696"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Reference" href="reference.html" />
+    <link rel="prev" title="OmegaConf Resolvers" href="resolvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MLflow Integration Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-shadow-run-pattern">The Shadow Run Pattern</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-problem-mlflow-run-management">The Problem: MLflow Run Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-solution-shadow-run-pattern">The Solution: Shadow Run Pattern</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#shadow-run-lifecycle">Shadow Run Lifecycle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#api-reference">API Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mlflow-context"><code class="docutils literal notranslate"><span class="pre">mlflow_context()</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#automatic-behaviors">Automatic Behaviors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#returns">Returns</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#common-workflows">Common Workflows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#workflow-1-simple-training-with-logging">Workflow 1: Simple Training with Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#workflow-2-separate-compute-and-diagnostics">Workflow 2: Separate Compute and Diagnostics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#step-1-training-expensive-run-once">Step 1: Training (Expensive, Run Once)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#step-2-diagnostics-fast-run-many-times">Step 2: Diagnostics (Fast, Run Many Times)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#workflow-3-hyperparameter-sweeps">Workflow 3: Hyperparameter Sweeps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#workflow-4-multi-stage-pipeline">Workflow 4: Multi-Stage Pipeline</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-patterns">Advanced Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-1-custom-run-names">Pattern 1: Custom Run Names</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-2-hierarchical-tags">Pattern 2: Hierarchical Tags</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-3-conditional-logging">Pattern 3: Conditional Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-4-manual-parameter-logging">Pattern 4: Manual Parameter Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-5-nested-experiments">Pattern 5: Nested Experiments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mlflow-ui-filtering">MLflow UI Filtering</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#essential-filters">Essential Filters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-filters">Advanced Filters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tracing-run-history">Tracing Run History</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#problem-mlflow-not-installed">Problem: MLflow Not Installed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#problem-parameters-not-showing-up">Problem: Parameters Not Showing Up</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#problem-duplicate-metrics-from-multiple-runs">Problem: Duplicate Metrics from Multiple Runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#problem-cant-find-previous-run">Problem: “Can’t Find Previous Run”</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#problem-deprecated-runs-still-visible">Problem: Deprecated Runs Still Visible</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#problem-artifacts-not-logged">Problem: Artifacts Not Logged</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#do">✅ DO</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dont">❌ DON’T</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#need-help">Need Help?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">MLflow Integration Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/mlflow_integration.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mlflow-integration-guide">
+<h1>MLflow Integration Guide<a class="headerlink" href="#mlflow-integration-guide" title="Link to this heading"></a></h1>
+<p>This guide provides comprehensive coverage of FlexLock’s MLflow integration, including the Shadow Run Pattern, best practices, and advanced usage patterns.</p>
+<hr class="docutils" />
+<section id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="#quick-start"><span class="xref myst">Quick Start</span></a></p></li>
+<li><p><a class="reference internal" href="#the-shadow-run-pattern"><span class="xref myst">The Shadow Run Pattern</span></a></p></li>
+<li><p><a class="reference internal" href="#api-reference"><span class="xref myst">API Reference</span></a></p></li>
+<li><p><a class="reference internal" href="#common-workflows"><span class="xref myst">Common Workflows</span></a></p></li>
+<li><p><a class="reference internal" href="#advanced-patterns"><span class="xref myst">Advanced Patterns</span></a></p></li>
+<li><p><a class="reference internal" href="#mlflow-ui-filtering"><span class="xref myst">MLflow UI Filtering</span></a></p></li>
+<li><p><a class="reference internal" href="#troubleshooting"><span class="xref myst">Troubleshooting</span></a></p></li>
+<li><p><a class="reference internal" href="#best-practices"><span class="xref myst">Best Practices</span></a></p></li>
+<li><p><a class="reference internal" href="#migration-guide"><span class="xref myst">Migration Guide</span></a></p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mlflow
+
+<span class="c1"># or with pixi</span>
+pixi<span class="w"> </span>add<span class="w"> </span>mlflow
+</pre></div>
+</div>
+</section>
+<section id="basic-usage">
+<h3>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflow_context</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="c1"># Your training code</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">accuracy</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
+
+    <span class="c1"># Log to MLflow</span>
+    <span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;MyExperiment&quot;</span><span class="p">):</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">)</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="s2">&quot;model.pkl&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>That’s it!</strong> FlexLock automatically:</p>
+<ul class="simple">
+<li><p>✅ Logs your config from <code class="docutils literal notranslate"><span class="pre">run.lock</span></code></p></li>
+<li><p>✅ Logs standard artifacts (<code class="docutils literal notranslate"><span class="pre">experiment.log</span></code>, etc.)</p></li>
+<li><p>✅ Manages run lifecycle with Shadow Run Pattern</p></li>
+<li><p>✅ Keeps your MLflow dashboard clean</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="the-shadow-run-pattern">
+<h2>The Shadow Run Pattern<a class="headerlink" href="#the-shadow-run-pattern" title="Link to this heading"></a></h2>
+<section id="the-problem-mlflow-run-management">
+<h3>The Problem: MLflow Run Management<a class="headerlink" href="#the-problem-mlflow-run-management" title="Link to this heading"></a></h3>
+<p>Traditional MLflow usage creates a dilemma for iterative ML workflows:</p>
+<p><strong>Option 1: Resume Same Run</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Resume existing run</span>
+<span class="k">with</span> <span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">(</span><span class="n">run_id</span><span class="o">=</span><span class="s2">&quot;abc123&quot;</span><span class="p">):</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;new_metric&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Problems:</strong></p>
+<ul class="simple">
+<li><p>🔴 Old and new metrics get mixed together</p></li>
+<li><p>🔴 Hard to tell which values are current</p></li>
+<li><p>🔴 Can’t easily “reset” diagnostic metrics</p></li>
+</ul>
+<p><strong>Option 2: Create New Run Every Time</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create new run</span>
+<span class="k">with</span> <span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">():</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Problems:</strong></p>
+<ul class="simple">
+<li><p>🔴 After 50 diagnostic iterations, you have 50 runs</p></li>
+<li><p>🔴 MLflow dashboard becomes cluttered</p></li>
+<li><p>🔴 Hard to find the “current” state of an experiment</p></li>
+</ul>
+</section>
+<section id="the-solution-shadow-run-pattern">
+<h3>The Solution: Shadow Run Pattern<a class="headerlink" href="#the-solution-shadow-run-pattern" title="Link to this heading"></a></h3>
+<p>FlexLock implements <strong>“Always New + Deprecate Old”</strong> strategy:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Physical State (Disk):        MLflow Runs (Database):
+┌──────────────────┐         ┌─────────────────────────┐
+│ outputs/exp/r01/ │◄────────│ Run A (deprecated)      │
+│                  │         │ - Config (snapshot)     │
+│ • run.lock       │◄────┐   │ - Metrics v1            │
+│ • model.pkl      │     │   └─────────────────────────┘
+│ • experiment.log │     │
+│ • results.json   │     │   ┌─────────────────────────┐
+└──────────────────┘     └───│ Run B (ACTIVE) ⭐       │
+  (Never moves)              │ - Config (inherited)    │
+                             │ - Metrics v2 (latest)   │
+                             │ - Model (inherited)     │
+                             └─────────────────────────┘
+</pre></div>
+</div>
+<p><strong>Key Principles:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Physical Truth</strong>: Data lives in <code class="docutils literal notranslate"><span class="pre">outputs/exp/run_01</span></code> (permanent)</p></li>
+<li><p><strong>MLflow Truth</strong>: We create a new Run ID every time</p></li>
+<li><p><strong>The Spotlight</strong>: New run tagged <code class="docutils literal notranslate"><span class="pre">active</span></code>, old run tagged <code class="docutils literal notranslate"><span class="pre">deprecated</span></code></p></li>
+<li><p><strong>Artifact Inheritance</strong>: New run re-logs artifacts from disk</p></li>
+</ol>
+<p><strong>Result:</strong> Your MLflow dashboard shows exactly <strong>one active run per experiment</strong>, always with the latest metrics!</p>
+</section>
+<section id="shadow-run-lifecycle">
+<h3>Shadow Run Lifecycle<a class="headerlink" href="#shadow-run-lifecycle" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Iteration 1:
+┌─────────────────┐
+│ Run A (active)  │  ← First run
+│ tag: active     │
+└─────────────────┘
+
+Iteration 2:
+┌─────────────────┐
+│ Run A (depr.)   │  ← Automatically deprecated
+│ tag: deprecated │
+│ superseded_by:B │
+└─────────────────┘
+┌─────────────────┐
+│ Run B (active)  │  ← New active run
+│ tag: active     │
+│ supersedes: A   │
+└─────────────────┘
+
+Iteration 3:
+┌─────────────────┐
+│ Run A (depr.)   │
+└─────────────────┘
+┌─────────────────┐
+│ Run B (depr.)   │  ← Also deprecated now
+│ superseded_by:C │
+└─────────────────┘
+┌─────────────────┐
+│ Run C (active)  │  ← Latest active run
+│ tag: active     │
+│ supersedes: B   │
+└─────────────────┘
+</pre></div>
+</div>
+<p><strong>Filter in MLflow UI:</strong> <code class="docutils literal notranslate"><span class="pre">tags.flexlock.status</span> <span class="pre">=</span> <span class="pre">'active'</span></code></p>
+<p>You see only Run C (the latest), with all inherited artifacts and latest metrics!</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="api-reference">
+<h2>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h2>
+<section id="mlflow-context">
+<h3><code class="docutils literal notranslate"><span class="pre">mlflow_context()</span></code><a class="headerlink" href="#mlflow-context" title="Link to this heading"></a></h3>
+<p>Context manager for MLflow logging with automatic run management.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflow_context</span>
+
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span>
+    <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">experiment_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Default&quot;</span><span class="p">,</span>
+    <span class="n">run_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">log_config</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">log_artifacts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">run</span><span class="p">:</span>
+    <span class="c1"># Your MLflow logging code</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="s2">&quot;plot.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="parameters">
+<h4>Parameters<a class="headerlink" href="#parameters" title="Link to this heading"></a></h4>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">save_dir</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span> <span class="pre">|</span> <span class="pre">Path</span></code></p></td>
+<td><p><em>required</em></p></td>
+<td><p>Directory containing run data (e.g., <code class="docutils literal notranslate"><span class="pre">outputs/exp/run_01</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">experiment_name</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;Default&quot;</span></code></p></td>
+<td><p>MLflow experiment name</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">run_name</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p>Name for this MLflow run (defaults to directory name)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tags</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Dict[str,</span> <span class="pre">str]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
+<td><p>Additional custom tags</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">log_config</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">bool</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p>If True, logs parameters from <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> file</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">log_artifacts</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">bool</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p>If True, logs standard artifacts</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="automatic-behaviors">
+<h4>Automatic Behaviors<a class="headerlink" href="#automatic-behaviors" title="Link to this heading"></a></h4>
+<p><strong>When <code class="docutils literal notranslate"><span class="pre">log_config=True</span></code>:</strong></p>
+<ul class="simple">
+<li><p>Reads <code class="docutils literal notranslate"><span class="pre">save_dir/run.lock</span></code></p></li>
+<li><p>Extracts configuration parameters</p></li>
+<li><p>Flattens nested config (e.g., <code class="docutils literal notranslate"><span class="pre">model.lr</span></code> → <code class="docutils literal notranslate"><span class="pre">model.lr</span></code>)</p></li>
+<li><p>Truncates long strings to 250 characters</p></li>
+<li><p>Logs as MLflow parameters</p></li>
+<li><p>Logs <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> file as artifact</p></li>
+</ul>
+<p><strong>When <code class="docutils literal notranslate"><span class="pre">log_artifacts=True</span></code>:</strong>
+Automatically logs these files if they exist:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">experiment.log</span></code> - Main experiment log</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">stderr.log</span></code> - Standard error output</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">stdout.log</span></code> - Standard output</p></li>
+</ul>
+<p><strong>Tags Added Automatically:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">flexlock.dir</span></code>: Absolute path to save_dir</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">flexlock.status</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;active&quot;</span></code> (new run) or <code class="docutils literal notranslate"><span class="pre">&quot;deprecated&quot;</span></code> (old run)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">flexlock.supersedes</span></code>: Run ID of previous active run (if exists)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">flexlock.superseded_by</span></code>: Run ID of next run (added to deprecated runs)</p></li>
+</ul>
+</section>
+<section id="returns">
+<h4>Returns<a class="headerlink" href="#returns" title="Link to this heading"></a></h4>
+<p>Yields <code class="docutils literal notranslate"><span class="pre">mlflow.ActiveRun</span></code> object, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if MLflow not installed.</p>
+</section>
+<section id="example">
+<h4>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflow_context</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+
+<span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;outputs/my_exp/run_01&quot;</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span>
+    <span class="n">save_dir</span><span class="o">=</span><span class="n">save_dir</span><span class="p">,</span>
+    <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;ResNet_Training&quot;</span><span class="p">,</span>
+    <span class="n">run_name</span><span class="o">=</span><span class="s2">&quot;resnet50_imagenet&quot;</span><span class="p">,</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;resnet50&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="s2">&quot;imagenet&quot;</span><span class="p">},</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">run</span><span class="p">:</span>
+    <span class="c1"># Log training metrics</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;train_loss&quot;</span><span class="p">,</span> <span class="mf">0.32</span><span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;val_accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+
+    <span class="c1"># Log model</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="s2">&quot;model.pkl&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Log plots</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;learning_curve.png&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Access run info</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run ID: </span><span class="si">{</span><span class="n">run</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">run_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<hr class="docutils" />
+<section id="common-workflows">
+<h2>Common Workflows<a class="headerlink" href="#common-workflows" title="Link to this heading"></a></h2>
+<section id="workflow-1-simple-training-with-logging">
+<h3>Workflow 1: Simple Training with Logging<a class="headerlink" href="#workflow-1-simple-training-with-logging" title="Link to this heading"></a></h3>
+<p><strong>Scenario:</strong> Train a model and log metrics to MLflow.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflow_context</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Train a model and log to MLflow.&quot;&quot;&quot;</span>
+    <span class="c1"># Training code</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">build_model</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+        <span class="n">train_data</span><span class="p">,</span>
+        <span class="n">epochs</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">epochs</span><span class="p">,</span>
+        <span class="n">validation_data</span><span class="o">=</span><span class="n">val_data</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Evaluation</span>
+    <span class="n">test_accuracy</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
+
+    <span class="c1"># Save model to disk</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/model.h5&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Log to MLflow</span>
+    <span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;Training&quot;</span><span class="p">):</span>
+        <span class="c1"># Metrics</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;test_accuracy&quot;</span><span class="p">,</span> <span class="n">test_accuracy</span><span class="p">)</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;final_train_loss&quot;</span><span class="p">,</span> <span class="n">history</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># Model</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/model.h5&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;test_accuracy&quot;</span><span class="p">:</span> <span class="n">test_accuracy</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Run:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>train.py<span class="w"> </span>-c<span class="w"> </span>config.yaml
+
+<span class="c1"># View in MLflow UI</span>
+mlflow<span class="w"> </span>ui
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="workflow-2-separate-compute-and-diagnostics">
+<h3>Workflow 2: Separate Compute and Diagnostics<a class="headerlink" href="#workflow-2-separate-compute-and-diagnostics" title="Link to this heading"></a></h3>
+<p><strong>Scenario:</strong> Run expensive training once, then iterate on diagnostic plots and metrics.</p>
+<section id="step-1-training-expensive-run-once">
+<h4>Step 1: Training (Expensive, Run Once)<a class="headerlink" href="#step-1-training-expensive-run-once" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># train.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Expensive training - saves to disk, NO MLflow yet.&quot;&quot;&quot;</span>
+    <span class="c1"># Long training process</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">train_for_24_hours</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+    <span class="c1"># Save results to disk</span>
+    <span class="n">save_results</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;complete&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run once</span>
+python<span class="w"> </span>train.py<span class="w"> </span>-c<span class="w"> </span>config.yaml
+<span class="c1"># Output: outputs/my_exp/2024-01-15_10-30-45/</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2-diagnostics-fast-run-many-times">
+<h4>Step 2: Diagnostics (Fast, Run Many Times)<a class="headerlink" href="#step-2-diagnostics-fast-run-many-times" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># diagnose.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflow_context</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">diagnose</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load results and create diagnostic plots.&quot;&quot;&quot;</span>
+    <span class="c1"># Load pre-computed results (fast!)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">load_results</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
+
+    <span class="c1"># Generate plots</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">create_confusion_matrix</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/confusion_matrix.png&quot;</span><span class="p">)</span>
+
+    <span class="n">fig2</span> <span class="o">=</span> <span class="n">create_learning_curves</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    <span class="n">fig2</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/learning_curves.png&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Calculate metrics</span>
+    <span class="n">f1</span> <span class="o">=</span> <span class="n">compute_f1_score</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    <span class="n">precision</span> <span class="o">=</span> <span class="n">compute_precision</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+    <span class="c1"># Log to MLflow</span>
+    <span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;Diagnostics&quot;</span><span class="p">):</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;f1_score&quot;</span><span class="p">,</span> <span class="n">f1</span><span class="p">)</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;precision&quot;</span><span class="p">,</span> <span class="n">precision</span><span class="p">)</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/confusion_matrix.png&quot;</span><span class="p">)</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/learning_curves.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Point to existing training directory</span>
+python<span class="w"> </span>diagnose.py<span class="w"> </span><span class="nv">save_dir</span><span class="o">=</span>outputs/my_exp/2024-01-15_10-30-45/
+
+<span class="c1"># Tweak plotting code, re-run (creates NEW MLflow run)</span>
+python<span class="w"> </span>diagnose.py<span class="w"> </span><span class="nv">save_dir</span><span class="o">=</span>outputs/my_exp/2024-01-15_10-30-45/
+
+<span class="c1"># Adjust metrics calculation, re-run again</span>
+python<span class="w"> </span>diagnose.py<span class="w"> </span><span class="nv">save_dir</span><span class="o">=</span>outputs/my_exp/2024-01-15_10-30-45/
+
+<span class="c1"># ... iterate 50 times if needed!</span>
+</pre></div>
+</div>
+<p><strong>MLflow Dashboard:</strong></p>
+<ul class="simple">
+<li><p>Filter: <code class="docutils literal notranslate"><span class="pre">tags.flexlock.status</span> <span class="pre">=</span> <span class="pre">'active'</span></code></p></li>
+<li><p>See: <strong>Exactly 1 run</strong> with latest diagnostics</p></li>
+<li><p>Contains: Original config + logs + latest metrics + latest plots</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="workflow-3-hyperparameter-sweeps">
+<h3>Workflow 3: Hyperparameter Sweeps<a class="headerlink" href="#workflow-3-hyperparameter-sweeps" title="Link to this heading"></a></h3>
+<p><strong>Scenario:</strong> Run parameter sweep and track all experiments.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflow_context</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_sweep</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Single training run in a sweep.&quot;&quot;&quot;</span>
+    <span class="c1"># Train with current hyperparameters</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">val_acc</span> <span class="o">=</span> <span class="n">validate_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="c1"># Log to MLflow</span>
+    <span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span>
+        <span class="n">save_dir</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span>
+        <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;HPO_Sweep&quot;</span><span class="p">,</span>
+        <span class="n">tags</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;sweep_name&quot;</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">sweep_name</span><span class="p">,</span>
+            <span class="s2">&quot;optimizer&quot;</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">):</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;val_accuracy&quot;</span><span class="p">,</span> <span class="n">val_acc</span><span class="p">)</span>
+
+        <span class="c1"># Tag best run</span>
+        <span class="k">if</span> <span class="n">val_acc</span> <span class="o">&gt;</span> <span class="n">cfg</span><span class="o">.</span><span class="n">best_acc_threshold</span><span class="p">:</span>
+            <span class="n">mlflow</span><span class="o">.</span><span class="n">set_tag</span><span class="p">(</span><span class="s2">&quot;is_best&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;val_acc&quot;</span><span class="p">:</span> <span class="n">val_acc</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Config (sweep.yaml):</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">sweep_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lr_optimizer_sweep</span>
+<span class="nt">model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">architecture</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resnet50</span>
+<span class="nt">training</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">  </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<span class="nt">best_acc_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.90</span>
+
+<span class="c1"># Sweep parameters</span>
+<span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">???</span><span class="w">  </span><span class="c1"># To be overridden</span>
+<span class="nt">optimizer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">???</span><span class="w">  </span><span class="c1"># To be overridden</span>
+</pre></div>
+</div>
+<p><strong>Run Sweep:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>train_sweep.py<span class="w"> </span>-c<span class="w"> </span>sweep.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.001,0.01,0.1<span class="w"> </span><span class="se">\</span>
+<span class="w">     </span><span class="nv">optimizer</span><span class="o">=</span>adam,sgd,rmsprop
+</pre></div>
+</div>
+<p><strong>MLflow Dashboard:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Filter: All runs in sweep</span>
+<span class="n">tags</span><span class="o">.</span><span class="n">sweep_name</span> <span class="o">=</span> <span class="s1">&#39;lr_optimizer_sweep&#39;</span>
+
+<span class="c1"># Filter: Only best runs</span>
+<span class="n">tags</span><span class="o">.</span><span class="n">is_best</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
+
+<span class="c1"># Filter: Specific optimizer</span>
+<span class="n">tags</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="s1">&#39;adam&#39;</span>
+</pre></div>
+</div>
+<p><strong>Columns to display:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">params.lr</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">params.optimizer</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">metrics.val_accuracy</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tags.is_best</span></code></p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="workflow-4-multi-stage-pipeline">
+<h3>Workflow 4: Multi-Stage Pipeline<a class="headerlink" href="#workflow-4-multi-stage-pipeline" title="Link to this heading"></a></h3>
+<p><strong>Scenario:</strong> Pipeline with preprocess → train → evaluate, all logged to MLflow.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflow_context</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="s2">&quot;pipeline.yaml&quot;</span><span class="p">)</span>
+
+<span class="c1"># Stage 1: Preprocess (no MLflow)</span>
+<span class="nd">@proj</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;preprocess&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">preprocess</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">load_and_clean_data</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">save_data</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;num_samples&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)}</span>
+
+<span class="c1"># Stage 2: Train with MLflow</span>
+<span class="nd">@proj</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;Pipeline&quot;</span><span class="p">):</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;train_accuracy&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">train_acc</span><span class="p">)</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="s2">&quot;model.pkl&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;train_acc&quot;</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">train_acc</span><span class="p">}</span>
+
+<span class="c1"># Stage 3: Evaluate with MLflow (same save_dir!)</span>
+<span class="nd">@proj</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;evaluate&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
+    <span class="n">test_acc</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
+
+    <span class="c1"># Creates NEW MLflow run, deprecates training run</span>
+    <span class="c1"># Inherits config and model.pkl, adds evaluation metrics</span>
+    <span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;Pipeline&quot;</span><span class="p">):</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;test_accuracy&quot;</span><span class="p">,</span> <span class="n">test_acc</span><span class="p">)</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="s2">&quot;test_results.json&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;test_acc&quot;</span><span class="p">:</span> <span class="n">test_acc</span><span class="p">}</span>
+
+<span class="c1"># Run pipeline</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="s2">&quot;preprocess&quot;</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="s2">&quot;evaluate&quot;</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Result in MLflow:</strong></p>
+<ul class="simple">
+<li><p>One active run per experiment</p></li>
+<li><p>Contains:</p>
+<ul>
+<li><p>Config (from preprocess stage)</p></li>
+<li><p>Model (from train stage)</p></li>
+<li><p>Train accuracy (from train stage)</p></li>
+<li><p>Test accuracy (from evaluate stage)</p></li>
+<li><p>Test results (from evaluate stage)</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="advanced-patterns">
+<h2>Advanced Patterns<a class="headerlink" href="#advanced-patterns" title="Link to this heading"></a></h2>
+<section id="pattern-1-custom-run-names">
+<h3>Pattern 1: Custom Run Names<a class="headerlink" href="#pattern-1-custom-run-names" title="Link to this heading"></a></h3>
+<p>Use descriptive run names for better organization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">_%H%M%S&quot;</span><span class="p">)</span>
+<span class="n">run_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">model_type</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">dataset</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span>
+    <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;Experiments&quot;</span><span class="p">,</span>
+    <span class="n">run_name</span><span class="o">=</span><span class="n">run_name</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pattern-2-hierarchical-tags">
+<h3>Pattern 2: Hierarchical Tags<a class="headerlink" href="#pattern-2-hierarchical-tags" title="Link to this heading"></a></h3>
+<p>Use dot-separated tags for hierarchical filtering:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;image_classification&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;model.architecture&quot;</span><span class="p">:</span> <span class="s2">&quot;resnet50&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;model.pretrained&quot;</span><span class="p">:</span> <span class="s2">&quot;imagenet&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;data.dataset&quot;</span><span class="p">:</span> <span class="s2">&quot;cifar100&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;data.augmentation&quot;</span><span class="p">:</span> <span class="s2">&quot;heavy&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">):</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Filter in MLflow UI:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>tags.project = &#39;image_classification&#39; AND tags.`model.architecture` = &#39;resnet50&#39;
+</pre></div>
+</div>
+</section>
+<section id="pattern-3-conditional-logging">
+<h3>Pattern 3: Conditional Logging<a class="headerlink" href="#pattern-3-conditional-logging" title="Link to this heading"></a></h3>
+<p>Only log to MLflow in certain conditions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflow_context</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">mlflow</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">accuracy</span> <span class="o">=</span> <span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="c1"># Only log if accuracy exceeds threshold</span>
+    <span class="k">if</span> <span class="n">accuracy</span> <span class="o">&gt;</span> <span class="n">cfg</span><span class="o">.</span><span class="n">log_threshold</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span>
+            <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;Good_Runs&quot;</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;val_accuracy&quot;</span><span class="p">,</span> <span class="n">accuracy</span><span class="p">)</span>
+            <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="s2">&quot;model.pkl&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="pattern-4-manual-parameter-logging">
+<h3>Pattern 4: Manual Parameter Logging<a class="headerlink" href="#pattern-4-manual-parameter-logging" title="Link to this heading"></a></h3>
+<p>Add runtime parameters not in config:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">git</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;Training&quot;</span><span class="p">):</span>
+    <span class="c1"># FlexLock automatically logs config from run.lock</span>
+
+    <span class="c1"># Log additional runtime info</span>
+    <span class="n">repo</span> <span class="o">=</span> <span class="n">git</span><span class="o">.</span><span class="n">Repo</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;git_commit&quot;</span><span class="p">,</span> <span class="n">repo</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">commit</span><span class="o">.</span><span class="n">hexsha</span><span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;git_branch&quot;</span><span class="p">,</span> <span class="n">repo</span><span class="o">.</span><span class="n">active_branch</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;hostname&quot;</span><span class="p">,</span> <span class="n">platform</span><span class="o">.</span><span class="n">node</span><span class="p">())</span>
+
+    <span class="c1"># Log metrics</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pattern-5-nested-experiments">
+<h3>Pattern 5: Nested Experiments<a class="headerlink" href="#pattern-5-nested-experiments" title="Link to this heading"></a></h3>
+<p>Organize related experiments hierarchically:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Parent experiment: Overall project</span>
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span>
+    <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;ImageClassification/ResNet&quot;</span><span class="p">,</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;image_classification&quot;</span><span class="p">},</span>
+<span class="p">):</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;test_accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+
+<span class="c1"># Child experiment: Specific variant</span>
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span>
+    <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;ImageClassification/ResNet/Ablations&quot;</span><span class="p">,</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;project&quot;</span><span class="p">:</span> <span class="s2">&quot;image_classification&quot;</span><span class="p">,</span> <span class="s2">&quot;study&quot;</span><span class="p">:</span> <span class="s2">&quot;ablation&quot;</span><span class="p">},</span>
+<span class="p">):</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;ablation_accuracy&quot;</span><span class="p">,</span> <span class="mf">0.92</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="mlflow-ui-filtering">
+<h2>MLflow UI Filtering<a class="headerlink" href="#mlflow-ui-filtering" title="Link to this heading"></a></h2>
+<section id="essential-filters">
+<h3>Essential Filters<a class="headerlink" href="#essential-filters" title="Link to this heading"></a></h3>
+<p><strong>Show only active runs (recommended):</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span>
+</pre></div>
+</div>
+<p><strong>Show deprecated runs:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;deprecated&#39;</span>
+</pre></div>
+</div>
+<p><strong>Show all runs for specific directory:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">dir</span> <span class="o">=</span> <span class="s1">&#39;/absolute/path/to/outputs/exp/run_01&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="advanced-filters">
+<h3>Advanced Filters<a class="headerlink" href="#advanced-filters" title="Link to this heading"></a></h3>
+<p><strong>Runs from a specific sweep:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span> <span class="n">AND</span> <span class="n">tags</span><span class="o">.</span><span class="n">sweep_name</span> <span class="o">=</span> <span class="s1">&#39;my_sweep&#39;</span>
+</pre></div>
+</div>
+<p><strong>Best runs only:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span> <span class="n">AND</span> <span class="n">tags</span><span class="o">.</span><span class="n">is_best</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
+</pre></div>
+</div>
+<p><strong>Runs with specific model:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span> <span class="n">AND</span> <span class="n">tags</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s1">&#39;resnet50&#39;</span>
+</pre></div>
+</div>
+<p><strong>Runs with accuracy above threshold:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span> <span class="n">AND</span> <span class="n">metrics</span><span class="o">.</span><span class="n">val_accuracy</span> <span class="o">&gt;</span> <span class="mf">0.90</span>
+</pre></div>
+</div>
+</section>
+<section id="tracing-run-history">
+<h3>Tracing Run History<a class="headerlink" href="#tracing-run-history" title="Link to this heading"></a></h3>
+<p><strong>Find what run A superseded:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">superseded_by</span> <span class="o">=</span> <span class="s1">&#39;&lt;run_A_id&gt;&#39;</span>
+</pre></div>
+</div>
+<p><strong>Find what superseded run A:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">supersedes</span> <span class="o">=</span> <span class="s1">&#39;&lt;run_A_id&gt;&#39;</span>
+</pre></div>
+</div>
+<p><strong>Complete lineage:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">dir</span> <span class="o">=</span> <span class="s1">&#39;/path/to/experiment&#39;</span> <span class="n">ORDER</span> <span class="n">BY</span> <span class="n">start_time</span> <span class="n">ASC</span>
+</pre></div>
+</div>
+<p>This shows the complete history: Run A → Run B → Run C → …</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<section id="problem-mlflow-not-installed">
+<h3>Problem: MLflow Not Installed<a class="headerlink" href="#problem-mlflow-not-installed" title="Link to this heading"></a></h3>
+<p><strong>Error:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MLflow</span> <span class="ow">not</span> <span class="n">installed</span><span class="o">.</span> <span class="n">To</span> <span class="n">use</span> <span class="n">mlflow_context</span><span class="p">,</span> <span class="n">install</span> <span class="k">with</span><span class="p">:</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">mlflow</span>
+</pre></div>
+</div>
+<p><strong>Solution:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mlflow
+
+<span class="c1"># or with pixi</span>
+pixi<span class="w"> </span>add<span class="w"> </span>mlflow
+</pre></div>
+</div>
+<p><strong>Verify:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import mlflow; print(mlflow.__version__)&quot;</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="problem-parameters-not-showing-up">
+<h3>Problem: Parameters Not Showing Up<a class="headerlink" href="#problem-parameters-not-showing-up" title="Link to this heading"></a></h3>
+<p><strong>Symptoms:</strong> No parameters logged in MLflow run</p>
+<p><strong>Possible Causes:</strong></p>
+<ol class="arabic">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">run.lock</span></code> file doesn’t exist</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ls<span class="w"> </span>outputs/my_exp/run_01/run.lock<span class="w">  </span><span class="c1"># Should exist</span>
+</pre></div>
+</div>
+<p><strong>Solution:</strong> Make sure you’re using <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code> decorator or <code class="docutils literal notranslate"><span class="pre">Project</span></code> API</p>
+</li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">log_config=False</span></code></strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Wrong</span>
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">log_config</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>  <span class="c1"># Disables param logging</span>
+</pre></div>
+</div>
+<p><strong>Solution:</strong> Use default <code class="docutils literal notranslate"><span class="pre">log_config=True</span></code></p>
+</li>
+<li><p><strong>Parameters too long (&gt;250 chars)</strong></p>
+<p>FlexLock automatically truncates to 250 characters. Check logs:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MLflow</span> <span class="n">config</span> <span class="n">logging</span> <span class="n">warning</span><span class="p">:</span> <span class="o">...</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="problem-duplicate-metrics-from-multiple-runs">
+<h3>Problem: Duplicate Metrics from Multiple Runs<a class="headerlink" href="#problem-duplicate-metrics-from-multiple-runs" title="Link to this heading"></a></h3>
+<p><strong>Symptoms:</strong> MLflow UI shows multiple runs for the same experiment</p>
+<p><strong>Cause:</strong> Creating new <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> for each run instead of reusing</p>
+<p><strong>Wrong:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">diagnose</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="c1"># Creates NEW directory each time</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">_%H%M%S&quot;</span><span class="p">)</span>
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;outputs/exp/</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">&quot;</span>  <span class="c1"># ❌ New dir every time</span>
+
+    <span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">):</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Correct:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">diagnose</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="c1"># Reuse EXISTING directory</span>
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="s2">&quot;outputs/exp/2024-01-15_10-30-45&quot;</span>  <span class="c1"># ✅ Same dir</span>
+
+    <span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">):</span>
+        <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Result:</strong> Shadow Run Pattern activates, old run gets deprecated</p>
+</section>
+<hr class="docutils" />
+<section id="problem-cant-find-previous-run">
+<h3>Problem: “Can’t Find Previous Run”<a class="headerlink" href="#problem-cant-find-previous-run" title="Link to this heading"></a></h3>
+<p><strong>Message in logs:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">No</span> <span class="n">previous</span> <span class="n">run</span> <span class="n">found</span> <span class="ow">or</span> <span class="n">search</span> <span class="n">failed</span><span class="p">:</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><strong>This is normal!</strong> On the first run for a directory, there’s no previous run to deprecate.</p>
+</section>
+<hr class="docutils" />
+<section id="problem-deprecated-runs-still-visible">
+<h3>Problem: Deprecated Runs Still Visible<a class="headerlink" href="#problem-deprecated-runs-still-visible" title="Link to this heading"></a></h3>
+<p><strong>Issue:</strong> MLflow UI shows both active and deprecated runs</p>
+<p><strong>Solution:</strong> Add filter in MLflow UI:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span>
+</pre></div>
+</div>
+<p><strong>Pro Tip:</strong> Save this filter as a view:</p>
+<ol class="arabic simple">
+<li><p>Apply filter</p></li>
+<li><p>Click “Save View”</p></li>
+<li><p>Name it “Active Runs Only”</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="problem-artifacts-not-logged">
+<h3>Problem: Artifacts Not Logged<a class="headerlink" href="#problem-artifacts-not-logged" title="Link to this heading"></a></h3>
+<p><strong>Symptoms:</strong> Missing <code class="docutils literal notranslate"><span class="pre">experiment.log</span></code> or other artifacts</p>
+<p><strong>Possible Causes:</strong></p>
+<ol class="arabic">
+<li><p><strong>Files don’t exist in save_dir</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ls<span class="w"> </span>outputs/my_exp/run_01/experiment.log<span class="w">  </span><span class="c1"># Should exist</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">log_artifacts=False</span></code></strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">log_artifacts</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>  <span class="c1"># Disables artifacts</span>
+</pre></div>
+</div>
+<p><strong>Solution:</strong> Use default <code class="docutils literal notranslate"><span class="pre">log_artifacts=True</span></code></p>
+</li>
+<li><p><strong>Custom artifact names</strong></p>
+<p>FlexLock auto-logs: <code class="docutils literal notranslate"><span class="pre">experiment.log</span></code>, <code class="docutils literal notranslate"><span class="pre">stderr.log</span></code>, <code class="docutils literal notranslate"><span class="pre">stdout.log</span></code>, <code class="docutils literal notranslate"><span class="pre">run.lock</span></code></p>
+<p>For custom files, log manually:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">):</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="s2">&quot;custom_results.json&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+<hr class="docutils" />
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
+<section id="do">
+<h3>✅ DO<a class="headerlink" href="#do" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p><strong>Use descriptive experiment names</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good</span>
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;ResNet50_ImageNet&quot;</span><span class="p">):</span>
+
+<span class="c1"># Bad</span>
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">experiment_name</span><span class="o">=</span><span class="s2">&quot;Exp1&quot;</span><span class="p">):</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Add meaningful tags</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span>
+    <span class="n">save_dir</span><span class="p">,</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;resnet50&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="s2">&quot;imagenet&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;optimizer&quot;</span><span class="p">:</span> <span class="s2">&quot;adam&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">):</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Reuse save_dir for diagnostics</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Training creates directory</span>
+<span class="n">save_dir</span> <span class="o">=</span> <span class="s2">&quot;outputs/exp/run_01&quot;</span>
+
+<span class="c1"># Diagnostics reuse same directory (enables Shadow Run Pattern)</span>
+<span class="n">python</span> <span class="n">diagnose</span><span class="o">.</span><span class="n">py</span> <span class="n">save_dir</span><span class="o">=</span><span class="n">outputs</span><span class="o">/</span><span class="n">exp</span><span class="o">/</span><span class="n">run_01</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Filter by active status</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tags</span><span class="o">.</span><span class="n">flexlock</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Keep deprecated runs for history</strong></p>
+<p>Don’t delete old runs - they provide audit trail!</p>
+</li>
+</ol>
+</section>
+<section id="dont">
+<h3>❌ DON’T<a class="headerlink" href="#dont" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p><strong>Don’t manually manage run resumption</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Bad - manually managing runs</span>
+<span class="n">existing_run_id</span> <span class="o">=</span> <span class="n">find_run_id</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">(</span><span class="n">run_id</span><span class="o">=</span><span class="n">existing_run_id</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="c1"># Good - let mlflow_context handle it</span>
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Don’t log config parameters twice</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Bad - already logged automatically</span>
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">):</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;learning_rate&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">lr</span><span class="p">)</span>  <span class="c1"># ❌ Duplicate</span>
+
+<span class="c1"># Good - config auto-logged from run.lock</span>
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">):</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">)</span>  <span class="c1"># ✅ Just log metrics</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Don’t create new directories for diagnostic iterations</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Bad</span>
+<span class="n">save_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;outputs/exp/diagnostic_</span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">&quot;</span>  <span class="c1"># ❌ New dir</span>
+
+<span class="c1"># Good</span>
+<span class="n">save_dir</span> <span class="o">=</span> <span class="s2">&quot;outputs/exp/run_01&quot;</span>  <span class="c1"># ✅ Reuse existing</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Don’t use mlflow.start_run() directly</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Bad</span>
+<span class="k">with</span> <span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">():</span>
+    <span class="o">...</span>
+
+<span class="c1"># Good</span>
+<span class="k">with</span> <span class="n">mlflow_context</span><span class="p">(</span><span class="n">save_dir</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Don’t delete deprecated runs</strong></p>
+<p>Keep them for history and audit trails!</p>
+</li>
+</ol>
+</section>
+</section>
+<hr class="docutils" />
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
+<p>FlexLock’s MLflow integration provides:</p>
+<ul class="simple">
+<li><p><strong>Shadow Run Pattern</strong> - Clean dashboard with one active run per experiment</p></li>
+<li><p><strong>Automatic Logging</strong> - Config and artifacts logged from disk</p></li>
+<li><p><strong>Iterative Diagnostics</strong> - Run diagnostics 50 times, see only latest</p></li>
+<li><p><strong>Flexible Filtering</strong> - Powerful tags for organizing experiments</p></li>
+</ul>
+<p><strong>Key Takeaway:</strong> With <code class="docutils literal notranslate"><span class="pre">mlflow_context()</span></code>, you can separate expensive computation from iterative diagnostics while maintaining a clean, organized MLflow dashboard!</p>
+</section>
+<hr class="docutils" />
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>HPC Integration</strong>: Scale experiments with <a class="reference internal" href="hpc_integration.html"><span class="std std-doc">HPC Integration Guide</span></a></p></li>
+<li><p><strong>Debugging</strong>: Use interactive debugging with <a class="reference internal" href="debugging.html"><span class="std std-doc">Debugging Guide</span></a></p></li>
+<li><p><strong>Python API</strong>: See <a class="reference internal" href="python_api.html"><span class="std std-doc">Python API Reference</span></a> for programmatic usage</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="need-help">
+<h2>Need Help?<a class="headerlink" href="#need-help" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Issues</strong>: <a class="reference external" href="https://github.com/quentinf00/flexlock/issues">Report bugs</a></p></li>
+<li><p><strong>Discussions</strong>: <a class="reference external" href="https://github.com/quentinf00/flexlock/discussions">Ask questions</a></p></li>
+<li><p><strong>Docs</strong>: <a class="reference external" href="https://flexlock.readthedocs.io">Full documentation</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="resolvers.html" class="btn btn-neutral float-left" title="OmegaConf Resolvers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reference.html" class="btn btn-neutral float-right" title="Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

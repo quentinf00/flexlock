@@ -1,0 +1,531 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reference &mdash; FlexLock 0.2.17 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/reference.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4031e696"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="FlexLock API Reference" href="api.html" />
+    <link rel="prev" title="MLflow Integration Guide" href="mlflow_integration.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#environment-variables">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parallel-execution">Parallel Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#smart-run-caching">Smart Run / Caching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-hashing">Data Hashing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#timestamp-format">Timestamp Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logging">Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debug-mode">Debug Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#display">Display</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#validation">Validation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#boolean-values">Boolean Values</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#exceptions">Exceptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#exception-hierarchy">Exception Hierarchy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exception-reference">Exception Reference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#flexlockerror"><code class="docutils literal notranslate"><span class="pre">FlexLockError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#flexlockconfigerror"><code class="docutils literal notranslate"><span class="pre">FlexLockConfigError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#flexlockexecutionerror"><code class="docutils literal notranslate"><span class="pre">FlexLockExecutionError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#flexlocksnapshoterror"><code class="docutils literal notranslate"><span class="pre">FlexLockSnapshotError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#flexlockvalidationerror"><code class="docutils literal notranslate"><span class="pre">FlexLockValidationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#flexlockcacheerror"><code class="docutils literal notranslate"><span class="pre">FlexLockCacheError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#flexlockbackenderror"><code class="docutils literal notranslate"><span class="pre">FlexLockBackendError</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#catching-multiple-exceptions">Catching Multiple Exceptions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/reference.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="reference">
+<h1>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h1>
+<section id="environment-variables">
+<h2>Environment Variables<a class="headerlink" href="#environment-variables" title="Link to this heading"></a></h2>
+<p>All FlexLock environment variables are prefixed with <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_</span></code>.</p>
+<section id="parallel-execution">
+<h3>Parallel Execution<a class="headerlink" href="#parallel-execution" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_POLL_INTERVAL</span></code></p></td>
+<td><p>int</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">10</span></code></p></td>
+<td><p>Poll interval in seconds for checking task status</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_LOG_FREQUENCY</span></code></p></td>
+<td><p>int</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">15</span></code></p></td>
+<td><p>Log frequency in seconds for progress updates</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEFAULT_N_JOBS</span></code></p></td>
+<td><p>int</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+<td><p>Default number of parallel jobs</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEFAULT_TIMEOUT</span></code></p></td>
+<td><p>int</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">3600</span></code></p></td>
+<td><p>Default timeout in seconds for HPC jobs</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="smart-run-caching">
+<h3>Smart Run / Caching<a class="headerlink" href="#smart-run-caching" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_WARN_SMART_RUN</span></code></p></td>
+<td><p>bool</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Warn when <code class="docutils literal notranslate"><span class="pre">smart_run=True</span></code> but <code class="docutils literal notranslate"><span class="pre">search_dirs=None</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="data-hashing">
+<h3>Data Hashing<a class="headerlink" href="#data-hashing" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_CACHE</span></code></p></td>
+<td><p>path</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">~/.cache</span></code></p></td>
+<td><p>Base directory for FlexLock cache</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_NO_CACHE</span></code></p></td>
+<td><p>bool</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p>Disable hash caching</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DIR_FILE_LIMIT</span></code></p></td>
+<td><p>int</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1000</span></code></p></td>
+<td><p>Max files to hash in a directory before warning</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_CACHE_DIR_FILE_LIMIT</span></code></p></td>
+<td><p>int</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1000</span></code></p></td>
+<td><p>Override file limit for cache operations</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="timestamp-format">
+<h3>Timestamp Format<a class="headerlink" href="#timestamp-format" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_TIMESTAMP_FORMAT</span></code></p></td>
+<td><p>str</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H-%M-%S</span></code></p></td>
+<td><p>Format for directory timestamps</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="logging">
+<h3>Logging<a class="headerlink" href="#logging" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_CONFIGURE_LOGGING</span></code></p></td>
+<td><p>bool</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Whether to configure logging by default</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="debug-mode">
+<h3>Debug Mode<a class="headerlink" href="#debug-mode" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG</span></code></p></td>
+<td><p>bool</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p>Enable debug mode (drops into debugger on error)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_NODEBUG</span></code></p></td>
+<td><p>bool</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
+<td><p>Disable debug mode (takes precedence over <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG_STRATEGY</span></code></p></td>
+<td><p>str</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">auto</span></code></p></td>
+<td><p>Debug strategy: <code class="docutils literal notranslate"><span class="pre">auto</span></code>, <code class="docutils literal notranslate"><span class="pre">pdb</span></code>, or <code class="docutils literal notranslate"><span class="pre">inject</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Debug strategies:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">auto</span></code>: Detect environment - use PDB for scripts, inject locals for notebooks/interactive</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pdb</span></code>: Always use PDB post-mortem debugger</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">inject</span></code>: Always inject locals into caller’s namespace (for notebooks)</p></li>
+</ul>
+</section>
+<section id="display">
+<h3>Display<a class="headerlink" href="#display" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_MAX_DISPLAY_ITEMS</span></code></p></td>
+<td><p>int</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">10</span></code></p></td>
+<td><p>Maximum items to show in summaries</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="validation">
+<h3>Validation<a class="headerlink" href="#validation" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_STRICT_VALIDATION</span></code></p></td>
+<td><p>bool</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>Enable strict configuration validation</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="boolean-values">
+<h3>Boolean Values<a class="headerlink" href="#boolean-values" title="Link to this heading"></a></h3>
+<p>Boolean environment variables accept:</p>
+<ul class="simple">
+<li><p><strong>True</strong>: <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">true</span></code>, <code class="docutils literal notranslate"><span class="pre">yes</span></code>, <code class="docutils literal notranslate"><span class="pre">on</span></code></p></li>
+<li><p><strong>False</strong>: <code class="docutils literal notranslate"><span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">false</span></code>, <code class="docutils literal notranslate"><span class="pre">no</span></code>, <code class="docutils literal notranslate"><span class="pre">off</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="exceptions">
+<h2>Exceptions<a class="headerlink" href="#exceptions" title="Link to this heading"></a></h2>
+<p>FlexLock defines a hierarchy of exceptions for error handling.</p>
+<section id="exception-hierarchy">
+<h3>Exception Hierarchy<a class="headerlink" href="#exception-hierarchy" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>FlexLockError (base)
+├── FlexLockConfigError
+├── FlexLockExecutionError
+├── FlexLockSnapshotError
+├── FlexLockValidationError
+├── FlexLockCacheError
+└── FlexLockBackendError
+</pre></div>
+</div>
+</section>
+<section id="exception-reference">
+<h3>Exception Reference<a class="headerlink" href="#exception-reference" title="Link to this heading"></a></h3>
+<section id="flexlockerror">
+<h4><code class="docutils literal notranslate"><span class="pre">FlexLockError</span></code><a class="headerlink" href="#flexlockerror" title="Link to this heading"></a></h4>
+<p>Base exception for all FlexLock errors. Catch this to handle any FlexLock-specific error.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">FlexLockError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;FlexLock error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="flexlockconfigerror">
+<h4><code class="docutils literal notranslate"><span class="pre">FlexLockConfigError</span></code><a class="headerlink" href="#flexlockconfigerror" title="Link to this heading"></a></h4>
+<p>Raised when there is an error in configuration.</p>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Invalid configuration structure</p></li>
+<li><p>Missing required keys</p></li>
+<li><p>Invalid <code class="docutils literal notranslate"><span class="pre">_target_</span></code> specification</p></li>
+<li><p>OmegaConf interpolation errors</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockConfigError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nonexistent_key&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">FlexLockConfigError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Configuration error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="flexlockexecutionerror">
+<h4><code class="docutils literal notranslate"><span class="pre">FlexLockExecutionError</span></code><a class="headerlink" href="#flexlockexecutionerror" title="Link to this heading"></a></h4>
+<p>Raised when there is an error during execution.</p>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Target function raises an exception</p></li>
+<li><p>Import errors for <code class="docutils literal notranslate"><span class="pre">_target_</span></code></p></li>
+<li><p>Argument mismatches</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockExecutionError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">FlexLockExecutionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Execution failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="flexlocksnapshoterror">
+<h4><code class="docutils literal notranslate"><span class="pre">FlexLockSnapshotError</span></code><a class="headerlink" href="#flexlocksnapshoterror" title="Link to this heading"></a></h4>
+<p>Raised when there is an error creating or loading snapshots.</p>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Cannot write to <code class="docutils literal notranslate"><span class="pre">save_dir</span></code></p></li>
+<li><p>Corrupted <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> file</p></li>
+<li><p>Git repository errors during snapshot</p></li>
+<li><p>Invalid data paths for hashing</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockSnapshotError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">snapshot</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">})</span>
+<span class="k">except</span> <span class="n">FlexLockSnapshotError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Snapshot error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="flexlockvalidationerror">
+<h4><code class="docutils literal notranslate"><span class="pre">FlexLockValidationError</span></code><a class="headerlink" href="#flexlockvalidationerror" title="Link to this heading"></a></h4>
+<p>Raised when validation of inputs fails.</p>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Invalid parameter types</p></li>
+<li><p>Out-of-range values</p></li>
+<li><p>Missing required parameters</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockValidationError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Invalid</span>
+<span class="k">except</span> <span class="n">FlexLockValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Validation error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="flexlockcacheerror">
+<h4><code class="docutils literal notranslate"><span class="pre">FlexLockCacheError</span></code><a class="headerlink" href="#flexlockcacheerror" title="Link to this heading"></a></h4>
+<p>Raised when there is an error with smart run caching.</p>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Cannot read cached <code class="docutils literal notranslate"><span class="pre">run.lock</span></code></p></li>
+<li><p>Fingerprint comparison errors</p></li>
+<li><p>Corrupted cache database</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockCacheError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">search_dirs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;outputs/&#39;</span><span class="p">])</span>
+<span class="k">except</span> <span class="n">FlexLockCacheError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cache error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="flexlockbackenderror">
+<h4><code class="docutils literal notranslate"><span class="pre">FlexLockBackendError</span></code><a class="headerlink" href="#flexlockbackenderror" title="Link to this heading"></a></h4>
+<p>Raised when there is an error with HPC backends (Slurm/PBS).</p>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Invalid backend configuration</p></li>
+<li><p>Job submission failure</p></li>
+<li><p>Queue/scheduler errors</p></li>
+<li><p>Task database lock issues</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockBackendError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">FlexLockBackendError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HPC backend error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="catching-multiple-exceptions">
+<h3>Catching Multiple Exceptions<a class="headerlink" href="#catching-multiple-exceptions" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FlexLockError</span><span class="p">,</span>
+    <span class="n">FlexLockConfigError</span><span class="p">,</span>
+    <span class="n">FlexLockExecutionError</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">FlexLockConfigError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fix your configuration: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">FlexLockExecutionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Execution failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">FlexLockError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Other FlexLock error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mlflow_integration.html" class="btn btn-neutral float-left" title="MLflow Integration Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="FlexLock API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

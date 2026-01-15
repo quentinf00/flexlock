@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; FlexLock 0.1.0 documentation</title>
+  <title>Index &mdash; FlexLock 0.2.17 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/genindex.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=38b66d78"></script>
+      <script src="_static/documentation_options.js?v=4031e696"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -40,21 +40,29 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Conda packages</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html#development-workflow-the-debug-decorator">Development Workflow: The Debug Decorator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="supported_configurations.html">Supported Configuration Formats</a></li>
-<li class="toctree-l1"><a class="reference internal" href="logging.html">Logging Configuration in FlexLock</a></li>
-<li class="toctree-l1"><a class="reference internal" href="parallel.html">Parallel Execution in FlexLock</a></li>
-<li class="toctree-l1"><a class="reference internal" href="flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
-<li class="toctree-l1"><a class="reference internal" href="experimental.html">Advanced Topics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 </ul>
 
         </div>
@@ -84,7 +92,8 @@
 <h1 id="index">Index</h1>
 
 <div class="genindex-jumpbox">
- <a href="#B"><strong>B</strong></a>
+ <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
@@ -101,10 +110,19 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
 </div>
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.snapshot.RunTracker.add_lineage">add_lineage() (flexlock.snapshot.RunTracker method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -116,11 +134,31 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#flexlock.taskdb.claim_next_task">claim_next_task() (in module flexlock.taskdb)</a>
+      <li><a href="api.html#flexlock.backends.pbs.PBSJob.cancel">cancel() (flexlock.backends.pbs.PBSJob method)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.backends.slurm.SlurmJob.cancel">(flexlock.backends.slurm.SlurmJob method)</a>
 </li>
+      </ul></li>
+      <li><a href="api.html#flexlock.backends.pbs.PBSBackend.cancel_job">cancel_job() (flexlock.backends.pbs.PBSBackend method)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.backends.slurm.SlurmBackend.cancel_job">(flexlock.backends.slurm.SlurmBackend method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#flexlock.git_utils.commit_cwd">commit_cwd() (in module flexlock.git_utils)</a>
+      <li><a href="api.html#flexlock.FlexLockRunner.check_if_exists">check_if_exists() (flexlock.FlexLockRunner method)</a>
+</li>
+      <li><a href="api.html#flexlock.backends.pbs.PBSBackend.check_status">check_status() (flexlock.backends.pbs.PBSBackend method)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.backends.slurm.SlurmBackend.check_status">(flexlock.backends.slurm.SlurmBackend method)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#flexlock.taskdb.claim_next_task">claim_next_task() (in module flexlock.taskdb)</a>
+</li>
+      <li><a href="api.html#flexlock.git_utils.create_shadow_snapshot">create_shadow_snapshot() (in module flexlock.git_utils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -155,11 +193,19 @@
 </li>
       </ul></li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.Project.exists">exists() (flexlock.Project method)</a>
+</li>
+      <li><a href="api.html#flexlock.utils.extract_tracking_info">extract_tracking_info() (in module flexlock.utils)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.snapshot.RunTracker.finalize">finalize() (flexlock.snapshot.RunTracker method)</a>
+</li>
       <li><a href="api.html#flexlock.taskdb.finish_task">finish_task() (in module flexlock.taskdb)</a>
 </li>
       <li><a href="api.html#flexlock.flexcli">flexcli() (in module flexlock)</a>
@@ -224,8 +270,6 @@
         <li><a href="api.html#module-flexlock.flexcli">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     flexlock.git_utils
 
@@ -233,18 +277,13 @@
         <li><a href="api.html#module-flexlock.git_utils">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     flexlock.load_stage
 
       <ul>
         <li><a href="api.html#module-flexlock.load_stage">module</a>
-</li>
-      </ul></li>
-      <li>
-    flexlock.mlflowlink
-
-      <ul>
-        <li><a href="api.html#module-flexlock.mlflowlink">module</a>
 </li>
       </ul></li>
       <li>
@@ -289,16 +328,50 @@
         <li><a href="api.html#module-flexlock.worker">module</a>
 </li>
       </ul></li>
+      <li><a href="api.html#flexlock.FlexLockBackendError">FlexLockBackendError</a>
+</li>
+      <li><a href="api.html#flexlock.FlexLockCacheError">FlexLockCacheError</a>
+</li>
+      <li><a href="api.html#flexlock.FlexLockConfigError">FlexLockConfigError</a>
+</li>
+      <li><a href="api.html#flexlock.FlexLockError">FlexLockError</a>
+</li>
+      <li><a href="api.html#flexlock.FlexLockExecutionError">FlexLockExecutionError</a>
+</li>
+      <li><a href="api.html#flexlock.FlexLockRunner">FlexLockRunner (class in flexlock)</a>
+</li>
+      <li><a href="api.html#flexlock.FlexLockSnapshotError">FlexLockSnapshotError</a>
+</li>
+      <li><a href="api.html#flexlock.FlexLockValidationError">FlexLockValidationError</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.Project.get">get() (flexlock.Project method)</a>
+</li>
+      <li><a href="api.html#flexlock.taskdb.get_all_tasks">get_all_tasks() (in module flexlock.taskdb)</a>
+</li>
+      <li><a href="api.html#flexlock.taskdb.get_failed_tasks">get_failed_tasks() (in module flexlock.taskdb)</a>
+</li>
       <li><a href="api.html#flexlock.git_utils.get_git_commit">get_git_commit() (in module flexlock.git_utils)</a>
 </li>
+      <li><a href="api.html#flexlock.get_git_tree_hash">get_git_tree_hash() (in module flexlock)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.git_utils.get_git_tree_hash">(in module flexlock.git_utils)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.Project.get_result">get_result() (flexlock.Project method)</a>
+</li>
+      <li><a href="api.html#flexlock.taskdb.get_status_counts">get_status_counts() (in module flexlock.taskdb)</a>
+</li>
+      <li><a href="api.html#flexlock.taskdb.get_task_snapshot">get_task_snapshot() (in module flexlock.taskdb)</a>
+</li>
       <li><a href="api.html#flexlock.backends.base.JobEnvironment.global_rank">global_rank (flexlock.backends.base.JobEnvironment property)</a>
 </li>
   </ul></td>
@@ -307,8 +380,12 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#flexlock.data_hash.hash_data">hash_data() (in module flexlock.data_hash)</a>
+      <li><a href="api.html#flexlock.hash_data">hash_data() (in module flexlock)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.data_hash.hash_data">(in module flexlock.data_hash)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -343,10 +420,22 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#flexlock.load_stage.load_stage_from_path">load_stage_from_path() (in module flexlock.load_stage)</a>
+      <li><a href="api.html#flexlock.resolvers.latest_resolver">latest_resolver() (in module flexlock.resolvers)</a>
 </li>
+      <li><a href="api.html#flexlock.taskdb.list_task_snapshots">list_task_snapshots() (in module flexlock.taskdb)</a>
+</li>
+      <li><a href="api.html#flexlock.FlexLockRunner.load_config">load_config() (flexlock.FlexLockRunner method)</a>
+</li>
+      <li><a href="api.html#flexlock.load_python_defaults">load_python_defaults() (in module flexlock)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.utils.load_python_defaults">(in module flexlock.utils)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.load_stage.load_stage_from_path">load_stage_from_path() (in module flexlock.load_stage)</a>
+</li>
       <li><a href="api.html#flexlock.parallel.load_tasks">load_tasks() (in module flexlock.parallel)</a>
 </li>
       <li><a href="api.html#flexlock.utils.log_to_file">log_to_file() (in module flexlock.utils)</a>
@@ -359,12 +448,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.utils.merge_task_into_cfg">merge_task_into_cfg() (in module flexlock.utils)</a>
 </li>
-      <li><a href="api.html#flexlock.mlflowlink">mlflowlink() (in module flexlock)</a>
-
-      <ul>
-        <li><a href="api.html#flexlock.mlflowlink.mlflowlink">(in module flexlock.mlflowlink)</a>
+      <li><a href="api.html#flexlock.mlflow_context">mlflow_context() (in module flexlock)</a>
 </li>
-      </ul></li>
       <li>
     module
 
@@ -388,8 +473,6 @@
         <li><a href="api.html#module-flexlock.git_utils">flexlock.git_utils</a>
 </li>
         <li><a href="api.html#module-flexlock.load_stage">flexlock.load_stage</a>
-</li>
-        <li><a href="api.html#module-flexlock.mlflowlink">flexlock.mlflowlink</a>
 </li>
         <li><a href="api.html#module-flexlock.parallel">flexlock.parallel</a>
 </li>
@@ -422,14 +505,20 @@
 </li>
       <li><a href="api.html#flexlock.backends.pbs.PBSBackend">PBSBackend (class in flexlock.backends.pbs)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.backends.pbs.PBSJob">PBSJob (class in flexlock.backends.pbs)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.taskdb.pending_count">pending_count() (in module flexlock.taskdb)</a>
 </li>
-      <li><a href="api.html#flexlock.utils.py2cfg">py2cfg() (in module flexlock.utils)</a>
+      <li><a href="api.html#flexlock.Project">Project (class in flexlock)</a>
 </li>
+      <li><a href="api.html#flexlock.py2cfg">py2cfg() (in module flexlock)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.utils.py2cfg">(in module flexlock.utils)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -444,11 +533,21 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.snapshot.RunTracker.record_data">record_data() (flexlock.snapshot.RunTracker method)</a>
+</li>
+      <li><a href="api.html#flexlock.snapshot.RunTracker.record_env">record_env() (flexlock.snapshot.RunTracker method)</a>
+</li>
       <li><a href="api.html#flexlock.resolvers.register_resolvers">register_resolvers() (in module flexlock.resolvers)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#flexlock.parallel.ParallelExecutor.run">run() (flexlock.parallel.ParallelExecutor method)</a>
+      <li><a href="api.html#flexlock.FlexLockRunner.run">run() (flexlock.FlexLockRunner method)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.parallel.ParallelExecutor.run">(flexlock.parallel.ParallelExecutor method)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#flexlock.snapshot.RunTracker">RunTracker (class in flexlock.snapshot)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -456,6 +555,12 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.git_utils.sanitize_ref_name">sanitize_ref_name() (in module flexlock.git_utils)</a>
+</li>
+      <li><a href="api.html#flexlock.snapshot.RunTracker.save">save() (flexlock.snapshot.RunTracker method)</a>
+</li>
+      <li><a href="api.html#flexlock.git_utils.shadow_index">shadow_index() (in module flexlock.git_utils)</a>
+</li>
       <li><a href="api.html#flexlock.backends.slurm.SlurmBackend">SlurmBackend (class in flexlock.backends.slurm)</a>
 </li>
       <li><a href="api.html#flexlock.backends.slurm.SlurmJob">SlurmJob (class in flexlock.backends.slurm)</a>
@@ -468,16 +573,20 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#flexlock.resolvers.snapshot_resolver">snapshot_resolver() (in module flexlock.resolvers)</a>
+      <li><a href="api.html#flexlock.backends.pbs.PBSJob.status">status() (flexlock.backends.pbs.PBSJob method)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.backends.slurm.SlurmJob.status">(flexlock.backends.slurm.SlurmJob method)</a>
 </li>
-      <li><a href="api.html#flexlock.resolvers.stage_resolver">stage_resolver() (in module flexlock.resolvers)</a>
-</li>
+      </ul></li>
       <li><a href="api.html#flexlock.backends.base.Backend.submit">submit() (flexlock.backends.base.Backend method)</a>
 
       <ul>
         <li><a href="api.html#flexlock.backends.pbs.PBSBackend.submit">(flexlock.backends.pbs.PBSBackend method)</a>
 </li>
         <li><a href="api.html#flexlock.backends.slurm.SlurmBackend.submit">(flexlock.backends.slurm.SlurmBackend method)</a>
+</li>
+        <li><a href="api.html#flexlock.Project.submit">(flexlock.Project method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -489,8 +598,12 @@
       <li><a href="api.html#flexlock.utils.to_dictconfig">to_dictconfig() (in module flexlock.utils)</a>
 </li>
   </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#flexlock.resolvers.track_resolver">track_resolver() (in module flexlock.resolvers)</a>
+      <li><a href="api.html#flexlock.taskdb.update_task_snapshot">update_task_snapshot() (in module flexlock.taskdb)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -506,10 +619,22 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#flexlock.worker.worker_loop">worker_loop() (in module flexlock.worker)</a>
+      <li><a href="api.html#flexlock.backends.pbs.PBSJob.wait">wait() (flexlock.backends.pbs.PBSJob method)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.backends.slurm.SlurmJob.wait">(flexlock.backends.slurm.SlurmJob method)</a>
 </li>
+      </ul></li>
+      <li><a href="api.html#flexlock.backends.pbs.PBSBackend.wait_for_job">wait_for_job() (flexlock.backends.pbs.PBSBackend method)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.backends.slurm.SlurmBackend.wait_for_job">(flexlock.backends.slurm.SlurmBackend method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.worker.worker_loop">worker_loop() (in module flexlock.worker)</a>
+</li>
       <li><a href="api.html#flexlock.backends.base.JobEnvironment.world_size">world_size (flexlock.backends.base.JobEnvironment property)</a>
 </li>
   </ul></td>

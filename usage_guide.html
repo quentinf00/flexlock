@@ -1,0 +1,1037 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Complete Usage Guide &mdash; FlexLock 0.2.17 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/usage_guide.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4031e696"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Debugging with FlexLock" href="debugging.html" />
+    <link rel="prev" title="Quickstart Guide" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Complete Usage Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#table-of-contents">Table of Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#your-first-experiment">Your First Experiment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-methods">Configuration Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#function-defaults-flexcli">1. Function Defaults (<code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-configs-py2cfg">2. Python Configs (<code class="docutils literal notranslate"><span class="pre">py2cfg</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#yaml-configs">3. YAML Configs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#execution-modes">Execution Modes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#direct-python-execution">1. Direct Python Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cli-with-flexlock-run">2. CLI with <code class="docutils literal notranslate"><span class="pre">flexlock-run</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-project-api">3. Python Project API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#reproducibility">Reproducibility</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enable-tracking">Enable Tracking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#snapshot-contents">Snapshot Contents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#compare-runs">Compare Runs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#parameter-sweeps">Parameter Sweeps</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cli-sweeps">CLI Sweeps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-api-sweeps">Python API Sweeps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hpc-integration">HPC Integration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#slurm-configuration">Slurm Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pbs-configuration">PBS Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#containerized-execution">Containerized Execution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pipelines">Pipelines</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-pipeline">Basic Pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pipeline-with-config-links">Pipeline with Config Links</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pipeline-with-smart-run">Pipeline with Smart Run</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#smart-caching">Smart Caching</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-it-works">How It Works</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enable-smart-run">Enable Smart Run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#custom-search-directories">Custom Search Directories</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#check-before-running">Check Before Running</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#common-patterns">Common Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-1-hyperparameter-search">Pattern 1: Hyperparameter Search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-2-iterative-refinement">Pattern 2: Iterative Refinement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-3-multi-stage-with-sweeps">Pattern 3: Multi-Stage with Sweeps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-4-resume-failed-sweep">Pattern 4: Resume Failed Sweep</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-5-cross-validation-pipeline">Pattern 5: Cross-Validation Pipeline</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#tips-best-practices">Tips &amp; Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#always-specify-save-dir">1. Always Specify <code class="docutils literal notranslate"><span class="pre">save_dir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#use-resolvers-for-dynamic-values">2. Use Resolvers for Dynamic Values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#track-data-dependencies">3. Track Data Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#use-smart-run-by-default">4. Use <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> by Default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#structure-configs-hierarchically">5. Structure Configs Hierarchically</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#issue-task-db-locked">Issue: “Task DB locked”</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#issue-smart-run-not-finding-cached-results">Issue: Smart run not finding cached results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#issue-sweep-not-using-all-workers">Issue: Sweep not using all workers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Complete Usage Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/usage_guide.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="complete-usage-guide">
+<h1>Complete Usage Guide<a class="headerlink" href="#complete-usage-guide" title="Link to this heading"></a></h1>
+<p>Comprehensive guide covering all FlexLock features and use cases.</p>
+<section id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#getting-started"><span class="xref myst">Getting Started</span></a></p></li>
+<li><p><a class="reference internal" href="#configuration-methods"><span class="xref myst">Configuration Methods</span></a></p></li>
+<li><p><a class="reference internal" href="#execution-modes"><span class="xref myst">Execution Modes</span></a></p></li>
+<li><p><a class="reference internal" href="#reproducibility"><span class="xref myst">Reproducibility</span></a></p></li>
+<li><p><a class="reference internal" href="#parameter-sweeps"><span class="xref myst">Parameter Sweeps</span></a></p></li>
+<li><p><a class="reference internal" href="#hpc-integration"><span class="xref myst">HPC Integration</span></a></p></li>
+<li><p><a class="reference internal" href="#pipelines"><span class="xref myst">Pipelines</span></a></p></li>
+<li><p><a class="reference internal" href="#smart-caching"><span class="xref myst">Smart Caching</span></a></p></li>
+<li><p><a class="reference internal" href="#common-patterns"><span class="xref myst">Common Patterns</span></a></p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>flexlock
+</pre></div>
+</div>
+</section>
+<section id="your-first-experiment">
+<h3>Your First Experiment<a class="headerlink" href="#your-first-experiment" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># train.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Train a model.&quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training: lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">}</span><span class="s2">, epochs=</span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span> <span class="s2">&quot;loss&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">}</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">train</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Run it:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>train.py<span class="w">                    </span><span class="c1"># Use defaults</span>
+python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1<span class="w">          </span><span class="c1"># Override learning rate</span>
+python<span class="w"> </span>train.py<span class="w"> </span>--debug<span class="w">            </span><span class="c1"># Enable debug mode</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="configuration-methods">
+<h2>Configuration Methods<a class="headerlink" href="#configuration-methods" title="Link to this heading"></a></h2>
+<p>FlexLock supports three configuration methods:</p>
+<section id="function-defaults-flexcli">
+<h3>1. Function Defaults (<code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>)<a class="headerlink" href="#function-defaults-flexcli" title="Link to this heading"></a></h3>
+<p>Best for: Simple scripts, quick prototypes</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">param1</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">param2</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">param1</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">param2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>CLI:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>script.py<span class="w"> </span>-o<span class="w"> </span><span class="nv">param1</span><span class="o">=</span><span class="m">20</span><span class="w"> </span><span class="nv">param2</span><span class="o">=</span>custom
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="python-configs-py2cfg">
+<h3>2. Python Configs (<code class="docutils literal notranslate"><span class="pre">py2cfg</span></code>)<a class="headerlink" href="#python-configs-py2cfg" title="Link to this heading"></a></h3>
+<p>Best for: Complex configurations, nested objects, type safety</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># config.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">py2cfg</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Model</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="c1"># Create configs</span>
+<span class="n">defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">base_dir</span><span class="o">=</span><span class="s1">&#39;outputs/&#39;</span><span class="p">,</span>
+    <span class="n">train</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span>
+        <span class="n">train</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.2</span><span class="p">),</span>
+        <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+        <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{base_dir}</span><span class="s1">/train&#39;</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>CLI:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>config.defaults<span class="w"> </span>-s<span class="w"> </span>train
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>config.defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.01
+</pre></div>
+</div>
+<p><strong>Python:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;config.defaults&#39;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="yaml-configs">
+<h3>3. YAML Configs<a class="headerlink" href="#yaml-configs" title="Link to this heading"></a></h3>
+<p>Best for: Declarative configs, sharing with non-Python users</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># config.yaml</span>
+<span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.train.train</span>
+
+<span class="nt">model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.models.Transformer</span>
+<span class="w">  </span><span class="nt">layers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12</span>
+<span class="w">  </span><span class="nt">dropout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span>
+
+<span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span>
+<span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outputs/train</span>
+</pre></div>
+</div>
+<p><strong>CLI:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-c<span class="w"> </span>config.yaml
+flexlock-run<span class="w"> </span>-c<span class="w"> </span>config.yaml<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.01
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="execution-modes">
+<h2>Execution Modes<a class="headerlink" href="#execution-modes" title="Link to this heading"></a></h2>
+<section id="direct-python-execution">
+<h3>1. Direct Python Execution<a class="headerlink" href="#direct-python-execution" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">}</span>
+
+<span class="c1"># Direct call (Python API)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Returns dict</span>
+
+<span class="c1"># CLI mode</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">train</span><span class="p">()</span>  <span class="c1"># Parses sys.argv</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="cli-with-flexlock-run">
+<h3>2. CLI with <code class="docutils literal notranslate"><span class="pre">flexlock-run</span></code><a class="headerlink" href="#cli-with-flexlock-run" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># From Python config</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.config<span class="w"> </span>-s<span class="w"> </span>train
+
+<span class="c1"># From YAML config</span>
+flexlock-run<span class="w"> </span>-c<span class="w"> </span>config.yaml
+
+<span class="c1"># With overrides</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="python-project-api">
+<h3>3. Python Project API<a class="headerlink" href="#python-project-api" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;myproject.config&#39;</span><span class="p">)</span>
+
+<span class="c1"># Get and execute</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="c1"># Access results</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="reproducibility">
+<h2>Reproducibility<a class="headerlink" href="#reproducibility" title="Link to this heading"></a></h2>
+<p>FlexLock tracks code, data, and configuration for every run.</p>
+<section id="enable-tracking">
+<h3>Enable Tracking<a class="headerlink" href="#enable-tracking" title="Link to this heading"></a></h3>
+<p><strong>With decorator:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span><span class="p">(</span>
+    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>           <span class="c1"># Track git repo</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_path}&#39;</span><span class="p">}</span>  <span class="c1"># Track data files</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p><strong>With py2cfg:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
+    <span class="n">train</span><span class="p">,</span>
+    <span class="n">input_path</span><span class="o">=</span><span class="s1">&#39;data/train.csv&#39;</span><span class="p">,</span>
+    <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train&#39;</span><span class="p">,</span>
+    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;submodule&#39;</span><span class="p">:</span> <span class="s1">&#39;libs/mylib&#39;</span><span class="p">},</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;train_data&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_path}&#39;</span><span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="snapshot-contents">
+<h3>Snapshot Contents<a class="headerlink" href="#snapshot-contents" title="Link to this heading"></a></h3>
+<p>Every run creates <code class="docutils literal notranslate"><span class="pre">run.lock</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># outputs/train/run_0001/run.lock</span>
+<span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2024-01-15T14:30:00.123456&quot;</span>
+
+<span class="nt">repos</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">main</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">commit</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;abc123...&quot;</span><span class="w">     </span><span class="c1"># Git commit hash</span>
+<span class="w">    </span><span class="nt">tree</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;def456...&quot;</span><span class="w">       </span><span class="c1"># Git tree hash (key for equality)</span>
+<span class="w">    </span><span class="nt">is_dirty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+
+<span class="nt">data</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">train_data</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;xxh64_789xyz...&quot;</span><span class="w">  </span><span class="c1"># Data file hash</span>
+
+<span class="nt">config</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span>
+<span class="w">  </span><span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">  </span><span class="nt">input_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;data/train.csv&quot;</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;outputs/train/run_0001&quot;</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="compare-runs">
+<h3>Compare Runs<a class="headerlink" href="#compare-runs" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-diff<span class="w"> </span>outputs/train/run_0001<span class="w"> </span>outputs/train/run_0002
+</pre></div>
+</div>
+<p><strong>Output:</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Differences:
+  config.lr: 0.01 → 0.1
+  data.train_data: hash_abc → hash_xyz
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="parameter-sweeps">
+<h2>Parameter Sweeps<a class="headerlink" href="#parameter-sweeps" title="Link to this heading"></a></h2>
+<p>Run multiple experiments with different parameters.</p>
+<section id="cli-sweeps">
+<h3>CLI Sweeps<a class="headerlink" href="#cli-sweeps" title="Link to this heading"></a></h3>
+<p><strong>Comma-separated values:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sweep<span class="w"> </span><span class="s2">&quot;0.001,0.01,0.1&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sweep-target<span class="w"> </span>lr<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--n_jobs<span class="w"> </span><span class="m">3</span>
+</pre></div>
+</div>
+<p><strong>From file:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># sweep.yaml</span>
+-<span class="w"> </span><span class="o">{</span>lr:<span class="w"> </span><span class="m">0</span>.001,<span class="w"> </span>batch_size:<span class="w"> </span><span class="m">32</span><span class="o">}</span>
+-<span class="w"> </span><span class="o">{</span>lr:<span class="w"> </span><span class="m">0</span>.01,<span class="w"> </span>batch_size:<span class="w"> </span><span class="m">64</span><span class="o">}</span>
+-<span class="w"> </span><span class="o">{</span>lr:<span class="w"> </span><span class="m">0</span>.1,<span class="w"> </span>batch_size:<span class="w"> </span><span class="m">128</span><span class="o">}</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--n_jobs<span class="w"> </span><span class="m">3</span>
+</pre></div>
+</div>
+<p><strong>From config:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># config.py</span>
+<span class="n">defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">train</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">),</span>
+    <span class="n">param_grid</span><span class="o">=</span><span class="p">[</span>
+        <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+        <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class="w"> </span>--sweep-key<span class="w"> </span>param_grid<span class="w"> </span>--n_jobs<span class="w"> </span><span class="m">2</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="python-api-sweeps">
+<h3>Python API Sweeps<a class="headerlink" href="#python-api-sweeps" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;config.defaults&#39;</span><span class="p">)</span>
+
+<span class="c1"># Define sweep</span>
+<span class="n">sweep</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">),</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="c1"># Execute</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">),</span>
+    <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=</span><span class="mi">3</span>
+<span class="p">)</span>
+
+<span class="c1"># Process results</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: accuracy=</span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best LR: </span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">lr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="hpc-integration">
+<h2>HPC Integration<a class="headerlink" href="#hpc-integration" title="Link to this heading"></a></h2>
+<p>Execute experiments on HPC clusters using Slurm or PBS.</p>
+<section id="slurm-configuration">
+<h3>Slurm Configuration<a class="headerlink" href="#slurm-configuration" title="Link to this heading"></a></h3>
+<p><strong>slurm.yaml:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--job-name=flexlock&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--cpus-per-task=8&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--mem=32G&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--time=04:00:00&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--gres=gpu:1&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--array=0-99&quot;</span><span class="w">    </span><span class="c1"># 100 workers</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;module</span><span class="nv"> </span><span class="s">load</span><span class="nv"> </span><span class="s">cuda/11.8&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;source</span><span class="nv"> </span><span class="s">activate</span><span class="nv"> </span><span class="s">myenv&quot;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;python&quot;</span>
+</pre></div>
+</div>
+<p><strong>CLI:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--slurm-config<span class="w"> </span>slurm.yaml
+</pre></div>
+</div>
+<p><strong>Python:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">,</span>
+    <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span>
+    <span class="n">slurm_config</span><span class="o">=</span><span class="s1">&#39;slurm.yaml&#39;</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Block until completion</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="pbs-configuration">
+<h3>PBS Configuration<a class="headerlink" href="#pbs-configuration" title="Link to this heading"></a></h3>
+<p><strong>pbs.yaml:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=1:ncpus=8:mem=32gb&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=04:00:00&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-N</span><span class="nv"> </span><span class="s">flexlock&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-J</span><span class="nv"> </span><span class="s">0-99&quot;</span><span class="w">  </span><span class="c1"># 100 workers</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;conda</span><span class="nv"> </span><span class="s">activate</span><span class="nv"> </span><span class="s">myenv&quot;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;python&quot;</span>
+</pre></div>
+</div>
+<p><strong>CLI:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pbs-config<span class="w"> </span>pbs.yaml
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="containerized-execution">
+<h3>Containerized Execution<a class="headerlink" href="#containerized-execution" title="Link to this heading"></a></h3>
+<p><strong>Singularity:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># pbs_singularity.yaml</span>
+<span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=1:ncpus=4&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&quot;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">  </span><span class="no">singularity run</span>
+<span class="w">  </span><span class="no">--bind $(pwd)/src:/app/src</span>
+<span class="w">  </span><span class="no">--bind $(pwd)/outputs:/workspace/outputs</span>
+<span class="w">  </span><span class="no">--pwd /workspace</span>
+<span class="w">  </span><span class="no">myenv.sif python</span>
+</pre></div>
+</div>
+<p><strong>Docker:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cd</span><span class="nv"> </span><span class="s">$WORKSPACE&quot;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">  </span><span class="no">docker run</span>
+<span class="w">  </span><span class="no">-v $(pwd):/workspace</span>
+<span class="w">  </span><span class="no">-w /workspace</span>
+<span class="w">  </span><span class="no">myimage:latest python</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="pipelines">
+<h2>Pipelines<a class="headerlink" href="#pipelines" title="Link to this heading"></a></h2>
+<p>Chain multiple stages with dependency tracking.</p>
+<section id="basic-pipeline">
+<h3>Basic Pipeline<a class="headerlink" href="#basic-pipeline" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span><span class="p">,</span> <span class="n">py2cfg</span>
+
+<span class="c1"># Define stages</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">preprocess</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">):</span>
+    <span class="c1"># ... processing ...</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;output_path&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">/processed.csv&quot;</span><span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">):</span>
+    <span class="c1"># ... training ...</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">):</span>
+    <span class="c1"># ... evaluation ...</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;final_accuracy&quot;</span><span class="p">:</span> <span class="mf">0.96</span><span class="p">}</span>
+
+<span class="c1"># Create project</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;pipeline.defaults&#39;</span><span class="p">)</span>
+
+<span class="c1"># Execute pipeline</span>
+<span class="n">prep_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">))</span>
+
+<span class="n">train_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+<span class="n">train_cfg</span><span class="o">.</span><span class="n">data_path</span> <span class="o">=</span> <span class="n">prep_result</span><span class="p">[</span><span class="s1">&#39;output_path&#39;</span><span class="p">]</span>
+<span class="n">train_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">train_cfg</span><span class="p">)</span>
+
+<span class="n">eval_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;evaluate&#39;</span><span class="p">)</span>
+<span class="n">eval_cfg</span><span class="o">.</span><span class="n">model_dir</span> <span class="o">=</span> <span class="n">train_result</span><span class="o">.</span><span class="n">save_dir</span>
+<span class="n">eval_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">eval_cfg</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final: </span><span class="si">{</span><span class="n">eval_result</span><span class="p">[</span><span class="s1">&#39;final_accuracy&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="pipeline-with-config-links">
+<h3>Pipeline with Config Links<a class="headerlink" href="#pipeline-with-config-links" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># pipeline.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">py2cfg</span>
+
+<span class="n">defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">base_dir</span><span class="o">=</span><span class="s1">&#39;outputs/pipeline&#39;</span><span class="p">,</span>
+
+    <span class="n">preprocess</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span>
+        <span class="n">preprocess</span><span class="p">,</span>
+        <span class="n">input_dir</span><span class="o">=</span><span class="s1">&#39;data/raw&#39;</span><span class="p">,</span>
+        <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{base_dir}</span><span class="s1">/preprocess&#39;</span>
+    <span class="p">),</span>
+
+    <span class="n">train</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span>
+        <span class="n">train</span><span class="p">,</span>
+        <span class="n">data_path</span><span class="o">=</span><span class="s1">&#39;${latest:$</span><span class="si">{base_dir}</span><span class="s1">/preprocess/*/processed.csv}&#39;</span><span class="p">,</span>
+        <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{base_dir}</span><span class="s1">/train&#39;</span>
+    <span class="p">),</span>
+
+    <span class="n">evaluate</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span>
+        <span class="n">evaluate</span><span class="p">,</span>
+        <span class="n">model_dir</span><span class="o">=</span><span class="s1">&#39;${latest:$</span><span class="si">{base_dir}</span><span class="s1">/train/*/}&#39;</span><span class="p">,</span>
+        <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{base_dir}</span><span class="s1">/evaluate&#39;</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Execute:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;pipeline.defaults&#39;</span><span class="p">)</span>
+
+<span class="c1"># All dependencies resolved automatically</span>
+<span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;preprocess&#39;</span><span class="p">,</span> <span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="s1">&#39;evaluate&#39;</span><span class="p">]:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">stage</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="pipeline-with-smart-run">
+<h3>Pipeline with Smart Run<a class="headerlink" href="#pipeline-with-smart-run" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># First execution</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;pipeline.defaults&#39;</span><span class="p">)</span>
+
+<span class="n">prep_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">))</span>     <span class="c1"># Runs</span>
+<span class="n">train_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">))</span>         <span class="c1"># Runs</span>
+<span class="n">eval_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;evaluate&#39;</span><span class="p">))</span>       <span class="c1"># Runs</span>
+
+<span class="c1"># Rerun (no changes)</span>
+<span class="n">prep_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">))</span>     <span class="c1"># ⚡ Cached</span>
+<span class="n">train_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">))</span>         <span class="c1"># ⚡ Cached</span>
+<span class="n">eval_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;evaluate&#39;</span><span class="p">))</span>       <span class="c1"># ⚡ Cached</span>
+
+<span class="c1"># Modify preprocess, rerun</span>
+<span class="n">prep_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">)</span>
+<span class="n">prep_cfg</span><span class="o">.</span><span class="n">some_param</span> <span class="o">=</span> <span class="s1">&#39;new_value&#39;</span>
+
+<span class="n">prep_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">prep_cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Runs (forced)</span>
+<span class="n">train_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">))</span>         <span class="c1"># Runs (deps changed)</span>
+<span class="n">eval_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;evaluate&#39;</span><span class="p">))</span>       <span class="c1"># Runs (deps changed)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="smart-caching">
+<h2>Smart Caching<a class="headerlink" href="#smart-caching" title="Link to this heading"></a></h2>
+<p>FlexLock automatically caches and reuses results.</p>
+<section id="how-it-works">
+<h3>How It Works<a class="headerlink" href="#how-it-works" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Fingerprint Generation:</strong> Combines code (git tree hash) + data (file hashes) + config</p></li>
+<li><p><strong>Search:</strong> Looks for matching <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> files in <code class="docutils literal notranslate"><span class="pre">search_dirs</span></code></p></li>
+<li><p><strong>Match:</strong> Compares fingerprints using <code class="docutils literal notranslate"><span class="pre">RunDiff</span></code></p></li>
+<li><p><strong>Cache Hit:</strong> Returns existing result without rerunning</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="enable-smart-run">
+<h3>Enable Smart Run<a class="headerlink" href="#enable-smart-run" title="Link to this heading"></a></h3>
+<p><strong>Default (enabled):</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>  <span class="c1"># smart_run=True by default</span>
+</pre></div>
+</div>
+<p><strong>Explicit:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">search_dirs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;outputs/train/&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><strong>Disable:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Always runs</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="custom-search-directories">
+<h3>Custom Search Directories<a class="headerlink" href="#custom-search-directories" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">search_dirs</span><span class="o">=</span><span class="p">[</span>
+        <span class="s1">&#39;outputs/train/&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;archive/previous_runs/&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;/shared/team_results/&#39;</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="check-before-running">
+<h3>Check Before Running<a class="headerlink" href="#check-before-running" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">proj</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">search_dirs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;outputs/train/&#39;</span><span class="p">]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using cached result&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running new experiment&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="common-patterns">
+<h2>Common Patterns<a class="headerlink" href="#common-patterns" title="Link to this heading"></a></h2>
+<section id="pattern-1-hyperparameter-search">
+<h3>Pattern 1: Hyperparameter Search<a class="headerlink" href="#pattern-1-hyperparameter-search" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;config.defaults&#39;</span><span class="p">)</span>
+
+<span class="c1"># Grid search</span>
+<span class="n">lr_values</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0001</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]</span>
+<span class="n">bs_values</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">]</span>
+
+<span class="n">sweep</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">bs</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lr</span> <span class="ow">in</span> <span class="n">lr_values</span>
+    <span class="k">for</span> <span class="n">bs</span> <span class="ow">in</span> <span class="n">bs_values</span>
+<span class="p">]</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">),</span>
+    <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Skip already-run configs</span>
+<span class="p">)</span>
+
+<span class="c1"># Find best</span>
+<span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best config: lr=</span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">lr</span><span class="si">}</span><span class="s2">, bs=</span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best accuracy: </span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">accuracy</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="pattern-2-iterative-refinement">
+<h3>Pattern 2: Iterative Refinement<a class="headerlink" href="#pattern-2-iterative-refinement" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start with baseline</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+<span class="n">cfg</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="mf">0.01</span>
+<span class="n">baseline</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Baseline: </span><span class="si">{</span><span class="n">baseline</span><span class="o">.</span><span class="n">accuracy</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Try improvements</span>
+<span class="k">for</span> <span class="n">lr</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.005</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.0005</span><span class="p">]:</span>
+    <span class="n">cfg</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="n">lr</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LR=</span><span class="si">{</span><span class="n">lr</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">accuracy</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">accuracy</span> <span class="o">&gt;</span> <span class="n">baseline</span><span class="o">.</span><span class="n">accuracy</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Improvement found! New baseline.&quot;</span><span class="p">)</span>
+        <span class="n">baseline</span> <span class="o">=</span> <span class="n">result</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="pattern-3-multi-stage-with-sweeps">
+<h3>Pattern 3: Multi-Stage with Sweeps<a class="headerlink" href="#pattern-3-multi-stage-with-sweeps" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Stage 1: Preprocess (once)</span>
+<span class="n">prep_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">)</span>
+<span class="n">prep_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">prep_cfg</span><span class="p">)</span>
+
+<span class="c1"># Stage 2: Train (sweep)</span>
+<span class="n">train_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+<span class="n">train_cfg</span><span class="o">.</span><span class="n">data_path</span> <span class="o">=</span> <span class="n">prep_result</span><span class="p">[</span><span class="s1">&#39;output_path&#39;</span><span class="p">]</span>
+
+<span class="n">train_sweep</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">)</span> <span class="k">for</span> <span class="n">lr</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]]</span>
+<span class="n">train_results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">train_cfg</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="n">train_sweep</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># Stage 3: Evaluate best model</span>
+<span class="n">best_train</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">train_results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;val_accuracy&#39;</span><span class="p">])</span>
+
+<span class="n">eval_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;evaluate&#39;</span><span class="p">)</span>
+<span class="n">eval_cfg</span><span class="o">.</span><span class="n">model_path</span> <span class="o">=</span> <span class="n">best_train</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">+</span> <span class="s1">&#39;/model.pth&#39;</span>
+<span class="n">eval_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">eval_cfg</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Test accuracy: </span><span class="si">{</span><span class="n">eval_result</span><span class="p">[</span><span class="s1">&#39;test_accuracy&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="pattern-4-resume-failed-sweep">
+<h3>Pattern 4: Resume Failed Sweep<a class="headerlink" href="#pattern-4-resume-failed-sweep" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initial sweep (some jobs fail)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span>--n_jobs<span class="w"> </span><span class="m">10</span>
+
+<span class="c1"># Check status</span>
+flexlock-status<span class="w"> </span>outputs/sweep/run.lock.tasks.db
+
+<span class="c1"># Rerun (only failed tasks execute)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span>--n_jobs<span class="w"> </span><span class="m">10</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="pattern-5-cross-validation-pipeline">
+<h3>Pattern 5: Cross-Validation Pipeline<a class="headerlink" href="#pattern-5-cross-validation-pipeline" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span><span class="p">,</span> <span class="n">py2cfg</span>
+
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;cv.defaults&#39;</span><span class="p">)</span>
+
+<span class="n">folds</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">fold</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">folds</span><span class="p">):</span>
+    <span class="c1"># Train on fold</span>
+    <span class="n">train_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+    <span class="n">train_cfg</span><span class="o">.</span><span class="n">fold</span> <span class="o">=</span> <span class="n">fold</span>
+    <span class="n">train_cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;outputs/cv/fold_</span><span class="si">{</span><span class="n">fold</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="n">train_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">train_cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Evaluate</span>
+    <span class="n">eval_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;evaluate&#39;</span><span class="p">)</span>
+    <span class="n">eval_cfg</span><span class="o">.</span><span class="n">model_dir</span> <span class="o">=</span> <span class="n">train_result</span><span class="o">.</span><span class="n">save_dir</span>
+    <span class="n">eval_cfg</span><span class="o">.</span><span class="n">fold</span> <span class="o">=</span> <span class="n">fold</span>
+
+    <span class="n">eval_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">eval_cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eval_result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CV Accuracy: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">std</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="tips-best-practices">
+<h2>Tips &amp; Best Practices<a class="headerlink" href="#tips-best-practices" title="Link to this heading"></a></h2>
+<section id="always-specify-save-dir">
+<h3>1. Always Specify <code class="docutils literal notranslate"><span class="pre">save_dir</span></code><a class="headerlink" href="#always-specify-save-dir" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train_baseline&#39;</span><span class="p">)</span>
+
+<span class="c1"># Bad (will use default, may conflict)</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="use-resolvers-for-dynamic-values">
+<h3>2. Use Resolvers for Dynamic Values<a class="headerlink" href="#use-resolvers-for-dynamic-values" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Auto-versioning</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;${vinc:outputs/train/run}&#39;</span><span class="p">)</span>
+
+<span class="c1"># Timestamps</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train_${now:%Y%m</span><span class="si">%d</span><span class="s1">_%H%M%S}&#39;</span><span class="p">)</span>
+
+<span class="c1"># Latest dependency</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">data_path</span><span class="o">=</span><span class="s1">&#39;${latest:outputs/preprocess/*/data.csv}&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="track-data-dependencies">
+<h3>3. Track Data Dependencies<a class="headerlink" href="#track-data-dependencies" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
+    <span class="n">train</span><span class="p">,</span>
+    <span class="n">input_data</span><span class="o">=</span><span class="s1">&#39;data/train.csv&#39;</span><span class="p">,</span>
+    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;train&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_data}&#39;</span><span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="use-smart-run-by-default">
+<h3>4. Use <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> by Default<a class="headerlink" href="#use-smart-run-by-default" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Let FlexLock skip redundant work</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Only disable for debugging</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="structure-configs-hierarchically">
+<h3>5. Structure Configs Hierarchically<a class="headerlink" href="#structure-configs-hierarchically" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">base_dir</span><span class="o">=</span><span class="s1">&#39;outputs/&#39;</span><span class="p">,</span>
+    <span class="n">shared_params</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+
+    <span class="n">train</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span>
+        <span class="n">train</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">shared_params</span><span class="p">,</span>
+        <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{base_dir}</span><span class="s1">/train&#39;</span>
+    <span class="p">),</span>
+
+    <span class="n">finetune</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span>
+        <span class="n">finetune</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">shared_params</span><span class="p">,</span>
+        <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>  <span class="c1"># Override</span>
+        <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{base_dir}</span><span class="s1">/finetune&#39;</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<section id="issue-task-db-locked">
+<h3>Issue: “Task DB locked”<a class="headerlink" href="#issue-task-db-locked" title="Link to this heading"></a></h3>
+<p><strong>Cause:</strong> Multiple processes accessing DB simultaneously</p>
+<p><strong>Solution:</strong></p>
+<ul class="simple">
+<li><p>Use HPC backend (handles concurrency)</p></li>
+<li><p>Reduce <code class="docutils literal notranslate"><span class="pre">n_jobs</span></code> for local execution</p></li>
+<li><p>Check for stale DB locks</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="issue-smart-run-not-finding-cached-results">
+<h3>Issue: Smart run not finding cached results<a class="headerlink" href="#issue-smart-run-not-finding-cached-results" title="Link to this heading"></a></h3>
+<p><strong>Cause:</strong> Config/code/data changed slightly</p>
+<p><strong>Solution:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check diff</span>
+flexlock-diff<span class="w"> </span>current_config<span class="w"> </span>existing_run/
+
+<span class="c1"># Common causes:</span>
+<span class="c1"># - save_dir changed (use normalization)</span>
+<span class="c1"># - Code changed (git tree hash different)</span>
+<span class="c1"># - Data changed (file hash different)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="issue-sweep-not-using-all-workers">
+<h3>Issue: Sweep not using all workers<a class="headerlink" href="#issue-sweep-not-using-all-workers" title="Link to this heading"></a></h3>
+<p><strong>Cause:</strong> Fewer tasks than workers</p>
+<p><strong>Solution:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 100 tasks, 10 workers = efficient</span>
+flexlock-run<span class="w"> </span>--sweep-file<span class="w"> </span>100tasks.yaml<span class="w"> </span>--n_jobs<span class="w"> </span><span class="m">10</span>
+
+<span class="c1"># 5 tasks, 10 workers = 5 workers idle</span>
+flexlock-run<span class="w"> </span>--sweep-file<span class="w"> </span>5tasks.yaml<span class="w"> </span>--n_jobs<span class="w"> </span><span class="m">10</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="cli_reference.html"><span class="std std-doc">CLI Reference</span></a> - Complete CLI documentation</p></li>
+<li><p><a class="reference internal" href="python_api.html"><span class="std std-doc">Python API</span></a> - Programmatic usage</p></li>
+<li><p><a class="reference internal" href="hpc_integration.html"><span class="std std-doc">HPC Integration</span></a> - Slurm/PBS setup</p></li>
+<li><p><a class="reference internal" href="resolvers.html"><span class="std std-doc">Resolvers</span></a> - Dynamic configuration values</p></li>
+<li><p><a class="reference internal" href="debugging.html"><span class="std std-doc">Debugging</span></a> - Interactive debugging features</p></li>
+</ul>
+<hr class="docutils" />
+<p>For more help:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/quentinf00/flexlock/issues">GitHub Issues</a></p></li>
+<li><p><a class="reference external" href="https://quentinf00.github.io/flexlock/">Documentation</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="debugging.html" class="btn btn-neutral float-right" title="Debugging with FlexLock" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

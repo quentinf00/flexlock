@@ -1,0 +1,638 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CLI Reference &mdash; FlexLock 0.2.17 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/cli_reference.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4031e696"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="OmegaConf Resolvers" href="resolvers.html" />
+    <link rel="prev" title="Python API Reference" href="python_api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="python_api.html">Python API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">CLI Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-loading">Configuration Loading</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#defaults-d"><code class="docutils literal notranslate"><span class="pre">--defaults</span></code>, <code class="docutils literal notranslate"><span class="pre">-d</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#config-c"><code class="docutils literal notranslate"><span class="pre">--config</span></code>, <code class="docutils literal notranslate"><span class="pre">-c</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-selection">Configuration Selection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#select-s"><code class="docutils literal notranslate"><span class="pre">--select</span></code>, <code class="docutils literal notranslate"><span class="pre">-s</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-overrides">Configuration Overrides</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#merge-m"><code class="docutils literal notranslate"><span class="pre">--merge</span></code>, <code class="docutils literal notranslate"><span class="pre">-m</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overrides-o"><code class="docutils literal notranslate"><span class="pre">--overrides</span></code>, <code class="docutils literal notranslate"><span class="pre">-o</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#merge-after-select-m"><code class="docutils literal notranslate"><span class="pre">--merge-after-select</span></code>, <code class="docutils literal notranslate"><span class="pre">-M</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overrides-after-select-o"><code class="docutils literal notranslate"><span class="pre">--overrides-after-select</span></code>, <code class="docutils literal notranslate"><span class="pre">-O</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#parameter-sweeps">Parameter Sweeps</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#source-options-mutually-exclusive">Source Options (Mutually Exclusive)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sweep-key"><code class="docutils literal notranslate"><span class="pre">--sweep-key</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sweep-file"><code class="docutils literal notranslate"><span class="pre">--sweep-file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sweep"><code class="docutils literal notranslate"><span class="pre">--sweep</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#target">Target</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sweep-target"><code class="docutils literal notranslate"><span class="pre">--sweep-target</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#execution-control">Execution Control</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#n-jobs"><code class="docutils literal notranslate"><span class="pre">--n_jobs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#check-exists"><code class="docutils literal notranslate"><span class="pre">--check-exists</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debug"><code class="docutils literal notranslate"><span class="pre">--debug</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hpc-backend-configuration">HPC Backend Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#slurm-config"><code class="docutils literal notranslate"><span class="pre">--slurm-config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pbs-config"><code class="docutils literal notranslate"><span class="pre">--pbs-config</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#containerized-execution">Containerized Execution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-merging-order">Configuration Merging Order</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#common-patterns">Common Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-1-simple-experiment">Pattern 1: Simple Experiment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-2-hyperparameter-sweep">Pattern 2: Hyperparameter Sweep</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-3-hpc-sweep-with-slurm">Pattern 3: HPC Sweep with Slurm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-4-containerized-hpc">Pattern 4: Containerized HPC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-5-debug-specific-config">Pattern 5: Debug Specific Config</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">CLI Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/cli_reference.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cli-reference">
+<h1>CLI Reference<a class="headerlink" href="#cli-reference" title="Link to this heading"></a></h1>
+<p>Complete reference for <code class="docutils literal notranslate"><span class="pre">flexlock-run</span></code> command-line interface.</p>
+<section id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="configuration-loading">
+<h2>Configuration Loading<a class="headerlink" href="#configuration-loading" title="Link to this heading"></a></h2>
+<section id="defaults-d">
+<h3><code class="docutils literal notranslate"><span class="pre">--defaults</span></code>, <code class="docutils literal notranslate"><span class="pre">-d</span></code><a class="headerlink" href="#defaults-d" title="Link to this heading"></a></h3>
+<p>Load Python module containing default configuration.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.config.defaults
+</pre></div>
+</div>
+<p><strong>Python module structure:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># myproject/config/defaults.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">py2cfg</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">train</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">),</span>
+    <span class="nb">eval</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">evaluate</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="config-c">
+<h3><code class="docutils literal notranslate"><span class="pre">--config</span></code>, <code class="docutils literal notranslate"><span class="pre">-c</span></code><a class="headerlink" href="#config-c" title="Link to this heading"></a></h3>
+<p>Load base YAML configuration file.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-c<span class="w"> </span>config.yaml
+</pre></div>
+</div>
+<p><strong>YAML structure:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.train.train</span>
+<span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span>
+<span class="nt">epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outputs/run1</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="configuration-selection">
+<h2>Configuration Selection<a class="headerlink" href="#configuration-selection" title="Link to this heading"></a></h2>
+<section id="select-s">
+<h3><code class="docutils literal notranslate"><span class="pre">--select</span></code>, <code class="docutils literal notranslate"><span class="pre">-s</span></code><a class="headerlink" href="#select-s" title="Link to this heading"></a></h3>
+<p>Select a specific node from the configuration tree.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load defaults, then select &#39;train&#39; node</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.defaults<span class="w"> </span>-s<span class="w"> </span>train
+
+<span class="c1"># Select nested node</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.defaults<span class="w"> </span>-s<span class="w"> </span>experiments.baseline
+</pre></div>
+</div>
+<p><strong>Works with:</strong></p>
+<ul class="simple">
+<li><p>Python configs (dict keys)</p></li>
+<li><p>YAML configs (nested keys)</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="configuration-overrides">
+<h2>Configuration Overrides<a class="headerlink" href="#configuration-overrides" title="Link to this heading"></a></h2>
+<section id="merge-m">
+<h3><code class="docutils literal notranslate"><span class="pre">--merge</span></code>, <code class="docutils literal notranslate"><span class="pre">-m</span></code><a class="headerlink" href="#merge-m" title="Link to this heading"></a></h3>
+<p>Merge a YAML/JSON file into the root config (before selection).</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-m<span class="w"> </span>overrides.yaml
+</pre></div>
+</div>
+<p><strong>Override file example:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="overrides-o">
+<h3><code class="docutils literal notranslate"><span class="pre">--overrides</span></code>, <code class="docutils literal notranslate"><span class="pre">-o</span></code><a class="headerlink" href="#overrides-o" title="Link to this heading"></a></h3>
+<p>Override specific keys in root config using dot-notation (before selection).</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Single override</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1
+
+<span class="c1"># Multiple overrides</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1<span class="w"> </span><span class="nv">epochs</span><span class="o">=</span><span class="m">100</span><span class="w"> </span><span class="nv">batch_size</span><span class="o">=</span><span class="m">32</span>
+
+<span class="c1"># Nested overrides</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-o<span class="w"> </span>optimizer.lr<span class="o">=</span><span class="m">0</span>.1<span class="w"> </span>optimizer.momentum<span class="o">=</span><span class="m">0</span>.9
+</pre></div>
+</div>
+<p><strong>Supports:</strong></p>
+<ul class="simple">
+<li><p>Primitive types: <code class="docutils literal notranslate"><span class="pre">param=1</span></code>, <code class="docutils literal notranslate"><span class="pre">flag=true</span></code>, <code class="docutils literal notranslate"><span class="pre">name=model</span></code></p></li>
+<li><p>Nested paths: <code class="docutils literal notranslate"><span class="pre">model.layers=12</span></code></p></li>
+<li><p>Lists: <code class="docutils literal notranslate"><span class="pre">devices=[0,1,2]</span></code></p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="merge-after-select-m">
+<h3><code class="docutils literal notranslate"><span class="pre">--merge-after-select</span></code>, <code class="docutils literal notranslate"><span class="pre">-M</span></code><a class="headerlink" href="#merge-after-select-m" title="Link to this heading"></a></h3>
+<p>Merge a file into the selected config node (after selection).</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Select train node, then merge experiment-specific settings</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-M<span class="w"> </span>experiment1.yaml
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="overrides-after-select-o">
+<h3><code class="docutils literal notranslate"><span class="pre">--overrides-after-select</span></code>, <code class="docutils literal notranslate"><span class="pre">-O</span></code><a class="headerlink" href="#overrides-after-select-o" title="Link to this heading"></a></h3>
+<p>Override keys in selected config node (after selection).</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Select train, then override its lr parameter</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.2
+
+<span class="c1"># Useful for modifying nested configs without affecting root</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>experiments.exp1<span class="w"> </span>-O<span class="w"> </span>model.depth<span class="o">=</span><span class="m">50</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="parameter-sweeps">
+<h2>Parameter Sweeps<a class="headerlink" href="#parameter-sweeps" title="Link to this heading"></a></h2>
+<p>Run multiple experiments with different parameter values.</p>
+<section id="source-options-mutually-exclusive">
+<h3>Source Options (Mutually Exclusive)<a class="headerlink" href="#source-options-mutually-exclusive" title="Link to this heading"></a></h3>
+<section id="sweep-key">
+<h4><code class="docutils literal notranslate"><span class="pre">--sweep-key</span></code><a class="headerlink" href="#sweep-key" title="Link to this heading"></a></h4>
+<p>Use a key from the config containing a list of parameter sets.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-key<span class="w"> </span>param_grid
+</pre></div>
+</div>
+<p><strong>Config example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># defaults.py</span>
+<span class="n">config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">train</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">),</span>
+    <span class="n">param_grid</span><span class="o">=</span><span class="p">[</span>
+        <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+        <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">),</span>
+        <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="sweep-file">
+<h4><code class="docutils literal notranslate"><span class="pre">--sweep-file</span></code><a class="headerlink" href="#sweep-file" title="Link to this heading"></a></h4>
+<p>Load sweep values from a file (YAML, JSON, or TXT).</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># YAML file with list of configs</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml
+
+<span class="c1"># Text file with values (one per line)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>lr_values.txt<span class="w"> </span>--sweep-target<span class="w"> </span>lr
+</pre></div>
+</div>
+<p><strong>File formats:</strong></p>
+<p><strong>YAML/JSON:</strong> List of dicts</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># sweep.yaml</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="nv">0.001</span><span class="p p-Indicator">,</span><span class="nt"> batch_size</span><span class="p">:</span><span class="w"> </span><span class="nv">32</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="nv">0.01</span><span class="p p-Indicator">,</span><span class="nt"> batch_size</span><span class="p">:</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">}</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="nv">0.1</span><span class="p p-Indicator">,</span><span class="nt"> batch_size</span><span class="p">:</span><span class="w"> </span><span class="nv">128</span><span class="p p-Indicator">}</span>
+</pre></div>
+</div>
+<p><strong>Text:</strong> One value per line</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># lr_values.txt
+0.001
+0.01
+0.1
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="sweep">
+<h4><code class="docutils literal notranslate"><span class="pre">--sweep</span></code><a class="headerlink" href="#sweep" title="Link to this heading"></a></h4>
+<p>Provide comma-separated sweep values directly.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simple values</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep<span class="w"> </span><span class="s2">&quot;0.001,0.01,0.1&quot;</span><span class="w"> </span>--sweep-target<span class="w"> </span>lr
+
+<span class="c1"># Key=value pairs (creates dicts)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep<span class="w"> </span><span class="s2">&quot;lr=0.001,lr=0.01,lr=0.1&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="target">
+<h3>Target<a class="headerlink" href="#target" title="Link to this heading"></a></h3>
+<section id="sweep-target">
+<h4><code class="docutils literal notranslate"><span class="pre">--sweep-target</span></code><a class="headerlink" href="#sweep-target" title="Link to this heading"></a></h4>
+<p>Specify where to inject sweep values into the config.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Inject at root level (merges entire dict)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml
+
+<span class="c1"># Inject at specific key (useful for simple values)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep<span class="w"> </span><span class="s2">&quot;0.001,0.01,0.1&quot;</span><span class="w"> </span>--sweep-target<span class="w"> </span>optimizer.lr
+</pre></div>
+</div>
+<p><strong>Behavior:</strong></p>
+<ul class="simple">
+<li><p><strong>With <code class="docutils literal notranslate"><span class="pre">--sweep-target</span></code>:</strong> Sweep values are set at the specified path</p></li>
+<li><p><strong>Without <code class="docutils literal notranslate"><span class="pre">--sweep-target</span></code>:</strong> Sweep values (must be dicts) are merged at root</p></li>
+</ul>
+</section>
+</section>
+</section>
+<hr class="docutils" />
+<section id="execution-control">
+<h2>Execution Control<a class="headerlink" href="#execution-control" title="Link to this heading"></a></h2>
+<section id="n-jobs">
+<h3><code class="docutils literal notranslate"><span class="pre">--n_jobs</span></code><a class="headerlink" href="#n-jobs" title="Link to this heading"></a></h3>
+<p>Number of parallel workers for sweep execution.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sequential execution (default)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span>--n_jobs<span class="w"> </span><span class="m">1</span>
+
+<span class="c1"># Parallel execution (4 workers)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span>--n_jobs<span class="w"> </span><span class="m">4</span>
+</pre></div>
+</div>
+<p><strong>Notes:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">n_jobs=1</span></code>: Sequential execution</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_jobs&gt;1</span></code>: Spawns multiprocessing workers (local)</p></li>
+<li><p>With HPC backends: Ignored (controlled by job array size)</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="check-exists">
+<h3><code class="docutils literal notranslate"><span class="pre">--check-exists</span></code><a class="headerlink" href="#check-exists" title="Link to this heading"></a></h3>
+<p>Skip execution if run with matching configuration already exists.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--check-exists
+</pre></div>
+</div>
+<p><strong>Behavior:</strong></p>
+<ul class="simple">
+<li><p>Compares current config with existing <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> files</p></li>
+<li><p>If match found: Skips execution</p></li>
+<li><p>If no match: Runs normally</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="debug">
+<h3><code class="docutils literal notranslate"><span class="pre">--debug</span></code><a class="headerlink" href="#debug" title="Link to this heading"></a></h3>
+<p>Enable debug mode with interactive post-mortem debugging.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--debug
+</pre></div>
+</div>
+<p><strong>Sets:</strong> <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG=true</span></code></p>
+<p><strong>Effects:</strong></p>
+<ul class="simple">
+<li><p>On exception: Drops into PDB debugger</p></li>
+<li><p>In notebooks: Injects local variables into global scope</p></li>
+<li><p>Useful for development and troubleshooting</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="hpc-backend-configuration">
+<h2>HPC Backend Configuration<a class="headerlink" href="#hpc-backend-configuration" title="Link to this heading"></a></h2>
+<p>Execute sweeps on HPC clusters using Slurm or PBS job schedulers.</p>
+<section id="slurm-config">
+<h3><code class="docutils literal notranslate"><span class="pre">--slurm-config</span></code><a class="headerlink" href="#slurm-config" title="Link to this heading"></a></h3>
+<p>Path to Slurm configuration YAML file.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span>--slurm-config<span class="w"> </span>slurm.yaml
+</pre></div>
+</div>
+<p><strong>Config file format:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># slurm.yaml</span>
+<span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--job-name=flexlock_sweep&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--cpus-per-task=4&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--mem=16G&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--time=01:00:00&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--array=0-99&quot;</span><span class="w">  </span><span class="c1"># 100 workers</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;module</span><span class="nv"> </span><span class="s">load</span><span class="nv"> </span><span class="s">python/3.10&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;source</span><span class="nv"> </span><span class="s">activate</span><span class="nv"> </span><span class="s">myenv&quot;</span>
+
+<span class="c1"># Optional: Custom Python executable</span>
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;python&quot;</span><span class="w">  </span><span class="c1"># or &quot;/path/to/venv/bin/python&quot;</span>
+
+<span class="c1"># Optional: Logging configuration</span>
+<span class="nt">configure_logging</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p><strong>Mutually exclusive with:</strong> <code class="docutils literal notranslate"><span class="pre">--pbs-config</span></code></p>
+</section>
+<hr class="docutils" />
+<section id="pbs-config">
+<h3><code class="docutils literal notranslate"><span class="pre">--pbs-config</span></code><a class="headerlink" href="#pbs-config" title="Link to this heading"></a></h3>
+<p>Path to PBS configuration YAML file.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span>--pbs-config<span class="w"> </span>pbs.yaml
+</pre></div>
+</div>
+<p><strong>Config file format:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># pbs.yaml</span>
+<span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=1:ncpus=4:mem=16gb&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=01:00:00&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-N</span><span class="nv"> </span><span class="s">flexlock_sweep&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-J</span><span class="nv"> </span><span class="s">0-99&quot;</span><span class="w">  </span><span class="c1"># 100 workers</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;eval</span><span class="nv"> </span><span class="s">\&quot;$(conda</span><span class="nv"> </span><span class="s">shell.bash</span><span class="nv"> </span><span class="s">hook)\&quot;&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;conda</span><span class="nv"> </span><span class="s">activate</span><span class="nv"> </span><span class="s">myenv&quot;</span>
+
+<span class="c1"># Optional: Custom Python executable (e.g., Singularity container)</span>
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">  </span><span class="no">singularity run</span>
+<span class="w">  </span><span class="no">--bind $(pwd):/workspace</span>
+<span class="w">  </span><span class="no">--pwd /workspace</span>
+<span class="w">  </span><span class="no">myenv.sif python</span>
+
+<span class="c1"># Optional: Name configuration</span>
+<span class="nt">configure_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p><strong>Mutually exclusive with:</strong> <code class="docutils literal notranslate"><span class="pre">--slurm-config</span></code></p>
+</section>
+<hr class="docutils" />
+<section id="containerized-execution">
+<h3>Containerized Execution<a class="headerlink" href="#containerized-execution" title="Link to this heading"></a></h3>
+<p>Run workers in Singularity/Docker containers by specifying custom <code class="docutils literal notranslate"><span class="pre">python_exe</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># pbs_singularity.yaml</span>
+<span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=1:ncpus=4&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&quot;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">  </span><span class="no">singularity run</span>
+<span class="w">  </span><span class="no">--bind $(pwd)/src:/app/src</span>
+<span class="w">  </span><span class="no">--bind $(pwd)/outputs:/workspace/outputs</span>
+<span class="w">  </span><span class="no">--pwd /workspace</span>
+<span class="w">  </span><span class="no">myenv.sif python</span>
+</pre></div>
+</div>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span>--pbs-config<span class="w"> </span>pbs_singularity.yaml
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="configuration-merging-order">
+<h2>Configuration Merging Order<a class="headerlink" href="#configuration-merging-order" title="Link to this heading"></a></h2>
+<p>Understanding the order in which configurations are merged:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1. Empty config
+2. + @flexcli decorator defaults (if using decorator)
+3. + Python defaults (--defaults)
+4. + Base YAML (--config)
+5. + Base merge (--merge)
+6. + Base overrides (--overrides)
+7. → SELECT node (--select)
+8. + Inner merge (--merge-after-select)
+9. + Inner overrides (--overrides-after-select)
+10. → INJECT save_dir if missing
+11. → EXECUTE or SWEEP
+</pre></div>
+</div>
+<p><strong>Example:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>myproject.defaults<span class="w"> </span><span class="se">\ </span><span class="w">     </span><span class="c1"># Load defaults</span>
+<span class="w">  </span>-o<span class="w"> </span><span class="nv">base_dir</span><span class="o">=</span>outputs<span class="w"> </span><span class="se">\ </span><span class="w">        </span><span class="c1"># Override at root</span>
+<span class="w">  </span>-s<span class="w"> </span>train<span class="w"> </span><span class="se">\ </span><span class="w">                   </span><span class="c1"># Select &#39;train&#39; node</span>
+<span class="w">  </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1<span class="w"> </span><span class="se">\ </span><span class="w">                  </span><span class="c1"># Override selected node</span>
+<span class="w">  </span>--sweep<span class="w"> </span><span class="s2">&quot;32,64,128&quot;</span><span class="w"> </span><span class="se">\ </span><span class="w">        </span><span class="c1"># Sweep batch sizes</span>
+<span class="w">  </span>--sweep-target<span class="w"> </span>batch_size<span class="w"> </span><span class="se">\ </span><span class="w">  </span><span class="c1"># Where to inject sweep</span>
+<span class="w">  </span>--n_jobs<span class="w"> </span><span class="m">4</span><span class="w">                    </span><span class="c1"># Parallel execution</span>
+</pre></div>
+</div>
+<p><strong>Resulting execution:</strong></p>
+<ul class="simple">
+<li><p>Loads <code class="docutils literal notranslate"><span class="pre">myproject.defaults</span></code></p></li>
+<li><p>Sets <code class="docutils literal notranslate"><span class="pre">base_dir=outputs</span></code> at root</p></li>
+<li><p>Selects <code class="docutils literal notranslate"><span class="pre">train</span></code> config node</p></li>
+<li><p>Overrides <code class="docutils literal notranslate"><span class="pre">lr=0.1</span></code> in train config</p></li>
+<li><p>Runs 3 experiments with <code class="docutils literal notranslate"><span class="pre">batch_size=[32,</span> <span class="pre">64,</span> <span class="pre">128]</span></code></p></li>
+<li><p>Uses 4 parallel workers</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="common-patterns">
+<h2>Common Patterns<a class="headerlink" href="#common-patterns" title="Link to this heading"></a></h2>
+<section id="pattern-1-simple-experiment">
+<h3>Pattern 1: Simple Experiment<a class="headerlink" href="#pattern-1-simple-experiment" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1
+</pre></div>
+</div>
+</section>
+<section id="pattern-2-hyperparameter-sweep">
+<h3>Pattern 2: Hyperparameter Sweep<a class="headerlink" href="#pattern-2-hyperparameter-sweep" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>myproject.defaults<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sweep<span class="w"> </span><span class="s2">&quot;0.001,0.01,0.1&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sweep-target<span class="w"> </span>optimizer.lr<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--n_jobs<span class="w"> </span><span class="m">3</span>
+</pre></div>
+</div>
+</section>
+<section id="pattern-3-hpc-sweep-with-slurm">
+<h3>Pattern 3: HPC Sweep with Slurm<a class="headerlink" href="#pattern-3-hpc-sweep-with-slurm" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>myproject.defaults<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sweep-file<span class="w"> </span>experiments.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--slurm-config<span class="w"> </span>slurm.yaml
+</pre></div>
+</div>
+</section>
+<section id="pattern-4-containerized-hpc">
+<h3>Pattern 4: Containerized HPC<a class="headerlink" href="#pattern-4-containerized-hpc" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>myproject.defaults<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sweep-key<span class="w"> </span>param_grid<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pbs-config<span class="w"> </span>pbs_singularity.yaml
+</pre></div>
+</div>
+</section>
+<section id="pattern-5-debug-specific-config">
+<h3>Pattern 5: Debug Specific Config<a class="headerlink" href="#pattern-5-debug-specific-config" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span>myproject.defaults<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-s<span class="w"> </span>experiments.failing_exp<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--debug
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="python_api.html"><span class="std std-doc">Python API Reference</span></a> - Programmatic usage with <code class="docutils literal notranslate"><span class="pre">Project</span></code> class</p></li>
+<li><p><a class="reference internal" href="hpc_integration.html"><span class="std std-doc">HPC Integration</span></a> - Detailed HPC setup guide</p></li>
+<li><p><a class="reference internal" href="#./parallel.md"><span class="xref myst">Parallel Execution</span></a> - Architecture and advanced options</p></li>
+<li><p><a class="reference internal" href="debugging.html"><span class="std std-doc">Debugging</span></a> - Interactive debugging features</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="python_api.html" class="btn btn-neutral float-left" title="Python API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="resolvers.html" class="btn btn-neutral float-right" title="OmegaConf Resolvers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

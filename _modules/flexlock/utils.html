@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.utils &mdash; FlexLock 0.1.0 documentation</title>
+  <title>flexlock.utils &mdash; FlexLock 0.2.17 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/utils.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=38b66d78"></script>
+      <script src="../../_static/documentation_options.js?v=4031e696"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -40,21 +40,29 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../README.html">FlexLock Documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Conda packages</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html#development-workflow-the-debug-decorator">Development Workflow: The Debug Decorator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../supported_configurations.html">Supported Configuration Formats</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../logging.html">Logging Configuration in FlexLock</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../parallel.html">Parallel Execution in FlexLock</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../experimental.html">Advanced Topics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
 </ul>
 
         </div>
@@ -84,22 +92,105 @@
   <h1>Source code for flexlock.utils</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Utility functions for FlexLock.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">,</span> <span class="n">open_dict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
-
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">fields</span>
 
 
+<div class="viewcode-block" id="extract_tracking_info">
+<a class="viewcode-back" href="../../api.html#flexlock.extract_tracking_info">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_tracking_info</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract tracking information from config&#39;s _snapshot_ field.</span>
+
+<span class="sd">    This is a unified function used across FlexLock to extract repository</span>
+<span class="sd">    tracking, data hashing, and lineage information from configurations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cfg: OmegaConf DictConfig with optional _snapshot_ field</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: (repos, data, prevs) where:</span>
+<span class="sd">            - repos: dict of {name: path} for git repositories to track</span>
+<span class="sd">            - data: dict of {name: path} for data files/dirs to hash</span>
+<span class="sd">            - prevs: list of paths to check for upstream FlexLock runs</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        FlexLockConfigError: If _snapshot_ contains invalid keys like &#39;repo&#39; (singular)</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; cfg = OmegaConf.create({</span>
+<span class="sd">        ...     &#39;_snapshot_&#39;: {</span>
+<span class="sd">        ...         &#39;repos&#39;: {&#39;main&#39;: &#39;.&#39;},</span>
+<span class="sd">        ...         &#39;data&#39;: {&#39;input&#39;: &#39;data/train.csv&#39;}</span>
+<span class="sd">        ...     }</span>
+<span class="sd">        ... })</span>
+<span class="sd">        &gt;&gt;&gt; repos, data, prevs = extract_tracking_info(cfg)</span>
+<span class="sd">        &gt;&gt;&gt; repos</span>
+<span class="sd">        {&#39;main&#39;: &#39;.&#39;}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockConfigError</span>
+
+    <span class="n">repos</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">prevs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="s2">&quot;_snapshot_&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span>
+
+    <span class="n">snap_cfg</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">_snapshot_</span>
+
+    <span class="c1"># Extract repos (only plural supported)</span>
+    <span class="k">if</span> <span class="s2">&quot;repos&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
+        <span class="n">repos_raw</span> <span class="o">=</span> <span class="n">snap_cfg</span><span class="o">.</span><span class="n">repos</span>
+        <span class="n">repos</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">repos_raw</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="s2">&quot;repo&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
+        <span class="c1"># Singular &#39;repo&#39; no longer supported - raise clear error</span>
+        <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
+            <span class="s2">&quot;Found &#39;repo&#39; (singular) in _snapshot_ configuration. &quot;</span>
+            <span class="s2">&quot;Please use &#39;repos&#39; (plural) instead. &quot;</span>
+            <span class="s2">&quot;Example: _snapshot_={&#39;repos&#39;: {&#39;main&#39;: &#39;.&#39;}}&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Extract data</span>
+    <span class="k">if</span> <span class="s2">&quot;data&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
+        <span class="n">data_raw</span> <span class="o">=</span> <span class="n">snap_cfg</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
+                <span class="s2">&quot;snapshot&#39;s data should be a mapping&quot;</span>
+                <span class="s2">&quot;Example: _snapshot_={&#39;data&#39;: {&#39;dataset&#39;: &#39;data/dataset.csv&#39;}}&quot;</span>
+            <span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">data_raw</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Extract prevs (lineage paths)</span>
+    <span class="k">if</span> <span class="s2">&quot;prevs&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
+        <span class="n">prevs_raw</span> <span class="o">=</span> <span class="n">snap_cfg</span><span class="o">.</span><span class="n">prevs</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prevs_raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
+                <span class="s2">&quot;snapshot&#39;s prevs should be a list&quot;</span>
+                <span class="s2">&quot;Example: _snapshot_={&#39;prevs&#39;: [&#39;path/to/run/toto&#39;]}&quot;</span>
+            <span class="p">)</span>
+        <span class="n">prevs</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">prevs_raw</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># &quot;prevs_from_data&quot;: Automatically treat data paths as lineage candidates</span>
+    <span class="c1"># This allows checking if data files came from FlexLock runs</span>
+    <span class="n">prevs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+
+    <span class="k">return</span> <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span></div>
+
+
+
 <div class="viewcode-block" id="to_dictconfig">
-<a class="viewcode-back" href="../../api.html#flexlock.utils.to_dictconfig">[docs]</a>
+<a class="viewcode-back" href="../../api.html#flexlock.to_dictconfig">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_dictconfig</span><span class="p">(</span><span class="n">incfg</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert various config formats (dataclass, dict, class instance, DictConfig)</span>
@@ -148,8 +239,99 @@
 
 
 
+<div class="viewcode-block" id="py2cfg">
+<a class="viewcode-back" href="../../api.html#flexlock.py2cfg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">py2cfg</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="n">pos</span><span class="p">,</span> <span class="o">**</span><span class="n">overrides</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates a default configuration dict from a function or class signature.</span>
+<span class="sd">    Supports nested py2cfg calls and handles decorated functions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 1. Unwrap decorated functions</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;_original_fn&quot;</span><span class="p">):</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">_original_fn</span>
+
+    <span class="c1"># 1. Handle functools.partial</span>
+    <span class="c1"># If it&#39;s a partial, we unwrap it, capture the fixed args, and mark as _partial_</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">):</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
+        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;_partial_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="c1"># Add positional arguments as _args_ if they exist</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;_args_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>  <span class="c1"># Add bound keyword arguments</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>  <span class="c1"># Apply runtime overrides</span>
+        <span class="k">return</span> <span class="n">config</span>
+
+    <span class="c1"># 2. Determine target and signature source</span>
+    <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">sig_obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="fm">__init__</span>
+    <span class="k">elif</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isroutine</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">sig_obj</span> <span class="o">=</span> <span class="n">obj</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;py2cfg expects class or function, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 3. Build Config</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;_target_&quot;</span><span class="p">:</span> <span class="n">target</span><span class="p">}</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">sig_obj</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+        <span class="c1"># Skip &#39;self&#39; for classes or bound methods</span>
+        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">sig_obj</span><span class="p">,</span> <span class="s1">&#39;__self__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">sig_obj</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s1">&#39;__init__&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;self&#39;</span><span class="p">:</span>
+                <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">param</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="c1"># We generally only capture primitive defaults here.</span>
+                <span class="c1"># Complex defaults (classes) should be handled via explicit overrides</span>
+                <span class="c1"># or None defaults in the function signature.</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span>
+                <span class="c1"># If a default value is itself a class/function, convert it too.</span>
+                <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="ow">or</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">val</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                        <span class="k">pass</span>  <span class="c1"># Keep original if conversion fails</span>
+                <span class="n">config</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># 4. Apply overrides (nested py2cfg calls happen here)</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">_args_</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">pos</span><span class="p">))))</span>  <span class="c1"># Add positional arguments if any</span>
+    
+    <span class="k">return</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_python_defaults">
+<a class="viewcode-back" href="../../api.html#flexlock.load_python_defaults">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_python_defaults</span><span class="p">(</span><span class="n">import_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dynamically imports a module or file path to retrieve &#39;defaults&#39;.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">import_path</span><span class="p">:</span>
+        <span class="c1"># Path based: &quot;configs/my_conf.py:defaults&quot;</span>
+        <span class="n">path_str</span><span class="p">,</span> <span class="n">var_name</span> <span class="o">=</span> <span class="n">import_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path_str</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span><span class="s2">&quot;dynamic_defaults&quot;</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">exec_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">var_name</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Module based: &quot;pkg.config.defaults&quot;</span>
+        <span class="n">module_name</span><span class="p">,</span> <span class="n">var_name</span> <span class="o">=</span> <span class="n">import_path</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">var_name</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="merge_task_into_cfg">
-<a class="viewcode-back" href="../../api.html#flexlock.utils.merge_task_into_cfg">[docs]</a>
+<a class="viewcode-back" href="../../api.html#flexlock.merge_task_into_cfg">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">merge_task_into_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">task_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DictConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge a task into the config.&quot;&quot;&quot;</span>
     <span class="c1"># Create a minimal config with just the task structure</span>
@@ -163,7 +345,7 @@
 
 
 <div class="viewcode-block" id="log_to_file">
-<a class="viewcode-back" href="../../api.html#flexlock.utils.log_to_file">[docs]</a>
+<a class="viewcode-back" href="../../api.html#flexlock.log_to_file">[docs]</a>
 <span class="nd">@contextmanager</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">log_to_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
     <span class="c1"># Add sink</span>
@@ -177,7 +359,7 @@
 
 
 <div class="viewcode-block" id="instantiate">
-<a class="viewcode-back" href="../../api.html#flexlock.utils.instantiate">[docs]</a>
+<a class="viewcode-back" href="../../api.html#flexlock.instantiate">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Recursively instantiate objects defined in dictionaries with a &quot;_target_&quot; key.</span>
@@ -187,13 +369,19 @@
 <span class="sd">        *args, **kwargs: Additional arguments to pass to the root object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># 1. Base case: If config is not a dict or list, return it as is.</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Instantiating config: </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Returning primitive config: </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">config</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">instantiate</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">config</span><span class="p">]</span>
 
     <span class="c1"># config is a dict</span>
+    <span class="k">if</span> <span class="s2">&quot;_snapshot_&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">open_dict</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+            <span class="k">del</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;_snapshot_&quot;</span><span class="p">]</span>
+
     <span class="c1"># 2. Check if this dict represents a target object</span>
     <span class="k">if</span> <span class="s2">&quot;_target_&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
         <span class="c1"># It&#39;s just a regular dictionary, but we should check values recursively</span>
@@ -203,6 +391,9 @@
     <span class="c1"># Copy to avoid mutating the original dict</span>
     <span class="n">conf_copy</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">target_path</span> <span class="o">=</span> <span class="n">conf_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_target_&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Handle positional arguments</span>
+    <span class="n">config_args</span> <span class="o">=</span> <span class="n">conf_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_args_&quot;</span><span class="p">,</span> <span class="p">[])</span>
     <span class="n">is_partial</span> <span class="o">=</span> <span class="n">conf_copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;_partial_&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 
     <span class="c1"># 4. recursive instantiation of arguments</span>
@@ -220,72 +411,15 @@
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">ImportError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not import target &#39;</span><span class="si">{</span><span class="n">target_path</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="c1"># 6. Instantiate or return partial</span>
+    <span class="c1"># 6. Combine positional arguments</span>
+    <span class="c1"># First config args, then runtime args</span>
+    <span class="n">all_args</span> <span class="o">=</span> <span class="n">instantiate</span><span class="p">(</span><span class="n">config_args</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="c1"># 7. Instantiate or return partial</span>
     <span class="k">if</span> <span class="n">is_partial</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">target_class</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">init_args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">target_class</span><span class="p">,</span> <span class="o">*</span><span class="n">all_args</span><span class="p">,</span> <span class="o">**</span><span class="n">init_args</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">target_class</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">init_args</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="py2cfg">
-<a class="viewcode-back" href="../../api.html#flexlock.utils.py2cfg">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">py2cfg</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">overrides</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a class, function, or partial into a configuration dictionary</span>
-<span class="sd">    with a &quot;_target_&quot; key and default arguments.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        obj: The class, function, or functools.partial object.</span>
-<span class="sd">        **overrides: Key-value pairs to override defaults or add fixed values.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># 1. Handle functools.partial</span>
-    <span class="c1"># If it&#39;s a partial, we unwrap it, capture the fixed args, and mark as _partial_</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">):</span>
-        <span class="n">config</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
-        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;_partial_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>  <span class="c1"># Add bound arguments</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>  <span class="c1"># Apply runtime overrides</span>
-        <span class="k">return</span> <span class="n">config</span>
-
-    <span class="c1"># 2. Extract the dot-path string</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;__module__&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;__qualname__&quot;</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Cannot determine target path for </span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">. It must be a class or function.&quot;</span>
-        <span class="p">)</span>
-
-    <span class="c1"># Handle case where class is defined in the main script</span>
-    <span class="n">module</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span>
-    <span class="n">target_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">obj</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
-
-    <span class="n">config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;_target_&quot;</span><span class="p">:</span> <span class="n">target_path</span><span class="p">}</span>
-
-    <span class="c1"># 3. Inspect signature to get default values</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="c1"># We only care about parameters that have defaults</span>
-            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">param</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="n">val</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">default</span>
-
-                <span class="c1"># OPTIONAL: Recursive handling</span>
-                <span class="c1"># If a default value is itself a class/function, convert it too.</span>
-                <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="ow">or</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">val</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
-                    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                        <span class="k">pass</span>  <span class="c1"># Keep original if conversion fails</span>
-
-                <span class="n">config</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
-    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-        <span class="c1"># Some built-ins allow signature inspection, others don&#39;t.</span>
-        <span class="k">pass</span>
-
-    <span class="c1"># 4. Apply overrides</span>
-    <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">config</span></div>
+    <span class="k">return</span> <span class="n">target_class</span><span class="p">(</span><span class="o">*</span><span class="n">all_args</span><span class="p">,</span> <span class="o">**</span><span class="n">init_args</span><span class="p">)</span></div>
 
 </pre></div>
 

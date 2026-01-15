@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.flexcli &mdash; FlexLock 0.1.0 documentation</title>
+  <title>flexlock.flexcli &mdash; FlexLock 0.2.17 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/flexcli.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=38b66d78"></script>
+      <script src="../../_static/documentation_options.js?v=4031e696"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -40,21 +40,29 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../README.html">FlexLock Documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Conda packages</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html#development-workflow-the-debug-decorator">Development Workflow: The Debug Decorator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../supported_configurations.html">Supported Configuration Formats</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../logging.html">Logging Configuration in FlexLock</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../parallel.html">Parallel Execution in FlexLock</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../experimental.html">Advanced Topics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
 </ul>
 
         </div>
@@ -82,234 +90,160 @@
            <div itemprop="articleBody">
              
   <h1>Source code for flexlock.flexcli</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Configuration decorator for FlexLock.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Configuration decorator for FlexLock with progressive framework support.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelExecutor</span><span class="p">,</span> <span class="n">load_tasks</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.debug</span><span class="w"> </span><span class="kn">import</span> <span class="n">debug_on_fail</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_dictconfig</span><span class="p">,</span> <span class="n">merge_task_into_cfg</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockRunner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">py2cfg</span><span class="p">,</span> <span class="n">instantiate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.debug</span><span class="w"> </span><span class="kn">import</span> <span class="n">debug_on_fail</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_jupyter_or_interactive</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check if running in Jupyter/IPython interactive environment.</span>
+
+<span class="sd">    Returns True for:</span>
+<span class="sd">    - Jupyter notebooks</span>
+<span class="sd">    - Jupyter console</span>
+<span class="sd">    - VSCode interactive windows</span>
+<span class="sd">    - IPython REPL</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">IPython</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_ipython</span>
+        <span class="n">ipython</span> <span class="o">=</span> <span class="n">get_ipython</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ipython</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># Also check for python -i</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="s1">&#39;ps1&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_should_use_cli_mode</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determine if we should parse CLI arguments or execute directly.</span>
+
+<span class="sd">    Returns False if:</span>
+<span class="sd">    - sys.argv[0] is ipykernel_launcher.py (Jupyter kernel startup)</span>
+<span class="sd">    - sys.argv has kernel arguments like --f=... or -f ...</span>
+
+<span class="sd">    Returns True if:</span>
+<span class="sd">    - Normal CLI execution</span>
+<span class="sd">    - IPython %run command (sys.argv[0] is the script name)</span>
+<span class="sd">    - Script execution</span>
+
+<span class="sd">    This allows:</span>
+<span class="sd">    - %run file.py -o param=2 → Parse CLI args ✓</span>
+<span class="sd">    - train() in Jupyter → Don&#39;t parse ✗</span>
+<span class="sd">    - ipykernel_launcher.py --f=kernel.json → Don&#39;t parse ✗</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># No arguments, likely interactive</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No sys.argv detected, assuming interactive mode&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Check sys.argv[0] for kernel launcher</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;ipykernel_launcher.py&#39;</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detected ipykernel_launcher in sys.argv[0], skipping CLI parsing&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Check for kernel connection file arguments</span>
+    <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="k">if</span> <span class="s1">&#39;--f=&#39;</span> <span class="ow">in</span> <span class="n">arg</span> <span class="ow">or</span> <span class="n">arg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;-f&#39;</span><span class="p">):</span>
+            <span class="c1"># Check if next arg or same arg contains .json (connection file)</span>
+            <span class="k">if</span> <span class="s1">&#39;.json&#39;</span> <span class="ow">in</span> <span class="n">arg</span> <span class="ow">or</span> <span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="ow">and</span> <span class="s1">&#39;.json&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detected Jupyter kernel connection file argument: </span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># If we get here, either:</span>
+    <span class="c1"># - Normal script execution</span>
+    <span class="c1"># - %run command (sys.argv[0] is script name, args look normal)</span>
+    <span class="c1"># Both should parse CLI</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CLI mode enabled. sys.argv: </span><span class="si">{</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span>
 
 
 <div class="viewcode-block" id="flexcli">
 <a class="viewcode-back" href="../../api.html#flexlock.flexcli">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">flexcli</span><span class="p">(</span><span class="n">default_config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">flexcli</span><span class="p">(</span><span class="n">_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">snapshot_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">defaults</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A decorator that wraps a function to provide CLI and programmatic configuration</span>
-<span class="sd">    capabilities using OmegaConf.</span>
+<span class="sd">    Decorator for FlexLock entry points with progressive framework support.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        default_config: The dataclass representing the configuration schema.</span>
-<span class="sd">        description (str, optional): A description of the script to be displayed in the help message.</span>
-<span class="sd">        debug: If True, enables debug mode with local variable injection on exceptions.</span>
-<span class="sd">               If None (default), debug mode is determined by CLI args or FLEXLOCK_DEBUG env var.</span>
+<span class="sd">        snapshot_config: Dict defining repos, data, and lineage tracking.</span>
+<span class="sd">                         Injects &#39;_snapshot_&#39; into the config.</span>
+<span class="sd">        **defaults: Default values for the function arguments.</span>
+
+<span class="sd">    Usage:</span>
+<span class="sd">        @flexcli</span>
+<span class="sd">        def main(param=10, db=&quot;postgres&quot;): ...</span>
+
+<span class="sd">        @flexcli(param=10)</span>
+<span class="sd">        def main(param, db=&quot;postgres&quot;): ...</span>
+
+<span class="sd">        @flexcli(</span>
+<span class="sd">            data_path=&quot;./data/mnist&quot;,</span>
+<span class="sd">            snapshot_config={</span>
+<span class="sd">                &quot;repos&quot;: {&quot;main&quot;: &quot;.&quot;},</span>
+<span class="sd">                &quot;data&quot;: {&quot;input_dataset&quot;: &quot;${data_path}&quot;}</span>
+<span class="sd">            }</span>
+<span class="sd">        )</span>
+<span class="sd">        def train(data_path, save_dir=None): ...</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="n">cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="n">epilog_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-            <span class="k">if</span> <span class="n">default_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">default_cfg</span> <span class="o">=</span> <span class="n">to_dictconfig</span><span class="p">(</span><span class="n">default_config</span><span class="p">)</span>
-                <span class="n">yaml_help</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_yaml</span><span class="p">(</span><span class="n">default_cfg</span><span class="p">)</span>
-                <span class="n">epilog_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Default Configuration:</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="si">{</span><span class="n">yaml_help</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Direct call with arguments - execute immediately</span>
+                <span class="c1"># Apply debug wrapper if enabled</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">debug_on_fail</span><span class="p">(</span><span class="n">fn</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-            <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
-                <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
-                <span class="n">epilog</span><span class="o">=</span><span class="n">epilog_str</span><span class="p">,</span>
-                <span class="n">formatter_class</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">RawTextHelpFormatter</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="c1"># Called with no arguments - check if we should parse CLI</span>
+            <span class="c1"># 1. Build Base Config from signature + defaults</span>
+            <span class="n">base_cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">**</span><span class="n">defaults</span><span class="p">)</span>
 
-            <span class="c1"># --- Argument Parsing ---</span>
-            <span class="c1"># Standard config arguments</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;-c&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;--config&quot;</span><span class="p">,</span>
-                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to the base YAML configuration file.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;-e&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;--experiment&quot;</span><span class="p">,</span>
-                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key to select a specific experiment from the config.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;-O&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;--overrides_path&quot;</span><span class="p">,</span>
-                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a YAML file with configuration overrides.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;-o&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;--overrides_dot&quot;</span><span class="p">,</span>
-                <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
-                <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key-value pairs for overrides (e.g., &#39;param=10&#39;).&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="c1"># 2. Inject Snapshot Config if provided</span>
+            <span class="k">if</span> <span class="n">snapshot_config</span><span class="p">:</span>
+                <span class="n">base_cfg</span><span class="p">[</span><span class="s2">&quot;_snapshot_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">snapshot_config</span>
 
-            <span class="c1"># Parallel execution arguments</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;--tasks&quot;</span><span class="p">,</span>
-                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a file with a list of tasks (e.g., .txt, .yaml).&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;--tasks-key&quot;</span><span class="p">,</span>
-                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key to select a list of tasks from the config.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;--task-to&quot;</span><span class="p">,</span>
-                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key where to merge the task in the config.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;--n_jobs&quot;</span><span class="p">,</span>
-                <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-                <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of parallel jobs.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;--slurm_config&quot;</span><span class="p">,</span>
-                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a Slurm configuration file.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;--pbs_config&quot;</span><span class="p">,</span>
-                <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a PBS configuration file.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="c1"># Debug argument</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;--debug&quot;</span><span class="p">,</span>
-                <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable debug mode with local variable injection on exceptions (overrides FLEXLOCK_DEBUG env var).&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="c1"># Logging arguments</span>
-            <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-                <span class="s2">&quot;--verbose&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Set log level to DEBUG.&quot;</span>
-            <span class="p">)</span>
-
-            <span class="c1"># Determine if running from CLI or programmatically</span>
-            <span class="n">is_cli_call</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
-                <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="s2">&quot;ipykernel&quot;</span> <span class="ow">in</span> <span class="n">arg</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="s2">&quot;pytest&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">is_cli_call</span><span class="p">:</span>
-                <span class="n">cli_args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
-                <span class="n">dot_list_overrides</span> <span class="o">=</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">overrides_dot</span>
+            <span class="c1"># 3. Determine execution mode</span>
+            <span class="k">if</span> <span class="n">_should_use_cli_mode</span><span class="p">():</span>
+                <span class="c1"># CLI mode (normal script or %run): Launch Runner to parse arguments</span>
+                <span class="n">runner</span> <span class="o">=</span> <span class="n">FlexLockRunner</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">base_cfg</span><span class="o">=</span><span class="n">base_cfg</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">cli_args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">([])</span>
-                <span class="n">dot_list_overrides</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+                <span class="c1"># Interactive mode (Jupyter kernel): Execute directly with defaults</span>
+                <span class="c1"># This happens when train() is called in Jupyter without %run</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Interactive mode detected: Executing with defaults (no CLI parsing)&quot;</span><span class="p">)</span>
 
-            <span class="c1"># Determine debug mode: CLI arg &gt; function param &gt; environment variable</span>
-            <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
-                <span class="n">debug_enabled</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">elif</span> <span class="n">debug</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Explicitly set to True or False</span>
-                <span class="n">debug_enabled</span> <span class="o">=</span> <span class="n">debug</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Use environment variable as fallback</span>
-                <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+                <span class="c1"># Execute with debug wrapper if enabled</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">debug_on_fail</span><span class="p">(</span><span class="n">fn</span><span class="p">)(</span><span class="o">**</span><span class="n">defaults</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="o">**</span><span class="n">defaults</span><span class="p">)</span>
 
-                <span class="n">debug_enabled</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span>
-                    <span class="s2">&quot;1&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;true&quot;</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="c1"># --- Configuration Loading ---</span>
-            <span class="k">if</span> <span class="n">cfg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">cfg</span> <span class="o">=</span> <span class="n">to_dictconfig</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">default_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">cfg</span> <span class="o">=</span> <span class="n">to_dictconfig</span><span class="p">(</span><span class="n">default_config</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
-                <span class="n">_cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="p">:</span>
-                    <span class="n">_cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">_cfg</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">&quot;Experiment &#39;</span><span class="si">{</span><span class="n">cli_args</span><span class="o">.</span><span class="n">experiment</span><span class="si">}</span><span class="s2">&#39; did not resolve to a dictionary in the config.&quot;</span>
-                        <span class="p">)</span>
-                <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">_cfg</span><span class="p">)</span>
-                <span class="c1"># sticking with the parent config</span>
-                <span class="n">_cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-                <span class="n">cfg</span> <span class="o">=</span> <span class="n">_cfg</span>
-
-            <span class="k">if</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">overrides_path</span><span class="p">:</span>
-                <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">overrides_path</span><span class="p">))</span>
-
-            <span class="k">if</span> <span class="n">dot_list_overrides</span><span class="p">:</span>
-                <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">(</span><span class="n">dot_list_overrides</span><span class="p">))</span>
-
-            <span class="c1"># --- Resolve save_dir to ensure consistent directory across all tasks ---</span>
-            <span class="c1"># Resolve the entire config to get the final save_dir, but then extract</span>
-            <span class="c1"># it and merge it back to the unresolved config to keep other values unresolved</span>
-            <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
-                <span class="c1"># Create a temporary fully resolved config to get the resolved save_dir</span>
-
-                <span class="n">resolved_cfg</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="n">OmegaConf</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">resolved_cfg</span><span class="p">)</span>
-                <span class="n">resolved_save_dir</span> <span class="o">=</span> <span class="n">resolved_cfg</span><span class="o">.</span><span class="n">save_dir</span>
-                <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">resolved_save_dir</span><span class="p">)</span>
-                <span class="n">save_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="n">OmegaConf</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;config.yaml&quot;</span><span class="p">)</span>
-                <span class="c1"># Update the original config with the resolved save_dir</span>
-                <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">resolved_save_dir</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Warning: No &#39;save_dir&#39; found in the final configuration.&quot;</span><span class="p">)</span>
-
-            <span class="n">main_fn</span> <span class="o">=</span> <span class="n">debug_on_fail</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">stack_depth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="n">debug_enabled</span> <span class="k">else</span> <span class="n">fn</span>
-            <span class="c1"># --- Execution Logic ---</span>
-            <span class="c1"># 1. Handle single run case first</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">tasks</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">tasks_key</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">main_fn</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-
-            <span class="c1"># 2. Load tasks for batch execution</span>
-            <span class="n">tasks</span> <span class="o">=</span> <span class="n">load_tasks</span><span class="p">(</span><span class="n">cli_args</span><span class="o">.</span><span class="n">tasks</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">tasks_key</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks loaded&quot;</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">&quot;--tasks or --tasks-key provided, but no tasks were loaded. Running once.&quot;</span>
-                <span class="p">)</span>
-                <span class="k">return</span> <span class="n">main_fn</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">task_to</span><span class="p">:</span>
-                <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;--task-to is required when using --tasks or --tasks-key.&quot;</span><span class="p">)</span>
-
-            <span class="c1"># 3. Handle debug sequential run</span>
-            <span class="k">if</span> <span class="n">debug_enabled</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">&quot;Debug mode is enabled, parallel execution is disabled. Running tasks sequentially.&quot;</span>
-                <span class="p">)</span>
-                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
-                    <span class="n">task_cfg</span> <span class="o">=</span> <span class="n">merge_task_into_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">.</span><span class="n">task_to</span><span class="p">)</span>
-                    <span class="n">main_fn</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">)</span>  <span class="c1">#  debug wrapper</span>
-                <span class="k">return</span> <span class="kc">None</span>
-
-            <span class="c1"># 4. Handle parallel execution</span>
-            <span class="n">executor</span> <span class="o">=</span> <span class="n">ParallelExecutor</span><span class="p">(</span>
-                <span class="n">func</span><span class="o">=</span><span class="n">main_fn</span><span class="p">,</span>  <span class="c1"># not debug wrapper</span>
-                <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
-                <span class="n">task_to</span><span class="o">=</span><span class="n">cli_args</span><span class="o">.</span><span class="n">task_to</span><span class="p">,</span>
-                <span class="n">cfg</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
-                <span class="n">n_jobs</span><span class="o">=</span><span class="n">cli_args</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span>
-                <span class="n">slurm_config</span><span class="o">=</span><span class="n">cli_args</span><span class="o">.</span><span class="n">slurm_config</span><span class="p">,</span>
-                <span class="n">pbs_config</span><span class="o">=</span><span class="n">cli_args</span><span class="o">.</span><span class="n">pbs_config</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-
+        <span class="n">wrapper</span><span class="o">.</span><span class="n">_original_fn</span> <span class="o">=</span> <span class="n">fn</span>
+        <span class="n">wrapper</span><span class="o">.</span><span class="n">_defaults</span> <span class="o">=</span> <span class="n">defaults</span>  <span class="c1"># Store metadata</span>
         <span class="k">return</span> <span class="n">wrapper</span>
 
-    <span class="k">return</span> <span class="n">decorator</span></div>
+    <span class="c1"># Support both @flexcli and @flexcli(...) syntax</span>
+    <span class="k">if</span> <span class="n">_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">decorator</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">_func</span><span class="p">)</span></div>
 
 </pre></div>
 

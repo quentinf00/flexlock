@@ -1,0 +1,245 @@
+# Quickstart Guide
+
+Get up and running with FlexLock in 5 minutes.
+
+## Installation
+
+```bash
+pip install flexlock
+```
+
+Or with conda:
+
+```bash
+conda install -c quentinf00 flexlock
+```
+
+## Your First Experiment
+
+### Step 1: Decorate Your Function
+
+```python
+# train.py
+from flexlock import flexcli
+
+@flexcli
+def train(lr: float = 0.01, epochs: int = 10):
+    """Train a model."""
+    print(f"Training with lr={lr} for {epochs} epochs")
+    # ... your training code ...
+    return {"accuracy": 0.95}
+
+if __name__ == "__main__":
+    train()
+```
+
+### Step 2: Run It
+
+```bash
+$ python train.py
+Training with lr=0.01 for 10 epochs
+✓ Results saved to: results/train/run_0001/
+```
+
+That's it! FlexLock automatically:
+- Created a CLI for your function
+- Saved results with auto-versioning
+- Tracked the configuration in `run.lock`
+
+### Step 3: Override Parameters
+
+```bash
+$ python train.py -o lr=0.1 epochs=20
+Training with lr=0.1 for 20 epochs
+✓ Results saved to: results/train/run_0002/
+```
+
+### Step 4: Run a Parameter Sweep
+
+```bash
+$ python train.py --sweep "0.001,0.01,0.1" --sweep-target lr --n_jobs 3
+✓ Running 3 experiments in parallel...
+✓ Sweep complete! Results in results/train/
+```
+
+## Next: Multi-Stage Pipelines
+
+```python
+# pipeline.py
+from flexlock.api import Project
+
+# Load configurations
+proj = Project(defaults='configs.defaults')
+
+# Stage 1: Preprocess
+preprocess_result = proj.submit(proj.get('preprocess'))
+
+# Stage 2: Train (uses preprocess output)
+train_cfg = proj.get('train')
+train_cfg.data_dir = preprocess_result.output_dir
+train_result = proj.submit(train_cfg)
+
+# Stage 3: Evaluate
+eval_cfg = proj.get('evaluate')
+eval_cfg.model_dir = train_result.save_dir
+eval_result = proj.submit(eval_cfg)
+
+print(f"Final accuracy: {eval_result.accuracy}")
+```
+
+Run again with the same config? FlexLock automatically skips stages that haven't changed:
+
+```bash
+$ python pipeline.py
+⚡ Cache Hit! Preprocess already done
+⚡ Cache Hit! Training already done
+⚡ Cache Hit! Evaluation already done
+Final accuracy: 0.95
+```
+
+## Key Concepts
+
+### 1. Configuration
+
+Three ways to configure:
+
+```python
+# Method 1: @flexcli decorator (simplest)
+@flexcli
+def train(lr=0.01): ...
+
+# Method 2: Python configs (most flexible)
+from flexlock import py2cfg
+config = py2cfg(train, lr=0.01, model=py2cfg(Transformer, layers=12))
+
+# Method 3: YAML configs (declarative)
+# config.yaml
+train:
+  lr: 0.01
+  epochs: 100
+```
+
+### 2. Reproducibility
+
+Every run creates a `run.lock` snapshot:
+
+```yaml
+# run.lock
+timestamp: 2024-01-15T10:30:00
+config:
+  lr: 0.01
+  epochs: 10
+repos:
+  main:
+    tree: abc123def...  # Git tree hash
+data:
+  train: hash_abc123...  # Data fingerprint
+```
+
+Compare runs:
+
+```bash
+$ flexlock diff run_0001 run_0002
+Differences:
+  config.lr: 0.01 → 0.1
+```
+
+### 3. Smart Caching
+
+FlexLock never reruns identical experiments:
+
+```python
+# First run: executes
+result = proj.submit(config)
+
+# Second run: instant cache hit
+result = proj.submit(config)  # ⚡ Skipped!
+```
+
+## What's Next?
+
+### Learn by Example
+
+Start with the tutorials:
+
+1. **[Basics](./tutorials/01_basics.md)**: `@flexcli` decorator, CLI args, sweeps
+2. **[Reproducibility](./tutorials/02_reproducibility.md)**: Snapshots, diffs, lineage
+3. **[YAML Configs](./tutorials/03_yaml_config.md)**: Multi-stage YAML setups
+4. **[Python Configs](./tutorials/04_python_config.md)**: `py2cfg`, nested objects
+5. **[Pipelines](./tutorials/05_pipeline.md)**: Multi-stage workflows with Project API
+
+### Explore Features
+
+- **[Parallel Execution](./parallel.md)**: Slurm, PBS, Docker support
+- **[Logging](./logging.md)**: Structured logging with Loguru
+- **[MLflow Integration](./mlflowlink.md)**: Export to MLflow
+- **[Debugging](./debugging.md)**: Interactive debugging on failure
+
+### API Reference
+
+- **[Project API](./api/project.md)**: Pipeline orchestration
+- **[py2cfg](./api/py2cfg.md)**: Configuration management
+- **[@flexcli](./api/flexcli.md)**: Decorator reference
+
+## Getting Help
+
+- **Documentation**: [https://quentinf00.github.io/flexlock/](https://quentinf00.github.io/flexlock/)
+- **GitHub Issues**: [Report bugs](https://github.com/quentinf00/flexlock/issues)
+- **Examples**: Check `examples/` in the repository
+
+## Common Patterns
+
+### Pattern 1: Hyperparameter Sweep
+
+```python
+@flexcli
+def train(lr=0.01, batch_size=32):
+    # ... training code ...
+    return {"accuracy": accuracy}
+
+# Run sweep
+# $ python train.py --sweep "0.001,0.01,0.1" --sweep-target lr --n_jobs 3
+```
+
+### Pattern 2: Multi-Stage Pipeline
+
+```python
+proj = Project(defaults='config.defaults')
+
+# Preprocess (runs once, cached thereafter)
+data = proj.submit(proj.get('preprocess'))
+
+# Train sweep (finds best model)
+sweep = [{"lr": 0.001}, {"lr": 0.01}, {"lr": 0.1}]
+results = proj.submit(proj.get('train'), sweep=sweep, n_jobs=3)
+best = max(results, key=lambda r: r.accuracy)
+
+# Evaluate best model
+eval_cfg = proj.get('evaluate')
+eval_cfg.model_dir = best.save_dir
+final = proj.submit(eval_cfg)
+```
+
+### Pattern 3: Iterative Development
+
+```python
+# Develop a stage interactively
+config = proj.get('preprocess')
+config.debug = True  # Add debug flag
+
+# Run it
+result = proj.submit(config, smart_run=False)  # Force rerun
+
+# Satisfied? Let it cache
+result = proj.submit(config)  # Will cache next time
+```
+
+## Tips & Tricks
+
+1. **Use `smart_run=True` (default)** for automatic caching
+2. **Add `save_dir` to configs** for organized results
+3. **Use `${vinc:path}` for auto-versioning** directories
+4. **Check `run.lock`** to understand what was tracked
+5. **Use sweeps for exploration**, not just grid search
+
+Ready to dive deeper? Continue with the [full tutorials](./tutorials/index.md)!

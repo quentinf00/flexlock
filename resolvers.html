@@ -1,0 +1,473 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OmegaConf Resolvers &mdash; FlexLock 0.2.17 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/resolvers.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4031e696"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="MLflow Integration Guide" href="mlflow_integration.html" />
+    <link rel="prev" title="CLI Reference" href="cli_reference.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">OmegaConf Resolvers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#available-resolvers">Available Resolvers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#now-format-current-timestamp"><code class="docutils literal notranslate"><span class="pre">${now:format}</span></code> - Current Timestamp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#latest-glob-find-latest-path"><code class="docutils literal notranslate"><span class="pre">${latest:glob}</span></code> - Find Latest Path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vinc-path-version-increment"><code class="docutils literal notranslate"><span class="pre">${vinc:path}</span></code> - Version Increment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#using-resolvers">Using Resolvers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#in-yaml-configs">In YAML Configs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#in-python-configs">In Python Configs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#in-decorator">In Decorator</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-usage">Advanced Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#nested-resolvers">Nested Resolvers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conditional-logic">Conditional Logic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pipeline-dependencies">Pipeline Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#custom-resolvers">Custom Resolvers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#use-vinc-for-sequential-runs">1. Use <code class="docutils literal notranslate"><span class="pre">${vinc:...}</span></code> for Sequential Runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#use-latest-for-pipeline-stages">2. Use <code class="docutils literal notranslate"><span class="pre">${latest:...}</span></code> for Pipeline Stages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#combine-resolvers-for-powerful-patterns">3. Combine Resolvers for Powerful Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#track-data-with-snapshot-config">4. Track Data with Snapshot Config</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">OmegaConf Resolvers</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/resolvers.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="omegaconf-resolvers">
+<h1>OmegaConf Resolvers<a class="headerlink" href="#omegaconf-resolvers" title="Link to this heading"></a></h1>
+<p>FlexLock registers custom OmegaConf resolvers for dynamic configuration values.</p>
+<section id="available-resolvers">
+<h2>Available Resolvers<a class="headerlink" href="#available-resolvers" title="Link to this heading"></a></h2>
+<section id="now-format-current-timestamp">
+<h3><code class="docutils literal notranslate"><span class="pre">${now:format}</span></code> - Current Timestamp<a class="headerlink" href="#now-format-current-timestamp" title="Link to this heading"></a></h3>
+<p>Get current timestamp in specified format.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.train</span>
+<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outputs/train_${now:%Y%m%d_%H%M%S}</span>
+</pre></div>
+</div>
+<p><strong>Python:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
+    <span class="n">train</span><span class="p">,</span>
+    <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train_${now:%Y%m</span><span class="si">%d</span><span class="s1">_%H%M%S}&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Format strings:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">%Y</span></code>: 4-digit year (2024)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">%m</span></code>: 2-digit month (01-12)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">%d</span></code>: 2-digit day (01-31)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">%H</span></code>: 2-digit hour (00-23)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">%M</span></code>: 2-digit minute (00-59)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">%S</span></code>: 2-digit second (00-59)</p></li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${now:%Y-%m-%d %H:%M:%S}</span><span class="w">  </span><span class="c1"># &quot;2024-01-15 14:30:00&quot;</span>
+<span class="nt">run_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${now:%y%m%d%H%M}</span><span class="w">            </span><span class="c1"># &quot;2401151430&quot;</span>
+<span class="nt">date</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${now:%Y%m%d}</span><span class="w">                  </span><span class="c1"># &quot;20240115&quot;</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="latest-glob-find-latest-path">
+<h3><code class="docutils literal notranslate"><span class="pre">${latest:glob}</span></code> - Find Latest Path<a class="headerlink" href="#latest-glob-find-latest-path" title="Link to this heading"></a></h3>
+<p>Find the most recently modified path matching a glob pattern.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.eval</span>
+<span class="nt">model_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:outputs/train_*/}</span>
+</pre></div>
+</div>
+<p><strong>Python:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
+    <span class="n">evaluate</span><span class="p">,</span>
+    <span class="n">model_dir</span><span class="o">=</span><span class="s1">&#39;${latest:outputs/train_*}&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Behavior:</strong></p>
+<ul class="simple">
+<li><p>Expands glob pattern (uses <code class="docutils literal notranslate"><span class="pre">pathlib.Path.glob()</span></code>)</p></li>
+<li><p>Sorts by modification time (most recent first)</p></li>
+<li><p>Returns string path of latest match</p></li>
+<li><p>Raises error if no matches found</p></li>
+</ul>
+<p><strong>Examples:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Latest checkpoint</span>
+<span class="nt">checkpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:checkpoints/epoch_*.pth}</span>
+
+<span class="c1"># Latest experiment run</span>
+<span class="nt">prev_run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:outputs/experiments/run_*/}</span>
+
+<span class="c1"># Latest data file</span>
+<span class="nt">data_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:data/processed_*.csv}</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="vinc-path-version-increment">
+<h3><code class="docutils literal notranslate"><span class="pre">${vinc:path}</span></code> - Version Increment<a class="headerlink" href="#vinc-path-version-increment" title="Link to this heading"></a></h3>
+<p>Generate next version number for a directory path.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.train</span>
+<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${vinc:outputs/pipeline/run}</span>
+</pre></div>
+</div>
+<p><strong>Behavior:</strong></p>
+<ul class="simple">
+<li><p>Searches for existing directories matching <code class="docutils literal notranslate"><span class="pre">{path}_*</span></code></p></li>
+<li><p>Finds highest numeric suffix</p></li>
+<li><p>Returns <code class="docutils literal notranslate"><span class="pre">{path}_{n+1}</span></code> where n is the highest existing</p></li>
+</ul>
+<p><strong>Examples:</strong></p>
+<p>Existing directories:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">outputs</span><span class="o">/</span><span class="n">pipeline</span><span class="o">/</span>
+  <span class="n">run_0001</span><span class="o">/</span>
+  <span class="n">run_0002</span><span class="o">/</span>
+  <span class="n">run_0005</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>Config:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${vinc:outputs/pipeline/run}</span>
+</pre></div>
+</div>
+<p>Resolves to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">outputs</span><span class="o">/</span><span class="n">pipeline</span><span class="o">/</span><span class="n">run_0006</span><span class="o">/</span>
+</pre></div>
+</div>
+<p><strong>Use cases:</strong></p>
+<ul class="simple">
+<li><p>Auto-versioned experiment directories</p></li>
+<li><p>Sequential pipeline runs</p></li>
+<li><p>Avoid overwriting previous results</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="using-resolvers">
+<h2>Using Resolvers<a class="headerlink" href="#using-resolvers" title="Link to this heading"></a></h2>
+<section id="in-yaml-configs">
+<h3>In YAML Configs<a class="headerlink" href="#in-yaml-configs" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># config.yaml</span>
+<span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.train</span>
+
+<span class="c1"># Dynamic timestamp</span>
+<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outputs/train_${now:%Y%m%d_%H%M%S}</span>
+
+<span class="c1"># Latest model</span>
+<span class="nt">pretrained_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:models/pretrained_*.pth}</span>
+
+<span class="c1"># Versioned output</span>
+<span class="nt">results_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${vinc:outputs/results/exp}</span>
+</pre></div>
+</div>
+</section>
+<section id="in-python-configs">
+<h3>In Python Configs<a class="headerlink" href="#in-python-configs" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">py2cfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
+    <span class="n">train</span><span class="p">,</span>
+    <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train_${now:%Y%m</span><span class="si">%d</span><span class="s1">_%H%M%S}&#39;</span><span class="p">,</span>
+    <span class="n">input_data</span><span class="o">=</span><span class="s1">&#39;data/train.csv&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Resolve all interpolations</span>
+<span class="n">resolved</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">resolved</span><span class="p">[</span><span class="s1">&#39;save_dir&#39;</span><span class="p">])</span>  <span class="c1"># &quot;outputs/train_20240115_143000&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="in-decorator">
+<h3>In Decorator<a class="headerlink" href="#in-decorator" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span><span class="p">,</span> <span class="n">py2cfg</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span>
+    <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train_${now:%Y%m</span><span class="si">%d</span><span class="s1">_%H%M%S}&#39;</span><span class="p">,</span>
+    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_path}&#39;</span><span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saving to </span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Auto-resolved</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="advanced-usage">
+<h2>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Link to this heading"></a></h2>
+<section id="nested-resolvers">
+<h3>Nested Resolvers<a class="headerlink" href="#nested-resolvers" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use resolvers in paths</span>
+<span class="nt">checkpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:${base_dir}/checkpoints/epoch_*.pth}</span>
+
+<span class="c1"># Combine timestamp and versioning</span>
+<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${vinc:outputs/train_${now:%Y%m%d}/run}</span>
+</pre></div>
+</div>
+</section>
+<section id="conditional-logic">
+<h3>Conditional Logic<a class="headerlink" href="#conditional-logic" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use OmegaConf&#39;s oc.select for conditionals</span>
+<span class="nt">data_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${oc.select:custom_data_path,${latest:data/default_*.csv}}</span>
+</pre></div>
+</div>
+</section>
+<section id="pipeline-dependencies">
+<h3>Pipeline Dependencies<a class="headerlink" href="#pipeline-dependencies" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Stage 1: Preprocess</span>
+<span class="nt">preprocess</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.preprocess</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${vinc:outputs/preprocess/run}</span>
+
+<span class="c1"># Stage 2: Train (depends on Stage 1)</span>
+<span class="nt">train</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.train</span>
+<span class="w">  </span><span class="nt">preprocess_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:outputs/preprocess/run_*/}</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${vinc:outputs/train/run}</span>
+</pre></div>
+</div>
+<p><strong>Execution:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;pipeline.defaults&#39;</span><span class="p">)</span>
+
+<span class="c1"># Run preprocess</span>
+<span class="n">prep_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">))</span>
+
+<span class="c1"># Train automatically finds latest preprocess output</span>
+<span class="n">train_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="custom-resolvers">
+<h2>Custom Resolvers<a class="headerlink" href="#custom-resolvers" title="Link to this heading"></a></h2>
+<p>Register your own resolvers:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">my_resolver</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+<span class="c1"># Register resolver</span>
+<span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;upper&quot;</span><span class="p">,</span> <span class="n">my_resolver</span><span class="p">)</span>
+
+<span class="c1"># Use in config</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">({</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NAME&quot;</span><span class="p">:</span> <span class="s2">&quot;${upper:$</span><span class="si">{name}</span><span class="s2">}&quot;</span>
+<span class="p">})</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">NAME</span><span class="p">)</span>  <span class="c1"># &quot;MODEL&quot;</span>
+</pre></div>
+</div>
+<p><strong>Examples:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Environment variable resolver</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;env&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
+
+<span class="c1"># Usage: ${env:HOME}</span>
+
+<span class="c1"># Math resolver</span>
+<span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;mul&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
+
+<span class="c1"># Usage: warmup_steps: ${mul:${total_steps},0.1}</span>
+
+<span class="c1"># Path join resolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span>
+    <span class="s2">&quot;join&quot;</span><span class="p">,</span>
+    <span class="k">lambda</span> <span class="o">*</span><span class="n">parts</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="o">*</span><span class="n">parts</span><span class="p">))</span>
+<span class="p">)</span>
+
+<span class="c1"># Usage: model_path: ${join:${base_dir},models,best.pth}</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
+<section id="use-vinc-for-sequential-runs">
+<h3>1. Use <code class="docutils literal notranslate"><span class="pre">${vinc:...}</span></code> for Sequential Runs<a class="headerlink" href="#use-vinc-for-sequential-runs" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good: Auto-versioning</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;${vinc:outputs/exp/run}&#39;</span><span class="p">)</span>
+
+<span class="c1"># Bad: Manual versioning (error-prone)</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/exp/run_0042&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="use-latest-for-pipeline-stages">
+<h3>2. Use <code class="docutils literal notranslate"><span class="pre">${latest:...}</span></code> for Pipeline Stages<a class="headerlink" href="#use-latest-for-pipeline-stages" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good: Automatically finds latest upstream</span>
+<span class="n">train_cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
+    <span class="n">train</span><span class="p">,</span>
+    <span class="n">preprocess_dir</span><span class="o">=</span><span class="s1">&#39;${latest:outputs/preprocess/run_*}&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Bad: Hardcoded path (breaks when preprocess reruns)</span>
+<span class="n">train_cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">preprocess_dir</span><span class="o">=</span><span class="s1">&#39;outputs/preprocess/run_0001&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="combine-resolvers-for-powerful-patterns">
+<h3>3. Combine Resolvers for Powerful Patterns<a class="headerlink" href="#combine-resolvers-for-powerful-patterns" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Auto-versioned run with timestamp in name</span>
+<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${vinc:outputs/train_${now:%Y%m%d}/run}</span>
+
+<span class="c1"># Latest data file reference</span>
+<span class="nt">input_data</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:data/processed_*.csv}</span>
+
+<span class="c1"># Pipeline stage with dependency</span>
+<span class="nt">upstream_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:outputs/stage1/run_*/}</span>
+</pre></div>
+</div>
+</section>
+<section id="track-data-with-snapshot-config">
+<h3>4. Track Data with Snapshot Config<a class="headerlink" href="#track-data-with-snapshot-config" title="Link to this heading"></a></h3>
+<p>For data tracking, use the <code class="docutils literal notranslate"><span class="pre">snapshot_config</span></code> in <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code> or <code class="docutils literal notranslate"><span class="pre">py2cfg</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
+    <span class="n">train</span><span class="p">,</span>
+    <span class="n">input_data</span><span class="o">=</span><span class="s1">&#39;data/train.csv&#39;</span><span class="p">,</span>
+    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;train&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_data}&#39;</span><span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://omegaconf.readthedocs.io/">OmegaConf Documentation</a> - Interpolation syntax</p></li>
+<li><p><a class="reference internal" href="python_api.html"><span class="std std-doc">Python API</span></a> - Using resolvers programmatically</p></li>
+<li><p><a class="reference internal" href="cli_reference.html"><span class="std std-doc">CLI Reference</span></a> - Resolver usage in CLI workflows</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cli_reference.html" class="btn btn-neutral float-left" title="CLI Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mlflow_integration.html" class="btn btn-neutral float-right" title="MLflow Integration Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,492 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flexlock.runner &mdash; FlexLock 0.2.17 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/runner.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=4031e696"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">flexlock.runner</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for flexlock.runner</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Runner for FlexLock experiments.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">open_dict</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">,</span> <span class="n">DictConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_python_defaults</span><span class="p">,</span> <span class="n">instantiate</span><span class="p">,</span> <span class="n">py2cfg</span><span class="p">,</span> <span class="n">extract_tracking_info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.debug</span><span class="w"> </span><span class="kn">import</span> <span class="n">debug_on_fail</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelExecutor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.diff</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunDiff</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockValidationError</span><span class="p">,</span> <span class="n">FlexLockConfigError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+
+<div class="viewcode-block" id="FlexLockRunner">
+<a class="viewcode-back" href="../../api.html#flexlock.FlexLockRunner">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FlexLockRunner</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_parser</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;FlexLock Execution Manager&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Existing Config/Select args</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--defaults&quot;</span><span class="p">,</span> <span class="s2">&quot;-d&quot;</span><span class="p">,</span> 
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Python import path for default config&quot;</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to base YAML config file&quot;</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--select&quot;</span><span class="p">,</span> <span class="s2">&quot;-s&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key to select the node to run&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Existing Override args</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--merge&quot;</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Merge file into Root config&quot;</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--overrides&quot;</span><span class="p">,</span> <span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-list overrides for Root config&quot;</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--merge-after-select&quot;</span><span class="p">,</span> <span class="s2">&quot;-M&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Merge file into Selected config&quot;</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--overrides-after-select&quot;</span><span class="p">,</span> <span class="s2">&quot;-O&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-list overrides for Selected config&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># NEW SWEEP ARGUMENTS</span>
+        <span class="n">sweep_group</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s2">&quot;Sweep Configuration&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Source (Mutually Exclusive)</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">sweep_group</span><span class="o">.</span><span class="n">add_mutually_exclusive_group</span><span class="p">()</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--sweep-key&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Key in config containing the sweep list (e.g. &#39;experiments.grid&#39;)&quot;</span><span class="p">)</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--sweep-file&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a file (yaml, json, txt) containing the sweep list&quot;</span><span class="p">)</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--sweep&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated values (e.g. &#39;0.01,0.02&#39; or &#39;lr=0.1,lr=0.2&#39;)&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Injection Target</span>
+        <span class="n">sweep_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--sweep-target&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-path key to inject the sweep value into (e.g. &#39;optimizer.lr&#39;). &quot;</span>
+                 <span class="s2">&quot;If omitted, sweep items are merged at the root.&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Execution</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--n_jobs&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">DEFAULT_N_JOBS</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of parallel jobs&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--check-exists&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Check if run already exists and skip if so.&quot;</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--debug&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks).&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># HPC Backend Configuration</span>
+        <span class="n">backend_group</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s2">&quot;HPC Backend Configuration&quot;</span><span class="p">)</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="n">backend_group</span><span class="o">.</span><span class="n">add_mutually_exclusive_group</span><span class="p">()</span>
+        <span class="n">backend</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--slurm-config&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to Slurm configuration YAML file for HPC execution&quot;</span>
+        <span class="p">)</span>
+        <span class="n">backend</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--pbs-config&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to PBS configuration YAML file for HPC execution&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">parser</span>
+
+<div class="viewcode-block" id="FlexLockRunner.load_config">
+<a class="viewcode-back" href="../../api.html#flexlock.FlexLockRunner.load_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c1"># 1. Start with Injected Base (from decorator) or Empty</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+
+        <span class="c1"># 2. Merge Python Defaults (if --defaults passed)</span>
+        <span class="c1"># Note: --defaults flag overrides decorator defaults if both exist</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span>
+            <span class="n">ext_defaults</span> <span class="o">=</span> <span class="n">load_python_defaults</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">ext_defaults</span><span class="p">))</span>
+
+        <span class="c1"># 3. Outer Overrides</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">merge</span><span class="p">:</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">merge</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">overrides</span><span class="p">:</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">overrides</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final Root Config: </span><span class="si">{</span><span class="n">cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cfg</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_cli_sweep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sweep_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse comma-separated sweep values from CLI.</span>
+
+<span class="sd">        Handles:</span>
+<span class="sd">        - Simple values: &quot;1,2,3&quot; → [1, 2, 3]</span>
+<span class="sd">        - Key=value pairs: &quot;lr=0.1,lr=0.2&quot; → [{&#39;lr&#39;: 0.1}, {&#39;lr&#39;: 0.2}]</span>
+<span class="sd">        - Quoted strings: &#39;&quot;a,b&quot;,c&#39; → [&#39;a,b&#39;, &#39;c&#39;]</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sweep_str: Comma-separated sweep values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of parsed values (int, float, dict, or str)</span>
+
+<span class="sd">        Examples:</span>
+<span class="sd">            &gt;&gt;&gt; _parse_cli_sweep(&quot;1,2,3&quot;)</span>
+<span class="sd">            [1, 2, 3]</span>
+<span class="sd">            &gt;&gt;&gt; _parse_cli_sweep(&quot;lr=0.1,lr=0.2&quot;)</span>
+<span class="sd">            [{&#39;lr&#39;: 0.1}, {&#39;lr&#39;: 0.2}]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Use csv reader to handle quoted strings correctly</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">([</span><span class="n">sweep_str</span><span class="p">],</span> <span class="n">skipinitialspace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span>
+
+        <span class="n">parsed_items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="c1"># Check for &quot;key=value&quot; format to support simple dict overrides</span>
+            <span class="k">if</span> <span class="s2">&quot;=&quot;</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+                <span class="c1"># This returns a DictConfig</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">conf</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">([</span><span class="n">item</span><span class="p">])</span>
+                    <span class="c1"># Convert to primitive dict</span>
+                    <span class="n">parsed_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">conf</span><span class="p">))</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="c1"># Fallback to string if parsing fails</span>
+                    <span class="n">parsed_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Try to cast to int/float/bool, fallback to string</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># YAML safe load handles typing (1 -&gt; int, 1.0 -&gt; float, true -&gt; bool)</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                    <span class="n">parsed_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="n">parsed_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parsed_items</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_sweep_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">root_cfg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extracts and normalizes the sweep list based on CLI arguments.</span>
+<span class="sd">        Returns a list of Dictionaries (Tasks).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            FlexLockValidationError: If multiple sweep sources are provided</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate mutual exclusivity of sweep sources</span>
+        <span class="n">sources_provided</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">sweep_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">sweep_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">sweep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">sources_provided</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FlexLockValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Multiple sweep sources provided. &quot;</span>
+                <span class="s2">&quot;Use only ONE of: --sweep-key, --sweep-file, or --sweep&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">raw_tasks</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># 1. Determine Source</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep_key</span><span class="p">:</span>
+            <span class="n">raw_tasks</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep_key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">raw_tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">FlexLockValidationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Sweep key &#39;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_key</span><span class="si">}</span><span class="s2">&#39; not found in config.&quot;</span>
+                <span class="p">)</span>
+            <span class="c1"># Convert ListConfig to primitive list</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_tasks</span><span class="p">,</span> <span class="p">(</span><span class="n">ListConfig</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)):</span>
+                <span class="n">raw_tasks</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">raw_tasks</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep_file</span><span class="p">:</span>
+            <span class="n">fpath</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fpath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Sweep file &#39;</span><span class="si">{</span><span class="n">fpath</span><span class="si">}</span><span class="s2">&#39; not found.&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">fpath</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;.yaml&#39;</span><span class="p">,</span> <span class="s1">&#39;.yml&#39;</span><span class="p">]:</span>
+                <span class="n">raw_tasks</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fpath</span><span class="p">),</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">fpath</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.json&#39;</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">raw_tasks</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Text file: Assume one value per line</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="c1"># strip whitespace and skip empty lines</span>
+                    <span class="n">raw_tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+                    <span class="c1"># Attempt type conversion via YAML</span>
+                    <span class="n">raw_tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">raw_tasks</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep</span><span class="p">:</span>
+            <span class="n">raw_tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_cli_sweep</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">sweep</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">raw_tasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># Ensure raw_tasks is a list (handle single dict/value case if user messed up config)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_tasks</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">raw_tasks</span> <span class="o">=</span> <span class="p">[</span><span class="n">raw_tasks</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">raw_tasks</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;exp&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare node config by ensuring it has a save_dir.</span>
+
+<span class="sd">        If save_dir is missing or None, generates a timestamped directory</span>
+<span class="sd">        path: outputs/{name}/{timestamp}</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cfg: Configuration node to prepare</span>
+<span class="sd">            name: Name prefix for auto-generated save_dir (default: &quot;exp&quot;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            DictConfig: Updated configuration with save_dir set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Inject save_dir if missing</span>
+        <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cfg</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+             <span class="n">ts</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">TIMESTAMP_FORMAT</span><span class="p">)</span>
+             <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;outputs&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">name</span> <span class="o">/</span> <span class="n">ts</span>
+             <span class="k">with</span> <span class="n">open_dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+                 <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span>
+        <span class="k">return</span> <span class="n">cfg</span>
+
+<div class="viewcode-block" id="FlexLockRunner.check_if_exists">
+<a class="viewcode-back" href="../../api.html#flexlock.FlexLockRunner.check_if_exists">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_if_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if a run with the same configuration already exists.&quot;&quot;&quot;</span>
+        <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">))</span>
+        <span class="n">lock_file</span> <span class="o">=</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">lock_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        
+        <span class="c1"># Load existing run data</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">lock_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">existing_data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        
+        <span class="c1"># Compare with current configuration</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">RunDiff</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">existing_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">diff</span><span class="o">.</span><span class="n">is_match</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="FlexLockRunner.run">
+<a class="viewcode-back" href="../../api.html#flexlock.FlexLockRunner.run">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base_cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">cli_args</span><span class="p">)</span>
+        <span class="n">run_func</span> <span class="o">=</span> <span class="n">instantiate</span>
+
+        <span class="n">root_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_config</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded root config: </span><span class="si">{</span><span class="n">root_cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># Select Node</span>
+        <span class="n">node_cfg</span> <span class="o">=</span> <span class="n">root_cfg</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">select</span><span class="p">:</span>
+            <span class="n">node_cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">select</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded node config: </span><span class="si">{</span><span class="n">node_cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">node_cfg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">FlexLockValidationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Selection &#39;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">select</span><span class="si">}</span><span class="s2">&#39; returned None.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">base_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_b</span> <span class="o">=</span> <span class="n">base_cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">_b</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span>
+            <span class="n">node_cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">_b</span><span class="p">)</span> <span class="c1"># to keep global keys pointers from root_cfg</span>
+
+        <span class="c1"># Inner Overrides</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">merge_after_select</span><span class="p">:</span>
+            <span class="n">node_cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">merge_after_select</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">overrides_after_select</span><span class="p">:</span>
+            <span class="n">node_cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">overrides_after_select</span><span class="p">))</span>
+
+        <span class="c1"># --- SWEEP HANDLING ---</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_sweep_tasks</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">root_cfg</span><span class="p">)</span>
+
+        <span class="c1"># Prepare node (inject save_dir)</span>
+        <span class="n">node_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_node</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span>
+
+        <span class="c1"># ACTIVATE DEBUGGING GLOBALLY</span>
+        <span class="n">debug</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Debug mode enabled&quot;</span><span class="p">)</span>
+            <span class="n">run_func</span> <span class="o">=</span> <span class="n">debug_on_fail</span><span class="p">(</span><span class="n">run_func</span><span class="p">)</span>
+
+        <span class="c1"># Check if run already exists</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">check_exists</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_if_exists</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Run already exists and matches current configuration. Skipping.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running sweep with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks in debug mode one job, no hpc.&quot;</span><span class="p">)</span>
+                <span class="c1"># Batch execution</span>
+                <span class="n">executor</span> <span class="o">=</span> <span class="n">ParallelExecutor</span><span class="p">(</span>
+                    <span class="n">func</span><span class="o">=</span><span class="n">run_func</span><span class="p">,</span>
+                    <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
+                    <span class="n">task_target</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_target</span><span class="p">,</span>  <span class="c1"># Use sweep_target as task_target</span>
+                    <span class="n">cfg</span><span class="o">=</span><span class="n">node_cfg</span><span class="p">,</span>
+                    <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running sweep with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks.&quot;</span><span class="p">)</span>
+                <span class="c1"># Batch execution</span>
+                <span class="n">executor</span> <span class="o">=</span> <span class="n">ParallelExecutor</span><span class="p">(</span>
+                    <span class="n">func</span><span class="o">=</span><span class="n">run_func</span><span class="p">,</span>
+                    <span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
+                    <span class="n">task_target</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_target</span><span class="p">,</span>  <span class="c1"># Use sweep_target as task_target</span>
+                    <span class="n">cfg</span><span class="o">=</span><span class="n">node_cfg</span><span class="p">,</span>
+                    <span class="n">n_jobs</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span>
+                    <span class="n">slurm_config</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;slurm_config&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                    <span class="n">pbs_config</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;pbs_config&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+        <span class="c1"># Single execution</span>
+        <span class="c1"># Extract tracking info from the node config</span>
+        <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span> <span class="o">=</span> <span class="n">extract_tracking_info</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span>
+        
+        <span class="c1"># Snapshot before run</span>
+        <span class="n">snapshot</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">prevs</span><span class="o">=</span><span class="n">prevs</span><span class="p">)</span>
+        
+        <span class="c1"># Remove _snapshot_ so it is NOT passed to the user function</span>
+        <span class="k">if</span> <span class="s2">&quot;_snapshot_&quot;</span> <span class="ow">in</span> <span class="n">node_cfg</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">open_dict</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">):</span>
+                <span class="k">del</span> <span class="n">node_cfg</span><span class="p">[</span><span class="s2">&quot;_snapshot_&quot;</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="n">run_func</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

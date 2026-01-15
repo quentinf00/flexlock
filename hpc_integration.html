@@ -1,0 +1,914 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HPC Integration &mdash; FlexLock 0.2.17 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/hpc_integration.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4031e696"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Python API Reference" href="python_api.html" />
+    <link rel="prev" title="Debugging with FlexLock" href="debugging.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">HPC Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-hpc-submission">Basic HPC Submission</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#non-blocking-submission">Non-Blocking Submission</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monitor-job-status">Monitor Job Status</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pbs-configuration">PBS Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-pbs-config">Basic PBS Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gpu-jobs">GPU Jobs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#high-memory-jobs">High-Memory Jobs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#slurm-configuration">Slurm Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-slurm-config">Basic Slurm Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gpu-with-slurm">GPU with Slurm</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#singularity-containers">Singularity Containers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pbs-singularity">PBS + Singularity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#slurm-singularity">Slurm + Singularity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gpu-containers">GPU Containers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#parameter-sweeps-on-hpc">Parameter Sweeps on HPC</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-sweep">Basic Sweep</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#large-sweeps">Large Sweeps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#wait-behavior">Wait Behavior</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#wait-true-blocking">wait=True (Blocking)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#wait-false-non-blocking">wait=False (Non-Blocking)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#monitoring-jobs">Monitoring Jobs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#real-time-status">Real-Time Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#check-failed-tasks">Check Failed Tasks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-all-tasks">List All Tasks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#smart-caching-with-hpc">Smart Caching with HPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multi-stage-pipelines-on-hpc">Multi-Stage Pipelines on HPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-usage">Advanced Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#custom-timeout">Custom Timeout</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#job-dependencies">Job Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multiple-queue-types">Multiple Queue Types</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#job-fails-immediately">Job Fails Immediately</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#job-stuck-in-queue">Job Stuck in Queue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#task-database-locked">Task Database Locked</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#jobs-not-completing">Jobs Not Completing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#results-not-loading">Results Not Loading</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#do">✅ Do:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dont">❌ Don’t:</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#performance-tips">Performance Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#batch-small-tasks">1. Batch Small Tasks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#use-smart-caching">2. Use Smart Caching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallel-preprocessing">3. Parallel Preprocessing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#choose-right-queue">4. Choose Right Queue</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#example-complete-hpc-workflow">Example: Complete HPC Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">HPC Integration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/hpc_integration.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hpc-integration">
+<h1>HPC Integration<a class="headerlink" href="#hpc-integration" title="Link to this heading"></a></h1>
+<p>FlexLock provides seamless integration with HPC cluster schedulers (PBS and Slurm) for running experiments at scale.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>FlexLock’s HPC integration allows you to:</p>
+<ul class="simple">
+<li><p>✅ Submit jobs to PBS or Slurm queues with a single parameter</p></li>
+<li><p>✅ Monitor job status in real-time with <code class="docutils literal notranslate"><span class="pre">flexlock-status</span></code></p></li>
+<li><p>✅ Wait for job completion or submit and continue</p></li>
+<li><p>✅ Run parameter sweeps across cluster nodes</p></li>
+<li><p>✅ Use Singularity containers for reproducible environments</p></li>
+<li><p>✅ Automatic task database for distributed job management</p></li>
+</ul>
+</section>
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<section id="basic-hpc-submission">
+<h3>Basic HPC Submission<a class="headerlink" href="#basic-hpc-submission" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;configs.defaults&#39;</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+
+<span class="c1"># Submit to PBS and wait for completion</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;configs/pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Accuracy: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">accuracy</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="non-blocking-submission">
+<h3>Non-Blocking Submission<a class="headerlink" href="#non-blocking-submission" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Submit and continue without waiting</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;configs/pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Job submitted&quot;</span><span class="p">)</span>
+<span class="c1"># Job continues running on cluster</span>
+</pre></div>
+</div>
+</section>
+<section id="monitor-job-status">
+<h3>Monitor Job Status<a class="headerlink" href="#monitor-job-status" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Real-time monitoring</span>
+flexlock-status<span class="w"> </span>outputs/train/run.lock.tasks.db<span class="w"> </span>--watch
+
+<span class="c1"># Check failed tasks</span>
+flexlock-status<span class="w"> </span>outputs/train/run.lock.tasks.db<span class="w"> </span>--failed<span class="w"> </span>--verbose
+</pre></div>
+</div>
+</section>
+</section>
+<section id="pbs-configuration">
+<h2>PBS Configuration<a class="headerlink" href="#pbs-configuration" title="Link to this heading"></a></h2>
+<section id="basic-pbs-config">
+<h3>Basic PBS Config<a class="headerlink" href="#basic-pbs-config" title="Link to this heading"></a></h3>
+<p>Create <code class="docutils literal notranslate"><span class="pre">configs/pbs.yaml</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=mem=4gb:ncpus=1&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-N</span><span class="nv"> </span><span class="s">my_job&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=00:30:00&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-q</span><span class="nv"> </span><span class="s">default&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-V&#39;</span><span class="w">  </span><span class="c1"># Export environment</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;eval</span><span class="nv"> </span><span class="s">&quot;$(pixi</span><span class="nv"> </span><span class="s">shell-hook)&quot;&#39;</span><span class="w">  </span><span class="c1"># Activate environment</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+</pre></div>
+</div>
+</section>
+<section id="gpu-jobs">
+<h3>GPU Jobs<a class="headerlink" href="#gpu-jobs" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=mem=32gb:ncpus=8:ngpus=1&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-N</span><span class="nv"> </span><span class="s">gpu_training&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=12:00:00&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-q</span><span class="nv"> </span><span class="s">gpu&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-V&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;module</span><span class="nv"> </span><span class="s">load</span><span class="nv"> </span><span class="s">cuda/11.8&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;eval</span><span class="nv"> </span><span class="s">&quot;$(pixi</span><span class="nv"> </span><span class="s">shell-hook)&quot;&#39;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+</pre></div>
+</div>
+</section>
+<section id="high-memory-jobs">
+<h3>High-Memory Jobs<a class="headerlink" href="#high-memory-jobs" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=mem=128gb:ncpus=32&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-N</span><span class="nv"> </span><span class="s">big_memory&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=48:00:00&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-q</span><span class="nv"> </span><span class="s">highmem&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-V&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;eval</span><span class="nv"> </span><span class="s">&quot;$(pixi</span><span class="nv"> </span><span class="s">shell-hook)&quot;&#39;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="slurm-configuration">
+<h2>Slurm Configuration<a class="headerlink" href="#slurm-configuration" title="Link to this heading"></a></h2>
+<section id="basic-slurm-config">
+<h3>Basic Slurm Config<a class="headerlink" href="#basic-slurm-config" title="Link to this heading"></a></h3>
+<p>Create <code class="docutils literal notranslate"><span class="pre">configs/slurm.yaml</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--mem=4G&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--cpus-per-task=1&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--time=00:30:00&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--partition=default&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--job-name=my_job&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$SLURM_SUBMIT_DIR&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;source</span><span class="nv"> </span><span class="s">activate</span><span class="nv"> </span><span class="s">myenv&#39;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+</pre></div>
+</div>
+</section>
+<section id="gpu-with-slurm">
+<h3>GPU with Slurm<a class="headerlink" href="#gpu-with-slurm" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--mem=32G&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--cpus-per-task=8&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--gres=gpu:1&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--time=12:00:00&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--partition=gpu&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$SLURM_SUBMIT_DIR&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;module</span><span class="nv"> </span><span class="s">load</span><span class="nv"> </span><span class="s">cuda/11.8&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;source</span><span class="nv"> </span><span class="s">activate</span><span class="nv"> </span><span class="s">myenv&#39;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="singularity-containers">
+<h2>Singularity Containers<a class="headerlink" href="#singularity-containers" title="Link to this heading"></a></h2>
+<p>Singularity integration happens through the <code class="docutils literal notranslate"><span class="pre">python_exe</span></code> parameter:</p>
+<section id="pbs-singularity">
+<h3>PBS + Singularity<a class="headerlink" href="#pbs-singularity" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># configs/pbs_singularity.yaml</span>
+<span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=mem=4gb:ncpus=1&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-N</span><span class="nv"> </span><span class="s">container_job&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=00:30:00&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-q</span><span class="nv"> </span><span class="s">default&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-V&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;module</span><span class="nv"> </span><span class="s">load</span><span class="nv"> </span><span class="s">singularity&#39;</span><span class="w">  </span><span class="c1"># If needed</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">  </span><span class="no">singularity run</span>
+<span class="w">  </span><span class="no">--bind $(pwd):/workspace</span>
+<span class="w">  </span><span class="no">--pwd /workspace</span>
+<span class="w">  </span><span class="no">my_env.sif python</span>
+</pre></div>
+</div>
+<p><strong>Key points:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--bind</span></code>: Mount host directories into container</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--pwd</span></code>: Set working directory inside container</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">my_env.sif</span></code>: Your container image</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">python</span></code>: Command to run inside container</p></li>
+</ul>
+</section>
+<section id="slurm-singularity">
+<h3>Slurm + Singularity<a class="headerlink" href="#slurm-singularity" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># configs/slurm_singularity.yaml</span>
+<span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--mem=4G&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--cpus-per-task=1&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$SLURM_SUBMIT_DIR&#39;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">  </span><span class="no">singularity run</span>
+<span class="w">  </span><span class="no">--bind $(pwd):/workspace</span>
+<span class="w">  </span><span class="no">--pwd /workspace</span>
+<span class="w">  </span><span class="no">env.sif python</span>
+</pre></div>
+</div>
+</section>
+<section id="gpu-containers">
+<h3>GPU Containers<a class="headerlink" href="#gpu-containers" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">  </span><span class="no">singularity run --nv</span>
+<span class="w">  </span><span class="no">--bind $(pwd):/workspace</span>
+<span class="w">  </span><span class="no">--bind /data:/data</span>
+<span class="w">  </span><span class="no">gpu-env.sif python</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">--nv</span></code> enables NVIDIA GPU access.</p>
+</section>
+</section>
+<section id="parameter-sweeps-on-hpc">
+<h2>Parameter Sweeps on HPC<a class="headerlink" href="#parameter-sweeps-on-hpc" title="Link to this heading"></a></h2>
+<p>Run multiple experiments in parallel across cluster nodes:</p>
+<section id="basic-sweep">
+<h3>Basic Sweep<a class="headerlink" href="#basic-sweep" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;configs.defaults&#39;</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+
+<span class="c1"># Define parameter grid</span>
+<span class="n">sweep_grid</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span> <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">,</span> <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="c1"># Submit sweep to HPC</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">,</span>
+    <span class="n">sweep</span><span class="o">=</span><span class="n">sweep_grid</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;configs/pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=</span><span class="mi">4</span>  <span class="c1"># Submit 4 parallel jobs</span>
+<span class="p">)</span>
+
+<span class="c1"># Find best configuration</span>
+<span class="n">best_idx</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)),</span>
+               <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<span class="n">best</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best: lr=</span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">lr</span><span class="si">}</span><span class="s2">, accuracy=</span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">accuracy</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="large-sweeps">
+<h3>Large Sweeps<a class="headerlink" href="#large-sweeps" title="Link to this heading"></a></h3>
+<p>For large sweeps, use job arrays:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># configs/pbs_array.yaml</span>
+<span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-J</span><span class="nv"> </span><span class="s">0-99&quot;</span><span class="w">  </span><span class="c1"># Job array with 100 tasks</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=mem=4gb:ncpus=1&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=01:00:00&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;#PBS</span><span class="nv"> </span><span class="s">-V&#39;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&#39;</span>
+
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+</pre></div>
+</div>
+<p>Each array task pulls work from the shared task database.</p>
+</section>
+</section>
+<section id="wait-behavior">
+<h2>Wait Behavior<a class="headerlink" href="#wait-behavior" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">wait</span></code> parameter controls whether <code class="docutils literal notranslate"><span class="pre">submit()</span></code> blocks:</p>
+<section id="wait-true-blocking">
+<h3>wait=True (Blocking)<a class="headerlink" href="#wait-true-blocking" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Blocks until job completes</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Blocks here</span>
+<span class="p">)</span>
+
+<span class="c1"># Results immediately available</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">accuracy</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>How it works:</strong></p>
+<ol class="arabic simple">
+<li><p>Submit job to cluster</p></li>
+<li><p>Poll task database every 1 second (configurable)</p></li>
+<li><p>Log progress every 10 seconds</p></li>
+<li><p>Return when all tasks complete</p></li>
+</ol>
+<p><strong>Use cases:</strong></p>
+<ul class="simple">
+<li><p>Sequential pipelines</p></li>
+<li><p>Immediate result analysis</p></li>
+<li><p>CI/CD workflows</p></li>
+</ul>
+</section>
+<section id="wait-false-non-blocking">
+<h3>wait=False (Non-Blocking)<a class="headerlink" href="#wait-false-non-blocking" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Returns immediately</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Returns immediately</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Job submitted, continuing...&quot;</span><span class="p">)</span>
+<span class="c1"># result.status == &quot;SUBMITTED&quot;</span>
+<span class="c1"># Job continues on cluster</span>
+</pre></div>
+</div>
+<p><strong>Use cases:</strong></p>
+<ul class="simple">
+<li><p>Submit many jobs at once</p></li>
+<li><p>Long-running experiments</p></li>
+<li><p>Interactive workflows</p></li>
+</ul>
+<p><strong>Monitor later:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-status<span class="w"> </span>outputs/train/run.lock.tasks.db<span class="w"> </span>--watch
+</pre></div>
+</div>
+</section>
+</section>
+<section id="monitoring-jobs">
+<h2>Monitoring Jobs<a class="headerlink" href="#monitoring-jobs" title="Link to this heading"></a></h2>
+<section id="real-time-status">
+<h3>Real-Time Status<a class="headerlink" href="#real-time-status" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Watch job progress</span>
+flexlock-status<span class="w"> </span>outputs/sweep/run.lock.tasks.db<span class="w"> </span>--watch
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>============================================================
+Task Status Summary
+============================================================
+Pending:       12
+Running:        3
+Done:          45
+Failed:         2
+------------------------------------------------------------
+Total:         62
+Progress:    75.8% (47/62 completed)
+
+Status:     ⏳ In progress
+============================================================
+
+Refreshing in 10s... (Ctrl+C to stop)
+</pre></div>
+</div>
+</section>
+<section id="check-failed-tasks">
+<h3>Check Failed Tasks<a class="headerlink" href="#check-failed-tasks" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-status<span class="w"> </span>outputs/sweep/run.lock.tasks.db<span class="w"> </span>--failed<span class="w"> </span>--verbose
+</pre></div>
+</div>
+<p>Shows:</p>
+<ul class="simple">
+<li><p>Task configurations that failed</p></li>
+<li><p>Full error tracebacks</p></li>
+<li><p>Node where failure occurred</p></li>
+<li><p>Timestamps</p></li>
+</ul>
+</section>
+<section id="list-all-tasks">
+<h3>List All Tasks<a class="headerlink" href="#list-all-tasks" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># All tasks</span>
+flexlock-status<span class="w"> </span>outputs/sweep/run.lock.tasks.db<span class="w"> </span>--all
+
+<span class="c1"># Filter by status</span>
+flexlock-status<span class="w"> </span>outputs/sweep/run.lock.tasks.db<span class="w"> </span>--all<span class="w"> </span>--status<span class="w"> </span>running
+flexlock-status<span class="w"> </span>outputs/sweep/run.lock.tasks.db<span class="w"> </span>--all<span class="w"> </span>--status<span class="w"> </span>failed
+</pre></div>
+</div>
+</section>
+</section>
+<section id="smart-caching-with-hpc">
+<h2>Smart Caching with HPC<a class="headerlink" href="#smart-caching-with-hpc" title="Link to this heading"></a></h2>
+<p>FlexLock’s smart run detection works seamlessly with HPC:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># First run - executes on cluster</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Check cache</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># Second run - uses cached results!</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Cache hit!</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="c1"># No job submitted, instant results</span>
+</pre></div>
+</div>
+<p><strong>Benefits:</strong></p>
+<ul class="simple">
+<li><p>Skip completed work</p></li>
+<li><p>Resume failed sweeps</p></li>
+<li><p>Incremental parameter exploration</p></li>
+</ul>
+</section>
+<section id="multi-stage-pipelines-on-hpc">
+<h2>Multi-Stage Pipelines on HPC<a class="headerlink" href="#multi-stage-pipelines-on-hpc" title="Link to this heading"></a></h2>
+<p>Run complex pipelines on the cluster:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;pipeline.defaults&#39;</span><span class="p">)</span>
+
+<span class="c1"># Stage 1: Preprocess (on cluster)</span>
+<span class="n">preprocess</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">),</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Wait for preprocessing</span>
+<span class="p">)</span>
+
+<span class="c1"># Stage 2: Train (uses preprocessing output)</span>
+<span class="n">train</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">),</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs_gpu.yaml&#39;</span><span class="p">,</span>  <span class="c1"># Different queue</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># Stage 3: Evaluate</span>
+<span class="n">evaluate</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;evaluate&#39;</span><span class="p">),</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final accuracy: </span><span class="si">{</span><span class="n">evaluate</span><span class="o">.</span><span class="n">accuracy</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="advanced-usage">
+<h2>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Link to this heading"></a></h2>
+<section id="custom-timeout">
+<h3>Custom Timeout<a class="headerlink" href="#custom-timeout" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelExecutor</span>
+
+<span class="n">executor</span> <span class="o">=</span> <span class="n">ParallelExecutor</span><span class="p">(</span>
+    <span class="n">func</span><span class="o">=</span><span class="n">my_function</span><span class="p">,</span>
+    <span class="n">tasks</span><span class="o">=</span><span class="n">task_list</span><span class="p">,</span>
+    <span class="n">cfg</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Wait with 2-hour timeout</span>
+<span class="n">success</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mi">7200</span><span class="p">,</span>      <span class="c1"># 2 hours</span>
+    <span class="n">poll_interval</span><span class="o">=</span><span class="mi">30</span>   <span class="c1"># Check every 30s</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Jobs did not complete in time&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="job-dependencies">
+<h3>Job Dependencies<a class="headerlink" href="#job-dependencies" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sequential execution</span>
+<span class="n">preprocess</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg1</span><span class="p">,</span> <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">train</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg2</span><span class="p">,</span> <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="multiple-queue-types">
+<h3>Multiple Queue Types<a class="headerlink" href="#multiple-queue-types" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fast queue for preprocessing</span>
+<span class="n">preprocess</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">preprocess_cfg</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;configs/pbs_fast.yaml&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># GPU queue for training</span>
+<span class="n">train</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">train_cfg</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;configs/pbs_gpu.yaml&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Highmem queue for analysis</span>
+<span class="n">analyze</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">analyze_cfg</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;configs/pbs_highmem.yaml&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<section id="job-fails-immediately">
+<h3>Job Fails Immediately<a class="headerlink" href="#job-fails-immediately" title="Link to this heading"></a></h3>
+<p><strong>Check PBS error logs:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cat<span class="w"> </span>outputs/job/pbs_logs/pbs.err
+</pre></div>
+</div>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Environment not activated</p></li>
+<li><p>Python not found</p></li>
+<li><p>Wrong working directory</p></li>
+</ul>
+<p><strong>Fix:</strong> Ensure PBS config has proper setup:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&#39;</span><span class="w">  </span><span class="c1"># Critical!</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;eval</span><span class="nv"> </span><span class="s">&quot;$(pixi</span><span class="nv"> </span><span class="s">shell-hook)&quot;&#39;</span><span class="w">  </span><span class="c1"># Or your env activation</span>
+</pre></div>
+</div>
+</section>
+<section id="job-stuck-in-queue">
+<h3>Job Stuck in Queue<a class="headerlink" href="#job-stuck-in-queue" title="Link to this heading"></a></h3>
+<p><strong>Check queue status:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>qstat<span class="w"> </span>-Q<span class="w">  </span><span class="c1"># PBS</span>
+squeue<span class="w">    </span><span class="c1"># Slurm</span>
+</pre></div>
+</div>
+<p><strong>Possible issues:</strong></p>
+<ul class="simple">
+<li><p>Insufficient resources</p></li>
+<li><p>Queue limits reached</p></li>
+<li><p>Wrong queue specified</p></li>
+</ul>
+</section>
+<section id="task-database-locked">
+<h3>Task Database Locked<a class="headerlink" href="#task-database-locked" title="Link to this heading"></a></h3>
+<p><strong>Symptom:</strong> “Database locked” errors.</p>
+<p><strong>Cause:</strong> Multiple workers accessing simultaneously (normal).</p>
+<p><strong>Solution:</strong> FlexLock handles this automatically with retries. If persistent:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Increase timeout in config</span>
+<span class="n">c</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA busy_timeout=30000&quot;</span><span class="p">)</span>  <span class="c1"># 30 seconds</span>
+</pre></div>
+</div>
+</section>
+<section id="jobs-not-completing">
+<h3>Jobs Not Completing<a class="headerlink" href="#jobs-not-completing" title="Link to this heading"></a></h3>
+<p><strong>Check with flexlock-status:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-status<span class="w"> </span>outputs/job/run.lock.tasks.db<span class="w"> </span>--all
+</pre></div>
+</div>
+<p><strong>Look for:</strong></p>
+<ul class="simple">
+<li><p>Tasks stuck in “running” status</p></li>
+<li><p>Failed tasks with errors</p></li>
+</ul>
+</section>
+<section id="results-not-loading">
+<h3>Results Not Loading<a class="headerlink" href="#results-not-loading" title="Link to this heading"></a></h3>
+<p><strong>Verify results file exists:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ls<span class="w"> </span>outputs/job/results.json
+</pre></div>
+</div>
+<p><strong>If missing:</strong></p>
+<ul class="simple">
+<li><p>Check if job actually completed</p></li>
+<li><p>Verify save_dir in config</p></li>
+<li><p>Check PBS output logs</p></li>
+</ul>
+</section>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
+<section id="do">
+<h3>✅ Do:<a class="headerlink" href="#do" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Test locally first</strong>: Run with <code class="docutils literal notranslate"><span class="pre">smart_run=True</span></code> locally before HPC</p></li>
+<li><p><strong>Use wait=True for pipelines</strong>: Ensures stages complete in order</p></li>
+<li><p><strong>Monitor actively</strong>: Use <code class="docutils literal notranslate"><span class="pre">flexlock-status</span> <span class="pre">--watch</span></code> for first runs</p></li>
+<li><p><strong>Set reasonable walltimes</strong>: Don’t request more than needed</p></li>
+<li><p><strong>Use containers</strong>: For reproducibility across systems</p></li>
+<li><p><strong>Smart caching</strong>: Use <code class="docutils literal notranslate"><span class="pre">smart_run=True</span></code> to skip completed work</p></li>
+</ol>
+</section>
+<section id="dont">
+<h3>❌ Don’t:<a class="headerlink" href="#dont" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Submit to login nodes</strong>: Always use the scheduler</p></li>
+<li><p><strong>Hardcode paths</strong>: Use <code class="docutils literal notranslate"><span class="pre">$PBS_O_WORKDIR</span></code> or relative paths</p></li>
+<li><p><strong>Ignore resource limits</strong>: Stay within your allocation</p></li>
+<li><p><strong>Submit thousands of tiny jobs</strong>: Use job arrays or batch tasks</p></li>
+<li><p><strong>Skip environment activation</strong>: Jobs will fail mysteriously</p></li>
+</ol>
+</section>
+</section>
+<section id="performance-tips">
+<h2>Performance Tips<a class="headerlink" href="#performance-tips" title="Link to this heading"></a></h2>
+<section id="batch-small-tasks">
+<h3>1. Batch Small Tasks<a class="headerlink" href="#batch-small-tasks" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Bad: 1000 tiny jobs</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="n">big_grid</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># Good: 100 jobs, each processing ~10 tasks</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="n">big_grid</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="use-smart-caching">
+<h3>2. Use Smart Caching<a class="headerlink" href="#use-smart-caching" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Skip completed work automatically</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">,</span>
+    <span class="n">sweep</span><span class="o">=</span><span class="n">grid</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Critical!</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="parallel-preprocessing">
+<h3>3. Parallel Preprocessing<a class="headerlink" href="#parallel-preprocessing" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Preprocess once locally</span>
+<span class="n">preprocess</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">preprocess_cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># All HPC jobs use same preprocessed data</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">train_cfg</span><span class="p">,</span>
+    <span class="n">sweep</span><span class="o">=</span><span class="n">grid</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="choose-right-queue">
+<h3>4. Choose Right Queue<a class="headerlink" href="#choose-right-queue" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quick jobs - fast queue</span>
+<span class="nt">walltime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">00:15:00</span>
+<span class="nt">queue</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fast</span>
+
+<span class="c1"># Long jobs - normal queue</span>
+<span class="nt">walltime</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">48:00:00</span>
+<span class="nt">queue</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">long</span>
+
+<span class="c1"># GPU jobs - GPU queue</span>
+<span class="nt">queue</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpu</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="example-complete-hpc-workflow">
+<h2>Example: Complete HPC Workflow<a class="headerlink" href="#example-complete-hpc-workflow" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="sd">&quot;&quot;&quot;Complete HPC workflow example.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+<span class="c1"># Enable logging</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">enable</span><span class="p">(</span><span class="s2">&quot;flexlock&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;configs.defaults&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Define sweep</span>
+    <span class="n">sweep_grid</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span> <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">,</span> <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;epochs&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">},</span>
+    <span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Submitting </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sweep_grid</span><span class="p">)</span><span class="si">}</span><span class="s2"> jobs to HPC&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Submit to cluster</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+        <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">),</span>
+        <span class="n">sweep</span><span class="o">=</span><span class="n">sweep_grid</span><span class="p">,</span>
+        <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;configs/pbs_gpu.yaml&#39;</span><span class="p">,</span>
+        <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Skip completed</span>
+        <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>       <span class="c1"># Block until done</span>
+        <span class="n">n_jobs</span><span class="o">=</span><span class="mi">4</span>         <span class="c1"># Parallel jobs</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Analyze results</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;All jobs completed!&quot;</span><span class="p">)</span>
+
+    <span class="n">best_idx</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)),</span>
+                   <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best configuration:&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  lr=</span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">lr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  epochs=</span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">epochs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  batch_size=</span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  accuracy=</span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">accuracy</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Run it:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Submit and wait</span>
+python<span class="w"> </span>workflow.py
+
+<span class="c1"># Monitor in another terminal</span>
+flexlock-status<span class="w"> </span>outputs/train/run.lock.tasks.db<span class="w"> </span>--watch
+</pre></div>
+</div>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong><a class="reference internal" href="#../my_awesome_project/08_hpc_backend/"><span class="xref myst">Example 08: HPC Backend</span></a></strong>: Detailed HPC examples</p></li>
+<li><p><strong><a class="reference internal" href="#../my_awesome_project/09_container/"><span class="xref myst">Example 09: Containers</span></a></strong>: Singularity integration</p></li>
+<li><p><strong><a class="reference internal" href="#../my_awesome_project/10_full_workflow/"><span class="xref myst">Example 10: Full Workflow</span></a></strong>: Complete feature showcase</p></li>
+<li><p><strong><a class="reference internal" href="#./api/parallel.md"><span class="xref myst">ParallelExecutor API</span></a></strong>: Low-level backend control</p></li>
+</ul>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
+<p>FlexLock makes HPC integration simple:</p>
+<ol class="arabic simple">
+<li><p><strong>Add one parameter</strong>: <code class="docutils literal notranslate"><span class="pre">pbs_config='pbs.yaml'</span></code></p></li>
+<li><p><strong>Monitor easily</strong>: <code class="docutils literal notranslate"><span class="pre">flexlock-status</span> <span class="pre">db_path</span> <span class="pre">--watch</span></code></p></li>
+<li><p><strong>Smart caching</strong>: Automatic result reuse</p></li>
+<li><p><strong>Container support</strong>: Reproducible environments</p></li>
+<li><p><strong>Flexible waiting</strong>: Block or continue as needed</p></li>
+</ol>
+<p>Start simple, scale to thousands of cluster jobs! 🚀</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="debugging.html" class="btn btn-neutral float-left" title="Debugging with FlexLock" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="python_api.html" class="btn btn-neutral float-right" title="Python API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,771 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python API Reference &mdash; FlexLock 0.2.17 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/python_api.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4031e696"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="CLI Reference" href="cli_reference.html" />
+    <link rel="prev" title="HPC Integration" href="hpc_integration.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Python API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#core-components">Core Components</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#py2cfg-python-to-configuration"><code class="docutils literal notranslate"><span class="pre">py2cfg</span></code>: Python to Configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#with-overrides">With Overrides</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#nested-configurations">Nested Configurations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#positional-arguments">Positional Arguments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#partial-functions">Partial Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#instantiate-execute-configurations"><code class="docutils literal notranslate"><span class="pre">instantiate</span></code>: Execute Configurations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flexcli-command-line-decorator"><code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>: Command-Line Decorator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Basic Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#with-defaults">With Defaults</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#with-snapshot-configuration">With Snapshot Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debug-mode">Debug Mode</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#project-api">Project API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-project">Creating a Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proj-get-key-retrieve-configuration"><code class="docutils literal notranslate"><span class="pre">proj.get(key)</span></code>: Retrieve Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proj-submit-execute-configuration"><code class="docutils literal notranslate"><span class="pre">proj.submit()</span></code>: Execute Configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#signature">Signature</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#basic-execution">Basic Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#smart-run-caching">Smart Run (Caching)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#parameter-sweep">Parameter Sweep</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hpc-execution-slurm">HPC Execution (Slurm)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hpc-execution-pbs">HPC Execution (PBS)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#async-execution">Async Execution</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#proj-exists-check-for-cached-run"><code class="docutils literal notranslate"><span class="pre">proj.exists()</span></code>: Check for Cached Run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proj-get-result-load-cached-results"><code class="docutils literal notranslate"><span class="pre">proj.get_result()</span></code>: Load Cached Results</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#executionresult">ExecutionResult</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#attributes">Attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dict-like-access">Dict-like Access</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-usage">Advanced Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#multi-stage-pipelines">Multi-Stage Pipelines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sweep-with-early-stopping">Sweep with Early Stopping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dynamic-configuration">Dynamic Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conditional-execution">Conditional Execution</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#always-use-save-dir">1. Always Use <code class="docutils literal notranslate"><span class="pre">save_dir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#use-smart-run-by-default">2. Use Smart Run by Default</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#structure-configs-hierarchically">3. Structure Configs Hierarchically</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#track-data-dependencies">4. Track Data Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#use-sweeps-for-exploration">5. Use Sweeps for Exploration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Python API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/python_api.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="python-api-reference">
+<h1>Python API Reference<a class="headerlink" href="#python-api-reference" title="Link to this heading"></a></h1>
+<p>Comprehensive guide to FlexLock’s Python API for programmatic experiment orchestration.</p>
+<section id="core-components">
+<h2>Core Components<a class="headerlink" href="#core-components" title="Link to this heading"></a></h2>
+<section id="py2cfg-python-to-configuration">
+<h3><code class="docutils literal notranslate"><span class="pre">py2cfg</span></code>: Python to Configuration<a class="headerlink" href="#py2cfg-python-to-configuration" title="Link to this heading"></a></h3>
+<p>Convert Python functions and classes into configuration dictionaries.</p>
+<section id="basic-usage">
+<h4>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">py2cfg</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Train a model.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+<span class="c1"># Convert function to config</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+<span class="c1"># Result: {&#39;_target_&#39;: &#39;module.train&#39;, &#39;lr&#39;: 0.01, &#39;epochs&#39;: 10}</span>
+</pre></div>
+</div>
+</section>
+<section id="with-overrides">
+<h4>With Overrides<a class="headerlink" href="#with-overrides" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Override default values</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="c1"># Result: {&#39;_target_&#39;: &#39;module.train&#39;, &#39;lr&#39;: 0.1, &#39;epochs&#39;: 100}</span>
+</pre></div>
+</div>
+</section>
+<section id="nested-configurations">
+<h4>Nested Configurations<a class="headerlink" href="#nested-configurations" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Transformer</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">heads</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">heads</span> <span class="o">=</span> <span class="n">heads</span>
+
+<span class="c1"># Nested py2cfg</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
+    <span class="n">train</span><span class="p">,</span>
+    <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">Transformer</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">heads</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Result:</span>
+<span class="c1"># {</span>
+<span class="c1">#   &#39;_target_&#39;: &#39;module.train&#39;,</span>
+<span class="c1">#   &#39;lr&#39;: 0.001,</span>
+<span class="c1">#   &#39;epochs&#39;: 10,</span>
+<span class="c1">#   &#39;model&#39;: {</span>
+<span class="c1">#     &#39;_target_&#39;: &#39;module.Transformer&#39;,</span>
+<span class="c1">#     &#39;layers&#39;: 12,</span>
+<span class="c1">#     &#39;heads&#39;: 16</span>
+<span class="c1">#   }</span>
+<span class="c1"># }</span>
+</pre></div>
+</div>
+</section>
+<section id="positional-arguments">
+<h4>Positional Arguments<a class="headerlink" href="#positional-arguments" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># For functions requiring positional args</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="c1"># Result: {&#39;_target_&#39;: &#39;module.train&#39;, &#39;_args_&#39;: [&#39;model_name&#39;], &#39;lr&#39;: 0.01}</span>
+</pre></div>
+</div>
+</section>
+<section id="partial-functions">
+<h4>Partial Functions<a class="headerlink" href="#partial-functions" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+
+<span class="c1"># Create partial function</span>
+<span class="n">train_adam</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adam&#39;</span><span class="p">)</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train_adam</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="c1"># Result: {&#39;_target_&#39;: &#39;module.train&#39;, &#39;_partial_&#39;: true, &#39;optimizer&#39;: &#39;adam&#39;, &#39;lr&#39;: 0.01}</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="instantiate-execute-configurations">
+<h3><code class="docutils literal notranslate"><span class="pre">instantiate</span></code>: Execute Configurations<a class="headerlink" href="#instantiate-execute-configurations" title="Link to this heading"></a></h3>
+<p>Execute a configuration dictionary by instantiating the target.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">instantiate</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;_target_&#39;</span><span class="p">:</span> <span class="s1">&#39;myproject.train.train&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;lr&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>
+    <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="mi">100</span>
+<span class="p">}</span>
+
+<span class="c1"># Execute</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">instantiate</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Behavior:</strong></p>
+<ul class="simple">
+<li><p>Imports the module and function specified in <code class="docutils literal notranslate"><span class="pre">_target_</span></code></p></li>
+<li><p>Passes config parameters as keyword arguments</p></li>
+<li><p>Handles <code class="docutils literal notranslate"><span class="pre">_args_</span></code> for positional arguments</p></li>
+<li><p>Supports <code class="docutils literal notranslate"><span class="pre">_partial_</span></code> for partial instantiation</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="flexcli-command-line-decorator">
+<h3><code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>: Command-Line Decorator<a class="headerlink" href="#flexcli-command-line-decorator" title="Link to this heading"></a></h3>
+<p>Transform a Python function into a CLI-enabled experiment.</p>
+<section id="id1">
+<h4>Basic Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+
+<span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Train a model.&quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training with lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">}</span><span class="s2">, epochs=</span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saving to </span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">}</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">train</span><span class="p">()</span>  <span class="c1"># CLI mode: parses sys.argv</span>
+</pre></div>
+</div>
+<p><strong>CLI usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>train.py<span class="w">                       </span><span class="c1"># Uses defaults</span>
+python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1<span class="w"> </span><span class="nv">epochs</span><span class="o">=</span><span class="m">20</span><span class="w">   </span><span class="c1"># Override params</span>
+</pre></div>
+</div>
+</section>
+<section id="with-defaults">
+<h4>With Defaults<a class="headerlink" href="#with-defaults" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="c1"># Decorator defaults override function defaults</span>
+</pre></div>
+</div>
+</section>
+<section id="with-snapshot-configuration">
+<h4>With Snapshot Configuration<a class="headerlink" href="#with-snapshot-configuration" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span><span class="p">(</span>
+    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">repos</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">main</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">),</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_path}&#39;</span><span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p><strong>Enables:</strong></p>
+<ul class="simple">
+<li><p>Git repository tracking</p></li>
+<li><p>Data file hashing</p></li>
+<li><p>Reproducibility snapshots</p></li>
+</ul>
+</section>
+<section id="debug-mode">
+<h4>Debug Mode<a class="headerlink" href="#debug-mode" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># or set FLEXLOCK_DEBUG=1</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">lr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid lr&quot;</span><span class="p">)</span>
+
+<span class="c1"># On error: Drops into interactive debugger</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<hr class="docutils" />
+<section id="project-api">
+<h2>Project API<a class="headerlink" href="#project-api" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Project</span></code> class provides high-level orchestration for multi-stage experiments.</p>
+<section id="creating-a-project">
+<h3>Creating a Project<a class="headerlink" href="#creating-a-project" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+
+<span class="c1"># Load from Python module</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;myproject.config.defaults&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Python module structure:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># myproject/config/defaults.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">py2cfg</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">preprocess</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="n">defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">preprocess</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">preprocess</span><span class="p">,</span> <span class="n">input_dir</span><span class="o">=</span><span class="s1">&#39;data/&#39;</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s1">&#39;processed/&#39;</span><span class="p">),</span>
+    <span class="n">train</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">data_dir</span><span class="o">=</span><span class="s1">&#39;processed/&#39;</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="proj-get-key-retrieve-configuration">
+<h3><code class="docutils literal notranslate"><span class="pre">proj.get(key)</span></code>: Retrieve Configuration<a class="headerlink" href="#proj-get-key-retrieve-configuration" title="Link to this heading"></a></h3>
+<p>Get a configuration node from the defaults.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get config by key</span>
+<span class="n">train_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+
+<span class="c1"># Modify before execution</span>
+<span class="n">train_cfg</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="n">train_cfg</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span>
+</pre></div>
+</div>
+<p><strong>Returns:</strong> <code class="docutils literal notranslate"><span class="pre">DictConfig</span></code> (OmegaConf)</p>
+</section>
+<hr class="docutils" />
+<section id="proj-submit-execute-configuration">
+<h3><code class="docutils literal notranslate"><span class="pre">proj.submit()</span></code>: Execute Configuration<a class="headerlink" href="#proj-submit-execute-configuration" title="Link to this heading"></a></h3>
+<p>Execute a configuration, with smart caching and HPC support.</p>
+<section id="signature">
+<h4>Signature<a class="headerlink" href="#signature" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">submit</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span>
+    <span class="n">sweep</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">search_dirs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">wait</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">slurm_config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutionResult</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">ExecutionResult</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="basic-execution">
+<h4>Basic Execution<a class="headerlink" href="#basic-execution" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get config and execute</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="c1"># Access results</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>      <span class="c1"># Where results are saved</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>        <span class="c1"># &quot;SUCCESS&quot;, &quot;CACHED&quot;, &quot;FAILED&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">result</span><span class="p">)</span>        <span class="c1"># Return value from function</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>   <span class="c1"># Dict-like access (if result is dict)</span>
+</pre></div>
+</div>
+</section>
+<section id="smart-run-caching">
+<h4>Smart Run (Caching)<a class="headerlink" href="#smart-run-caching" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># First run: executes</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Runs</span>
+
+<span class="c1"># Second run: cache hit</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># ⚡ Skipped! Returns cached result</span>
+</pre></div>
+</div>
+<p><strong>How it works:</strong></p>
+<ul class="simple">
+<li><p>Generates fingerprint (code + data + config)</p></li>
+<li><p>Searches <code class="docutils literal notranslate"><span class="pre">search_dirs</span></code> for matching <code class="docutils literal notranslate"><span class="pre">run.lock</span></code></p></li>
+<li><p>Returns cached result if found</p></li>
+</ul>
+<p><strong>Custom search:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">search_dirs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;outputs/train/&#39;</span><span class="p">,</span> <span class="s1">&#39;archive/old_runs/&#39;</span><span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="parameter-sweep">
+<h4>Parameter Sweep<a class="headerlink" href="#parameter-sweep" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define sweep</span>
+<span class="n">sweep</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">),</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="c1"># Execute sweep</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># Process results</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: accuracy=</span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best config: </span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="hpc-execution-slurm">
+<h4>HPC Execution (Slurm)<a class="headerlink" href="#hpc-execution-slurm" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">,</span>
+    <span class="n">slurm_config</span><span class="o">=</span><span class="s1">&#39;slurm.yaml&#39;</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Block until completion</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Slurm config:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--job-name=train&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--cpus-per-task=8&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--mem=32G&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--time=04:00:00&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;module</span><span class="nv"> </span><span class="s">load</span><span class="nv"> </span><span class="s">cuda/11.8&quot;</span>
+<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;python&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="hpc-execution-pbs">
+<h4>HPC Execution (PBS)<a class="headerlink" href="#hpc-execution-pbs" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">,</span>
+    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;pbs.yaml&#39;</span><span class="p">,</span>
+    <span class="n">wait</span><span class="o">=</span><span class="kc">False</span>  <span class="c1"># Submit and return immediately</span>
+<span class="p">)</span>
+
+<span class="c1"># Check result later</span>
+<span class="c1"># (Requires manual polling or separate script)</span>
+</pre></div>
+</div>
+</section>
+<section id="async-execution">
+<h4>Async Execution<a class="headerlink" href="#async-execution" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Submit without waiting</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">slurm_config</span><span class="o">=</span><span class="s1">&#39;slurm.yaml&#39;</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>  <span class="c1"># &quot;SUBMITTED&quot;</span>
+
+<span class="c1"># Continue with other work...</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="proj-exists-check-for-cached-run">
+<h3><code class="docutils literal notranslate"><span class="pre">proj.exists()</span></code>: Check for Cached Run<a class="headerlink" href="#proj-exists-check-for-cached-run" title="Link to this heading"></a></h3>
+<p>Check if a run with matching configuration exists.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">proj</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">search_dirs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;outputs/train/&#39;</span><span class="p">]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Run already exists, using cache&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No cache found, executing&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="proj-get-result-load-cached-results">
+<h3><code class="docutils literal notranslate"><span class="pre">proj.get_result()</span></code>: Load Cached Results<a class="headerlink" href="#proj-get-result-load-cached-results" title="Link to this heading"></a></h3>
+<p>Load results from a previously completed run.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+
+<span class="c1"># Load cached result (raises ValueError if not found)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">search_dirs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;outputs/&#39;</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Result loading:</strong></p>
+<ul class="simple">
+<li><p>Tries <code class="docutils literal notranslate"><span class="pre">results.json</span></code> first</p></li>
+<li><p>Falls back to <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> if available</p></li>
+<li><p>Returns <code class="docutils literal notranslate"><span class="pre">ExecutionResult</span></code> with <code class="docutils literal notranslate"><span class="pre">status=&quot;CACHED&quot;</span></code></p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="executionresult">
+<h2>ExecutionResult<a class="headerlink" href="#executionresult" title="Link to this heading"></a></h2>
+<p>Object returned by <code class="docutils literal notranslate"><span class="pre">proj.submit()</span></code>.</p>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="n">result</span><span class="o">.</span><span class="n">save_dir</span>   <span class="c1"># str: Directory where results are saved</span>
+<span class="n">result</span><span class="o">.</span><span class="n">status</span>     <span class="c1"># str: &quot;SUCCESS&quot;, &quot;CACHED&quot;, &quot;SKIPPED&quot;, &quot;FAILED&quot;</span>
+<span class="n">result</span><span class="o">.</span><span class="n">result</span>     <span class="c1"># Any: Return value from function</span>
+<span class="n">result</span><span class="o">.</span><span class="n">cfg</span>        <span class="c1"># DictConfig: Configuration used</span>
+</pre></div>
+</div>
+</section>
+<section id="dict-like-access">
+<h3>Dict-like Access<a class="headerlink" href="#dict-like-access" title="Link to this heading"></a></h3>
+<p>If the function returns a dict, access keys as attributes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span> <span class="s2">&quot;loss&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">}</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">accuracy</span><span class="p">)</span>      <span class="c1"># 0.95</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">])</span>       <span class="c1"># 0.05</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;f1&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>  <span class="c1"># 0 (default)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="advanced-usage">
+<h2>Advanced Usage<a class="headerlink" href="#advanced-usage" title="Link to this heading"></a></h2>
+<section id="multi-stage-pipelines">
+<h3>Multi-Stage Pipelines<a class="headerlink" href="#multi-stage-pipelines" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span><span class="p">,</span> <span class="n">py2cfg</span>
+
+<span class="c1"># Define pipeline</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;pipeline.defaults&#39;</span><span class="p">)</span>
+
+<span class="c1"># Stage 1: Preprocess</span>
+<span class="n">preprocess_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">)</span>
+<span class="n">preprocess_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">preprocess_cfg</span><span class="p">)</span>
+
+<span class="c1"># Stage 2: Train (depends on Stage 1)</span>
+<span class="n">train_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+<span class="n">train_cfg</span><span class="o">.</span><span class="n">data_dir</span> <span class="o">=</span> <span class="n">preprocess_result</span><span class="o">.</span><span class="n">save_dir</span>  <span class="c1"># Use output from Stage 1</span>
+<span class="n">train_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">train_cfg</span><span class="p">)</span>
+
+<span class="c1"># Stage 3: Evaluate (depends on Stage 2)</span>
+<span class="n">eval_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;evaluate&#39;</span><span class="p">)</span>
+<span class="n">eval_cfg</span><span class="o">.</span><span class="n">model_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">train_result</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;model.pth&#39;</span>
+<span class="n">eval_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">eval_cfg</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final accuracy: </span><span class="si">{</span><span class="n">eval_result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>With smart run:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Re-run entire pipeline</span>
+<span class="c1"># Unchanged stages are automatically skipped</span>
+<span class="n">preprocess_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">preprocess_cfg</span><span class="p">)</span>  <span class="c1"># ⚡ Cached</span>
+<span class="n">train_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">train_cfg</span><span class="p">)</span>            <span class="c1"># ⚡ Cached</span>
+<span class="n">eval_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">eval_cfg</span><span class="p">)</span>              <span class="c1"># ⚡ Cached</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="sweep-with-early-stopping">
+<h3>Sweep with Early Stopping<a class="headerlink" href="#sweep-with-early-stopping" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sweep</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]]</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">override</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sweep</span><span class="p">):</span>
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+    <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">override</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="c1"># Early stop if accuracy &gt; 0.95</span>
+    <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.95</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found good config at iteration </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">break</span>
+
+<span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="dynamic-configuration">
+<h3>Dynamic Configuration<a class="headerlink" href="#dynamic-configuration" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+
+<span class="c1"># Dynamic save_dir with timestamp</span>
+<span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;outputs/train_</span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">_%H%M%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="c1"># Dynamic data path</span>
+<span class="n">cfg</span><span class="o">.</span><span class="n">data_dir</span> <span class="o">=</span> <span class="s2">&quot;data/latest&quot;</span> <span class="k">if</span> <span class="n">use_latest</span> <span class="k">else</span> <span class="s2">&quot;data/stable&quot;</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="conditional-execution">
+<h3>Conditional Execution<a class="headerlink" href="#conditional-execution" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+
+<span class="c1"># Only run if not cached</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">proj</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Training model...&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using cached model&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get_result</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="c1"># Use result</span>
+<span class="n">model_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s1">&#39;model.pth&#39;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
+<section id="always-use-save-dir">
+<h3>1. Always Use <code class="docutils literal notranslate"><span class="pre">save_dir</span></code><a class="headerlink" href="#always-use-save-dir" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Bad: No save_dir</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+
+<span class="c1"># Good: Explicit save_dir</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train_baseline&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="use-smart-run-by-default">
+<h3>2. Use Smart Run by Default<a class="headerlink" href="#use-smart-run-by-default" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Let FlexLock handle caching</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Only disable for debugging</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="structure-configs-hierarchically">
+<h3>3. Structure Configs Hierarchically<a class="headerlink" href="#structure-configs-hierarchically" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good: Nested structure</span>
+<span class="n">defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">base_dir</span><span class="o">=</span><span class="s1">&#39;outputs/&#39;</span><span class="p">,</span>
+    <span class="n">preprocess</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">preprocess</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{base_dir}</span><span class="s1">/preprocess&#39;</span><span class="p">),</span>
+    <span class="n">train</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{base_dir}</span><span class="s1">/train&#39;</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Access root variables via interpolation</span>
+<span class="c1"># OmegaConf resolves ${base_dir} at runtime</span>
+</pre></div>
+</div>
+</section>
+<section id="track-data-dependencies">
+<h3>4. Track Data Dependencies<a class="headerlink" href="#track-data-dependencies" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
+    <span class="n">train</span><span class="p">,</span>
+    <span class="n">input_data</span><span class="o">=</span><span class="s1">&#39;data/train.csv&#39;</span><span class="p">,</span>
+    <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train&#39;</span><span class="p">,</span>
+    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;train_data&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_data}&#39;</span><span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Now FlexLock tracks:</span>
+<span class="c1"># - Code version (git tree hash)</span>
+<span class="c1"># - Data version (file hash)</span>
+<span class="c1"># - Configuration</span>
+</pre></div>
+</div>
+</section>
+<section id="use-sweeps-for-exploration">
+<h3>5. Use Sweeps for Exploration<a class="headerlink" href="#use-sweeps-for-exploration" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Define parameter grid</span>
+<span class="n">param_grid</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">bs</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lr</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">bs</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">]</span>
+<span class="p">]</span>
+
+<span class="c1"># Execute in parallel</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">,</span>
+    <span class="n">sweep</span><span class="o">=</span><span class="n">param_grid</span><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Skip already-run configs</span>
+<span class="p">)</span>
+
+<span class="c1"># Analyze results</span>
+<span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="cli_reference.html"><span class="std std-doc">CLI Reference</span></a> - Command-line usage</p></li>
+<li><p><a class="reference internal" href="#./snapshot.md"><span class="xref myst">Snapshot System</span></a> - Reproducibility features</p></li>
+<li><p><a class="reference internal" href="hpc_integration.html"><span class="std std-doc">HPC Integration</span></a> - Slurm/PBS configuration</p></li>
+<li><p><a class="reference internal" href="debugging.html"><span class="std std-doc">Debugging</span></a> - Interactive debugging</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="hpc_integration.html" class="btn btn-neutral float-left" title="HPC Integration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cli_reference.html" class="btn btn-neutral float-right" title="CLI Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

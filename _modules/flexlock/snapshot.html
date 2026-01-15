@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.snapshot &mdash; FlexLock 0.1.0 documentation</title>
+  <title>flexlock.snapshot &mdash; FlexLock 0.2.17 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/snapshot.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=38b66d78"></script>
+      <script src="../../_static/documentation_options.js?v=4031e696"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -40,21 +40,29 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../README.html">FlexLock Documentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Conda packages</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html#development-workflow-the-debug-decorator">Development Workflow: The Debug Decorator</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../supported_configurations.html">Supported Configuration Formats</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../logging.html">Logging Configuration in FlexLock</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../parallel.html">Parallel Execution in FlexLock</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../flexcli.html"><code class="docutils literal notranslate"><span class="pre">flexcli</span></code>: Command-Line Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../snapshot.html"><code class="docutils literal notranslate"><span class="pre">snapshot</span></code>: Experiment Tracking</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../mlflowlink.html"><code class="docutils literal notranslate"><span class="pre">mlflowlink</span></code>: MLflow Integration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../debugging.html"><code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code>: Interactive Debugging</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../experimental.html">Advanced Topics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
 </ul>
 
         </div>
@@ -82,258 +90,236 @@
            <div itemprop="articleBody">
              
   <h1>Source code for flexlock.snapshot</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Utility for creating and managing the `run.lock` file.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Snapshotting utilities for FlexLock.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span>
-
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.git_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_shadow_snapshot</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data_hash</span><span class="w"> </span><span class="kn">import</span> <span class="n">hash_data</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.load_stage</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_stage_from_path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_dictconfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_get_caller_info</span><span class="p">(</span><span class="n">repos</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gets information about the function that called snapshot.&quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">git</span><span class="w"> </span><span class="kn">import</span> <span class="n">Repo</span>
+<div class="viewcode-block" id="RunTracker">
+<a class="viewcode-back" href="../../api.html#flexlock.RunTracker">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RunTracker</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">,</span> <span class="n">parent_lock</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_lock</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">parent_lock</span><span class="p">)</span> <span class="k">if</span> <span class="n">parent_lock</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()}</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_lock</span><span class="p">:</span>
+            <span class="c1"># We record the link, effectively saying &quot;See parent for Git/Env&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;parent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent_lock</span><span class="p">)</span>
 
-        <span class="n">caller_frame</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># Go back 2 frames to get the actual caller</span>
-        <span class="n">caller_module</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmodule</span><span class="p">(</span><span class="n">caller_frame</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-
-        <span class="n">caller_info</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;module&quot;</span><span class="p">:</span> <span class="n">caller_module</span><span class="o">.</span><span class="vm">__name__</span>
-            <span class="k">if</span> <span class="n">caller_module</span>
-            <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="n">caller_frame</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="s2">&quot;function&quot;</span><span class="p">:</span> <span class="n">caller_frame</span><span class="o">.</span><span class="n">function</span><span class="p">,</span>
-            <span class="s2">&quot;filepath&quot;</span><span class="p">:</span> <span class="n">caller_module</span><span class="o">.</span><span class="vm">__file__</span>
-            <span class="k">if</span> <span class="n">caller_module</span>
-            <span class="k">else</span> <span class="n">caller_frame</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span>
-            <span class="s2">&quot;repo&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="p">}</span>
-
-        <span class="c1"># Find which repo the caller file belongs to</span>
-        <span class="k">if</span> <span class="n">repos</span><span class="p">:</span>
-            <span class="n">abs_caller_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">caller_frame</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">repo_name</span><span class="p">,</span> <span class="n">repo_path</span> <span class="ow">in</span> <span class="n">repos</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">repo</span> <span class="o">=</span> <span class="n">Repo</span><span class="p">(</span><span class="n">repo_path</span><span class="p">,</span> <span class="n">search_parent_directories</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="n">repo_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">working_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">abs_caller_path</span><span class="o">.</span><span class="n">is_relative_to</span><span class="p">(</span><span class="n">repo_root</span><span class="p">):</span>
-                    <span class="n">caller_info</span><span class="p">[</span><span class="s2">&quot;filepath&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
-                        <span class="n">abs_caller_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span>
-                    <span class="p">)</span>
-                    <span class="n">caller_info</span><span class="p">[</span><span class="s2">&quot;repo&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">repo_name</span>
-                    <span class="k">break</span>  <span class="c1"># Stop after finding the first matching repo</span>
-
-        <span class="k">return</span> <span class="n">caller_info</span>
-
-    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;module&quot;</span><span class="p">:</span> <span class="s2">&quot;unknown&quot;</span><span class="p">,</span> <span class="s2">&quot;function&quot;</span><span class="p">:</span> <span class="s2">&quot;unknown&quot;</span><span class="p">}</span>
+<div class="viewcode-block" id="RunTracker.record_env">
+<a class="viewcode-back" href="../../api.html#flexlock.RunTracker.record_env">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_env</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repos</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="c1"># Optimization: If we have a parent, we MIGHT skip recording git</span>
+        <span class="c1"># IF we are sure code hasn&#39;t changed between main process and worker</span>
+        <span class="c1"># (which is true for multiprocessing/slurm typically).</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_lock</span><span class="p">:</span>
+            <span class="k">return</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;repos&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">repos</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Uses the Shadow Index logic</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;repos&quot;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">create_shadow_snapshot</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">ref_name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span><span class="p">))</span></div>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_get_repo_info</span><span class="p">(</span>
-    <span class="n">repos</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
-    <span class="n">commit</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-    <span class="n">commit_branch</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">commit_message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Gets the commit hash for each repo, creating a new commit if requested.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.git_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">commit_cwd</span><span class="p">,</span> <span class="n">get_git_commit</span>
-
-    <span class="k">if</span> <span class="n">repos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{}</span>
-
-    <span class="n">commit_hashes</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">repos</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">commit</span><span class="p">:</span>
-            <span class="n">new_commit</span> <span class="o">=</span> <span class="n">commit_cwd</span><span class="p">(</span>
-                <span class="n">branch</span><span class="o">=</span><span class="n">commit_branch</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="n">commit_message</span><span class="p">,</span> <span class="n">repo_path</span><span class="o">=</span><span class="n">path</span>
-            <span class="p">)</span>
-            <span class="n">commit_hashes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_commit</span><span class="o">.</span><span class="n">hexsha</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">commit_hashes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_git_commit</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">commit_hashes</span>
+<div class="viewcode-block" id="RunTracker.record_data">
+<a class="viewcode-back" href="../../api.html#flexlock.RunTracker.record_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_paths</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">hash_data</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data_paths</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_atomic_write_yaml</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Writes a dictionary to a YAML file atomically.&quot;&quot;&quot;</span>
-    <span class="n">temp_fd</span><span class="p">,</span> <span class="n">temp_path_str</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span>
-        <span class="nb">dir</span><span class="o">=</span><span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.tmp-&quot;</span>
-    <span class="p">)</span>
-    <span class="n">temp_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">temp_path_str</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">temp_fd</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">default_flow_style</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">temp_path</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+<div class="viewcode-block" id="RunTracker.add_lineage">
+<a class="viewcode-back" href="../../api.html#flexlock.RunTracker.add_lineage">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_lineage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add lineage information from upstream FlexLock runs.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;lineage&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;lineage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;lineage&quot;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span>
+            <span class="s2">&quot;info&quot;</span><span class="p">:</span> <span class="n">info</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="RunTracker.finalize">
+<a class="viewcode-back" href="../../api.html#flexlock.RunTracker.finalize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepares the final snapshot dict but does not write it to disk.</span>
+
+<span class="sd">        This allows callers to decide where to store the snapshot</span>
+<span class="sd">        (file, DB, or both).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config: OmegaConf configuration object</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Complete snapshot data structure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;config&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="RunTracker.save">
+<a class="viewcode-back" href="../../api.html#flexlock.RunTracker.save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Finalize and write to disk as run.lock.</span>
+<span class="sd">        Now implemented by calling finalize() then writing.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: The snapshot data that was written</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">snapshot_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="c1"># Atomic Write</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">tf</span><span class="p">:</span>
+            <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">snapshot_data</span><span class="p">,</span> <span class="n">tf</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">tmp_name</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">snapshot_data</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="snapshot">
 <a class="viewcode-back" href="../../api.html#flexlock.snapshot">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">snapshot</span><span class="p">(</span>
-    <span class="n">config</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span>
-    <span class="n">repos</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">prevs</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">snapshot_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">commit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">commit_branch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;flexlock-run-logs&quot;</span><span class="p">,</span>
-    <span class="n">commit_message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">mlflowlink</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">resolve</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">prevs_from_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">snapshot</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prevs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parent_lock</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_snapshot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Writes a `run.lock` file with the state of the experiment.</span>
+<span class="sd">    Create a snapshot of the current run state.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        config (DictConfig): The OmegaConf configuration object for the run.</span>
-<span class="sd">        repos (dict, str, or list[str], optional):</span>
-<span class="sd">            - A dictionary mapping a name to a git repository path (e.g., {&#39;main_repo&#39;: &#39;.&#39;}).</span>
-<span class="sd">            - A single path to a git repository. The key will be the directory name.</span>
-<span class="sd">            - A list of paths to git repositories.</span>
-<span class="sd">        data (dict, str, or list[str], optional):</span>
-<span class="sd">            - A dictionary mapping a name to a data path to be hashed (e.g., {&#39;raw_data&#39;: &#39;path/to/data&#39;}).</span>
-<span class="sd">            - A single path to a data file/directory. The key will be the full path.</span>
-<span class="sd">            - A list of paths to data files/directories.</span>
-<span class="sd">        prevs (list, optional): A list of paths to previous stage directories to be included.</span>
-<span class="sd">        snapshot_path (str, optional): The explicit path to the `run.lock` file.</span>
-<span class="sd">                                      If None, defaults to `config.save_dir / &#39;run.lock&#39;`.</span>
-<span class="sd">        merge (bool, optional): If True and a `run.lock` file already exists, it will be</span>
-<span class="sd">                                read, updated with the new information, and written back.</span>
-<span class="sd">        commit (bool, optional): If True, create a new commit to capture the state of each repo.</span>
-<span class="sd">                                 If False, record the current commit hash. Defaults to True.</span>
-<span class="sd">        commit_branch (str, optional): The branch to commit to if `commit=True`.</span>
-<span class="sd">        commit_message (str, optional): The commit message to use if `commit=True`.</span>
-<span class="sd">        mlflowlink (bool, optional): If True, logs the snapshot to MLflow. Defaults to False.</span>
-<span class="sd">        resolve (bool, optional): Whether to resolve the OmegaConf config before snapshotting. Defaults to True.</span>
-<span class="sd">        prevs_from_data (bool, optional): If True, automatically adds paths from the `data` argument to `prevs`. Defaults to True.</span>
-<span class="sd">        force (bool, optional): If True, forces the creation of a new snapshot even if `run.lock` exists. Defaults to False.</span>
+<span class="sd">        cfg: OmegaConf configuration</span>
+<span class="sd">        repos: Dict of repository paths to track</span>
+<span class="sd">        data: Dict of data paths to hash</span>
+<span class="sd">        prevs: List of paths to search for upstream lineage</span>
+<span class="sd">        parent_lock: Path to parent run.lock (for delta snapshots)</span>
+<span class="sd">        save_path: Custom save directory (overrides cfg.save_dir)</span>
+<span class="sd">        return_snapshot: If True, return snapshot dict instead of/in addition to saving</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict if return_snapshot=True, else None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No save_dir specified in config; skipping snapshot.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">return_snapshot</span> <span class="k">else</span> <span class="kc">None</span>
 
-    <span class="k">with</span> <span class="n">logger</span><span class="o">.</span><span class="n">catch</span><span class="p">(</span><span class="n">reraise</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="n">config</span> <span class="o">=</span> <span class="n">to_dictconfig</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">snapshot_path</span><span class="p">:</span>
-            <span class="n">lock_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">snapshot_path</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-            <span class="n">lock_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Either `snapshot_path` must be provided or `config` must have a `save_dir` key.&quot;</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">lock_file</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">merge</span> <span class="ow">or</span> <span class="n">force</span><span class="p">):</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;File &#39;</span><span class="si">{</span><span class="n">lock_file</span><span class="si">}</span><span class="s2">&#39; exists exiting (set force or merge to True to force execution or append to existing).&quot;</span>
-            <span class="p">)</span>
-            <span class="k">return</span>
+    <span class="c1"># Use custom save_path if provided, otherwise use cfg.save_dir</span>
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">save_path</span> <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
 
-        <span class="n">lock_file</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">tracker</span> <span class="o">=</span> <span class="n">RunTracker</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">parent_lock</span><span class="o">=</span><span class="n">parent_lock</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">resolve</span><span class="p">:</span>
-            <span class="n">OmegaConf</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="c1"># 1. Record Git &amp; Data (Hashing)</span>
+    <span class="k">if</span> <span class="n">repos</span><span class="p">:</span>
+        <span class="n">tracker</span><span class="o">.</span><span class="n">record_env</span><span class="p">(</span><span class="n">repos</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Recording data for snapshot: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">tracker</span><span class="o">.</span><span class="n">record_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-        <span class="n">run_data</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="n">merge</span> <span class="ow">and</span> <span class="n">lock_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">lock_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                <span class="n">run_data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="c1"># 2. Record Lineage (Automatic Discovery)</span>
+    <span class="k">if</span> <span class="n">prevs</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Looking for upstream FlexLock runs in: </span><span class="si">{</span><span class="n">prevs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_find_snapshot_dir</span><span class="p">(</span><span class="n">start_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Recursive search for FlexLock run metadata.</span>
 
-        <span class="c1"># --- Process flexible &#39;repos&#39; and &#39;data&#39; arguments ---</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">_process_arg</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">is_repo</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">arg</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">{}</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="n">arg</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="n">new_dict</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="k">for</span> <span class="n">path_str</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
-                    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path_str</span><span class="p">)</span>
-                    <span class="n">key</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span><span class="o">.</span><span class="n">name</span>
-                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">new_dict</span><span class="p">:</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">&quot;Key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; is being overridden in </span><span class="si">{</span><span class="s1">&#39;repos&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">is_repo</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;data&#39;</span><span class="si">}</span><span class="s2"> use dict syntax to specify unique key for arg.&quot;</span>
-                        <span class="p">)</span>
-                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">&quot;Runlock key collision </span><span class="si">{</span><span class="s1">&#39;repos&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">is_repo</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;data&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
-                        <span class="p">)</span>
-                    <span class="n">new_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">new_dict</span>
-            <span class="k">return</span> <span class="n">arg</span>
+<span class="sd">            Returns:</span>
+<span class="sd">                tuple: (snapshot_dir, snapshot_data) or None</span>
 
-        <span class="n">repos</span> <span class="o">=</span> <span class="n">_process_arg</span><span class="p">(</span><span class="n">repos</span><span class="p">,</span> <span class="n">is_repo</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">_process_arg</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
-        <span class="c1"># --- Capture Caller and Repo Info First ---</span>
-        <span class="n">run_data</span><span class="p">[</span><span class="s2">&quot;caller&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_get_caller_info</span><span class="p">(</span><span class="n">repos</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">repos</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">commit_message</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">commit_message</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Snapshot </span><span class="si">{</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">config</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;save_dir&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="n">repo_info</span> <span class="o">=</span> <span class="n">_get_repo_info</span><span class="p">(</span><span class="n">repos</span><span class="p">,</span> <span class="n">commit</span><span class="p">,</span> <span class="n">commit_branch</span><span class="p">,</span> <span class="n">commit_message</span><span class="p">)</span>
-            <span class="n">run_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;repos&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">repo_info</span><span class="p">)</span>
-
-        <span class="c1"># --- Update with other information ---</span>
-        <span class="n">run_data</span><span class="p">[</span><span class="s2">&quot;config&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">data_hashes</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">hash_data</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-            <span class="n">run_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data_hashes</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">prevs</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prevs</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="n">prevs</span> <span class="o">=</span> <span class="p">[</span><span class="n">prevs</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">prevs_from_data</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">prevs</span><span class="p">:</span>
-                <span class="n">prevs</span> <span class="o">=</span> <span class="n">prevs</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">prevs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-        <span class="k">if</span> <span class="n">prevs</span><span class="p">:</span>
-
-            <span class="k">def</span><span class="w"> </span><span class="nf">_find_snapshot_dir</span><span class="p">(</span><span class="n">start_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">                </span><span class="sd">&quot;&quot;&quot;Search for `run.lock` in `start_path` and its parents.&quot;&quot;&quot;</span>
-                <span class="n">p</span> <span class="o">=</span> <span class="n">start_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-                    <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span>
-
-                <span class="k">while</span> <span class="n">p</span> <span class="o">!=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>  <span class="c1"># Stop at the root directory</span>
-                    <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                        <span class="k">return</span> <span class="n">p</span>
-                    <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span>
+<span class="sd">            Searches in order:</span>
+<span class="sd">            1. .flexlock_marker file (points to DB)</span>
+<span class="sd">            2. run.lock file (traditional file-based)</span>
+<span class="sd">            3. Recursively up the directory tree</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">start_path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">start_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span>
 
-            <span class="n">previous_stages_data</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">for</span> <span class="n">path_str</span> <span class="ow">in</span> <span class="n">prevs</span><span class="p">:</span>
-                <span class="n">snapshot_dir</span> <span class="o">=</span> <span class="n">_find_snapshot_dir</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path_str</span><span class="p">))</span>
-                <span class="k">if</span> <span class="n">snapshot_dir</span><span class="p">:</span>
-                    <span class="n">stage_data</span> <span class="o">=</span> <span class="n">load_stage_from_path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">snapshot_dir</span><span class="p">))</span>
-                    <span class="c1"># The key from load_stage_from_path is the full path,</span>
-                    <span class="c1"># we want to use the directory name as the key.</span>
-                    <span class="n">original_key</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">stage_data</span><span class="p">))</span>
-                    <span class="n">previous_stages_data</span><span class="p">[</span><span class="n">snapshot_dir</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">stage_data</span><span class="p">[</span><span class="n">original_key</span><span class="p">]</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Could not find a &#39;run.lock&#39; file for the previous stage at or above &#39;</span><span class="si">{</span><span class="n">path_str</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+            <span class="c1"># Safety brake: stop at root or if path is invalid</span>
+            <span class="k">while</span> <span class="n">p</span> <span class="o">!=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Checking for FlexLock metadata in: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Option 1: Check for marker file (DB-based snapshot)</span>
+                <span class="n">marker_file</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="s2">&quot;.flexlock_marker&quot;</span>
+                <span class="k">if</span> <span class="n">marker_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">marker_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">marker_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+                        <span class="n">db_path</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="n">marker_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;db&quot;</span><span class="p">,</span> <span class="s2">&quot;tasks.db&quot;</span><span class="p">)</span>
+                        <span class="n">task_id</span> <span class="o">=</span> <span class="n">marker_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;task_id&quot;</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="n">db_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">task_id</span><span class="p">:</span>
+                            <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_task_snapshot</span>
+                            <span class="n">snapshot_data</span> <span class="o">=</span> <span class="n">get_task_snapshot</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">snapshot_data</span><span class="p">:</span>
+                                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found DB-based snapshot via marker at: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                                <span class="k">return</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">snapshot_data</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to read marker file at </span><span class="si">{</span><span class="n">marker_file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Option 2: Check for traditional run.lock file</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                            <span class="n">snapshot_data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found file-based snapshot at: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">snapshot_data</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to read run.lock at </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span>
+
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">path_str</span> <span class="ow">in</span> <span class="n">prevs</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">_find_snapshot_dir</span><span class="p">(</span><span class="n">path_str</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+                <span class="n">snapshot_dir</span><span class="p">,</span> <span class="n">snapshot_data</span> <span class="o">=</span> <span class="n">result</span>
+                <span class="c1"># We found an upstream FlexLock run!</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found upstream FlexLock run at: </span><span class="si">{</span><span class="n">snapshot_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Extract stage info from snapshot data</span>
+                    <span class="n">stage_info</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="n">snapshot_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config&quot;</span><span class="p">,</span> <span class="p">{}),</span>
+                        <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">snapshot_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;timestamp&quot;</span><span class="p">),</span>
+                        <span class="s2">&quot;repos&quot;</span><span class="p">:</span> <span class="n">snapshot_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;repos&quot;</span><span class="p">,</span> <span class="p">{}),</span>
+                        <span class="s2">&quot;parent&quot;</span><span class="p">:</span> <span class="n">snapshot_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parent&quot;</span><span class="p">)</span>
+                    <span class="p">}</span>
+
+                    <span class="c1"># Add to lineage</span>
+                    <span class="n">tracker</span><span class="o">.</span><span class="n">add_lineage</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="n">snapshot_dir</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>  <span class="c1"># e.g. &quot;run_2023...&quot; or &quot;task_abc123&quot;</span>
+                        <span class="n">path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">snapshot_dir</span><span class="p">),</span>
+                        <span class="n">info</span><span class="o">=</span><span class="n">stage_info</span>
                     <span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found snapshot at </span><span class="si">{</span><span class="n">snapshot_dir</span><span class="si">}</span><span class="s2"> but failed to process: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-            <span class="n">run_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;prevs&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">previous_stages_data</span><span class="p">)</span>
-
-        <span class="c1"># Write the file atomically</span>
-        <span class="n">_atomic_write_yaml</span><span class="p">(</span><span class="n">run_data</span><span class="p">,</span> <span class="n">lock_file</span><span class="p">)</span>
-
-    <span class="c1"># Dump any pending tasks from database to the YAML file (in case tasks were added before snapshot creation)</span>
-    <span class="k">if</span> <span class="n">mlflowlink</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.mlflowlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflowlink</span>
-
-        <span class="k">with</span> <span class="n">mlflowlink</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">lock_file</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span> <span class="k">as</span> <span class="n">_</span><span class="p">:</span>
-            <span class="k">pass</span>
-        <span class="k">pass</span></div>
+    <span class="c1"># 3. Save and/or return</span>
+    <span class="k">if</span> <span class="n">return_snapshot</span><span class="p">:</span>
+        <span class="c1"># For DB storage: return snapshot without writing file</span>
+        <span class="n">snapshot_data</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">snapshot_data</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Traditional behavior: write to file</span>
+        <span class="n">tracker</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
 
 </pre></div>
 
