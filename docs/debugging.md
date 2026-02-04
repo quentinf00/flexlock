@@ -351,7 +351,7 @@ def train(lr=0.01, save_dir="${vinc:results/train}"):
         # All debug info saved to debug.log
 ```
 
-See [Logging Documentation](./logging.md) for more on structured logging.
+FlexLock uses [Loguru](https://github.com/Delgan/loguru) for structured logging.
 
 ### Summary
 

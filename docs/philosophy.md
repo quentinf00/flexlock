@@ -167,5 +167,5 @@ eval_result = proj.submit(eval_config)
 Ready to try FlexLock? Start with:
 
 1. **[Quickstart Guide](./quickstart.md)**: 5-minute introduction
-2. **[Tutorial: Basics](./tutorials/01_basics.md)**: Your first experiment
-3. **[Tutorial: Pipelines](./tutorials/05_pipeline.md)**: Multi-stage workflows
+2. **[Usage Guide](./usage_guide.md)**: Comprehensive usage patterns
+3. **[Python API](./python_api.md)**: Programmatic usage with Project class

@@ -1,5 +1,7 @@
 """FlexLock: A lightweight library for reproducible ML experiments."""
 
+__version__ = "0.3.0"
+
 from loguru import logger
 
 logger.disable("flexlock")
@@ -30,6 +32,7 @@ from .exceptions import (
 register_resolvers()
 
 __all__ = [
+    "__version__",
     "flexcli",
     "snapshot",
     "mlflow_context",

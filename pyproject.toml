@@ -1,6 +1,6 @@
 [project]
 name = "flexlock"
-version = "0.2.17"
+dynamic = ["version"]
 authors = [ {name="Quentin Febvre", email="quentin.febvre@gmail.com"} ]
 description = "A lightweight and painless SciOps library"
 readme = "README.md"
@@ -15,11 +15,14 @@ flexlock-status = "flexlock.status_cli:main"
 
 [tool.pixi.package]
 name = "flexlock"
-version = "0.2.17"
+version = "0.3.0"
 
-[build-system] 
+[build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
+
+[tool.hatch.version]
+path = "flexlock/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 only-include = ["flexlock"]

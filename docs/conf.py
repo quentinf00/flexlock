@@ -17,7 +17,10 @@ html_theme_options = {
 project = 'FlexLock'
 copyright = '2023, FlexLock Team'
 author = 'FlexLock Team'
-release = '0.2.17' # This should ideally be dynamically pulled from your project
+
+# Dynamic version from package
+from flexlock import __version__
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
