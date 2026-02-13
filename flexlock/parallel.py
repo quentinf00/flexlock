@@ -199,8 +199,6 @@ class ParallelExecutor:
         # We assume the Main Process has the correct context (repos, etc.)
         repos, data, _ = extract_tracking_info(self.cfg)
         # Set default repos if none specified
-        if not repos:
-            repos = {"main": "."}
         snapshot(
             self.cfg,
             repos=repos,

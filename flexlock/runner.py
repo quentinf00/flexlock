@@ -85,6 +85,11 @@ class FlexLockRunner:
             help="Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks)."
         )
 
+        parser.add_argument(
+            "--print-config", action="store_true",
+            help="Print the compiled configuration and target function docstring when available."
+        )
+
         # HPC Backend Configuration
         backend_group = parser.add_argument_group("HPC Backend Configuration")
         backend = backend_group.add_mutually_exclusive_group()
@@ -300,6 +305,36 @@ class FlexLockRunner:
             node_cfg.merge_with(OmegaConf.load(args.merge_after_select))
         if args.overrides_after_select:
             node_cfg.merge_with(OmegaConf.from_dotlist(args.overrides_after_select))
+
+        # Print config if requested
+        if args.print_config:
+            print("=== COMPILED CONFIG ===")
+            print(OmegaConf.to_yaml(node_cfg))
+
+            # Print target function docstring if available
+            if "_target_" in node_cfg:
+                try:
+                    target_path = node_cfg._target_
+                    # Import the target function dynamically
+                    module_name, func_name = target_path.rsplit('.', 1)
+                    module = __import__(module_name, fromlist=[func_name])
+                    target_func = getattr(module, func_name)
+
+                    docstring = getattr(target_func, '__doc__', None)
+                    if docstring:
+                        print("\n=== TARGET FUNCTION DOCSTRING ===")
+                        print(f"Target: {target_path}")
+                        print(f"Docstring:\n{docstring}")
+                    else:
+                        print(f"\n=== TARGET FUNCTION DOCSTRING ===")
+                        print(f"Target: {target_path}")
+                        print("No docstring available for this function.")
+                except (ImportError, AttributeError, ValueError) as e:
+                    print(f"\n=== TARGET FUNCTION DOCSTRING ===")
+                    print(f"Could not import target function '{node_cfg._target_}': {e}")
+            else:
+                print("\n=== TARGET FUNCTION DOCSTRING ===")
+                print("No '_target_' specified in config, no function to document.")
 
         # --- SWEEP HANDLING ---
         tasks = self._load_sweep_tasks(args, root_cfg)

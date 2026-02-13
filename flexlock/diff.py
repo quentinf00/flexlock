@@ -12,7 +12,9 @@ class RunDiff:
         target: dict,
         ignore_keys: list = None,
         current_save_dir: str = None,
-        target_save_dir: str = None
+        target_save_dir: str = None,
+        match_include: list = None,
+        match_exclude: list = None,
     ):
         """
         Initialize RunDiff for comparing two run snapshots.
@@ -23,6 +25,8 @@ class RunDiff:
             ignore_keys: Additional keys to ignore during comparison
             current_save_dir: Save directory of current run (for normalization)
             target_save_dir: Save directory of target run (for normalization)
+            match_include: Override include patterns for git comparison
+            match_exclude: Override exclude patterns for git comparison
         """
         self.current = current
         self.target = target
@@ -36,6 +40,10 @@ class RunDiff:
         # For value normalization (handling interpolation)
         self.c_dir = str(current_save_dir) if current_save_dir else None
         self.t_dir = str(target_save_dir) if target_save_dir else None
+
+        # Override patterns for git comparison (takes priority over snapshot-level patterns)
+        self.match_include = match_include
+        self.match_exclude = match_exclude
 
         self.diffs = {}
 
@@ -58,7 +66,7 @@ class RunDiff:
         return val
 
     def compare_git(self):
-        """Compare git tree hashes."""
+        """Compare git tree hashes, with optional include/exclude filtering."""
         diff = []
         c_repos = self.current.get("repos", {})
         t_repos = self.target.get("repos", {})
@@ -69,13 +77,52 @@ class RunDiff:
                 diff.append(f"Repo {name} missing")
                 continue
 
-            # The Magic: Compare Tree Hashes (Content Identity)
+            # Compare Tree Hashes (Content Identity)
             if c_info.get("tree") != t_info.get("tree"):
+                # Trees differ — check if RELEVANT files changed
+                # Priority: RunDiff-level override > snapshot-level patterns
+                include = self.match_include or c_info.get("include") or t_info.get("include")
+                exclude = self.match_exclude or c_info.get("exclude") or t_info.get("exclude")
+
+                if include or exclude:
+                    repo_path = c_info.get("path") or t_info.get("path")
+                    if repo_path and self._trees_match_filtered(
+                        repo_path, c_info["tree"], t_info["tree"], include, exclude
+                    ):
+                        continue  # Relevant files unchanged — match
+
                 diff.append(f"Repo {name}: Content changed")
 
         if diff:
             self.diffs["git"] = diff
         return len(diff) == 0
+
+    def _trees_match_filtered(self, repo_path, tree1, tree2, include=None, exclude=None):
+        """
+        Check if two trees match when filtered by include/exclude patterns.
+
+        Uses git diff-tree with pathspec filtering to compare only relevant files.
+        Returns True if no relevant files differ, False otherwise.
+        """
+        try:
+            from git.repo import Repo as GitRepo
+            repo = GitRepo(repo_path, search_parent_directories=True)
+
+            # Build git pathspec: include patterns + :(exclude) patterns
+            pathspec = list(include or [])
+            if exclude:
+                pathspec.extend(f":(exclude){pat}" for pat in exclude)
+
+            args = ["-r", "--name-only", "--no-commit-id", tree1, tree2]
+            if pathspec:
+                args.append("--")
+                args.extend(pathspec)
+
+            output = repo.git.diff_tree(*args).strip()
+            return len(output) == 0  # No relevant files changed
+        except Exception as e:
+            logger.debug(f"Filtered git comparison failed: {e}")
+            return False  # Conservative: treat as different
 
     def compare_config(self):
         """

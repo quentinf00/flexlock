@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import sqlite3
+from omegaconf import OmegaConf
 import threading
 from loguru import logger
 import yaml
@@ -92,7 +93,7 @@ def queue_tasks(db_path: Path, tasks: List[Any]) -> None:
     with _conn(db_path) as c:
         c.executemany(
             "INSERT OR IGNORE INTO tasks (task_id, task_info) VALUES (?, ?)",
-            [(_hash_task(t), yaml.dump(t)) for t in tasks],
+            [(_hash_task(t), OmegaConf.to_yaml(t)) for t in tasks],
         )
         c.commit()
 
@@ -111,7 +112,7 @@ def claim_next_task(db_path: Path, node: str) -> Any | None:
         row = cur.fetchone()
         if row:
             c.commit()
-            return yaml.safe_load(row[0])
+            return OmegaConf.create(row[0])
     return None
 
 
@@ -121,7 +122,7 @@ def finish_task(
     """Marks a task as finished (done or failed) and records its result or error."""
     tid = _hash_task(task)
     status = "failed" if error else "done"
-    result_str = yaml.dump(result) if result is not None else None
+    result_str = OmegaConf.to_yaml(result) if result is not None else None
     with _conn(db_path) as c:
         c.execute(
             "UPDATE tasks SET status=?, error=?, result_info=?, ts_end=CURRENT_TIMESTAMP WHERE task_id=?",
@@ -146,7 +147,7 @@ def dump_to_yaml(db_path: Path, yaml_path: Path) -> None:
             "SELECT result_info, task_info, status FROM tasks WHERE status IN ('done','failed') ORDER BY ts_end"
         ).fetchall()
         data = [
-            dict(task = yaml.safe_load(r[0]), status = r[2]) if r[0] else dict(task = yaml.safe_load(r[1]), status = r[2])
+            dict(task = OmegaConf.create(r[0]), status = r[2]) if r[0] else dict(task = OmegaConf.create(r[1]), status = r[2])
             for r in rows
             if r[0] or r[1]
         ]
@@ -255,7 +256,7 @@ def get_failed_tasks(db_path: Path) -> list:
 
         failed_tasks = []
         for row in rows:
-            task_info = yaml.safe_load(row[0]) if row[0] else {}
+            task_info = OmegaConf.create(row[0]) if row[0] else {}
             failed_tasks.append({
                 "task": task_info,
                 "error": row[1],
@@ -300,8 +301,8 @@ def get_all_tasks(db_path: Path, status: str = None) -> list:
 
         tasks = []
         for row in rows:
-            task_info = yaml.safe_load(row[1]) if row[1] else {}
-            result_info = yaml.safe_load(row[2]) if row[2] else {}
+            task_info = OmegaConf.create(row[1]) if row[1] else {}
+            result_info = OmegaConf.create(row[2]) if row[2] else {}
             tasks.append({
                 "task_id": row[0],
                 "task": task_info,
@@ -320,5 +321,5 @@ def _atomic_write_yaml(data: list, path: Path):
 
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.tmp-")
     with os.fdopen(fd, "w") as f:
-        yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+        f.write(OmegaConf.to_yaml(data))
     os.rename(tmp, path)

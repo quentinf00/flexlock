@@ -10,7 +10,7 @@ from .git_utils import create_shadow_snapshot
 from .data_hash import hash_data
 from .load_stage import load_stage_from_path
 from loguru import logger
-
+import uuid
 
 class RunTracker:
     def __init__(self, save_dir, parent_lock=None):
@@ -28,11 +28,20 @@ class RunTracker:
         # (which is true for multiprocessing/slurm typically).
         if self.parent_lock:
             return
-            
+
         self.data["repos"] = {}
-        for name, path in repos.items():
-            # Uses the Shadow Index logic
-            self.data["repos"][name] = create_shadow_snapshot(path, ref_name=str(self.save_dir))
+        for name, repo_info in repos.items():
+            path = repo_info["path"]
+            snapshot_data = create_shadow_snapshot(
+                path, ref_name=str(self.save_dir) + f'_{uuid.uuid1().hex}',
+            )
+            # Store metadata for comparison-time filtering
+            if repo_info.get("include"):
+                snapshot_data["include"] = repo_info["include"]
+            if repo_info.get("exclude"):
+                snapshot_data["exclude"] = repo_info["exclude"]
+            snapshot_data["path"] = path
+            self.data["repos"][name] = snapshot_data
 
     def record_data(self, data_paths: dict):
         self.data["data"] = {k: hash_data(v) for k, v in data_paths.items()}

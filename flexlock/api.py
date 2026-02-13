@@ -110,13 +110,21 @@ class Project:
 
         return fingerprint
 
-    def _find_matching_run(self, cfg: DictConfig, search_dirs: List[str] = None) -> Optional[Path]:
+    def _find_matching_run(
+        self,
+        cfg: DictConfig,
+        search_dirs: List[str] = None,
+        match_include: List[str] = None,
+        match_exclude: List[str] = None,
+    ) -> Optional[Path]:
         """
         Search for an existing run that matches the given configuration.
 
         Args:
             cfg: Configuration to match
             search_dirs: List of directories to search (defaults to parent of cfg.save_dir)
+            match_include: Override include patterns for git comparison
+            match_exclude: Override exclude patterns for git comparison
 
         Returns:
             Path to matching run directory, or None if no match found
@@ -165,7 +173,9 @@ class Project:
                         target=candidate_snapshot,
                         current_save_dir=proposed_save_dir,
                         target_save_dir=candidate_save_dir,
-                        ignore_keys=["_snapshot_"]  # Additional keys to ignore
+                        ignore_keys=["_snapshot_"],
+                        match_include=match_include,
+                        match_exclude=match_exclude,
                     )
 
                     if differ.is_match():
@@ -244,7 +254,10 @@ class Project:
         search_dirs: List[str] = None,
         wait: bool = True,
         pbs_config: str = None,
-        slurm_config: str = None
+        slurm_config: str = None,
+        sweep_dir_suffix: bool = False,
+        match_include: List[str] = None,
+        match_exclude: List[str] = None,
     ) -> ExecutionResult | List[ExecutionResult]:
         """
         Submit a configuration for execution.
@@ -258,6 +271,8 @@ class Project:
             search_dirs: Directories to search for cached runs (for smart_run)
             pbs_config: Path to PBS configuration YAML (for HPC execution)
             slurm_config: Path to Slurm configuration YAML (for HPC execution)
+            match_include: Override include patterns for git comparison during smart_run
+            match_exclude: Override exclude patterns for git comparison during smart_run
 
         Returns:
             ExecutionResult (single run) or List[ExecutionResult] (sweep)
@@ -273,12 +288,12 @@ class Project:
 
         # Handle sweep execution
         if sweep:
-            return self._submit_sweep(config, sweep, n_jobs, smart_run, search_dirs, pbs_config, slurm_config, wait)
+            return self._submit_sweep(config, sweep, n_jobs, smart_run, search_dirs, pbs_config, slurm_config, wait, sweep_dir_suffix, match_include, match_exclude)
 
         # Single execution path
         # Check for existing run if smart_run is enabled
         if smart_run:
-            match_dir = self._find_matching_run(config, search_dirs)
+            match_dir = self._find_matching_run(config, search_dirs, match_include, match_exclude)
             if match_dir:
                 logger.info(f"Skipping execution, using cached result from {match_dir}")
                 return self.get_result(config, search_dirs)
@@ -367,7 +382,10 @@ class Project:
         search_dirs: List[str],
         pbs_config: str = None,
         slurm_config: str = None,
-        wait: bool = True
+        wait: bool = True,
+        dir_suffix: bool = False,
+        match_include: List[str] = None,
+        match_exclude: List[str] = None,
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -381,6 +399,8 @@ class Project:
             pbs_config: Path to PBS configuration YAML
             slurm_config: Path to Slurm configuration YAML
             wait: Whether to wait for jobs to complete
+            match_include: Override include patterns for git comparison
+            match_exclude: Override exclude patterns for git comparison
 
         Returns:
             List of ExecutionResult objects
@@ -394,16 +414,20 @@ class Project:
 
         # Check each sweep config for cached results
         for i, override in enumerate(sweep):
-            # Merge override into base config
             sweep_cfg = OmegaConf.merge(base_config, override)
 
+            # This makes the config self-contained for DB serialization.
+            sweep_cfg = OmegaConf.create(
+             OmegaConf.to_container(sweep_cfg, resolve=True)
+            )
+
             # Update save_dir to include sweep index
-            if "save_dir" in sweep_cfg:
+            if  dir_suffix and "save_dir" in  sweep_cfg:
                 base_save_dir = Path(sweep_cfg.save_dir)
                 sweep_cfg.save_dir = str(base_save_dir.parent / f"{base_save_dir.name}_sweep_{i:04d}")
 
             if smart_run:
-                match_dir = self._find_matching_run(sweep_cfg, search_dirs)
+                match_dir = self._find_matching_run(sweep_cfg, search_dirs, match_include, match_exclude)
                 if match_dir:
                     logger.info(f"Sweep {i}: Using cached result from {match_dir}")
                     cached_results.append((i, self.get_result(sweep_cfg, search_dirs)))
@@ -433,9 +457,18 @@ class Project:
 
                 # Create a wrapper config that ParallelExecutor can work with
                 # The task configs are what ParallelExecutor will execute
+                # Resolve _snapshot_ while base_config still has its parent chain
+                # so that OmegaConf interpolations (e.g. ${...key}) can resolve
+                if "_snapshot_" in base_config:
+                    snapshot_resolved = OmegaConf.to_container(
+                        base_config._snapshot_, resolve=True
+                    )
+                else:
+                    snapshot_resolved = {}
+
                 executor_cfg = OmegaConf.create({
                     "save_dir": str(sweep_save_dir),
-                    "_snapshot_": base_config.get("_snapshot_", {})
+                    "_snapshot_": snapshot_resolved,
                 })
 
                 # Use ParallelExecutor with backend support
