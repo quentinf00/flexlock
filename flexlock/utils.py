@@ -14,6 +14,15 @@ import warnings
 from dataclasses import fields
 
 
+def resolve_module_to_repo_path(module_name: str) -> str:
+    """Resolve a Python module name to its containing git repository's working directory."""
+    mod = importlib.import_module(module_name)
+    source_file = inspect.getfile(mod)
+    from git.repo import Repo as GitRepo
+    repo_obj = GitRepo(source_file, search_parent_directories=True)
+    return repo_obj.working_tree_dir
+
+
 def extract_tracking_info(cfg) -> Tuple[Dict, Dict, List]:
     """
     Extract tracking information from config's _snapshot_ field.
@@ -63,11 +72,34 @@ def extract_tracking_info(cfg) -> Tuple[Dict, Dict, List]:
                 if isinstance(val, str):
                     repos[name] = {"path": val}
                 elif isinstance(val, dict):
-                    repos[name] = {
-                        "path": val["path"],
-                        "include": val.get("include"),
-                        "exclude": val.get("exclude"),
-                    }
+                    has_path = "path" in val
+                    has_module = "module" in val
+
+                    if not has_path and not has_module:
+                        raise FlexLockConfigError(
+                            f"Repo '{name}' must specify either 'path' or 'module'."
+                        )
+
+                    if has_module and not has_path:
+                        try:
+                            resolved_path = resolve_module_to_repo_path(val["module"])
+                        except Exception as e:
+                            raise FlexLockConfigError(
+                                f"Repo '{name}': could not resolve module '{val['module']}': {e}"
+                            )
+                        repos[name] = {
+                            "path": resolved_path,
+                            "module": val["module"],
+                            "include": val.get("include"),
+                            "exclude": val.get("exclude"),
+                        }
+                    else:
+                        repos[name] = {
+                            "path": val["path"],
+                            "module": val.get("module"),
+                            "include": val.get("include"),
+                            "exclude": val.get("exclude"),
+                        }
                 else:
                     raise FlexLockConfigError(
                         f"Repo '{name}' value must be a string (path) or dict. Got: {type(val)}"
@@ -99,19 +131,18 @@ def extract_tracking_info(cfg) -> Tuple[Dict, Dict, List]:
                 )
             prevs = OmegaConf.to_container(prevs_raw, resolve=True)
 
-    # Auto-populate repos["main"] from _target_ if not already set
-    if "main" not in repos and "_target_" in cfg:
+    # Auto-populate repo from _target_ using top-level module name
+    if "_target_" in cfg:
         try:
             target_str = cfg._target_ if isinstance(cfg, DictConfig) else cfg["_target_"]
-            module_name, _ = target_str.rsplit(".", 1)
-            mod = importlib.import_module(module_name)
-            source_file = inspect.getfile(mod)
-            from git.repo import Repo as GitRepo
-            repo_obj = GitRepo(source_file, search_parent_directories=True)
-            repos["main"] = {"path": repo_obj.working_tree_dir}
-            logger.debug(f"Auto-populated repos['main'] from _target_ '{target_str}': {repos['main']['path']}")
+            top_level_module = target_str.split(".")[0]
+            if top_level_module not in repos:
+                module_name, _ = target_str.rsplit(".", 1)
+                resolved_path = resolve_module_to_repo_path(module_name)
+                repos[top_level_module] = {"path": resolved_path, "module": top_level_module}
+                logger.debug(f"Auto-populated repos['{top_level_module}'] from _target_ '{target_str}': {resolved_path}")
         except Exception:
-            logger.debug("Could not auto-populate repos['main'] from _target_ (REPL or built-in?)")
+            logger.debug("Could not auto-populate repo from _target_ (REPL or built-in?)")
 
     # "prevs_from_data": Automatically treat data paths as lineage candidates
     # This allows checking if data files came from FlexLock runs

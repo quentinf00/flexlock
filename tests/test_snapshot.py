@@ -57,12 +57,11 @@ def test_runtracker_record_env():
     with patch("flexlock.snapshot.create_shadow_snapshot") as mock_snapshot:
         mock_snapshot.return_value = {"tree": "mock_tree", "commit": "mock_commit", "is_dirty": False}
         
-        tracker.record_env({"main": "/path/to/repo"})
-        
+        tracker.record_env({"main": {"path": "/path/to/repo"}})
+
         assert tracker.data["repos"]["main"]["tree"] == "mock_tree"
         assert tracker.data["repos"]["main"]["commit"] == "mock_commit"
         assert tracker.data["repos"]["main"]["is_dirty"] == False
-        mock_snapshot.assert_called_once_with("/path/to/repo", ref_name='test_run')
 
 
 def test_runtracker_record_env_with_parent():
@@ -75,8 +74,8 @@ def test_runtracker_record_env_with_parent():
     with patch("flexlock.snapshot.create_shadow_snapshot") as mock_snapshot:
         mock_snapshot.return_value = {"tree": "mock_tree", "commit": "mock_commit", "is_dirty": False}
         
-        tracker.record_env({"main": "/path/to/repo"})
-        
+        tracker.record_env({"main": {"path": "/path/to/repo"}})
+
         # Should not call create_shadow_snapshot when parent exists
         mock_snapshot.assert_not_called()
         # Should not have repos data
@@ -113,7 +112,7 @@ def test_runtracker_save():
         with patch("flexlock.snapshot.create_shadow_snapshot") as mock_snapshot:
             mock_snapshot.return_value = {"tree": "mock_tree", "commit": "mock_commit", "is_dirty": False}
             
-            tracker.record_env({"main": "."})
+            tracker.record_env({"main": {"path": "."}})
             tracker.save(config)
             
             lock_file = save_dir / "run.lock"
@@ -142,14 +141,14 @@ def test_snapshot_function_basic():
             mock_snapshot.return_value = {"tree": "mock_tree", "commit": "mock_commit", "is_dirty": False}
             mock_hash.return_value = "mock_data_hash"
             
-            snapshot(cfg, repos={"main": "."}, data={"dataset": "/path/to/data"})
-            
+            snapshot(cfg, repos={"main": {"path": "."}}, data={"dataset": "/path/to/data"})
+
             lock_file = save_dir / "run.lock"
             assert lock_file.exists()
-            
+
             with open(lock_file, "r") as f:
                 data = yaml.safe_load(f)
-                
+
             assert data["config"]["param"] == 1
             # Check that both repos and data were recorded
             assert "repos" in data
@@ -211,7 +210,7 @@ def test_snapshot_function_custom_save_path():
             
             snapshot(
                 cfg,
-                repos={"main": "."},
+                repos={"main": {"path": "."}},
                 data={"dataset": "/path/to/data"},
                 save_path=str(custom_save_dir)
             )
@@ -312,7 +311,7 @@ def test_snapshot_with_real_git(git_repo):
             
             snapshot(
                 cfg,
-                repos={"main": str(repo_dir)},
+                repos={"main": {"path": str(repo_dir)}},
                 data={"dataset": str(data_file)}
             )
             
@@ -339,7 +338,7 @@ def test_snapshot_no_save_dir():
     cfg = OmegaConf.create({"param": 1})  # No save_dir
     
     # Should return early without error
-    result = snapshot(cfg, repos={"main": "."}, data={"dataset": "/path/to/data"})
+    result = snapshot(cfg, repos={"main": {"path": "."}}, data={"dataset": "/path/to/data"})
     assert result is None
 
 

@@ -641,8 +641,9 @@ def test_extract_tracking_info_basic():
     })
     
     repos, data, prevs = extract_tracking_info(cfg)
-    
-    assert repos == {'main': '.', 'lib': './lib'}
+
+    assert repos['main']['path'] == '.'
+    assert repos['lib']['path'] == './lib'
     assert data == {'input': 'data/train.csv', 'model': 'models/best.pt'}
     # prevs should include data paths
     assert 'data/train.csv' in prevs
@@ -675,8 +676,8 @@ def test_extract_tracking_info_with_prevs():
     })
     
     repos, data, prevs = extract_tracking_info(cfg)
-    
-    assert repos == {'main': '.'}
+
+    assert repos['main']['path'] == '.'
     assert data == {'input': 'data/train.csv'}
     # prevs should include both explicit prevs and data paths
     assert 'outputs/exp1/run.lock' in prevs
@@ -698,5 +699,120 @@ def test_extract_tracking_info_singular_repo_raises_error():
     
     with pytest.raises(FlexLockConfigError, match="Found 'repo' \\(singular\\)"):
         extract_tracking_info(cfg)
+
+
+def test_extract_tracking_info_module_repo():
+    """Test extract_tracking_info with module-based repo spec."""
+    from flexlock.utils import extract_tracking_info
+    from unittest.mock import patch
+
+    cfg = OmegaConf.create({
+        '_snapshot_': {
+            'repos': {
+                'my_pkg': {'module': 'my_pkg'},
+            }
+        }
+    })
+
+    with patch('flexlock.utils.resolve_module_to_repo_path', return_value='/resolved/path'):
+        repos, data, prevs = extract_tracking_info(cfg)
+
+    assert repos['my_pkg']['path'] == '/resolved/path'
+    assert repos['my_pkg']['module'] == 'my_pkg'
+
+
+def test_extract_tracking_info_module_with_include():
+    """Test module-based repo with include/exclude filters."""
+    from flexlock.utils import extract_tracking_info
+    from unittest.mock import patch
+
+    cfg = OmegaConf.create({
+        '_snapshot_': {
+            'repos': {
+                'my_pkg': {'module': 'my_pkg', 'include': ['src/**'], 'exclude': ['*.pyc']},
+            }
+        }
+    })
+
+    with patch('flexlock.utils.resolve_module_to_repo_path', return_value='/resolved/path'):
+        repos, data, prevs = extract_tracking_info(cfg)
+
+    assert repos['my_pkg']['path'] == '/resolved/path'
+    assert repos['my_pkg']['include'] == ['src/**']
+    assert repos['my_pkg']['exclude'] == ['*.pyc']
+
+
+def test_extract_tracking_info_both_path_and_module():
+    """Test that path takes precedence when both are provided."""
+    from flexlock.utils import extract_tracking_info
+
+    cfg = OmegaConf.create({
+        '_snapshot_': {
+            'repos': {
+                'my_pkg': {'path': '/explicit/path', 'module': 'my_pkg'},
+            }
+        }
+    })
+
+    repos, data, prevs = extract_tracking_info(cfg)
+
+    assert repos['my_pkg']['path'] == '/explicit/path'
+    assert repos['my_pkg']['module'] == 'my_pkg'
+
+
+def test_extract_tracking_info_neither_path_nor_module():
+    """Test that neither path nor module raises error."""
+    from flexlock.utils import extract_tracking_info
+    from flexlock.exceptions import FlexLockConfigError
+
+    cfg = OmegaConf.create({
+        '_snapshot_': {
+            'repos': {
+                'my_pkg': {'include': ['*.py']},
+            }
+        }
+    })
+
+    with pytest.raises(FlexLockConfigError, match="must specify either 'path' or 'module'"):
+        extract_tracking_info(cfg)
+
+
+def test_extract_tracking_info_auto_detect_uses_module_name():
+    """Test that auto-detection names the repo after the top-level module."""
+    from flexlock.utils import extract_tracking_info
+    from unittest.mock import patch
+
+    cfg = OmegaConf.create({
+        '_target_': 'my_pkg.trainer.Trainer',
+    })
+
+    with patch('flexlock.utils.resolve_module_to_repo_path', return_value='/some/repo'):
+        repos, data, prevs = extract_tracking_info(cfg)
+
+    assert 'my_pkg' in repos
+    assert repos['my_pkg']['path'] == '/some/repo'
+    assert repos['my_pkg']['module'] == 'my_pkg'
+    assert 'main' not in repos
+
+
+def test_extract_tracking_info_auto_detect_skips_if_exists():
+    """Test that auto-detection doesn't override an explicitly set repo."""
+    from flexlock.utils import extract_tracking_info
+    from unittest.mock import patch
+
+    cfg = OmegaConf.create({
+        '_target_': 'my_pkg.trainer.Trainer',
+        '_snapshot_': {
+            'repos': {
+                'my_pkg': '/explicit/path',
+            }
+        }
+    })
+
+    with patch('flexlock.utils.resolve_module_to_repo_path') as mock_resolve:
+        repos, data, prevs = extract_tracking_info(cfg)
+
+    assert repos['my_pkg']['path'] == '/explicit/path'
+    mock_resolve.assert_not_called()
 
 

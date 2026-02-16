@@ -40,6 +40,8 @@ class RunTracker:
                 snapshot_data["include"] = repo_info["include"]
             if repo_info.get("exclude"):
                 snapshot_data["exclude"] = repo_info["exclude"]
+            if repo_info.get("module"):
+                snapshot_data["module"] = repo_info["module"]
             snapshot_data["path"] = path
             self.data["repos"][name] = snapshot_data
 
