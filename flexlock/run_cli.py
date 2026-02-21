@@ -27,6 +27,7 @@ def main():
     except Exception as e:
         logger.error(f"FlexLock run failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

@@ -108,7 +108,7 @@ class SlurmBackend(Backend):
             out = subprocess.check_output(
                 ["squeue", "-j", job_id, "-h", "-o", "%T"],
                 text=True,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
             )
             status = out.strip()
             if status:
@@ -121,16 +121,16 @@ class SlurmBackend(Backend):
             out = subprocess.check_output(
                 ["sacct", "-j", job_id, "-n", "-o", "State"],
                 text=True,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
             )
-            status = out.strip().split('\n')[0].strip()
+            status = out.strip().split("\n")[0].strip()
             if status:
                 return status
         except subprocess.CalledProcessError:
             pass
 
         logger.warning(f"Could not determine status for Slurm job {job_id}")
-        return 'unknown'
+        return "unknown"
 
     def wait_for_job(self, job_id: str, timeout=None, poll_interval=5) -> bool:
         """
@@ -151,12 +151,19 @@ class SlurmBackend(Backend):
             status = self.check_status(job_id)
 
             # Completed states
-            if status in ['COMPLETED', 'completed']:
+            if status in ["COMPLETED", "completed"]:
                 logger.info(f"Slurm job {job_id} completed")
                 return True
 
             # Failed states
-            if status in ['FAILED', 'TIMEOUT', 'CANCELLED', 'NODE_FAIL', 'PREEMPTED', 'OUT_OF_MEMORY']:
+            if status in [
+                "FAILED",
+                "TIMEOUT",
+                "CANCELLED",
+                "NODE_FAIL",
+                "PREEMPTED",
+                "OUT_OF_MEMORY",
+            ]:
                 logger.error(f"Slurm job {job_id} failed with status: {status}")
                 return False
 
@@ -166,7 +173,7 @@ class SlurmBackend(Backend):
                 return False
 
             # Still running or pending
-            if status in ['PENDING', 'RUNNING', 'CONFIGURING']:
+            if status in ["PENDING", "RUNNING", "CONFIGURING"]:
                 logger.debug(f"Slurm job {job_id} status: {status}")
             else:
                 logger.debug(f"Slurm job {job_id} unknown status: {status}")

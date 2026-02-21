@@ -15,7 +15,9 @@ from . import config
 class ExecutionResult:
     """Result object from task execution."""
 
-    def __init__(self, save_dir: str, status: str, result: Any = None, cfg: DictConfig = None):
+    def __init__(
+        self, save_dir: str, status: str, result: Any = None, cfg: DictConfig = None
+    ):
         """
         Initialize execution result.
 
@@ -155,17 +157,19 @@ class Project:
                 continue
 
             # Iterate over subdirectories (run directories)
-            for lock_file in Path(root_path).glob('**/run.lock'):
+            for lock_file in Path(root_path).glob("**/run.lock"):
                 run_dir = Path(lock_file).parent
                 logger.debug(f"Checking run.lock at {lock_file}")
                 try:
                     # Load candidate snapshot
-                    with open(lock_file, 'r') as f:
+                    with open(lock_file, "r") as f:
                         candidate_snapshot = yaml.safe_load(f)
 
                     # Extract save_dir from both snapshots for normalization
                     proposed_save_dir = fingerprint.get("config", {}).get("save_dir")
-                    candidate_save_dir = candidate_snapshot.get("config", {}).get("save_dir")
+                    candidate_save_dir = candidate_snapshot.get("config", {}).get(
+                        "save_dir"
+                    )
 
                     # Compare using RunDiff with save_dir context
                     differ = RunDiff(
@@ -179,7 +183,9 @@ class Project:
                     )
 
                     if differ.is_match():
-                        logger.success(f"⚡ Cache Hit! Found matching run at: {run_dir}")
+                        logger.success(
+                            f"⚡ Cache Hit! Found matching run at: {run_dir}"
+                        )
                         return run_dir
                     else:
                         logger.debug(f"No match for run at: {run_dir}: {differ.diffs}")
@@ -203,7 +209,9 @@ class Project:
         """
         return self._find_matching_run(cfg, search_dirs) is not None
 
-    def get_result(self, cfg: DictConfig, search_dirs: List[str] = None) -> ExecutionResult:
+    def get_result(
+        self, cfg: DictConfig, search_dirs: List[str] = None
+    ) -> ExecutionResult:
         """
         Retrieve results from a previously completed run.
 
@@ -228,21 +236,18 @@ class Project:
         # Try results.json
         results_file = match_dir / "results.json"
         if results_file.exists():
-            with open(results_file, 'r') as f:
+            with open(results_file, "r") as f:
                 result_data = json.load(f)
 
         # Try loading from run.lock
         lock_file = match_dir / "run.lock"
         if result_data is None and lock_file.exists():
-            with open(lock_file, 'r') as f:
+            with open(lock_file, "r") as f:
                 lock_data = yaml.safe_load(f)
                 result_data = lock_data.get("result", {})
 
         return ExecutionResult(
-            save_dir=str(match_dir),
-            status="CACHED",
-            result=result_data,
-            cfg=cfg
+            save_dir=str(match_dir), status="CACHED", result=result_data, cfg=cfg
         )
 
     def submit(
@@ -288,12 +293,26 @@ class Project:
 
         # Handle sweep execution
         if sweep:
-            return self._submit_sweep(config, sweep, n_jobs, smart_run, search_dirs, pbs_config, slurm_config, wait, sweep_dir_suffix, match_include, match_exclude)
+            return self._submit_sweep(
+                config,
+                sweep,
+                n_jobs,
+                smart_run,
+                search_dirs,
+                pbs_config,
+                slurm_config,
+                wait,
+                sweep_dir_suffix,
+                match_include,
+                match_exclude,
+            )
 
         # Single execution path
         # Check for existing run if smart_run is enabled
         if smart_run:
-            match_dir = self._find_matching_run(config, search_dirs, match_include, match_exclude)
+            match_dir = self._find_matching_run(
+                config, search_dirs, match_include, match_exclude
+            )
             if match_dir:
                 logger.info(f"Skipping execution, using cached result from {match_dir}")
                 return self.get_result(config, search_dirs)
@@ -309,10 +328,9 @@ class Project:
             from .parallel import ParallelExecutor
 
             save_dir = config.get("save_dir", "outputs/job")
-            executor_cfg = OmegaConf.create({
-                "save_dir": str(save_dir),
-                "_snapshot_": config.get("_snapshot_", {})
-            })
+            executor_cfg = OmegaConf.create(
+                {"save_dir": str(save_dir), "_snapshot_": config.get("_snapshot_", {})}
+            )
 
             executor = ParallelExecutor(
                 func=instantiate,
@@ -322,25 +340,27 @@ class Project:
                 n_jobs=config.DEFAULT_N_JOBS,
                 pbs_config=pbs_config,
                 slurm_config=slurm_config,
-                local_workers=None
+                local_workers=None,
             )
 
             # Run with wait parameter (executor handles waiting)
-            success = executor.run(wait=wait, timeout=config.DEFAULT_TIMEOUT if wait else None)
+            success = executor.run(
+                wait=wait, timeout=config.DEFAULT_TIMEOUT if wait else None
+            )
 
             # Load result
             result_data = None
             if "save_dir" in config:
                 results_file = Path(config.save_dir) / "results.json"
                 if results_file.exists():
-                    with open(results_file, 'r') as f:
+                    with open(results_file, "r") as f:
                         result_data = json.load(f)
 
             return ExecutionResult(
                 save_dir=str(save_dir),
                 status="SUCCESS" if wait else "SUBMITTED",
                 result=result_data,
-                cfg=config
+                cfg=config,
             )
 
         else:
@@ -361,16 +381,17 @@ class Project:
             if "save_dir" in config:
                 results_file = Path(save_dir) / "results.json"
                 try:
-                    with open(results_file, 'w') as f:
-                        json.dump(result if isinstance(result, dict) else {"result": result}, f, indent=2)
+                    with open(results_file, "w") as f:
+                        json.dump(
+                            result if isinstance(result, dict) else {"result": result},
+                            f,
+                            indent=2,
+                        )
                 except Exception as e:
                     logger.warning(f"Could not save results to {results_file}: {e}")
 
             return ExecutionResult(
-                save_dir=str(save_dir),
-                status="SUCCESS",
-                result=result,
-                cfg=config
+                save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config
             )
 
     def _submit_sweep(
@@ -418,16 +439,20 @@ class Project:
 
             # This makes the config self-contained for DB serialization.
             sweep_cfg = OmegaConf.create(
-             OmegaConf.to_container(sweep_cfg, resolve=True)
+                OmegaConf.to_container(sweep_cfg, resolve=True)
             )
 
             # Update save_dir to include sweep index
-            if  dir_suffix and "save_dir" in  sweep_cfg:
+            if dir_suffix and "save_dir" in sweep_cfg:
                 base_save_dir = Path(sweep_cfg.save_dir)
-                sweep_cfg.save_dir = str(base_save_dir.parent / f"{base_save_dir.name}_sweep_{i:04d}")
+                sweep_cfg.save_dir = str(
+                    base_save_dir.parent / f"{base_save_dir.name}_sweep_{i:04d}"
+                )
 
             if smart_run:
-                match_dir = self._find_matching_run(sweep_cfg, search_dirs, match_include, match_exclude)
+                match_dir = self._find_matching_run(
+                    sweep_cfg, search_dirs, match_include, match_exclude
+                )
                 if match_dir:
                     logger.info(f"Sweep {i}: Using cached result from {match_dir}")
                     cached_results.append((i, self.get_result(sweep_cfg, search_dirs)))
@@ -442,7 +467,9 @@ class Project:
 
             if use_hpc or (n_jobs > 1 and len(configs_to_run) > 1):
                 # Parallel execution using ParallelExecutor (local or HPC)
-                logger.info(f"Executing {len(configs_to_run)} sweep configs with ParallelExecutor")
+                logger.info(
+                    f"Executing {len(configs_to_run)} sweep configs with ParallelExecutor"
+                )
 
                 # Extract just configs for parallel execution
                 task_configs = [cfg for _, cfg in configs_to_run]
@@ -466,10 +493,12 @@ class Project:
                 else:
                     snapshot_resolved = {}
 
-                executor_cfg = OmegaConf.create({
-                    "save_dir": str(sweep_save_dir),
-                    "_snapshot_": snapshot_resolved,
-                })
+                executor_cfg = OmegaConf.create(
+                    {
+                        "save_dir": str(sweep_save_dir),
+                        "_snapshot_": snapshot_resolved,
+                    }
+                )
 
                 # Use ParallelExecutor with backend support
                 executor = ParallelExecutor(
@@ -480,7 +509,7 @@ class Project:
                     n_jobs=n_jobs,
                     pbs_config=pbs_config,
                     slurm_config=slurm_config,
-                    local_workers=n_jobs if not use_hpc else None
+                    local_workers=n_jobs if not use_hpc else None,
                 )
 
                 # Run the sweep (executor handles waiting based on wait parameter)
@@ -493,15 +522,20 @@ class Project:
                     if "save_dir" in cfg:
                         results_file = Path(cfg.save_dir) / "results.json"
                         if results_file.exists():
-                            with open(results_file, 'r') as f:
+                            with open(results_file, "r") as f:
                                 result_data = json.load(f)
 
-                    results.append((idx, ExecutionResult(
-                        save_dir=str(cfg.get("save_dir", ".")),
-                        status="SUCCESS",
-                        result=result_data,
-                        cfg=cfg
-                    )))
+                    results.append(
+                        (
+                            idx,
+                            ExecutionResult(
+                                save_dir=str(cfg.get("save_dir", ".")),
+                                status="SUCCESS",
+                                result=result_data,
+                                cfg=cfg,
+                            ),
+                        )
+                    )
             else:
                 # Sequential execution (no backend, n_jobs=1)
                 for i, cfg in configs_to_run:

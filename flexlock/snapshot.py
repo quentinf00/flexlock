@@ -12,12 +12,13 @@ from .load_stage import load_stage_from_path
 from loguru import logger
 import uuid
 
+
 class RunTracker:
     def __init__(self, save_dir, parent_lock=None):
         self.save_dir = Path(save_dir)
         self.parent_lock = Path(parent_lock) if parent_lock else None
         self.data = {"timestamp": datetime.now().isoformat()}
-        
+
         if self.parent_lock:
             # We record the link, effectively saying "See parent for Git/Env"
             self.data["parent"] = str(self.parent_lock)
@@ -33,7 +34,8 @@ class RunTracker:
         for name, repo_info in repos.items():
             path = repo_info["path"]
             snapshot_data = create_shadow_snapshot(
-                path, ref_name=str(self.save_dir) + f'_{uuid.uuid1().hex}',
+                path,
+                ref_name=str(self.save_dir) + f"_{uuid.uuid1().hex}",
             )
             # Store metadata for comparison-time filtering
             if repo_info.get("include"):
@@ -53,10 +55,7 @@ class RunTracker:
         if "lineage" not in self.data:
             self.data["lineage"] = {}
 
-        self.data["lineage"][name] = {
-            "path": path,
-            "info": info
-        }
+        self.data["lineage"][name] = {"path": path, "info": info}
 
     def finalize(self, config):
         """
@@ -94,7 +93,15 @@ class RunTracker:
         return snapshot_data
 
 
-def snapshot(cfg, repos=None, data=None, prevs=None, parent_lock=None, save_path=None, return_snapshot=False):
+def snapshot(
+    cfg,
+    repos=None,
+    data=None,
+    prevs=None,
+    parent_lock=None,
+    save_path=None,
+    return_snapshot=False,
+):
     """
     Create a snapshot of the current run state.
 
@@ -129,6 +136,7 @@ def snapshot(cfg, repos=None, data=None, prevs=None, parent_lock=None, save_path
     # 2. Record Lineage (Automatic Discovery)
     if prevs:
         logger.debug(f"Looking for upstream FlexLock runs in: {prevs}")
+
         def _find_snapshot_dir(start_path: Path) -> tuple[Path, dict] | None:
             """
             Recursive search for FlexLock run metadata.
@@ -142,6 +150,7 @@ def snapshot(cfg, repos=None, data=None, prevs=None, parent_lock=None, save_path
             3. Recursively up the directory tree
             """
             import json
+
             try:
                 p = Path(start_path).resolve()
             except Exception:
@@ -164,12 +173,17 @@ def snapshot(cfg, repos=None, data=None, prevs=None, parent_lock=None, save_path
 
                         if db_path.exists() and task_id:
                             from flexlock.taskdb import get_task_snapshot
+
                             snapshot_data = get_task_snapshot(db_path, task_id)
                             if snapshot_data:
-                                logger.debug(f"Found DB-based snapshot via marker at: {p}")
+                                logger.debug(
+                                    f"Found DB-based snapshot via marker at: {p}"
+                                )
                                 return (p, snapshot_data)
                     except Exception as e:
-                        logger.warning(f"Failed to read marker file at {marker_file}: {e}")
+                        logger.warning(
+                            f"Failed to read marker file at {marker_file}: {e}"
+                        )
 
                 # Option 2: Check for traditional run.lock file
                 if (p / "run.lock").exists():
@@ -198,17 +212,19 @@ def snapshot(cfg, repos=None, data=None, prevs=None, parent_lock=None, save_path
                         "config": snapshot_data.get("config", {}),
                         "timestamp": snapshot_data.get("timestamp"),
                         "repos": snapshot_data.get("repos", {}),
-                        "parent": snapshot_data.get("parent")
+                        "parent": snapshot_data.get("parent"),
                     }
 
                     # Add to lineage
                     tracker.add_lineage(
                         name=snapshot_dir.name,  # e.g. "run_2023..." or "task_abc123"
                         path=str(snapshot_dir),
-                        info=stage_info
+                        info=stage_info,
                     )
                 except Exception as e:
-                    logger.warning(f"Found snapshot at {snapshot_dir} but failed to process: {e}")
+                    logger.warning(
+                        f"Found snapshot at {snapshot_dir} but failed to process: {e}"
+                    )
 
     # 3. Save and/or return
     if return_snapshot:

@@ -8,7 +8,9 @@ from loguru import logger
 from omegaconf import OmegaConf
 
 
-def _flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = ".") -> Dict[str, Any]:
+def _flatten_dict(
+    d: Dict[str, Any], parent_key: str = "", sep: str = "."
+) -> Dict[str, Any]:
     """Flatten a nested dictionary into a single-level dict with dot-separated keys."""
     items = []
     for k, v in d.items():
@@ -23,7 +25,7 @@ def _flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = ".") -> Di
 @contextmanager
 def mlflow_context(
     save_dir: str | Path,
-    experiment_name: str = os.environ.get('MLFLOW_EXPERIMENT_NAME', "Default"),
+    experiment_name: str = os.environ.get("MLFLOW_EXPERIMENT_NAME", "Default"),
     run_name: str = None,
     tags: Dict[str, str] = None,
     log_config: bool = True,
@@ -73,7 +75,9 @@ def mlflow_context(
         import mlflow
         from mlflow.tracking import MlflowClient
     except ImportError:
-        logger.warning("MLflow not installed. To use mlflow_context, install with: pip install mlflow")
+        logger.warning(
+            "MLflow not installed. To use mlflow_context, install with: pip install mlflow"
+        )
         yield None
         return
 
@@ -95,15 +99,16 @@ def mlflow_context(
             experiment_ids=[exp.experiment_id],
             filter_string=filter_str,
             max_results=1,
-            order_by=["start_time DESC"]
+            order_by=["start_time DESC"],
         )
         if runs:
             prev_run_id = runs[0].info.run_id
             # Get the previous run's tags to inherit user tags (like pipeline tags)
             prev_run = client.get_run(prev_run_id)
             prev_run_tags = {
-                k: v for k, v in prev_run.data.tags.items()
-                if not k.startswith('flexlock.') and not k.startswith('mlflow.')
+                k: v
+                for k, v in prev_run.data.tags.items()
+                if not k.startswith("flexlock.") and not k.startswith("mlflow.")
             }
             logger.info(f"Found previous active run: {prev_run_id}")
             if prev_run_tags:
@@ -143,7 +148,9 @@ def mlflow_context(
                     # Log Config Params
                     cfg_obj = OmegaConf.load(lock_path)
                     content = cfg_obj.get("config", cfg_obj)  # Handle nested or flat
-                    flat_params = _flatten_dict(OmegaConf.to_container(content, resolve=True))
+                    flat_params = _flatten_dict(
+                        OmegaConf.to_container(content, resolve=True)
+                    )
 
                     # Sanitize (truncate long strings to avoid MLflow param length limits)
                     clean_params = {k: str(v)[:250] for k, v in flat_params.items()}
@@ -183,4 +190,3 @@ def mlflow_context(
                 logger.info(f"Superseded previous MLflow run {prev_run_id}")
             except Exception as e:
                 logger.warning(f"Failed to deprecate run {prev_run_id}: {e}")
-

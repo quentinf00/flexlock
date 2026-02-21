@@ -1499,12 +1499,12 @@ packages:
   timestamp: 1749615415615
 - pypi: ./
   name: flexlock
-  version: 0.3.1
-  sha256: 02a727efd32e8c6f195114b52ba943ff2959dcde825ade8def978f5b4051b10d
+  version: 0.3.2
+  sha256: 76b8ef9f7ba068d8e430ac1a09c5e1673173e9f0217e8d726a4d699de630853c
   requires_python: '>=3.11'
 - conda: .
   name: flexlock
-  version: 0.3.1
+  version: 0.3.2
   build: pyh4616a5c_0
   subdir: noarch
   variants:

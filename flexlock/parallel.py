@@ -92,7 +92,7 @@ class ParallelExecutor:
             self.backend = PBSBackend(folder=self.save_dir / "pbs_logs", **p)
 
     def _run_locally(self):
-        num_workers = self.local_workers or self.n_jobs 
+        num_workers = self.local_workers or self.n_jobs
         if num_workers == 1:
             worker_loop(self.func, self.cfg, self.task_target, self.db_path)
         else:
@@ -108,7 +108,9 @@ class ParallelExecutor:
             for p in procs:
                 p.join()
 
-    def _wait_for_completion(self, timeout: int = None, poll_interval: int = None) -> bool:
+    def _wait_for_completion(
+        self, timeout: int = None, poll_interval: int = None
+    ) -> bool:
         """
         Wait for all tasks to complete by polling the database.
 
@@ -132,10 +134,10 @@ class ParallelExecutor:
             while True:
                 # Get current status
                 status_counts = get_status_counts(self.db_path)
-                pending = status_counts.get('pending', 0)
-                running = status_counts.get('running', 0)
-                done = status_counts.get('done', 0)
-                failed = status_counts.get('failed', 0)
+                pending = status_counts.get("pending", 0)
+                running = status_counts.get("running", 0)
+                done = status_counts.get("done", 0)
+                failed = status_counts.get("failed", 0)
                 total = pending + running + done + failed
 
                 # Check if complete
@@ -158,7 +160,9 @@ class ParallelExecutor:
 
                 # Check timeout
                 if timeout and elapsed > timeout:
-                    logger.warning(f"Timeout after {timeout}s (pending: {pending}, running: {running})")
+                    logger.warning(
+                        f"Timeout after {timeout}s (pending: {pending}, running: {running})"
+                    )
                     return False
 
                 # Wait before next check
@@ -191,7 +195,7 @@ class ParallelExecutor:
             return True
 
         # 1. Prepare Root Directory
-        root_dir = Path(self.cfg.save_dir) # e.g., outputs/sweep_name
+        root_dir = Path(self.cfg.save_dir)  # e.g., outputs/sweep_name
         root_dir.mkdir(parents=True, exist_ok=True)
 
         # 2. CREATE MASTER SNAPSHOT
@@ -199,12 +203,7 @@ class ParallelExecutor:
         # We assume the Main Process has the correct context (repos, etc.)
         repos, data, _ = extract_tracking_info(self.cfg)
         # Set default repos if none specified
-        snapshot(
-            self.cfg,
-            repos=repos,
-            data=data,
-            save_path=root_dir
-        )
+        snapshot(self.cfg, repos=repos, data=data, save_path=root_dir)
 
         # 3. Populate SQLite DB
         # Store 'root_dir' in the DB so workers know where the Master Lock is.
@@ -222,8 +221,9 @@ class ParallelExecutor:
 
                 # Check if any tasks failed
                 from .taskdb import get_status_counts
+
                 status_counts = get_status_counts(self.db_path)
-                failed = status_counts.get('failed', 0)
+                failed = status_counts.get("failed", 0)
                 success = failed == 0
             else:
                 # HPC backend execution

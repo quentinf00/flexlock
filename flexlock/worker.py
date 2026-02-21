@@ -16,12 +16,12 @@ def worker_loop(func, cfg, task_to: str, db_path):
     if func is None:
         func = instantiate
     node = os.getenv("HOSTNAME") or "local"
-    
+
     # Find the master lock file (parent lock)
     # The master lock should be in the parent directory of the db_path
     db_dir = Path(db_path).parent
     master_lock = db_dir / "run.lock"
-    
+
     while True:
         task = claim_next_task(db_path, node)
         if task is None:
@@ -36,6 +36,7 @@ def worker_loop(func, cfg, task_to: str, db_path):
 
         # Get task_id for DB operations
         from flexlock.taskdb import _hash_task
+
         task_id = _hash_task(task)
 
         try:
@@ -58,21 +59,23 @@ def worker_loop(func, cfg, task_to: str, db_path):
                 prevs=prevs,
                 repos=None,  # Skip repos, we rely on Parent
                 parent_lock=str(master_lock) if master_lock.exists() else None,
-                return_snapshot=True  # Return data for DB storage instead of writing file
+                return_snapshot=True,  # Return data for DB storage instead of writing file
             )
 
             # Store snapshot in database
             if snapshot_data:
                 from flexlock.taskdb import update_task_snapshot
+
                 update_task_snapshot(db_path, task_id, snapshot_data)
                 logger.debug(f"Stored snapshot for task {task_id} in database")
 
             # Write marker file for lineage discovery
             import json
+
             marker_file = task_save_dir / ".flexlock_marker"
             marker_data = {
                 "db": str(Path(db_path).relative_to(task_save_dir.parent)),
-                "task_id": task_id
+                "task_id": task_id,
             }
             marker_file.write_text(json.dumps(marker_data, indent=2))
             logger.debug(f"Wrote marker file at {marker_file}")

@@ -50,7 +50,10 @@ def export_all_tasks(db_path: Path, output_base_dir: Path, status: str = None) -
     tasks = list_task_snapshots(db_path, status)
 
     if not tasks:
-        logger.warning(f"No tasks found in {db_path}" + (f" with status={status}" if status else ""))
+        logger.warning(
+            f"No tasks found in {db_path}"
+            + (f" with status={status}" if status else "")
+        )
         return
 
     output_base_dir.mkdir(parents=True, exist_ok=True)
@@ -61,12 +64,16 @@ def export_all_tasks(db_path: Path, output_base_dir: Path, status: str = None) -
             task_output_dir.mkdir(parents=True, exist_ok=True)
 
             # Atomic write
-            with tempfile.NamedTemporaryFile("w", dir=task_output_dir, delete=False) as tf:
+            with tempfile.NamedTemporaryFile(
+                "w", dir=task_output_dir, delete=False
+            ) as tf:
                 yaml.dump(snapshot_data, tf, sort_keys=False)
                 tmp_name = tf.name
             os.replace(tmp_name, task_output_dir / "run.lock")
 
-            logger.info(f"Exported task {task_id[:8]} (status={task_status}) to {task_output_dir}")
+            logger.info(
+                f"Exported task {task_id[:8]} (status={task_status}) to {task_output_dir}"
+            )
 
     logger.info(f"Exported {len(tasks)} tasks to {output_base_dir}")
 
@@ -81,25 +88,24 @@ def main():
         "--db",
         type=Path,
         required=True,
-        help="Path to tasks database (e.g., outputs/sweep/tasks.db)"
+        help="Path to tasks database (e.g., outputs/sweep/tasks.db)",
     )
 
     parser.add_argument(
-        "--task",
-        help="Task ID to export (hash). If not specified, exports all tasks."
+        "--task", help="Task ID to export (hash). If not specified, exports all tasks."
     )
 
     parser.add_argument(
         "--out",
         type=Path,
         required=True,
-        help="Output directory for exported snapshot(s)"
+        help="Output directory for exported snapshot(s)",
     )
 
     parser.add_argument(
         "--status",
         choices=["pending", "running", "done", "failed"],
-        help="Filter tasks by status (only used when exporting all tasks)"
+        help="Filter tasks by status (only used when exporting all tasks)",
     )
 
     args = parser.parse_args()

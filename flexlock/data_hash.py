@@ -209,7 +209,7 @@ def hash_data(
                 # Check cache for file
                 cursor.execute(
                     "SELECT hash, mtime FROM cache WHERE path=? AND is_dir=0",
-                    (str(path),)
+                    (str(path),),
                 )
                 row = cursor.fetchone()
 
@@ -222,12 +222,17 @@ def hash_data(
                 # Check cache for directory
                 cursor.execute(
                     "SELECT hash, mtime, file_count, latest_mtime FROM cache WHERE path=? AND is_dir=1",
-                    (str(path),)
+                    (str(path),),
                 )
                 row = cursor.fetchone()
 
                 if row:
-                    cached_hash, cached_mtime, cached_file_count, cached_latest_mtime = row
+                    (
+                        cached_hash,
+                        cached_mtime,
+                        cached_file_count,
+                        cached_latest_mtime,
+                    ) = row
                     file_count, latest_mtime = _get_dir_stats(path, dir_file_limit)
 
                     if file_count > dir_file_limit:
@@ -236,8 +241,10 @@ def hash_data(
                         if cached_mtime == current_mtime:
                             return cached_hash
                     else:
-                        if (cached_file_count == file_count and
-                            cached_latest_mtime == latest_mtime):
+                        if (
+                            cached_file_count == file_count
+                            and cached_latest_mtime == latest_mtime
+                        ):
                             return cached_hash
 
     # If not in cache or cache is invalid/disabled, compute the hash
@@ -268,7 +275,7 @@ def hash_data(
                 mtime = path.stat().st_mtime
                 cursor.execute(
                     "INSERT OR REPLACE INTO cache VALUES (?, ?, NULL, NULL, ?, 0)",
-                    (str(path), mtime, new_hash)
+                    (str(path), mtime, new_hash),
                 )
             elif path.is_dir():
                 file_count, latest_mtime = _get_dir_stats(path, dir_file_limit)
@@ -277,13 +284,13 @@ def hash_data(
                     # For large directories, use just the directory's mtime
                     cursor.execute(
                         "INSERT OR REPLACE INTO cache VALUES (?, ?, NULL, NULL, ?, 1)",
-                        (str(path), mtime, new_hash)
+                        (str(path), mtime, new_hash),
                     )
                 else:
                     # For smaller directories, cache more detailed stats
                     cursor.execute(
                         "INSERT OR REPLACE INTO cache VALUES (?, ?, ?, ?, ?, 1)",
-                        (str(path), mtime, file_count, latest_mtime, new_hash)
+                        (str(path), mtime, file_count, latest_mtime, new_hash),
                     )
             conn.commit()
 

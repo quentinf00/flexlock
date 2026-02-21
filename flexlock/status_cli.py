@@ -13,10 +13,10 @@ def print_status_summary(db_path: Path):
     status_counts = get_status_counts(db_path)
 
     # Get totals
-    pending = status_counts.get('pending', 0)
-    running = status_counts.get('running', 0)
-    done = status_counts.get('done', 0)
-    failed = status_counts.get('failed', 0)
+    pending = status_counts.get("pending", 0)
+    running = status_counts.get("running", 0)
+    done = status_counts.get("done", 0)
+    failed = status_counts.get("failed", 0)
     total = pending + running + done + failed
 
     # Print header
@@ -66,14 +66,14 @@ def print_failed_tasks(db_path: Path, verbose: bool = False):
         print("-" * 60)
 
         # Print task configuration
-        task = task_info['task']
+        task = task_info["task"]
         print("Config:")
         for key, value in task.items():
-            if not key.startswith('_'):
+            if not key.startswith("_"):
                 print(f"  {key}: {value}")
 
         # Print error
-        error = task_info['error']
+        error = task_info["error"]
         if error:
             print(f"\nError:")
             # Truncate very long errors
@@ -81,15 +81,15 @@ def print_failed_tasks(db_path: Path, verbose: bool = False):
                 print(f"  {error[:500]}...")
                 print(f"  (Use --verbose to see full error)")
             else:
-                for line in error.split('\n'):
+                for line in error.split("\n"):
                     print(f"  {line}")
 
         # Print metadata
-        if task_info['node']:
+        if task_info["node"]:
             print(f"\nNode: {task_info['node']}")
-        if task_info['ts_start']:
+        if task_info["ts_start"]:
             print(f"Started:  {task_info['ts_start']}")
-        if task_info['ts_end']:
+        if task_info["ts_end"]:
             print(f"Finished: {task_info['ts_end']}")
 
     print("\n" + "=" * 60 + "\n")
@@ -112,14 +112,14 @@ def print_all_tasks(db_path: Path, status_filter: str = None):
     print("-" * 60)
 
     for task_info in tasks:
-        status = task_info['status']
-        task_id = task_info['task_id'][:10]  # Truncate hash
-        node = task_info['node'] or 'N/A'
+        status = task_info["status"]
+        task_id = task_info["task_id"][:10]  # Truncate hash
+        node = task_info["node"] or "N/A"
         node = node[:13] if len(node) > 13 else node
-        timestamp = task_info['ts_end'] or task_info['ts_start'] or 'N/A'
+        timestamp = task_info["ts_end"] or task_info["ts_start"] or "N/A"
 
         # Format timestamp
-        if timestamp != 'N/A':
+        if timestamp != "N/A":
             timestamp = timestamp[:19]  # Just YYYY-MM-DD HH:MM:SS
 
         print(f"{status:<10} {task_id:<12} {node:<15} {timestamp}")
@@ -138,6 +138,7 @@ def watch_status(db_path: Path, interval: int = 10):
 
             # Print timestamp
             from datetime import datetime
+
             print(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
             # Print status
@@ -145,8 +146,8 @@ def watch_status(db_path: Path, interval: int = 10):
 
             # Check if completed
             status_counts = get_status_counts(db_path)
-            pending = status_counts.get('pending', 0)
-            running = status_counts.get('running', 0)
+            pending = status_counts.get("pending", 0)
+            running = status_counts.get("running", 0)
 
             if pending == 0 and running == 0:
                 print("All tasks completed. Exiting watch mode.\n")
@@ -181,50 +182,43 @@ Examples:
 
   # Show verbose error messages
   flexlock-status outputs/sweep/run.lock.tasks.db --failed --verbose
-        """
+        """,
     )
 
     parser.add_argument(
-        "db_path",
-        type=Path,
-        help="Path to task database (run.lock.tasks.db)"
+        "db_path", type=Path, help="Path to task database (run.lock.tasks.db)"
     )
 
     parser.add_argument(
-        "--failed",
-        action="store_true",
-        help="Show details of failed tasks"
+        "--failed", action="store_true", help="Show details of failed tasks"
     )
 
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Show all tasks"
-    )
+    parser.add_argument("--all", action="store_true", help="Show all tasks")
 
     parser.add_argument(
         "--status",
-        choices=['pending', 'running', 'done', 'failed'],
-        help="Filter tasks by status (use with --all)"
+        choices=["pending", "running", "done", "failed"],
+        help="Filter tasks by status (use with --all)",
     )
 
     parser.add_argument(
         "--watch",
         action="store_true",
-        help="Watch status in real-time (updates every 10s)"
+        help="Watch status in real-time (updates every 10s)",
     )
 
     parser.add_argument(
         "--interval",
         type=int,
         default=10,
-        help="Update interval for watch mode in seconds (default: 10)"
+        help="Update interval for watch mode in seconds (default: 10)",
     )
 
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
-        help="Show verbose output (full error messages)"
+        help="Show verbose output (full error messages)",
     )
 
     args = parser.parse_args()
@@ -253,6 +247,7 @@ Examples:
     except Exception as e:
         logger.error(f"Error reading database: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

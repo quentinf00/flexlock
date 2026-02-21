@@ -5,8 +5,7 @@ from .pbs import PBSBackend
 from .slurm import SlurmBackend
 
 __all__ = [
-    'Backend',
-    'PBSBackend',
-    'SlurmBackend',
+    "Backend",
+    "PBSBackend",
+    "SlurmBackend",
 ]
-

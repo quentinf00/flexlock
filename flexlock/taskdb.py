@@ -147,7 +147,9 @@ def dump_to_yaml(db_path: Path, yaml_path: Path) -> None:
             "SELECT result_info, task_info, status FROM tasks WHERE status IN ('done','failed') ORDER BY ts_end"
         ).fetchall()
         data = [
-            dict(task = OmegaConf.create(r[0]), status = r[2]) if r[0] else dict(task = OmegaConf.create(r[1]), status = r[2])
+            dict(task=OmegaConf.create(r[0]), status=r[2])
+            if r[0]
+            else dict(task=OmegaConf.create(r[1]), status=r[2])
             for r in rows
             if r[0] or r[1]
         ]
@@ -166,10 +168,11 @@ def update_task_snapshot(db_path: Path, task_id: str, snapshot_data: dict) -> No
         snapshot_data: Complete snapshot dictionary
     """
     import json
+
     with _conn(db_path) as c:
         c.execute(
             "UPDATE tasks SET snapshot=? WHERE task_id=?",
-            (json.dumps(snapshot_data), task_id)
+            (json.dumps(snapshot_data), task_id),
         )
         c.commit()
 
@@ -186,11 +189,9 @@ def get_task_snapshot(db_path: Path, task_id: str) -> dict | None:
         dict: Snapshot data, or None if not found
     """
     import json
+
     with _conn(db_path) as c:
-        cur = c.execute(
-            "SELECT snapshot FROM tasks WHERE task_id=?",
-            (task_id,)
-        )
+        cur = c.execute("SELECT snapshot FROM tasks WHERE task_id=?", (task_id,))
         row = cur.fetchone()
         if row and row[0]:
             return json.loads(row[0])
@@ -209,11 +210,12 @@ def list_task_snapshots(db_path: Path, status: str = None) -> List[tuple]:
         List of tuples: (task_id, snapshot_dict, status)
     """
     import json
+
     with _conn(db_path) as c:
         if status:
             cur = c.execute(
                 "SELECT task_id, snapshot, status FROM tasks WHERE status=? AND snapshot IS NOT NULL",
-                (status,)
+                (status,),
             )
         else:
             cur = c.execute(
@@ -257,13 +259,15 @@ def get_failed_tasks(db_path: Path) -> list:
         failed_tasks = []
         for row in rows:
             task_info = OmegaConf.create(row[0]) if row[0] else {}
-            failed_tasks.append({
-                "task": task_info,
-                "error": row[1],
-                "ts_start": row[2],
-                "ts_end": row[3],
-                "node": row[4]
-            })
+            failed_tasks.append(
+                {
+                    "task": task_info,
+                    "error": row[1],
+                    "ts_start": row[2],
+                    "ts_end": row[3],
+                    "node": row[4],
+                }
+            )
         return failed_tasks
 
 
@@ -287,7 +291,7 @@ def get_all_tasks(db_path: Path, status: str = None) -> list:
                 FROM tasks WHERE status=?
                 ORDER BY ts_start DESC
                 """,
-                (status,)
+                (status,),
             ).fetchall()
         else:
             rows = c.execute(
@@ -303,16 +307,18 @@ def get_all_tasks(db_path: Path, status: str = None) -> list:
         for row in rows:
             task_info = OmegaConf.create(row[1]) if row[1] else {}
             result_info = OmegaConf.create(row[2]) if row[2] else {}
-            tasks.append({
-                "task_id": row[0],
-                "task": task_info,
-                "result": result_info,
-                "status": row[3],
-                "error": row[4],
-                "ts_start": row[5],
-                "ts_end": row[6],
-                "node": row[7]
-            })
+            tasks.append(
+                {
+                    "task_id": row[0],
+                    "task": task_info,
+                    "result": result_info,
+                    "status": row[3],
+                    "error": row[4],
+                    "ts_start": row[5],
+                    "ts_end": row[6],
+                    "node": row[7],
+                }
+            )
         return tasks
 
 

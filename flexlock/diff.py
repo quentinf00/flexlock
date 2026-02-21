@@ -33,8 +33,16 @@ class RunDiff:
 
         # Keys to strictly ignore during config comparison
         self.ignore_keys = set(ignore_keys or []) | {
-            "save_dir", "timestamp", "system", "job_id", "work_dir", "cwd",
-            "_snapshot_", "date", "time", "datetime"
+            "save_dir",
+            "timestamp",
+            "system",
+            "job_id",
+            "work_dir",
+            "cwd",
+            "_snapshot_",
+            "date",
+            "time",
+            "datetime",
         }
 
         # For value normalization (handling interpolation)
@@ -59,7 +67,9 @@ class RunDiff:
         Returns:
             Normalized value
         """
-        logger.debug(f"Normalizing value: {val} with root_dir: {root_dir}, {type(val)} {type(root_dir)}")
+        logger.debug(
+            f"Normalizing value: {val} with root_dir: {root_dir}, {type(val)} {type(root_dir)}"
+        )
         if root_dir and isinstance(val, str) and root_dir in val:
             logger.debug(f"Value '{val}' contains root_dir '{root_dir}', normalizing.")
             return val.replace(root_dir, "<SAVE_DIR>")
@@ -81,8 +91,12 @@ class RunDiff:
             if c_info.get("tree") != t_info.get("tree"):
                 # Trees differ — check if RELEVANT files changed
                 # Priority: RunDiff-level override > snapshot-level patterns
-                include = self.match_include or c_info.get("include") or t_info.get("include")
-                exclude = self.match_exclude or c_info.get("exclude") or t_info.get("exclude")
+                include = (
+                    self.match_include or c_info.get("include") or t_info.get("include")
+                )
+                exclude = (
+                    self.match_exclude or c_info.get("exclude") or t_info.get("exclude")
+                )
 
                 if include or exclude:
                     repo_path = c_info.get("path") or t_info.get("path")
@@ -97,7 +111,9 @@ class RunDiff:
             self.diffs["git"] = diff
         return len(diff) == 0
 
-    def _trees_match_filtered(self, repo_path, tree1, tree2, include=None, exclude=None):
+    def _trees_match_filtered(
+        self, repo_path, tree1, tree2, include=None, exclude=None
+    ):
         """
         Check if two trees match when filtered by include/exclude patterns.
 
@@ -106,6 +122,7 @@ class RunDiff:
         """
         try:
             from git.repo import Repo as GitRepo
+
             repo = GitRepo(repo_path, search_parent_directories=True)
 
             # Build git pathspec: include patterns + :(exclude) patterns
@@ -137,7 +154,9 @@ class RunDiff:
             diff = []
 
             # Handle DictConfigs vs Primitives
-            if isinstance(d1, (dict, DictConfig)) and isinstance(d2, (dict, DictConfig)):
+            if isinstance(d1, (dict, DictConfig)) and isinstance(
+                d2, (dict, DictConfig)
+            ):
                 all_keys = set(d1.keys()) | set(d2.keys())
                 for k in all_keys:
                     if k in self.ignore_keys:
@@ -152,7 +171,9 @@ class RunDiff:
                     else:
                         diff.extend(_recursive_diff(d1[k], d2[k], new_path))
 
-            elif isinstance(d1, (list, tuple, ListConfig)) and isinstance(d2, (list, tuple, ListConfig)):
+            elif isinstance(d1, (list, tuple, ListConfig)) and isinstance(
+                d2, (list, tuple, ListConfig)
+            ):
                 if len(d1) != len(d2):
                     diff.append(f"List length mismatch {path}: {len(d1)} vs {len(d2)}")
                 else:
@@ -161,7 +182,9 @@ class RunDiff:
 
             else:
                 # Value Comparison with Normalization
-                logger.debug(f"Comparing values at {path}: {d1} vs {d2} after normalization with dirs {self.c_dir}, {self.t_dir}")
+                logger.debug(
+                    f"Comparing values at {path}: {d1} vs {d2} after normalization with dirs {self.c_dir}, {self.t_dir}"
+                )
 
                 v1_norm = self._normalize_val(d1, self.c_dir)
                 v2_norm = self._normalize_val(d2, self.t_dir)

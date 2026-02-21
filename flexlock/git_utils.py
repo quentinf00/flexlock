@@ -35,12 +35,17 @@ def shadow_index(repo: GitRepo):
 
 def sanitize_ref_name(name: str) -> str:
     """Sanitize a string to be a valid git ref name."""
-    invalid_chars = [' ', '~', '^', ':', '?', '*', '[', '\\', '..', '@{', '//']
+    invalid_chars = [" ", "~", "^", ":", "?", "*", "[", "\\", "..", "@{", "//"]
     for char in invalid_chars:
-        name = name.replace(char, '_')
+        name = name.replace(char, "_")
     return name
 
-def create_shadow_snapshot(repo_path: str = ".", ignore_patterns: list | None = None, ref_name: str | None = None) -> dict:
+
+def create_shadow_snapshot(
+    repo_path: str = ".",
+    ignore_patterns: list | None = None,
+    ref_name: str | None = None,
+) -> dict:
     """
     Creates a Shadow Commit.
     Returns: {commit_hash, tree_hash, is_dirty}
@@ -57,7 +62,13 @@ def create_shadow_snapshot(repo_path: str = ".", ignore_patterns: list | None = 
         # 2. Remove ignored patterns from Shadow Index
         if ignore_patterns:
             try:
-                git.rm("--cached", "-r", "--ignore-unmatch", *ignore_patterns, env=shadow_env)
+                git.rm(
+                    "--cached",
+                    "-r",
+                    "--ignore-unmatch",
+                    *ignore_patterns,
+                    env=shadow_env,
+                )
             except Exception:
                 pass
 
@@ -67,7 +78,9 @@ def create_shadow_snapshot(repo_path: str = ".", ignore_patterns: list | None = 
         # 4. Create Shadow Commit (Lineage)
         parent = repo.head.commit.hexsha
         msg = f"FlexLock Shadow: {parent[:7]} + Changes"
-        shadow_commit = git.commit_tree(tree_hash, "-p", parent, "-m", msg, env=shadow_env)
+        shadow_commit = git.commit_tree(
+            tree_hash, "-p", parent, "-m", msg, env=shadow_env
+        )
 
         # 5. Save Ref (Prevent Garbage Collection)
         ref_name = f"refs/flexlock/runs/{ref_name or shadow_commit}"
@@ -75,8 +88,8 @@ def create_shadow_snapshot(repo_path: str = ".", ignore_patterns: list | None = 
 
         return {
             "commit": shadow_commit,
-            "tree": tree_hash, # <--- The key for Equality Checks
-            "is_dirty": repo.is_dirty(untracked_files=True)
+            "tree": tree_hash,  # <--- The key for Equality Checks
+            "is_dirty": repo.is_dirty(untracked_files=True),
         }
 
 

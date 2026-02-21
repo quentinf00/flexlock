@@ -114,11 +114,9 @@ class PBSBackend(Backend):
         try:
             # Use qstat -x to get info about finished jobs too
             out = subprocess.check_output(
-                ["qstat", "-x", job_id],
-                text=True,
-                stderr=subprocess.DEVNULL
+                ["qstat", "-x", job_id], text=True, stderr=subprocess.DEVNULL
             )
-            lines = out.strip().split('\n')
+            lines = out.strip().split("\n")
             if len(lines) > 2:  # Header + job line
                 # Parse the status from qstat output
                 job_line = lines[2]  # Skip two header lines
@@ -127,10 +125,10 @@ class PBSBackend(Backend):
                     return parts[9]  # Job state is usually the 10th column
         except subprocess.CalledProcessError:
             # Job not found, likely completed and cleaned up
-            return 'C'
+            return "C"
         except Exception as e:
             logger.warning(f"Failed to check PBS job status for {job_id}: {e}")
-        return 'unknown'
+        return "unknown"
 
     def wait_for_job(self, job_id: str, timeout=None, poll_interval=5) -> bool:
         """
@@ -151,12 +149,12 @@ class PBSBackend(Backend):
             status = self.check_status(job_id)
 
             # Completed states
-            if status in ['C', 'completed']:
+            if status in ["C", "completed"]:
                 logger.info(f"PBS job {job_id} completed")
                 return True
 
             # Failed states
-            if status in ['E', 'F', 'failed']:
+            if status in ["E", "F", "failed"]:
                 logger.error(f"PBS job {job_id} failed with status: {status}")
                 return False
 
@@ -166,7 +164,7 @@ class PBSBackend(Backend):
                 return False
 
             # Still running or queued
-            if status in ['Q', 'R', 'H']:
+            if status in ["Q", "R", "H"]:
                 logger.debug(f"PBS job {job_id} status: {status}")
             else:
                 logger.debug(f"PBS job {job_id} unknown status: {status}")

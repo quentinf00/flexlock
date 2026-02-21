@@ -32,54 +32,60 @@ class FlexLockRunner:
             print("=== TARGET FUNCTION DOCSTRING ===")
             try:
                 target_path = node_cfg._target_
-                module_name, func_name = target_path.rsplit('.', 1)
+                module_name, func_name = target_path.rsplit(".", 1)
                 module = __import__(module_name, fromlist=[func_name])
                 target_func = getattr(module, func_name)
-                docstring = getattr(target_func, '__doc__', None)
+                docstring = getattr(target_func, "__doc__", None)
                 print(f"Target: {target_path}")
-                print(f"Docstring:\n{docstring}" if docstring else "No docstring available.")
+                print(
+                    f"Docstring:\n{docstring}"
+                    if docstring
+                    else "No docstring available."
+                )
             except (ImportError, AttributeError, ValueError) as e:
                 print(f"Could not import target function '{node_cfg._target_}': {e}")
 
     def _build_parser(self):
-        parser = argparse.ArgumentParser(description="FlexLock Execution Manager", add_help=False)
+        parser = argparse.ArgumentParser(
+            description="FlexLock Execution Manager", add_help=False
+        )
 
-        parser.add_argument("-h", "--help", action="store_true", help="Show this help message and exit.")
         parser.add_argument(
-            "--print-config", action="store_true",
-            help="Print the compiled configuration and target function docstring, then exit."
+            "-h", "--help", action="store_true", help="Show this help message and exit."
+        )
+        parser.add_argument(
+            "--print-config",
+            action="store_true",
+            help="Print the compiled configuration and target function docstring, then exit.",
         )
 
         # Existing Config/Select args
         parser.add_argument(
-            "--defaults", "-d",
-            help="Python import path for default config"
+            "--defaults", "-d", help="Python import path for default config"
         )
+        parser.add_argument("--config", "-c", help="Path to base YAML config file")
         parser.add_argument(
-            "--config", "-c",
-            help="Path to base YAML config file"
-        )
-        parser.add_argument(
-            "--select", "-s",
-            help="Dot-separated key to select the node to run"
+            "--select", "-s", help="Dot-separated key to select the node to run"
         )
 
         # Existing Override args
+        parser.add_argument("--merge", "-m", help="Merge file into Root config")
         parser.add_argument(
-            "--merge", "-m",
-            help="Merge file into Root config"
+            "--overrides",
+            "-o",
+            nargs="*",
+            default=[],
+            help="Dot-list overrides for Root config",
         )
         parser.add_argument(
-            "--overrides", "-o", nargs="*", default=[],
-            help="Dot-list overrides for Root config"
+            "--merge-after-select", "-M", help="Merge file into Selected config"
         )
         parser.add_argument(
-            "--merge-after-select", "-M",
-            help="Merge file into Selected config"
-        )
-        parser.add_argument(
-            "--overrides-after-select", "-O", nargs="*", default=[],
-            help="Dot-list overrides for Selected config"
+            "--overrides-after-select",
+            "-O",
+            nargs="*",
+            default=[],
+            help="Dot-list overrides for Selected config",
         )
 
         # NEW SWEEP ARGUMENTS
@@ -87,26 +93,42 @@ class FlexLockRunner:
 
         # Source (Mutually Exclusive)
         source = sweep_group.add_mutually_exclusive_group()
-        source.add_argument("--sweep-key", help="Key in config containing the sweep list (e.g. 'experiments.grid')")
-        source.add_argument("--sweep-file", help="Path to a file (yaml, json, txt) containing the sweep list")
-        source.add_argument("--sweep", help="Comma-separated values (e.g. '0.01,0.02' or 'lr=0.1,lr=0.2')")
+        source.add_argument(
+            "--sweep-key",
+            help="Key in config containing the sweep list (e.g. 'experiments.grid')",
+        )
+        source.add_argument(
+            "--sweep-file",
+            help="Path to a file (yaml, json, txt) containing the sweep list",
+        )
+        source.add_argument(
+            "--sweep",
+            help="Comma-separated values (e.g. '0.01,0.02' or 'lr=0.1,lr=0.2')",
+        )
 
         # Injection Target
         sweep_group.add_argument(
             "--sweep-target",
             help="Dot-path key to inject the sweep value into (e.g. 'optimizer.lr'). "
-                 "If omitted, sweep items are merged at the root."
+            "If omitted, sweep items are merged at the root.",
         )
 
         # Execution
-        parser.add_argument("--n_jobs", type=int, default=config.DEFAULT_N_JOBS, help="Number of parallel jobs")
         parser.add_argument(
-            "--check-exists", action="store_true",
-            help="Check if run already exists and skip if so."
+            "--n_jobs",
+            type=int,
+            default=config.DEFAULT_N_JOBS,
+            help="Number of parallel jobs",
         )
         parser.add_argument(
-            "--debug", action="store_true",
-            help="Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks)."
+            "--check-exists",
+            action="store_true",
+            help="Check if run already exists and skip if so.",
+        )
+        parser.add_argument(
+            "--debug",
+            action="store_true",
+            help="Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks).",
         )
 
         # HPC Backend Configuration
@@ -114,11 +136,10 @@ class FlexLockRunner:
         backend = backend_group.add_mutually_exclusive_group()
         backend.add_argument(
             "--slurm-config",
-            help="Path to Slurm configuration YAML file for HPC execution"
+            help="Path to Slurm configuration YAML file for HPC execution",
         )
         backend.add_argument(
-            "--pbs-config",
-            help="Path to PBS configuration YAML file for HPC execution"
+            "--pbs-config", help="Path to PBS configuration YAML file for HPC execution"
         )
 
         return parser
@@ -140,7 +161,7 @@ class FlexLockRunner:
             cfg.merge_with(OmegaConf.load(args.merge))
         if args.overrides:
             cfg.merge_with(OmegaConf.from_dotlist(args.overrides))
-        
+
         if args.debug:
             logger.debug(f"Final Root Config: {cfg}")
         return cfg
@@ -201,11 +222,13 @@ class FlexLockRunner:
             FlexLockValidationError: If multiple sweep sources are provided
         """
         # Validate mutual exclusivity of sweep sources
-        sources_provided = sum([
-            args.sweep_key is not None,
-            args.sweep_file is not None,
-            args.sweep is not None
-        ])
+        sources_provided = sum(
+            [
+                args.sweep_key is not None,
+                args.sweep_file is not None,
+                args.sweep is not None,
+            ]
+        )
 
         if sources_provided > 1:
             raise FlexLockValidationError(
@@ -229,13 +252,11 @@ class FlexLockRunner:
         elif args.sweep_file:
             fpath = Path(args.sweep_file)
             if not fpath.exists():
-                raise FlexLockConfigError(
-                    f"Sweep file '{fpath}' not found."
-                )
+                raise FlexLockConfigError(f"Sweep file '{fpath}' not found.")
 
-            if fpath.suffix in ['.yaml', '.yml']:
+            if fpath.suffix in [".yaml", ".yml"]:
                 raw_tasks = OmegaConf.to_container(OmegaConf.load(fpath), resolve=True)
-            elif fpath.suffix == '.json':
+            elif fpath.suffix == ".json":
                 with open(fpath) as f:
                     raw_tasks = json.load(f)
             else:
@@ -274,10 +295,10 @@ class FlexLockRunner:
         """
         # Inject save_dir if missing
         if "save_dir" not in cfg or cfg.save_dir is None:
-             ts = datetime.now().strftime(config.TIMESTAMP_FORMAT)
-             path = Path("outputs") / name / ts
-             with open_dict(cfg):
-                 cfg.save_dir = str(path)
+            ts = datetime.now().strftime(config.TIMESTAMP_FORMAT)
+            path = Path("outputs") / name / ts
+            with open_dict(cfg):
+                cfg.save_dir = str(path)
         cfg.save_dir = cfg.save_dir
         return cfg
 
@@ -285,14 +306,14 @@ class FlexLockRunner:
         """Check if a run with the same configuration already exists."""
         save_dir = Path(cfg.get("save_dir", "."))
         lock_file = save_dir / "run.lock"
-        
+
         if not lock_file.exists():
             return False
-        
+
         # Load existing run data
         with open(lock_file, "r") as f:
             existing_data = yaml.safe_load(f)
-        
+
         # Compare with current configuration
         diff = RunDiff(cfg, existing_data)
         return diff.is_match()
@@ -317,7 +338,7 @@ class FlexLockRunner:
         if base_cfg is not None:
             _b = base_cfg.copy()
             _b.merge_with(node_cfg)
-            node_cfg.merge_with(_b) # to keep global keys pointers from root_cfg
+            node_cfg.merge_with(_b)  # to keep global keys pointers from root_cfg
 
         # Inner Overrides
         if args.merge_after_select:
@@ -340,7 +361,10 @@ class FlexLockRunner:
         node_cfg = self._prepare_node(node_cfg)
 
         # ACTIVATE DEBUGGING GLOBALLY
-        debug = args.debug or os.environ.get("FLEXLOCK_DEBUG", "false").lower() in ("1", "true")
+        debug = args.debug or os.environ.get("FLEXLOCK_DEBUG", "false").lower() in (
+            "1",
+            "true",
+        )
         if debug:
             logger.info("Debug mode enabled")
             run_func = debug_on_fail(run_func)
@@ -351,7 +375,9 @@ class FlexLockRunner:
             return
         if tasks:
             if debug:
-                logger.info(f"Running sweep with {len(tasks)} tasks in debug mode one job, no hpc.")
+                logger.info(
+                    f"Running sweep with {len(tasks)} tasks in debug mode one job, no hpc."
+                )
                 # Batch execution
                 executor = ParallelExecutor(
                     func=run_func,
@@ -370,21 +396,21 @@ class FlexLockRunner:
                     task_target=args.sweep_target,  # Use sweep_target as task_target
                     cfg=node_cfg,
                     n_jobs=args.n_jobs,
-                    slurm_config=getattr(args, 'slurm_config', None),
-                    pbs_config=getattr(args, 'pbs_config', None)
+                    slurm_config=getattr(args, "slurm_config", None),
+                    pbs_config=getattr(args, "pbs_config", None),
                 )
                 return executor.run()
 
         # Single execution
         # Extract tracking info from the node config
         repos, data, prevs = extract_tracking_info(node_cfg)
-        
+
         # Snapshot before run
         snapshot(node_cfg, repos=repos, data=data, prevs=prevs)
-        
+
         # Remove _snapshot_ so it is NOT passed to the user function
         if "_snapshot_" in node_cfg:
             with open_dict(node_cfg):
                 del node_cfg["_snapshot_"]
-        
+
         return run_func(node_cfg)

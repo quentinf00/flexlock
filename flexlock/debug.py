@@ -11,14 +11,15 @@ def _is_notebook() -> bool:
     """Check if running in a Jupyter notebook or IPython environment."""
     try:
         from IPython import get_ipython
+
         ipython = get_ipython()
         if ipython is None:
             return False
         # Check if we're in a notebook (not just IPython terminal)
-        if 'IPKernelApp' in ipython.config:
+        if "IPKernelApp" in ipython.config:
             return True
         # Also check for Jupyter console
-        return hasattr(ipython, 'kernel')
+        return hasattr(ipython, "kernel")
     except (ImportError, AttributeError):
         return False
 
@@ -27,19 +28,20 @@ def _is_interactive_shell() -> bool:
     """Check if running in interactive Python shell (not notebook)."""
     try:
         from IPython import get_ipython
+
         ipython = get_ipython()
         if ipython is None:
             return False
         # IPython terminal (not notebook)
-        return 'IPKernelApp' not in ipython.config
+        return "IPKernelApp" not in ipython.config
     except (ImportError, AttributeError):
         # Check for regular python -i
-        return hasattr(sys, 'ps1')
+        return hasattr(sys, "ps1")
 
 
 def _is_boring_frame(filename: str) -> bool:
     """Check if frame is from stdlib, site-packages, or flexlock internals."""
-    if not filename or filename == '<string>':
+    if not filename or filename == "<string>":
         return True
 
     try:
@@ -52,18 +54,21 @@ def _is_boring_frame(filename: str) -> bool:
     # Skip stdlib
     if path_str.startswith(sys.prefix):
         # But don't skip if it's in site-packages (that's checked next)
-        if 'site-packages' not in path_str:
+        if "site-packages" not in path_str:
             return True
 
     # Skip site-packages
-    if 'site-packages' in p.parts:
+    if "site-packages" in p.parts:
         return True
 
     # Skip flexlock itself (but not test code)
-    if 'flexlock' in p.parts and 'test' not in path_str:
+    if "flexlock" in p.parts and "test" not in path_str:
         # Check if it's actually the flexlock package
         for part in p.parts:
-            if part == 'flexlock' and p.parts[p.parts.index(part) - 1] != 'test_project':
+            if (
+                part == "flexlock"
+                and p.parts[p.parts.index(part) - 1] != "test_project"
+            ):
                 return True
 
     return False
@@ -71,7 +76,7 @@ def _is_boring_frame(filename: str) -> bool:
 
 def _is_project_frame(filename: str) -> bool:
     """Check if frame is from the current project (working directory)."""
-    if not filename or filename == '<string>':
+    if not filename or filename == "<string>":
         return False
 
     try:
@@ -89,9 +94,9 @@ def _score_frame(frame_info: Dict[str, Any]) -> int:
     Higher score = more interesting = more likely to be where you want to debug.
     """
     score = 0
-    frame = frame_info['frame']
-    filename = frame_info['filename']
-    locals_dict = frame_info['locals']
+    frame = frame_info["frame"]
+    filename = frame_info["filename"]
+    locals_dict = frame_info["locals"]
 
     # Project frames are much more interesting
     if _is_project_frame(filename):
@@ -110,8 +115,9 @@ def _score_frame(frame_info: Dict[str, Any]) -> int:
 
     # Frames with non-trivial local names (not just 'self', 'cls', '_')
     interesting_names = [
-        name for name in locals_dict.keys()
-        if not name.startswith('_') and name not in ('self', 'cls')
+        name
+        for name in locals_dict.keys()
+        if not name.startswith("_") and name not in ("self", "cls")
     ]
     score += len(interesting_names) * 5
 
@@ -158,18 +164,18 @@ def _extract_frames(exc_info) -> List[Dict[str, Any]]:
         is_project = _is_project_frame(filename)
 
         frame_info = {
-            'frame': frame,
-            'locals': locals_dict,
-            'filename': filename,
-            'function': function,
-            'lineno': lineno,
-            'is_project': is_project,
-            'is_boring': is_boring,
-            'score': 0,  # Will be scored later
+            "frame": frame,
+            "locals": locals_dict,
+            "filename": filename,
+            "function": function,
+            "lineno": lineno,
+            "is_project": is_project,
+            "is_boring": is_boring,
+            "score": 0,  # Will be scored later
         }
 
         # Score the frame
-        frame_info['score'] = _score_frame(frame_info)
+        frame_info["score"] = _score_frame(frame_info)
 
         frames.append(frame_info)
         tb = tb.tb_next
@@ -193,12 +199,12 @@ def _select_default_frame(frames: List[Dict[str, Any]]) -> int:
 
     # Check if last frame (exception site) is in project
     last_idx = len(frames) - 1
-    if frames[last_idx]['is_project']:
+    if frames[last_idx]["is_project"]:
         return last_idx
 
     # Find deepest project frame (iterate backwards)
     for i in range(len(frames) - 1, -1, -1):
-        if frames[i]['is_project']:
+        if frames[i]["is_project"]:
             return i
 
     # No project frames found - use exception frame
@@ -222,6 +228,7 @@ def _inject_notebook_debug(frames: List[Dict[str, Any]], default_idx: int):
     """
     try:
         from IPython import get_ipython
+
         ipython = get_ipython()
         if ipython is None:
             logger.warning("Could not get IPython instance for debug injection")
@@ -231,7 +238,7 @@ def _inject_notebook_debug(frames: List[Dict[str, Any]], default_idx: int):
         return
 
     # State for navigation
-    state = {'current_idx': default_idx}
+    state = {"current_idx": default_idx}
 
     def show_frames():
         """Show all available frames."""
@@ -239,18 +246,20 @@ def _inject_notebook_debug(frames: List[Dict[str, Any]], default_idx: int):
         print("Available frames (most recent call last):")
         print("=" * 70)
         for i, f in enumerate(frames):
-            marker = "→" if i == state['current_idx'] else " "
-            project_marker = "📁" if f['is_project'] else "  "
-            boring_marker = "⚙️" if f['is_boring'] else "  "
+            marker = "→" if i == state["current_idx"] else " "
+            project_marker = "📁" if f["is_project"] else "  "
+            boring_marker = "⚙️" if f["is_boring"] else "  "
 
-            print(f"{marker} [{i:2d}] {project_marker}{boring_marker} "
-                  f"{f['function']}() at {Path(f['filename']).name}:{f['lineno']}")
+            print(
+                f"{marker} [{i:2d}] {project_marker}{boring_marker} "
+                f"{f['function']}() at {Path(f['filename']).name}:{f['lineno']}"
+            )
 
-            if i == state['current_idx']:
+            if i == state["current_idx"]:
                 # Show locals preview
-                local_names = [k for k in f['locals'].keys() if not k.startswith('_')]
+                local_names = [k for k in f["locals"].keys() if not k.startswith("_")]
                 if local_names:
-                    preview = ', '.join(local_names[:5])
+                    preview = ", ".join(local_names[:5])
                     if len(local_names) > 5:
                         preview += f", ... ({len(local_names)} total)"
                     print(f"       Locals: {preview}")
@@ -263,23 +272,25 @@ def _inject_notebook_debug(frames: List[Dict[str, Any]], default_idx: int):
     def inject_frame(idx: int):
         """Inject a specific frame's locals."""
         if not (0 <= idx < len(frames)):
-            print(f"Invalid frame index: {idx} (valid: 0-{len(frames)-1})")
+            print(f"Invalid frame index: {idx} (valid: 0-{len(frames) - 1})")
             return
 
-        state['current_idx'] = idx
+        state["current_idx"] = idx
         frame_info = frames[idx]
 
         # Inject locals into namespace
-        ipython.user_ns.update(frame_info['locals'])
+        ipython.user_ns.update(frame_info["locals"])
 
         # Update debug metadata
-        ipython.user_ns['_debug_current'] = idx
-        ipython.user_ns['_debug_frame_info'] = frame_info
+        ipython.user_ns["_debug_current"] = idx
+        ipython.user_ns["_debug_frame_info"] = frame_info
 
-        print(f"\n🔍 Injected frame [{idx}]: {frame_info['function']}() "
-              f"at {Path(frame_info['filename']).name}:{frame_info['lineno']}")
+        print(
+            f"\n🔍 Injected frame [{idx}]: {frame_info['function']}() "
+            f"at {Path(frame_info['filename']).name}:{frame_info['lineno']}"
+        )
 
-        local_names = [k for k in frame_info['locals'].keys() if not k.startswith('_')]
+        local_names = [k for k in frame_info["locals"].keys() if not k.startswith("_")]
         if local_names:
             print(f"   Available: {', '.join(local_names[:10])}")
             if len(local_names) > 10:
@@ -287,7 +298,7 @@ def _inject_notebook_debug(frames: List[Dict[str, Any]], default_idx: int):
 
     def debug_up():
         """Move to caller frame (up the stack)."""
-        new_idx = state['current_idx'] - 1
+        new_idx = state["current_idx"] - 1
         if new_idx < 0:
             print("Already at top of stack")
             return
@@ -295,7 +306,7 @@ def _inject_notebook_debug(frames: List[Dict[str, Any]], default_idx: int):
 
     def debug_down():
         """Move to callee frame (down the stack, toward exception)."""
-        new_idx = state['current_idx'] + 1
+        new_idx = state["current_idx"] + 1
         if new_idx >= len(frames):
             print("Already at bottom of stack (exception site)")
             return
@@ -306,11 +317,11 @@ def _inject_notebook_debug(frames: List[Dict[str, Any]], default_idx: int):
         inject_frame(idx)
 
     # Inject navigation functions
-    ipython.user_ns['_debug_frames'] = frames
-    ipython.user_ns['_debug_show'] = show_frames
-    ipython.user_ns['_debug_up'] = debug_up
-    ipython.user_ns['_debug_down'] = debug_down
-    ipython.user_ns['_debug_goto'] = debug_goto
+    ipython.user_ns["_debug_frames"] = frames
+    ipython.user_ns["_debug_show"] = show_frames
+    ipython.user_ns["_debug_up"] = debug_up
+    ipython.user_ns["_debug_down"] = debug_down
+    ipython.user_ns["_debug_goto"] = debug_goto
 
     # Inject default frame
     logger.info("Injecting debug locals into notebook namespace...")
@@ -329,7 +340,7 @@ def _handle_exception_debug(exc_info):
     - Script: Drop into PDB post-mortem
     """
     # Get configuration
-    strategy = os.environ.get('FLEXLOCK_DEBUG_STRATEGY', 'auto').lower()
+    strategy = os.environ.get("FLEXLOCK_DEBUG_STRATEGY", "auto").lower()
 
     logger.debug(f"Debug strategy: {strategy}")
     # Extract frames
@@ -346,13 +357,16 @@ def _handle_exception_debug(exc_info):
     # Determine behavior
     in_notebook = _is_notebook()
     in_shell = _is_interactive_shell()
-    logger.debug(f"Detected environment - Notebook: {in_notebook}, Interactive Shell: {in_shell}")
+    logger.debug(
+        f"Detected environment - Notebook: {in_notebook}, Interactive Shell: {in_shell}"
+    )
 
-    if strategy == 'pdb':
+    if strategy == "pdb":
         # Force PDB
         import pdb
+
         pdb.post_mortem(exc_info[2])
-    elif strategy == 'inject':
+    elif strategy == "inject":
         # Force injection (even in script)
         if in_notebook or in_shell:
             _inject_notebook_debug(frames, default_idx)
@@ -365,12 +379,15 @@ def _handle_exception_debug(exc_info):
             _inject_notebook_debug(frames, default_idx)
         elif in_shell:
             # Interactive shell: Inject or PDB
-            logger.info("In interactive shell - injecting locals. Use pdb.post_mortem() for debugger.")
+            logger.info(
+                "In interactive shell - injecting locals. Use pdb.post_mortem() for debugger."
+            )
             _inject_notebook_debug(frames, default_idx)
         else:
             # Script: PDB
             logger.info("Dropping into PDB post-mortem debugger...")
             import pdb
+
             pdb.post_mortem(exc_info[2])
 
 
@@ -429,7 +446,7 @@ def debug_on_fail(fn=None):
                 # Log exception
                 logger.error(
                     f"Exception in {fn.__name__}(): {exc_info[1]}",
-                    exc_info=False  # Don't double-log traceback
+                    exc_info=False,  # Don't double-log traceback
                 )
 
                 # Handle debug

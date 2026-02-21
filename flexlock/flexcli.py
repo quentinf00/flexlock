@@ -24,6 +24,7 @@ def _is_jupyter_or_interactive():
     """
     try:
         from IPython import get_ipython
+
         ipython = get_ipython()
         if ipython is not None:
             return True
@@ -31,7 +32,7 @@ def _is_jupyter_or_interactive():
         pass
 
     # Also check for python -i
-    if hasattr(sys, 'ps1'):
+    if hasattr(sys, "ps1"):
         return True
 
     return False
@@ -61,15 +62,20 @@ def _should_use_cli_mode():
         return False
 
     # Check sys.argv[0] for kernel launcher
-    if sys.argv[0].endswith('ipykernel_launcher.py'):
-        logger.debug(f"Detected ipykernel_launcher in sys.argv[0], skipping CLI parsing")
+    if sys.argv[0].endswith("ipykernel_launcher.py"):
+        logger.debug(
+            f"Detected ipykernel_launcher in sys.argv[0], skipping CLI parsing"
+        )
         return False
 
     # Check for kernel connection file arguments
     for arg in sys.argv[1:]:
-        if '--f=' in arg or arg.startswith('-f'):
+        if "--f=" in arg or arg.startswith("-f"):
             # Check if next arg or same arg contains .json (connection file)
-            if '.json' in arg or (sys.argv.index(arg) + 1 < len(sys.argv) and '.json' in sys.argv[sys.argv.index(arg) + 1]):
+            if ".json" in arg or (
+                sys.argv.index(arg) + 1 < len(sys.argv)
+                and ".json" in sys.argv[sys.argv.index(arg) + 1]
+            ):
                 logger.debug(f"Detected Jupyter kernel connection file argument: {arg}")
                 return False
 
@@ -106,6 +112,7 @@ def flexcli(_func=None, snapshot_config: Optional[Dict] = None, **defaults):
         )
         def train(data_path, save_dir=None): ...
     """
+
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
@@ -133,7 +140,9 @@ def flexcli(_func=None, snapshot_config: Optional[Dict] = None, **defaults):
             else:
                 # Interactive mode (Jupyter kernel): Execute directly with defaults
                 # This happens when train() is called in Jupyter without %run
-                logger.info("Interactive mode detected: Executing with defaults (no CLI parsing)")
+                logger.info(
+                    "Interactive mode detected: Executing with defaults (no CLI parsing)"
+                )
 
                 # Execute with debug wrapper if enabled
                 if os.environ.get("FLEXLOCK_DEBUG", "false").lower() in ("1", "true"):

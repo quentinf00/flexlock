@@ -78,47 +78,38 @@ def main():
     )
 
     # Create subcommands for different comparison modes
-    subparsers = parser.add_subparsers(dest="mode", required=True, help="Comparison mode")
+    subparsers = parser.add_subparsers(
+        dest="mode", required=True, help="Comparison mode"
+    )
 
     # Mode 1: Compare two directories (traditional)
     dir_parser = subparsers.add_parser(
-        "dirs",
-        help="Compare two directory-based snapshots"
+        "dirs", help="Compare two directory-based snapshots"
     )
     dir_parser.add_argument("dir1", type=Path, help="First directory")
     dir_parser.add_argument("dir2", type=Path, help="Second directory")
     dir_parser.add_argument(
-        "--details",
-        action="store_true",
-        help="Show detailed differences"
+        "--details", action="store_true", help="Show detailed differences"
     )
 
     # Mode 2: Compare two tasks in DB
-    db_parser = subparsers.add_parser(
-        "db",
-        help="Compare two DB-based snapshots"
-    )
+    db_parser = subparsers.add_parser("db", help="Compare two DB-based snapshots")
     db_parser.add_argument("db_path", type=Path, help="Path to tasks database")
     db_parser.add_argument("task_id1", help="First task ID (hash)")
     db_parser.add_argument("task_id2", help="Second task ID (hash)")
     db_parser.add_argument(
-        "--details",
-        action="store_true",
-        help="Show detailed differences"
+        "--details", action="store_true", help="Show detailed differences"
     )
 
     # Mode 3: Compare directory to DB task
     mixed_parser = subparsers.add_parser(
-        "mixed",
-        help="Compare directory snapshot to DB snapshot"
+        "mixed", help="Compare directory snapshot to DB snapshot"
     )
     mixed_parser.add_argument("dir_path", type=Path, help="Directory path")
     mixed_parser.add_argument("db_path", type=Path, help="Database path")
     mixed_parser.add_argument("task_id", help="Task ID in database")
     mixed_parser.add_argument(
-        "--details",
-        action="store_true",
-        help="Show detailed differences"
+        "--details", action="store_true", help="Show detailed differences"
     )
 
     args = parser.parse_args()

@@ -21,6 +21,7 @@ def now_resolver(fmt: str = None) -> str:
         fmt = config.TIMESTAMP_FORMAT
     return datetime.now().strftime(fmt)
 
+
 def latest_resolver(path_glob: str) -> str:
     """
     OmegaConf resolver that returns the latest path matching the given pattern
@@ -45,6 +46,7 @@ def latest_resolver(path_glob: str) -> str:
     latest_path = max(matching_paths, key=os.path.getmtime)
 
     return latest_path
+
 
 def vinc_resolver(path: str, fmt: str = "_{i:04d}") -> str:
     """
@@ -74,7 +76,6 @@ def vinc_resolver(path: str, fmt: str = "_{i:04d}") -> str:
     version_str = fmt.format(i=next_version)
 
     return str(parent_dir / f"{base_name}{version_str}")
-
 
 
 def register_resolvers():

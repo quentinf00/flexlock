@@ -19,6 +19,7 @@ def resolve_module_to_repo_path(module_name: str) -> str:
     mod = importlib.import_module(module_name)
     source_file = inspect.getfile(mod)
     from git.repo import Repo as GitRepo
+
     repo_obj = GitRepo(source_file, search_parent_directories=True)
     return repo_obj.working_tree_dir
 
@@ -134,15 +135,24 @@ def extract_tracking_info(cfg) -> Tuple[Dict, Dict, List]:
     # Auto-populate repo from _target_ using top-level module name
     if "_target_" in cfg:
         try:
-            target_str = cfg._target_ if isinstance(cfg, DictConfig) else cfg["_target_"]
+            target_str = (
+                cfg._target_ if isinstance(cfg, DictConfig) else cfg["_target_"]
+            )
             top_level_module = target_str.split(".")[0]
             if top_level_module not in repos:
                 module_name, _ = target_str.rsplit(".", 1)
                 resolved_path = resolve_module_to_repo_path(module_name)
-                repos[top_level_module] = {"path": resolved_path, "module": top_level_module}
-                logger.debug(f"Auto-populated repos['{top_level_module}'] from _target_ '{target_str}': {resolved_path}")
+                repos[top_level_module] = {
+                    "path": resolved_path,
+                    "module": top_level_module,
+                }
+                logger.debug(
+                    f"Auto-populated repos['{top_level_module}'] from _target_ '{target_str}': {resolved_path}"
+                )
         except Exception:
-            logger.debug("Could not auto-populate repo from _target_ (REPL or built-in?)")
+            logger.debug(
+                "Could not auto-populate repo from _target_ (REPL or built-in?)"
+            )
 
     # "prevs_from_data": Automatically treat data paths as lineage candidates
     # This allows checking if data files came from FlexLock runs
@@ -237,8 +247,10 @@ def py2cfg(obj, /, *pos, **overrides):
         params = list(sig.parameters.values())
 
         # Skip 'self' for classes or bound methods
-        if inspect.isclass(obj) or (hasattr(sig_obj, '__self__') and sig_obj.__name__ != '__init__'):
-            if params and params[0].name == 'self':
+        if inspect.isclass(obj) or (
+            hasattr(sig_obj, "__self__") and sig_obj.__name__ != "__init__"
+        ):
+            if params and params[0].name == "self":
                 params = params[1:]
 
         for param in params:
@@ -259,10 +271,12 @@ def py2cfg(obj, /, *pos, **overrides):
 
     # 4. Apply overrides (nested py2cfg calls happen here)
     config.update(overrides)
-    
+
     if len(pos) > 0:
-        config.update(OmegaConf.create(dict(_args_=list(pos))))  # Add positional arguments if any
-    
+        config.update(
+            OmegaConf.create(dict(_args_=list(pos)))
+        )  # Add positional arguments if any
+
     return OmegaConf.create(config)
 
 
