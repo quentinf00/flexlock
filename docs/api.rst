@@ -1,5 +1,5 @@
 FlexLock API Reference
-====================
+======================
 
 .. toctree::
    :maxdepth: 4
@@ -43,6 +43,7 @@ FlexLock API Reference
    :members:
    :undoc-members:
    :show-inheritance:
+   :no-index:
 
 .. automodule:: flexlock.git_utils
    :members:
@@ -93,6 +94,7 @@ FlexLock API Reference
    :members:
    :undoc-members:
    :show-inheritance:
+   :no-index:
 
 .. automodule:: flexlock.runner
    :members:

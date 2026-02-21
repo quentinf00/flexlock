@@ -325,7 +325,7 @@ def instantiate(config, *args, **kwargs):
 
     Args:
         config: The configuration dictionary (or value).
-        *args, **kwargs: Additional arguments to pass to the root object.
+        \*args, \*\*kwargs: Additional arguments to pass to the root object.
     """
     # 1. Base case: If config is not a dict or list, return it as is.
     logger.debug(f"Instantiating config: {config} of type {type(config)}")

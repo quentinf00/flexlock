@@ -96,7 +96,8 @@ def flexcli(_func=None, snapshot_config: Optional[Dict] = None, **defaults):
                          Injects '_snapshot_' into the config.
         **defaults: Default values for the function arguments.
 
-    Usage:
+    Usage::
+
         @flexcli
         def main(param=10, db="postgres"): ...
 

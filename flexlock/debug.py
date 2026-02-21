@@ -411,7 +411,8 @@ def debug_on_fail(fn=None):
         fn: The function to decorate. If None, returns a decorator.
         stack_depth: DEPRECATED - kept for backward compatibility
 
-    Usage:
+    Usage::
+
         @debug_on_fail
         def my_function():
             ...
@@ -419,12 +420,12 @@ def debug_on_fail(fn=None):
         # Or with explicit call:
         debug_on_fail(my_function)()
 
-    In notebooks after exception:
-        - Locals from relevant frame are injected
-        - _debug_show(): Show all frames
-        - _debug_up(): Move to caller
-        - _debug_down(): Move toward exception
-        - _debug_goto(n): Jump to frame n
+    In notebooks after exception, the following helpers are injected:
+
+    - ``_debug_show()``: Show all frames
+    - ``_debug_up()``: Move to caller
+    - ``_debug_down()``: Move toward exception
+    - ``_debug_goto(n)``: Jump to frame n
     """
 
     def decorator(fn):
