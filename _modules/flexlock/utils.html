@@ -5,15 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.utils &mdash; FlexLock 0.2.17 documentation</title>
+  <title>flexlock.utils &mdash; FlexLock 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/utils.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=4031e696"></script>
+      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -106,6 +106,19 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">fields</span>
 
 
+<div class="viewcode-block" id="resolve_module_to_repo_path">
+<a class="viewcode-back" href="../../api.html#flexlock.resolve_module_to_repo_path">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_module_to_repo_path</span><span class="p">(</span><span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve a Python module name to its containing git repository&#39;s working directory.&quot;&quot;&quot;</span>
+    <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+    <span class="n">source_file</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">mod</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">git.repo</span><span class="w"> </span><span class="kn">import</span> <span class="n">Repo</span> <span class="k">as</span> <span class="n">GitRepo</span>
+
+    <span class="n">repo_obj</span> <span class="o">=</span> <span class="n">GitRepo</span><span class="p">(</span><span class="n">source_file</span><span class="p">,</span> <span class="n">search_parent_directories</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">repo_obj</span><span class="o">.</span><span class="n">working_tree_dir</span></div>
+
+
+
 <div class="viewcode-block" id="extract_tracking_info">
 <a class="viewcode-back" href="../../api.html#flexlock.extract_tracking_info">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_tracking_info</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">]:</span>
@@ -115,12 +128,15 @@
 <span class="sd">    This is a unified function used across FlexLock to extract repository</span>
 <span class="sd">    tracking, data hashing, and lineage information from configurations.</span>
 
+<span class="sd">    If no repos.main is specified but the config has a _target_, automatically</span>
+<span class="sd">    detects the git repository of the target function&#39;s source file.</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        cfg: OmegaConf DictConfig with optional _snapshot_ field</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        tuple: (repos, data, prevs) where:</span>
-<span class="sd">            - repos: dict of {name: path} for git repositories to track</span>
+<span class="sd">            - repos: dict of {name: {&quot;path&quot;: str, &quot;include&quot;: list|None, &quot;exclude&quot;: list|None}}</span>
 <span class="sd">            - data: dict of {name: path} for data files/dirs to hash</span>
 <span class="sd">            - prevs: list of paths to check for upstream FlexLock runs</span>
 
@@ -136,7 +152,7 @@
 <span class="sd">        ... })</span>
 <span class="sd">        &gt;&gt;&gt; repos, data, prevs = extract_tracking_info(cfg)</span>
 <span class="sd">        &gt;&gt;&gt; repos</span>
-<span class="sd">        {&#39;main&#39;: &#39;.&#39;}</span>
+<span class="sd">        {&#39;main&#39;: {&#39;path&#39;: &#39;.&#39;}}</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockConfigError</span>
 
@@ -144,42 +160,96 @@
     <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">prevs</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;_snapshot_&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span>
+    <span class="k">if</span> <span class="s2">&quot;_snapshot_&quot;</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+        <span class="n">snap_cfg</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">_snapshot_</span>
 
-    <span class="n">snap_cfg</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">_snapshot_</span>
+        <span class="c1"># Extract repos (only plural supported)</span>
+        <span class="k">if</span> <span class="s2">&quot;repos&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
+            <span class="n">repos_container</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">snap_cfg</span><span class="o">.</span><span class="n">repos</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">repos_container</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">repos</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">val</span><span class="p">}</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="n">has_path</span> <span class="o">=</span> <span class="s2">&quot;path&quot;</span> <span class="ow">in</span> <span class="n">val</span>
+                    <span class="n">has_module</span> <span class="o">=</span> <span class="s2">&quot;module&quot;</span> <span class="ow">in</span> <span class="n">val</span>
 
-    <span class="c1"># Extract repos (only plural supported)</span>
-    <span class="k">if</span> <span class="s2">&quot;repos&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
-        <span class="n">repos_raw</span> <span class="o">=</span> <span class="n">snap_cfg</span><span class="o">.</span><span class="n">repos</span>
-        <span class="n">repos</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">repos_raw</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="s2">&quot;repo&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
-        <span class="c1"># Singular &#39;repo&#39; no longer supported - raise clear error</span>
-        <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
-            <span class="s2">&quot;Found &#39;repo&#39; (singular) in _snapshot_ configuration. &quot;</span>
-            <span class="s2">&quot;Please use &#39;repos&#39; (plural) instead. &quot;</span>
-            <span class="s2">&quot;Example: _snapshot_={&#39;repos&#39;: {&#39;main&#39;: &#39;.&#39;}}&quot;</span>
-        <span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">has_path</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_module</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Repo &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; must specify either &#39;path&#39; or &#39;module&#39;.&quot;</span>
+                        <span class="p">)</span>
 
-    <span class="c1"># Extract data</span>
-    <span class="k">if</span> <span class="s2">&quot;data&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
-        <span class="n">data_raw</span> <span class="o">=</span> <span class="n">snap_cfg</span><span class="o">.</span><span class="n">data</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="n">has_module</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_path</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">resolved_path</span> <span class="o">=</span> <span class="n">resolve_module_to_repo_path</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="s2">&quot;module&quot;</span><span class="p">])</span>
+                        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;Repo &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: could not resolve module &#39;</span><span class="si">{</span><span class="n">val</span><span class="p">[</span><span class="s1">&#39;module&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="p">)</span>
+                        <span class="n">repos</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">resolved_path</span><span class="p">,</span>
+                            <span class="s2">&quot;module&quot;</span><span class="p">:</span> <span class="n">val</span><span class="p">[</span><span class="s2">&quot;module&quot;</span><span class="p">],</span>
+                            <span class="s2">&quot;include&quot;</span><span class="p">:</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include&quot;</span><span class="p">),</span>
+                            <span class="s2">&quot;exclude&quot;</span><span class="p">:</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;exclude&quot;</span><span class="p">),</span>
+                        <span class="p">}</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">repos</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">val</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">],</span>
+                            <span class="s2">&quot;module&quot;</span><span class="p">:</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;module&quot;</span><span class="p">),</span>
+                            <span class="s2">&quot;include&quot;</span><span class="p">:</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include&quot;</span><span class="p">),</span>
+                            <span class="s2">&quot;exclude&quot;</span><span class="p">:</span> <span class="n">val</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;exclude&quot;</span><span class="p">),</span>
+                        <span class="p">}</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Repo &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; value must be a string (path) or dict. Got: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">&quot;repo&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
-                <span class="s2">&quot;snapshot&#39;s data should be a mapping&quot;</span>
-                <span class="s2">&quot;Example: _snapshot_={&#39;data&#39;: {&#39;dataset&#39;: &#39;data/dataset.csv&#39;}}&quot;</span>
+                <span class="s2">&quot;Found &#39;repo&#39; (singular) in _snapshot_ configuration. &quot;</span>
+                <span class="s2">&quot;Please use &#39;repos&#39; (plural) instead. &quot;</span>
+                <span class="s2">&quot;Example: _snapshot_={&#39;repos&#39;: {&#39;main&#39;: &#39;.&#39;}}&quot;</span>
             <span class="p">)</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">data_raw</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="c1"># Extract prevs (lineage paths)</span>
-    <span class="k">if</span> <span class="s2">&quot;prevs&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
-        <span class="n">prevs_raw</span> <span class="o">=</span> <span class="n">snap_cfg</span><span class="o">.</span><span class="n">prevs</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prevs_raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
-                <span class="s2">&quot;snapshot&#39;s prevs should be a list&quot;</span>
-                <span class="s2">&quot;Example: _snapshot_={&#39;prevs&#39;: [&#39;path/to/run/toto&#39;]}&quot;</span>
+        <span class="c1"># Extract data</span>
+        <span class="k">if</span> <span class="s2">&quot;data&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
+            <span class="n">data_raw</span> <span class="o">=</span> <span class="n">snap_cfg</span><span class="o">.</span><span class="n">data</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
+                    <span class="s2">&quot;snapshot&#39;s data should be a mapping&quot;</span>
+                    <span class="s2">&quot;Example: _snapshot_={&#39;data&#39;: {&#39;dataset&#39;: &#39;data/dataset.csv&#39;}}&quot;</span>
+                <span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">data_raw</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Extract prevs (lineage paths)</span>
+        <span class="k">if</span> <span class="s2">&quot;prevs&quot;</span> <span class="ow">in</span> <span class="n">snap_cfg</span><span class="p">:</span>
+            <span class="n">prevs_raw</span> <span class="o">=</span> <span class="n">snap_cfg</span><span class="o">.</span><span class="n">prevs</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prevs_raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
+                    <span class="s2">&quot;snapshot&#39;s prevs should be a list&quot;</span>
+                    <span class="s2">&quot;Example: _snapshot_={&#39;prevs&#39;: [&#39;path/to/run/toto&#39;]}&quot;</span>
+                <span class="p">)</span>
+            <span class="n">prevs</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">prevs_raw</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Auto-populate repo from _target_ using top-level module name</span>
+    <span class="k">if</span> <span class="s2">&quot;_target_&quot;</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">target_str</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">cfg</span><span class="o">.</span><span class="n">_target_</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)</span> <span class="k">else</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;_target_&quot;</span><span class="p">]</span>
             <span class="p">)</span>
-        <span class="n">prevs</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">prevs_raw</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">top_level_module</span> <span class="o">=</span> <span class="n">target_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">top_level_module</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">repos</span><span class="p">:</span>
+                <span class="n">module_name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">target_str</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">resolved_path</span> <span class="o">=</span> <span class="n">resolve_module_to_repo_path</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+                <span class="n">repos</span><span class="p">[</span><span class="n">top_level_module</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">resolved_path</span><span class="p">,</span>
+                    <span class="s2">&quot;module&quot;</span><span class="p">:</span> <span class="n">top_level_module</span><span class="p">,</span>
+                <span class="p">}</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Auto-populated repos[&#39;</span><span class="si">{</span><span class="n">top_level_module</span><span class="si">}</span><span class="s2">&#39;] from _target_ &#39;</span><span class="si">{</span><span class="n">target_str</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">resolved_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Could not auto-populate repo from _target_ (REPL or built-in?)&quot;</span>
+            <span class="p">)</span>
 
     <span class="c1"># &quot;prevs_from_data&quot;: Automatically treat data paths as lineage candidates</span>
     <span class="c1"># This allows checking if data files came from FlexLock runs</span>
@@ -280,8 +350,10 @@
         <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
         <span class="c1"># Skip &#39;self&#39; for classes or bound methods</span>
-        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">sig_obj</span><span class="p">,</span> <span class="s1">&#39;__self__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">sig_obj</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s1">&#39;__init__&#39;</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;self&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="nb">hasattr</span><span class="p">(</span><span class="n">sig_obj</span><span class="p">,</span> <span class="s2">&quot;__self__&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">sig_obj</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">!=</span> <span class="s2">&quot;__init__&quot;</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;self&quot;</span><span class="p">:</span>
                 <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
         <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
@@ -302,10 +374,12 @@
 
     <span class="c1"># 4. Apply overrides (nested py2cfg calls happen here)</span>
     <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
-    
+
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">_args_</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">pos</span><span class="p">))))</span>  <span class="c1"># Add positional arguments if any</span>
-    
+        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">_args_</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">pos</span><span class="p">)))</span>
+        <span class="p">)</span>  <span class="c1"># Add positional arguments if any</span>
+
     <span class="k">return</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></div>
 
 
@@ -366,7 +440,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        config: The configuration dictionary (or value).</span>
-<span class="sd">        *args, **kwargs: Additional arguments to pass to the root object.</span>
+<span class="sd">        \*args, \*\*kwargs: Additional arguments to pass to the root object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># 1. Base case: If config is not a dict or list, return it as is.</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Instantiating config: </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2"> of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>

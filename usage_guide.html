@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Complete Usage Guide &mdash; FlexLock 0.3.0 documentation</title>
+  <title>Complete Usage Guide &mdash; FlexLock 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/usage_guide.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=f129cdf0"></script>
+      <script src="_static/documentation_options.js?v=78d8237d"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -71,6 +71,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#reproducibility">Reproducibility</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#enable-tracking">Enable Tracking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#repo-configuration-format">Repo Configuration Format</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#snapshot-contents">Snapshot Contents</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#compare-runs">Compare Runs</a></li>
 </ul>
@@ -96,6 +97,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#how-it-works">How It Works</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#enable-smart-run">Enable Smart Run</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#custom-search-directories">Custom Search Directories</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#filtered-comparison-with-match-include-match-exclude">Filtered Comparison with <code class="docutils literal notranslate"><span class="pre">match_include</span></code> / <code class="docutils literal notranslate"><span class="pre">match_exclude</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#check-before-running">Check Before Running</a></li>
 </ul>
 </li>
@@ -171,15 +173,15 @@
 <section id="table-of-contents">
 <h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Link to this heading"></a></h2>
 <ol class="arabic simple">
-<li><p><a class="reference internal" href="#getting-started"><span class="xref myst">Getting Started</span></a></p></li>
-<li><p><a class="reference internal" href="#configuration-methods"><span class="xref myst">Configuration Methods</span></a></p></li>
-<li><p><a class="reference internal" href="#execution-modes"><span class="xref myst">Execution Modes</span></a></p></li>
-<li><p><a class="reference internal" href="#reproducibility"><span class="xref myst">Reproducibility</span></a></p></li>
-<li><p><a class="reference internal" href="#parameter-sweeps"><span class="xref myst">Parameter Sweeps</span></a></p></li>
-<li><p><a class="reference internal" href="#hpc-integration"><span class="xref myst">HPC Integration</span></a></p></li>
-<li><p><a class="reference internal" href="#pipelines"><span class="xref myst">Pipelines</span></a></p></li>
-<li><p><a class="reference internal" href="#smart-caching"><span class="xref myst">Smart Caching</span></a></p></li>
-<li><p><a class="reference internal" href="#common-patterns"><span class="xref myst">Common Patterns</span></a></p></li>
+<li><p><a class="reference internal" href="#getting-started">Getting Started</a></p></li>
+<li><p><a class="reference internal" href="#configuration-methods">Configuration Methods</a></p></li>
+<li><p><a class="reference internal" href="#execution-modes">Execution Modes</a></p></li>
+<li><p><a class="reference internal" href="#reproducibility">Reproducibility</a></p></li>
+<li><p><a class="reference internal" href="#parameter-sweeps">Parameter Sweeps</a></p></li>
+<li><p><a class="reference internal" href="#hpc-integration">HPC Integration</a></p></li>
+<li><p><a class="reference internal" href="#pipelines">Pipelines</a></p></li>
+<li><p><a class="reference internal" href="#smart-caching">Smart Caching</a></p></li>
+<li><p><a class="reference internal" href="#common-patterns">Common Patterns</a></p></li>
 </ol>
 </section>
 <hr class="docutils" />
@@ -380,6 +382,35 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
 <span class="p">)</span>
 </pre></div>
 </div>
+<blockquote>
+<div><p><strong>Auto-detection:</strong> When the config specifies a <code class="docutils literal notranslate"><span class="pre">_target_</span></code> (e.g. with YAML configs or <code class="docutils literal notranslate"><span class="pre">py2cfg</span></code>), FlexLock automatically detects and tracks the git repository of the target function. No explicit <code class="docutils literal notranslate"><span class="pre">repos</span></code> entry is needed.</p>
+</div></blockquote>
+</section>
+<section id="repo-configuration-format">
+<h3>Repo Configuration Format<a class="headerlink" href="#repo-configuration-format" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">repos</span></code> values can be a plain path string or a dict with additional options:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="n">repos</span><span class="o">=</span><span class="p">{</span>
+        <span class="c1"># Simple: string path</span>
+        <span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
+
+        <span class="c1"># Explicit dict</span>
+        <span class="s1">&#39;mylib&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="s1">&#39;libs/mylib&#39;</span><span class="p">},</span>
+
+        <span class="c1"># Resolved from module name (auto-finds git root via importlib)</span>
+        <span class="s1">&#39;external&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;module&#39;</span><span class="p">:</span> <span class="s1">&#39;some_package&#39;</span><span class="p">},</span>
+
+        <span class="c1"># With include/exclude for filtered smart_run comparison</span>
+        <span class="s1">&#39;filtered&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;include&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;src/mymodule/**&#39;</span><span class="p">],</span>  <span class="c1"># only these paths are compared</span>
+            <span class="s1">&#39;exclude&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;tests/**&#39;</span><span class="p">,</span> <span class="s1">&#39;docs/**&#39;</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>When <code class="docutils literal notranslate"><span class="pre">include</span></code>/<code class="docutils literal notranslate"><span class="pre">exclude</span></code> patterns are specified, <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> will consider two runs a match even if other files in the repo differ — only the filtered paths are compared.</p>
 </section>
 <hr class="docutils" />
 <section id="snapshot-contents">
@@ -393,6 +424,9 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
 <span class="w">    </span><span class="nt">commit</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;abc123...&quot;</span><span class="w">     </span><span class="c1"># Git commit hash</span>
 <span class="w">    </span><span class="nt">tree</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;def456...&quot;</span><span class="w">       </span><span class="c1"># Git tree hash (key for equality)</span>
 <span class="w">    </span><span class="nt">is_dirty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/abs/path/to/repo&quot;</span>
+<span class="w">    </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">           </span><span class="c1"># include patterns (if set, used for filtered comparison)</span>
+<span class="w">    </span><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w">           </span><span class="c1"># exclude patterns</span>
 
 <span class="nt">data</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">train_data</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;xxh64_789xyz...&quot;</span><span class="w">  </span><span class="c1"># Data file hash</span>
@@ -725,6 +759,19 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
 </pre></div>
 </div>
 </section>
+<section id="filtered-comparison-with-match-include-match-exclude">
+<h3>Filtered Comparison with <code class="docutils literal notranslate"><span class="pre">match_include</span></code> / <code class="docutils literal notranslate"><span class="pre">match_exclude</span></code><a class="headerlink" href="#filtered-comparison-with-match-include-match-exclude" title="Link to this heading"></a></h3>
+<p>Override the git path patterns used during <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> matching without changing the snapshot config:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">match_include</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;src/model/**&#39;</span><span class="p">],</span>   <span class="c1"># only compare these paths</span>
+    <span class="n">match_exclude</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;tests/**&#39;</span><span class="p">],</span>        <span class="c1"># ignore these paths</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>These take priority over any <code class="docutils literal notranslate"><span class="pre">include</span></code>/<code class="docutils literal notranslate"><span class="pre">exclude</span></code> stored in the repo’s <code class="docutils literal notranslate"><span class="pre">run.lock</span></code>.</p>
+</section>
 <hr class="docutils" />
 <section id="check-before-running">
 <h3>Check Before Running<a class="headerlink" href="#check-before-running" title="Link to this heading"></a></h3>
@@ -900,7 +947,7 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
     <span class="n">train</span><span class="p">,</span>
     <span class="n">input_data</span><span class="o">=</span><span class="s1">&#39;data/train.csv&#39;</span><span class="p">,</span>
     <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
-        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>              <span class="c1"># or omit if using _target_ (auto-detected)</span>
         <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;train&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_data}&#39;</span><span class="p">}</span>
     <span class="p">)</span>
 <span class="p">)</span>

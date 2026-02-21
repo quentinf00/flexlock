@@ -5,15 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.git_utils &mdash; FlexLock 0.2.17 documentation</title>
+  <title>flexlock.git_utils &mdash; FlexLock 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/git_utils.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=4031e696"></script>
+      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -132,15 +132,20 @@
 <a class="viewcode-back" href="../../api.html#flexlock.sanitize_ref_name">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">sanitize_ref_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Sanitize a string to be a valid git ref name.&quot;&quot;&quot;</span>
-    <span class="n">invalid_chars</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="s1">&#39;^&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;[&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;..&#39;</span><span class="p">,</span> <span class="s1">&#39;@{&#39;</span><span class="p">,</span> <span class="s1">&#39;//&#39;</span><span class="p">]</span>
+    <span class="n">invalid_chars</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;[&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;@{&quot;</span><span class="p">,</span> <span class="s2">&quot;//&quot;</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">invalid_chars</span><span class="p">:</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">name</span></div>
+
 
 
 <div class="viewcode-block" id="create_shadow_snapshot">
 <a class="viewcode-back" href="../../api.html#flexlock.create_shadow_snapshot">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">create_shadow_snapshot</span><span class="p">(</span><span class="n">repo_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">ignore_patterns</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ref_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_shadow_snapshot</span><span class="p">(</span>
+    <span class="n">repo_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+    <span class="n">ignore_patterns</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">ref_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates a Shadow Commit.</span>
 <span class="sd">    Returns: {commit_hash, tree_hash, is_dirty}</span>
@@ -157,7 +162,13 @@
         <span class="c1"># 2. Remove ignored patterns from Shadow Index</span>
         <span class="k">if</span> <span class="n">ignore_patterns</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">git</span><span class="o">.</span><span class="n">rm</span><span class="p">(</span><span class="s2">&quot;--cached&quot;</span><span class="p">,</span> <span class="s2">&quot;-r&quot;</span><span class="p">,</span> <span class="s2">&quot;--ignore-unmatch&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">ignore_patterns</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">shadow_env</span><span class="p">)</span>
+                <span class="n">git</span><span class="o">.</span><span class="n">rm</span><span class="p">(</span>
+                    <span class="s2">&quot;--cached&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;-r&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;--ignore-unmatch&quot;</span><span class="p">,</span>
+                    <span class="o">*</span><span class="n">ignore_patterns</span><span class="p">,</span>
+                    <span class="n">env</span><span class="o">=</span><span class="n">shadow_env</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                 <span class="k">pass</span>
 
@@ -167,7 +178,9 @@
         <span class="c1"># 4. Create Shadow Commit (Lineage)</span>
         <span class="n">parent</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">commit</span><span class="o">.</span><span class="n">hexsha</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;FlexLock Shadow: </span><span class="si">{</span><span class="n">parent</span><span class="p">[:</span><span class="mi">7</span><span class="p">]</span><span class="si">}</span><span class="s2"> + Changes&quot;</span>
-        <span class="n">shadow_commit</span> <span class="o">=</span> <span class="n">git</span><span class="o">.</span><span class="n">commit_tree</span><span class="p">(</span><span class="n">tree_hash</span><span class="p">,</span> <span class="s2">&quot;-p&quot;</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">shadow_env</span><span class="p">)</span>
+        <span class="n">shadow_commit</span> <span class="o">=</span> <span class="n">git</span><span class="o">.</span><span class="n">commit_tree</span><span class="p">(</span>
+            <span class="n">tree_hash</span><span class="p">,</span> <span class="s2">&quot;-p&quot;</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">shadow_env</span>
+        <span class="p">)</span>
 
         <span class="c1"># 5. Save Ref (Prevent Garbage Collection)</span>
         <span class="n">ref_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;refs/flexlock/runs/</span><span class="si">{</span><span class="n">ref_name</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">shadow_commit</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -175,8 +188,8 @@
 
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;commit&quot;</span><span class="p">:</span> <span class="n">shadow_commit</span><span class="p">,</span>
-            <span class="s2">&quot;tree&quot;</span><span class="p">:</span> <span class="n">tree_hash</span><span class="p">,</span> <span class="c1"># &lt;--- The key for Equality Checks</span>
-            <span class="s2">&quot;is_dirty&quot;</span><span class="p">:</span> <span class="n">repo</span><span class="o">.</span><span class="n">is_dirty</span><span class="p">(</span><span class="n">untracked_files</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="s2">&quot;tree&quot;</span><span class="p">:</span> <span class="n">tree_hash</span><span class="p">,</span>  <span class="c1"># &lt;--- The key for Equality Checks</span>
+            <span class="s2">&quot;is_dirty&quot;</span><span class="p">:</span> <span class="n">repo</span><span class="o">.</span><span class="n">is_dirty</span><span class="p">(</span><span class="n">untracked_files</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
         <span class="p">}</span></div>
 
 

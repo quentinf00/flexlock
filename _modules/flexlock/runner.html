@@ -5,15 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.runner &mdash; FlexLock 0.2.17 documentation</title>
+  <title>flexlock.runner &mdash; FlexLock 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
   
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/runner.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=4031e696"></script>
+      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -117,39 +117,69 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_parser</span><span class="p">()</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_print_config_and_docstring</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_cfg</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Print compiled config and target docstring.&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== COMPILED CONFIG ===&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_yaml</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="s2">&quot;_target_&quot;</span> <span class="ow">in</span> <span class="n">node_cfg</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== TARGET FUNCTION DOCSTRING ===&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">target_path</span> <span class="o">=</span> <span class="n">node_cfg</span><span class="o">.</span><span class="n">_target_</span>
+                <span class="n">module_name</span><span class="p">,</span> <span class="n">func_name</span> <span class="o">=</span> <span class="n">target_path</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">module</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">module_name</span><span class="p">,</span> <span class="n">fromlist</span><span class="o">=</span><span class="p">[</span><span class="n">func_name</span><span class="p">])</span>
+                <span class="n">target_func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">func_name</span><span class="p">)</span>
+                <span class="n">docstring</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">target_func</span><span class="p">,</span> <span class="s2">&quot;__doc__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Target: </span><span class="si">{</span><span class="n">target_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Docstring:</span><span class="se">\n</span><span class="si">{</span><span class="n">docstring</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="k">if</span> <span class="n">docstring</span>
+                    <span class="k">else</span> <span class="s2">&quot;No docstring available.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ImportError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not import target function &#39;</span><span class="si">{</span><span class="n">node_cfg</span><span class="o">.</span><span class="n">_target_</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;FlexLock Execution Manager&quot;</span><span class="p">)</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;FlexLock Execution Manager&quot;</span><span class="p">,</span> <span class="n">add_help</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;-h&quot;</span><span class="p">,</span> <span class="s2">&quot;--help&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Show this help message and exit.&quot;</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--print-config&quot;</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Print the compiled configuration and target function docstring, then exit.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># Existing Config/Select args</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--defaults&quot;</span><span class="p">,</span> <span class="s2">&quot;-d&quot;</span><span class="p">,</span> 
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Python import path for default config&quot;</span>
+            <span class="s2">&quot;--defaults&quot;</span><span class="p">,</span> <span class="s2">&quot;-d&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Python import path for default config&quot;</span>
         <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to base YAML config file&quot;</span><span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to base YAML config file&quot;</span>
-        <span class="p">)</span>
-        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--select&quot;</span><span class="p">,</span> <span class="s2">&quot;-s&quot;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key to select the node to run&quot;</span>
+            <span class="s2">&quot;--select&quot;</span><span class="p">,</span> <span class="s2">&quot;-s&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key to select the node to run&quot;</span>
         <span class="p">)</span>
 
         <span class="c1"># Existing Override args</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--merge&quot;</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Merge file into Root config&quot;</span><span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--merge&quot;</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Merge file into Root config&quot;</span>
+            <span class="s2">&quot;--overrides&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-o&quot;</span><span class="p">,</span>
+            <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-list overrides for Root config&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--overrides&quot;</span><span class="p">,</span> <span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-list overrides for Root config&quot;</span>
+            <span class="s2">&quot;--merge-after-select&quot;</span><span class="p">,</span> <span class="s2">&quot;-M&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Merge file into Selected config&quot;</span>
         <span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--merge-after-select&quot;</span><span class="p">,</span> <span class="s2">&quot;-M&quot;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Merge file into Selected config&quot;</span>
-        <span class="p">)</span>
-        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--overrides-after-select&quot;</span><span class="p">,</span> <span class="s2">&quot;-O&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-list overrides for Selected config&quot;</span>
+            <span class="s2">&quot;--overrides-after-select&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-O&quot;</span><span class="p">,</span>
+            <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-list overrides for Selected config&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># NEW SWEEP ARGUMENTS</span>
@@ -157,26 +187,42 @@
 
         <span class="c1"># Source (Mutually Exclusive)</span>
         <span class="n">source</span> <span class="o">=</span> <span class="n">sweep_group</span><span class="o">.</span><span class="n">add_mutually_exclusive_group</span><span class="p">()</span>
-        <span class="n">source</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--sweep-key&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Key in config containing the sweep list (e.g. &#39;experiments.grid&#39;)&quot;</span><span class="p">)</span>
-        <span class="n">source</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--sweep-file&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a file (yaml, json, txt) containing the sweep list&quot;</span><span class="p">)</span>
-        <span class="n">source</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--sweep&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated values (e.g. &#39;0.01,0.02&#39; or &#39;lr=0.1,lr=0.2&#39;)&quot;</span><span class="p">)</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--sweep-key&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Key in config containing the sweep list (e.g. &#39;experiments.grid&#39;)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--sweep-file&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to a file (yaml, json, txt) containing the sweep list&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--sweep&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Comma-separated values (e.g. &#39;0.01,0.02&#39; or &#39;lr=0.1,lr=0.2&#39;)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># Injection Target</span>
         <span class="n">sweep_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
             <span class="s2">&quot;--sweep-target&quot;</span><span class="p">,</span>
             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-path key to inject the sweep value into (e.g. &#39;optimizer.lr&#39;). &quot;</span>
-                 <span class="s2">&quot;If omitted, sweep items are merged at the root.&quot;</span>
+            <span class="s2">&quot;If omitted, sweep items are merged at the root.&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Execution</span>
-        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--n_jobs&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">DEFAULT_N_JOBS</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of parallel jobs&quot;</span><span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--check-exists&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Check if run already exists and skip if so.&quot;</span>
+            <span class="s2">&quot;--n_jobs&quot;</span><span class="p">,</span>
+            <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">DEFAULT_N_JOBS</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of parallel jobs&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--debug&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks).&quot;</span>
+            <span class="s2">&quot;--check-exists&quot;</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Check if run already exists and skip if so.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--debug&quot;</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks).&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># HPC Backend Configuration</span>
@@ -184,11 +230,10 @@
         <span class="n">backend</span> <span class="o">=</span> <span class="n">backend_group</span><span class="o">.</span><span class="n">add_mutually_exclusive_group</span><span class="p">()</span>
         <span class="n">backend</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
             <span class="s2">&quot;--slurm-config&quot;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to Slurm configuration YAML file for HPC execution&quot;</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to Slurm configuration YAML file for HPC execution&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">backend</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--pbs-config&quot;</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to PBS configuration YAML file for HPC execution&quot;</span>
+            <span class="s2">&quot;--pbs-config&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to PBS configuration YAML file for HPC execution&quot;</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">parser</span>
@@ -212,7 +257,7 @@
             <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">merge</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">overrides</span><span class="p">:</span>
             <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">overrides</span><span class="p">))</span>
-        
+
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final Root Config: </span><span class="si">{</span><span class="n">cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cfg</span></div>
@@ -274,11 +319,13 @@
 <span class="sd">            FlexLockValidationError: If multiple sweep sources are provided</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Validate mutual exclusivity of sweep sources</span>
-        <span class="n">sources_provided</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span>
-            <span class="n">args</span><span class="o">.</span><span class="n">sweep_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">args</span><span class="o">.</span><span class="n">sweep_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">args</span><span class="o">.</span><span class="n">sweep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="p">])</span>
+        <span class="n">sources_provided</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">sweep_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">sweep_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">sweep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">sources_provided</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">FlexLockValidationError</span><span class="p">(</span>
@@ -302,13 +349,11 @@
         <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep_file</span><span class="p">:</span>
             <span class="n">fpath</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_file</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">fpath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Sweep file &#39;</span><span class="si">{</span><span class="n">fpath</span><span class="si">}</span><span class="s2">&#39; not found.&quot;</span>
-                <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sweep file &#39;</span><span class="si">{</span><span class="n">fpath</span><span class="si">}</span><span class="s2">&#39; not found.&quot;</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">fpath</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;.yaml&#39;</span><span class="p">,</span> <span class="s1">&#39;.yml&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">fpath</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;.yml&quot;</span><span class="p">]:</span>
                 <span class="n">raw_tasks</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fpath</span><span class="p">),</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">fpath</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.json&#39;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">fpath</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.json&quot;</span><span class="p">:</span>
                 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                     <span class="n">raw_tasks</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -347,10 +392,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Inject save_dir if missing</span>
         <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cfg</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-             <span class="n">ts</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">TIMESTAMP_FORMAT</span><span class="p">)</span>
-             <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;outputs&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">name</span> <span class="o">/</span> <span class="n">ts</span>
-             <span class="k">with</span> <span class="n">open_dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
-                 <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">ts</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">TIMESTAMP_FORMAT</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;outputs&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">name</span> <span class="o">/</span> <span class="n">ts</span>
+            <span class="k">with</span> <span class="n">open_dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+                <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span>
         <span class="k">return</span> <span class="n">cfg</span>
 
@@ -360,14 +405,14 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if a run with the same configuration already exists.&quot;&quot;&quot;</span>
         <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">))</span>
         <span class="n">lock_file</span> <span class="o">=</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span>
-        
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">lock_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span> <span class="kc">False</span>
-        
+
         <span class="c1"># Load existing run data</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">lock_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">existing_data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        
+
         <span class="c1"># Compare with current configuration</span>
         <span class="n">diff</span> <span class="o">=</span> <span class="n">RunDiff</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">existing_data</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">diff</span><span class="o">.</span><span class="n">is_match</span><span class="p">()</span></div>
@@ -395,13 +440,21 @@
         <span class="k">if</span> <span class="n">base_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_b</span> <span class="o">=</span> <span class="n">base_cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
             <span class="n">_b</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span>
-            <span class="n">node_cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">_b</span><span class="p">)</span> <span class="c1"># to keep global keys pointers from root_cfg</span>
+            <span class="n">node_cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">_b</span><span class="p">)</span>  <span class="c1"># to keep global keys pointers from root_cfg</span>
 
         <span class="c1"># Inner Overrides</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">merge_after_select</span><span class="p">:</span>
             <span class="n">node_cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">merge_after_select</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">overrides_after_select</span><span class="p">:</span>
             <span class="n">node_cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">overrides_after_select</span><span class="p">))</span>
+
+        <span class="c1"># Print config and exit if requested</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">print_config</span> <span class="ow">or</span> <span class="n">args</span><span class="o">.</span><span class="n">help</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">help</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_print_config_and_docstring</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span>
+            <span class="k">return</span>
 
         <span class="c1"># --- SWEEP HANDLING ---</span>
         <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_sweep_tasks</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">root_cfg</span><span class="p">)</span>
@@ -410,7 +463,10 @@
         <span class="n">node_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_node</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span>
 
         <span class="c1"># ACTIVATE DEBUGGING GLOBALLY</span>
-        <span class="n">debug</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span>
+        <span class="n">debug</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;true&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Debug mode enabled&quot;</span><span class="p">)</span>
             <span class="n">run_func</span> <span class="o">=</span> <span class="n">debug_on_fail</span><span class="p">(</span><span class="n">run_func</span><span class="p">)</span>
@@ -421,7 +477,9 @@
             <span class="k">return</span>
         <span class="k">if</span> <span class="n">tasks</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running sweep with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks in debug mode one job, no hpc.&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Running sweep with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks in debug mode one job, no hpc.&quot;</span>
+                <span class="p">)</span>
                 <span class="c1"># Batch execution</span>
                 <span class="n">executor</span> <span class="o">=</span> <span class="n">ParallelExecutor</span><span class="p">(</span>
                     <span class="n">func</span><span class="o">=</span><span class="n">run_func</span><span class="p">,</span>
@@ -440,23 +498,23 @@
                     <span class="n">task_target</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_target</span><span class="p">,</span>  <span class="c1"># Use sweep_target as task_target</span>
                     <span class="n">cfg</span><span class="o">=</span><span class="n">node_cfg</span><span class="p">,</span>
                     <span class="n">n_jobs</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span>
-                    <span class="n">slurm_config</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;slurm_config&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-                    <span class="n">pbs_config</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;pbs_config&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="n">slurm_config</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;slurm_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                    <span class="n">pbs_config</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;pbs_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="k">return</span> <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 
         <span class="c1"># Single execution</span>
         <span class="c1"># Extract tracking info from the node config</span>
         <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span> <span class="o">=</span> <span class="n">extract_tracking_info</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span>
-        
+
         <span class="c1"># Snapshot before run</span>
         <span class="n">snapshot</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">prevs</span><span class="o">=</span><span class="n">prevs</span><span class="p">)</span>
-        
+
         <span class="c1"># Remove _snapshot_ so it is NOT passed to the user function</span>
         <span class="k">if</span> <span class="s2">&quot;_snapshot_&quot;</span> <span class="ow">in</span> <span class="n">node_cfg</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">open_dict</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">):</span>
                 <span class="k">del</span> <span class="n">node_cfg</span><span class="p">[</span><span class="s2">&quot;_snapshot_&quot;</span><span class="p">]</span>
-        
+
         <span class="k">return</span> <span class="n">run_func</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span></div>
 </div>
 

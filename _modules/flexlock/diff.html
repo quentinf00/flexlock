@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.diff &mdash; FlexLock 0.3.0 documentation</title>
+  <title>flexlock.diff &mdash; FlexLock 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/diff.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=f129cdf0"></script>
+      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -106,7 +106,9 @@
         <span class="n">target</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
         <span class="n">ignore_keys</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">current_save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">target_save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">target_save_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">match_include</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">match_exclude</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize RunDiff for comparing two run snapshots.</span>
@@ -117,19 +119,33 @@
 <span class="sd">            ignore_keys: Additional keys to ignore during comparison</span>
 <span class="sd">            current_save_dir: Save directory of current run (for normalization)</span>
 <span class="sd">            target_save_dir: Save directory of target run (for normalization)</span>
+<span class="sd">            match_include: Override include patterns for git comparison</span>
+<span class="sd">            match_exclude: Override exclude patterns for git comparison</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="n">current</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">target</span>
 
         <span class="c1"># Keys to strictly ignore during config comparison</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ignore_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">ignore_keys</span> <span class="ow">or</span> <span class="p">[])</span> <span class="o">|</span> <span class="p">{</span>
-            <span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;job_id&quot;</span><span class="p">,</span> <span class="s2">&quot;work_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;cwd&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;_snapshot_&quot;</span><span class="p">,</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;datetime&quot;</span>
+            <span class="s2">&quot;save_dir&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;system&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;job_id&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;work_dir&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;cwd&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;_snapshot_&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;date&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;datetime&quot;</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="c1"># For value normalization (handling interpolation)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">c_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">current_save_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">current_save_dir</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">t_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">target_save_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">target_save_dir</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="c1"># Override patterns for git comparison (takes priority over snapshot-level patterns)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">match_include</span> <span class="o">=</span> <span class="n">match_include</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">match_exclude</span> <span class="o">=</span> <span class="n">match_exclude</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">diffs</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -145,7 +161,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Normalized value</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Normalizing value: </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2"> with root_dir: </span><span class="si">{</span><span class="n">root_dir</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">root_dir</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Normalizing value: </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2"> with root_dir: </span><span class="si">{</span><span class="n">root_dir</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">root_dir</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">root_dir</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">root_dir</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Value &#39;</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">&#39; contains root_dir &#39;</span><span class="si">{</span><span class="n">root_dir</span><span class="si">}</span><span class="s2">&#39;, normalizing.&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="s2">&quot;&lt;SAVE_DIR&gt;&quot;</span><span class="p">)</span>
@@ -154,7 +172,7 @@
 <div class="viewcode-block" id="RunDiff.compare_git">
 <a class="viewcode-back" href="../../api.html#flexlock.diff.RunDiff.compare_git">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compare_git</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare git tree hashes.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare git tree hashes, with optional include/exclude filtering.&quot;&quot;&quot;</span>
         <span class="n">diff</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">c_repos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;repos&quot;</span><span class="p">,</span> <span class="p">{})</span>
         <span class="n">t_repos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;repos&quot;</span><span class="p">,</span> <span class="p">{})</span>
@@ -165,14 +183,60 @@
                 <span class="n">diff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Repo </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> missing&quot;</span><span class="p">)</span>
                 <span class="k">continue</span>
 
-            <span class="c1"># The Magic: Compare Tree Hashes (Content Identity)</span>
+            <span class="c1"># Compare Tree Hashes (Content Identity)</span>
             <span class="k">if</span> <span class="n">c_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tree&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">t_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tree&quot;</span><span class="p">):</span>
+                <span class="c1"># Trees differ — check if RELEVANT files changed</span>
+                <span class="c1"># Priority: RunDiff-level override &gt; snapshot-level patterns</span>
+                <span class="n">include</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">match_include</span> <span class="ow">or</span> <span class="n">c_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">t_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;include&quot;</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">exclude</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">match_exclude</span> <span class="ow">or</span> <span class="n">c_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;exclude&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">t_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;exclude&quot;</span><span class="p">)</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">include</span> <span class="ow">or</span> <span class="n">exclude</span><span class="p">:</span>
+                    <span class="n">repo_path</span> <span class="o">=</span> <span class="n">c_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">t_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">repo_path</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trees_match_filtered</span><span class="p">(</span>
+                        <span class="n">repo_path</span><span class="p">,</span> <span class="n">c_info</span><span class="p">[</span><span class="s2">&quot;tree&quot;</span><span class="p">],</span> <span class="n">t_info</span><span class="p">[</span><span class="s2">&quot;tree&quot;</span><span class="p">],</span> <span class="n">include</span><span class="p">,</span> <span class="n">exclude</span>
+                    <span class="p">):</span>
+                        <span class="k">continue</span>  <span class="c1"># Relevant files unchanged — match</span>
+
                 <span class="n">diff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Repo </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: Content changed&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">diff</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">diffs</span><span class="p">[</span><span class="s2">&quot;git&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">diff</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_trees_match_filtered</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">repo_path</span><span class="p">,</span> <span class="n">tree1</span><span class="p">,</span> <span class="n">tree2</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if two trees match when filtered by include/exclude patterns.</span>
+
+<span class="sd">        Uses git diff-tree with pathspec filtering to compare only relevant files.</span>
+<span class="sd">        Returns True if no relevant files differ, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">git.repo</span><span class="w"> </span><span class="kn">import</span> <span class="n">Repo</span> <span class="k">as</span> <span class="n">GitRepo</span>
+
+            <span class="n">repo</span> <span class="o">=</span> <span class="n">GitRepo</span><span class="p">(</span><span class="n">repo_path</span><span class="p">,</span> <span class="n">search_parent_directories</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Build git pathspec: include patterns + :(exclude) patterns</span>
+            <span class="n">pathspec</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">include</span> <span class="ow">or</span> <span class="p">[])</span>
+            <span class="k">if</span> <span class="n">exclude</span><span class="p">:</span>
+                <span class="n">pathspec</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;:(exclude)</span><span class="si">{</span><span class="n">pat</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">pat</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">)</span>
+
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;-r&quot;</span><span class="p">,</span> <span class="s2">&quot;--name-only&quot;</span><span class="p">,</span> <span class="s2">&quot;--no-commit-id&quot;</span><span class="p">,</span> <span class="n">tree1</span><span class="p">,</span> <span class="n">tree2</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">pathspec</span><span class="p">:</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;--&quot;</span><span class="p">)</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pathspec</span><span class="p">)</span>
+
+            <span class="n">output</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">diff_tree</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>  <span class="c1"># No relevant files changed</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Filtered git comparison failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># Conservative: treat as different</span>
 
 <div class="viewcode-block" id="RunDiff.compare_config">
 <a class="viewcode-back" href="../../api.html#flexlock.diff.RunDiff.compare_config">[docs]</a>
@@ -189,7 +253,9 @@
             <span class="n">diff</span> <span class="o">=</span> <span class="p">[]</span>
 
             <span class="c1"># Handle DictConfigs vs Primitives</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d2</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">d2</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)</span>
+            <span class="p">):</span>
                 <span class="n">all_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">d1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">d2</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
                 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">all_keys</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_keys</span><span class="p">:</span>
@@ -204,7 +270,9 @@
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">diff</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_recursive_diff</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">new_path</span><span class="p">))</span>
 
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d2</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">d2</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)</span>
+            <span class="p">):</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">d1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">d2</span><span class="p">):</span>
                     <span class="n">diff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;List length mismatch </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">d1</span><span class="p">)</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">d2</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -213,7 +281,9 @@
 
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Value Comparison with Normalization</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Comparing values at </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">d1</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">d2</span><span class="si">}</span><span class="s2"> after normalization with dirs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">c_dir</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">t_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Comparing values at </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">d1</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="n">d2</span><span class="si">}</span><span class="s2"> after normalization with dirs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">c_dir</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">t_dir</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
 
                 <span class="n">v1_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_val</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c_dir</span><span class="p">)</span>
                 <span class="n">v2_norm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_val</span><span class="p">(</span><span class="n">d2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_dir</span><span class="p">)</span>

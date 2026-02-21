@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlexLock API Reference &mdash; FlexLock 0.3.0 documentation</title>
+  <title>FlexLock API Reference &mdash; FlexLock 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/api.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=f129cdf0"></script>
+      <script src="_static/documentation_options.js?v=78d8237d"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -137,7 +137,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.data_hash.dirhash"><code class="docutils literal notranslate"><span class="pre">dirhash()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.data_hash.hash_data"><code class="docutils literal notranslate"><span class="pre">hash_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.debug.debug_on_fail"><code class="docutils literal notranslate"><span class="pre">debug_on_fail()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#flexlock.flexcli.flexcli"><code class="docutils literal notranslate"><span class="pre">flexcli()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.git_utils.create_shadow_snapshot"><code class="docutils literal notranslate"><span class="pre">create_shadow_snapshot()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.git_utils.get_git_commit"><code class="docutils literal notranslate"><span class="pre">get_git_commit()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.git_utils.get_git_tree_hash"><code class="docutils literal notranslate"><span class="pre">get_git_tree_hash()</span></code></a></li>
@@ -169,15 +168,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.resolvers.now_resolver"><code class="docutils literal notranslate"><span class="pre">now_resolver()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.resolvers.register_resolvers"><code class="docutils literal notranslate"><span class="pre">register_resolvers()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.resolvers.vinc_resolver"><code class="docutils literal notranslate"><span class="pre">vinc_resolver()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#flexlock.snapshot.RunTracker"><code class="docutils literal notranslate"><span class="pre">RunTracker</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#flexlock.snapshot.RunTracker.add_lineage"><code class="docutils literal notranslate"><span class="pre">RunTracker.add_lineage()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#flexlock.snapshot.RunTracker.finalize"><code class="docutils literal notranslate"><span class="pre">RunTracker.finalize()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#flexlock.snapshot.RunTracker.record_data"><code class="docutils literal notranslate"><span class="pre">RunTracker.record_data()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#flexlock.snapshot.RunTracker.record_env"><code class="docutils literal notranslate"><span class="pre">RunTracker.record_env()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#flexlock.snapshot.RunTracker.save"><code class="docutils literal notranslate"><span class="pre">RunTracker.save()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#flexlock.snapshot.snapshot"><code class="docutils literal notranslate"><span class="pre">snapshot()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.runner.FlexLockRunner"><code class="docutils literal notranslate"><span class="pre">FlexLockRunner</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#flexlock.runner.FlexLockRunner.check_if_exists"><code class="docutils literal notranslate"><span class="pre">FlexLockRunner.check_if_exists()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#flexlock.runner.FlexLockRunner.load_config"><code class="docutils literal notranslate"><span class="pre">FlexLockRunner.load_config()</span></code></a></li>
@@ -217,6 +207,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.utils.log_to_file"><code class="docutils literal notranslate"><span class="pre">log_to_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.utils.merge_task_into_cfg"><code class="docutils literal notranslate"><span class="pre">merge_task_into_cfg()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.utils.py2cfg"><code class="docutils literal notranslate"><span class="pre">py2cfg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#flexlock.utils.resolve_module_to_repo_path"><code class="docutils literal notranslate"><span class="pre">resolve_module_to_repo_path()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.utils.to_dictconfig"><code class="docutils literal notranslate"><span class="pre">to_dictconfig()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.worker.worker_loop"><code class="docutils literal notranslate"><span class="pre">worker_loop()</span></code></a></li>
 </ul>
@@ -384,7 +375,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="flexlock.Project.submit">
-<span class="sig-name descname"><span class="pre">submit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DictConfig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smart_run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbs_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slurm_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#flexlock.api.ExecutionResult" title="flexlock.api.ExecutionResult"><span class="pre">ExecutionResult</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#flexlock.api.ExecutionResult" title="flexlock.api.ExecutionResult"><span class="pre">ExecutionResult</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/flexlock/api.html#Project.submit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.Project.submit" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">submit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DictConfig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smart_run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbs_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slurm_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_include</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#flexlock.api.ExecutionResult" title="flexlock.api.ExecutionResult"><span class="pre">ExecutionResult</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#flexlock.api.ExecutionResult" title="flexlock.api.ExecutionResult"><span class="pre">ExecutionResult</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/flexlock/api.html#Project.submit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.Project.submit" title="Link to this definition"></a></dt>
 <dd><p>Submit a configuration for execution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -397,6 +388,8 @@
 <li><p><strong>search_dirs</strong> – Directories to search for cached runs (for smart_run)</p></li>
 <li><p><strong>pbs_config</strong> – Path to PBS configuration YAML (for HPC execution)</p></li>
 <li><p><strong>slurm_config</strong> – Path to Slurm configuration YAML (for HPC execution)</p></li>
+<li><p><strong>match_include</strong> – Override include patterns for git comparison during smart_run</p></li>
+<li><p><strong>match_exclude</strong> – Override exclude patterns for git comparison during smart_run</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -437,24 +430,22 @@ FLEXLOCK_DEBUG_STRATEGY: ‘auto’ (default), ‘pdb’, or ‘inject’</p>
 </ul>
 </dd>
 </dl>
-<dl>
-<dt>Usage:</dt><dd><p>&#64;debug_on_fail
-def my_function():</p>
-<blockquote>
-<div><p>…</p>
-</div></blockquote>
-<p># Or with explicit call:
-debug_on_fail(my_function)()</p>
-</dd>
-<dt>In notebooks after exception:</dt><dd><ul class="simple">
-<li><p>Locals from relevant frame are injected</p></li>
-<li><p>_debug_show(): Show all frames</p></li>
-<li><p>_debug_up(): Move to caller</p></li>
-<li><p>_debug_down(): Move toward exception</p></li>
-<li><p>_debug_goto(n): Jump to frame n</p></li>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@debug_on_fail</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
+    <span class="o">...</span>
+
+<span class="c1"># Or with explicit call:</span>
+<span class="n">debug_on_fail</span><span class="p">(</span><span class="n">my_function</span><span class="p">)()</span>
+</pre></div>
+</div>
+<p>In notebooks after exception, the following helpers are injected:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_debug_show()</span></code>: Show all frames</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_debug_up()</span></code>: Move to caller</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_debug_down()</span></code>: Move toward exception</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_debug_goto(n)</span></code>: Jump to frame n</p></li>
 </ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -470,25 +461,23 @@ Injects ‘_snapshot_’ into the config.</p></li>
 </ul>
 </dd>
 </dl>
-<dl>
-<dt>Usage:</dt><dd><p>&#64;flexcli
-def main(param=10, db=”postgres”): …</p>
-<p>&#64;flexcli(param=10)
-def main(param, db=”postgres”): …</p>
-<dl>
-<dt>&#64;flexcli(</dt><dd><p>data_path=”./data/mnist”,
-snapshot_config={</p>
-<blockquote>
-<div><p>“repos”: {“main”: “.”},
-“data”: {“input_dataset”: “${data_path}”}</p>
-</div></blockquote>
-<p>}</p>
-</dd>
-</dl>
-<p>)
-def train(data_path, save_dir=None): …</p>
-</dd>
-</dl>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span><span class="p">):</span> <span class="o">...</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span><span class="p">):</span> <span class="o">...</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span>
+    <span class="n">data_path</span><span class="o">=</span><span class="s2">&quot;./data/mnist&quot;</span><span class="p">,</span>
+    <span class="n">snapshot_config</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;repos&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;main&quot;</span><span class="p">:</span> <span class="s2">&quot;.&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;input_dataset&quot;</span><span class="p">:</span> <span class="s2">&quot;$</span><span class="si">{data_path}</span><span class="s2">&quot;</span><span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span> <span class="o">...</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -523,7 +512,7 @@ This represents the content fingerprint of the repository.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="flexlock.mlflow_context">
-<span class="sig-prename descclassname"><span class="pre">flexlock.</span></span><span class="sig-name descname"><span class="pre">mlflow_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">experiment_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_artifacts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/mlflow.html#mlflow_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.mlflow_context" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">flexlock.</span></span><span class="sig-name descname"><span class="pre">mlflow_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">experiment_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'My</span> <span class="pre">Awesome</span> <span class="pre">Project'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_artifacts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/mlflow.html#mlflow_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.mlflow_context" title="Link to this definition"></a></dt>
 <dd><p>Manages a “Shadow Run” in MLflow linked to a physical directory.</p>
 <p>This context manager implements the “Always New + Deprecate Old” strategy,
 treating the MLflow Run as a temporary view of the persistent physical state
@@ -882,30 +871,28 @@ FLEXLOCK_DEBUG_STRATEGY: ‘auto’ (default), ‘pdb’, or ‘inject’</p>
 </ul>
 </dd>
 </dl>
-<dl>
-<dt>Usage:</dt><dd><p>&#64;debug_on_fail
-def my_function():</p>
-<blockquote>
-<div><p>…</p>
-</div></blockquote>
-<p># Or with explicit call:
-debug_on_fail(my_function)()</p>
-</dd>
-<dt>In notebooks after exception:</dt><dd><ul class="simple">
-<li><p>Locals from relevant frame are injected</p></li>
-<li><p>_debug_show(): Show all frames</p></li>
-<li><p>_debug_up(): Move to caller</p></li>
-<li><p>_debug_down(): Move toward exception</p></li>
-<li><p>_debug_goto(n): Jump to frame n</p></li>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@debug_on_fail</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
+    <span class="o">...</span>
+
+<span class="c1"># Or with explicit call:</span>
+<span class="n">debug_on_fail</span><span class="p">(</span><span class="n">my_function</span><span class="p">)()</span>
+</pre></div>
+</div>
+<p>In notebooks after exception, the following helpers are injected:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_debug_show()</span></code>: Show all frames</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_debug_up()</span></code>: Move to caller</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_debug_down()</span></code>: Move toward exception</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_debug_goto(n)</span></code>: Jump to frame n</p></li>
 </ul>
-</dd>
-</dl>
 </dd></dl>
 
-<p id="module-flexlock.flexcli">Configuration decorator for FlexLock with progressive framework support.</p>
+<p>Configuration decorator for FlexLock with progressive framework support.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="flexlock.flexcli.flexcli">
-<span class="sig-prename descclassname"><span class="pre">flexlock.flexcli.</span></span><span class="sig-name descname"><span class="pre">flexcli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snapshot_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">defaults</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/flexcli.html#flexcli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.flexcli.flexcli" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">flexlock.flexcli.</span></span><span class="sig-name descname"><span class="pre">flexcli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snapshot_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">defaults</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/flexcli.html#flexcli"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Decorator for FlexLock entry points with progressive framework support.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -916,25 +903,23 @@ Injects ‘_snapshot_’ into the config.</p></li>
 </ul>
 </dd>
 </dl>
-<dl>
-<dt>Usage:</dt><dd><p>&#64;flexcli
-def main(param=10, db=”postgres”): …</p>
-<p>&#64;flexcli(param=10)
-def main(param, db=”postgres”): …</p>
-<dl>
-<dt>&#64;flexcli(</dt><dd><p>data_path=”./data/mnist”,
-snapshot_config={</p>
-<blockquote>
-<div><p>“repos”: {“main”: “.”},
-“data”: {“input_dataset”: “${data_path}”}</p>
-</div></blockquote>
-<p>}</p>
-</dd>
-</dl>
-<p>)
-def train(data_path, save_dir=None): …</p>
-</dd>
-</dl>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span><span class="p">):</span> <span class="o">...</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="s2">&quot;postgres&quot;</span><span class="p">):</span> <span class="o">...</span>
+
+<span class="nd">@flexcli</span><span class="p">(</span>
+    <span class="n">data_path</span><span class="o">=</span><span class="s2">&quot;./data/mnist&quot;</span><span class="p">,</span>
+    <span class="n">snapshot_config</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;repos&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;main&quot;</span><span class="p">:</span> <span class="s2">&quot;.&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;input_dataset&quot;</span><span class="p">:</span> <span class="s2">&quot;$</span><span class="si">{data_path}</span><span class="s2">&quot;</span><span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span> <span class="o">...</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <p id="module-flexlock.git_utils">Source code versioning utilities for FlexLock.</p>
@@ -995,7 +980,7 @@ This represents the content fingerprint of the repository.</p>
 <p id="module-flexlock.diff">Diff utilities for FlexLock.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="flexlock.diff.RunDiff">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">flexlock.diff.</span></span><span class="sig-name descname"><span class="pre">RunDiff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/diff.html#RunDiff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.diff.RunDiff" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">flexlock.diff.</span></span><span class="sig-name descname"><span class="pre">RunDiff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_include</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/diff.html#RunDiff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.diff.RunDiff" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="flexlock.diff.RunDiff.compare_config">
@@ -1013,7 +998,7 @@ and normalizing path values.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="flexlock.diff.RunDiff.compare_git">
 <span class="sig-name descname"><span class="pre">compare_git</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/diff.html#RunDiff.compare_git"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.diff.RunDiff.compare_git" title="Link to this definition"></a></dt>
-<dd><p>Compare git tree hashes.</p>
+<dd><p>Compare git tree hashes, with optional include/exclude filtering.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1142,7 +1127,7 @@ all its ancestors.</p>
 <p id="module-flexlock.mlflow">MLflow integration for FlexLock.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="flexlock.mlflow.mlflow_context">
-<span class="sig-prename descclassname"><span class="pre">flexlock.mlflow.</span></span><span class="sig-name descname"><span class="pre">mlflow_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">experiment_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_artifacts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/mlflow.html#mlflow_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.mlflow.mlflow_context" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">flexlock.mlflow.</span></span><span class="sig-name descname"><span class="pre">mlflow_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">experiment_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'My</span> <span class="pre">Awesome</span> <span class="pre">Project'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_artifacts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/mlflow.html#mlflow_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.mlflow.mlflow_context" title="Link to this definition"></a></dt>
 <dd><p>Manages a “Shadow Run” in MLflow linked to a physical directory.</p>
 <p>This context manager implements the “Always New + Deprecate Old” strategy,
 treating the MLflow Run as a temporary view of the persistent physical state
@@ -1257,20 +1242,20 @@ and returns the next versioned path as a string. Results are cached to ensure
 consistent values within a single execution.</p>
 </dd></dl>
 
-<p id="module-flexlock.snapshot">Snapshotting utilities for FlexLock.</p>
+<p>Snapshotting utilities for FlexLock.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="flexlock.snapshot.RunTracker">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">flexlock.snapshot.</span></span><span class="sig-name descname"><span class="pre">RunTracker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_lock</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.snapshot.RunTracker" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">flexlock.snapshot.</span></span><span class="sig-name descname"><span class="pre">RunTracker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_lock</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="flexlock.snapshot.RunTracker.add_lineage">
-<span class="sig-name descname"><span class="pre">add_lineage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker.add_lineage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.snapshot.RunTracker.add_lineage" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">add_lineage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker.add_lineage"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Add lineage information from upstream FlexLock runs.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="flexlock.snapshot.RunTracker.finalize">
-<span class="sig-name descname"><span class="pre">finalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker.finalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.snapshot.RunTracker.finalize" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">finalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker.finalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Prepares the final snapshot dict but does not write it to disk.</p>
 <p>This allows callers to decide where to store the snapshot
 (file, DB, or both).</p>
@@ -1288,18 +1273,18 @@ consistent values within a single execution.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="flexlock.snapshot.RunTracker.record_data">
-<span class="sig-name descname"><span class="pre">record_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker.record_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.snapshot.RunTracker.record_data" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">record_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker.record_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="flexlock.snapshot.RunTracker.record_env">
-<span class="sig-name descname"><span class="pre">record_env</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker.record_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.snapshot.RunTracker.record_env" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">record_env</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker.record_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="flexlock.snapshot.RunTracker.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.snapshot.RunTracker.save" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#RunTracker.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Finalize and write to disk as run.lock.
 Now implemented by calling finalize() then writing.</p>
 <dl class="field-list simple">
@@ -1315,8 +1300,8 @@ Now implemented by calling finalize() then writing.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="flexlock.snapshot.snapshot">
-<span class="sig-prename descclassname"><span class="pre">flexlock.snapshot.</span></span><span class="sig-name descname"><span class="pre">snapshot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prevs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_lock</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_snapshot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#snapshot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.snapshot.snapshot" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">flexlock.snapshot.</span></span><span class="sig-name descname"><span class="pre">snapshot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prevs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent_lock</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_snapshot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/snapshot.html#snapshot"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Create a snapshot of the current run state.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1461,7 +1446,7 @@ Now implemented by calling finalize() then writing.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="flexlock.api.Project.submit">
-<span class="sig-name descname"><span class="pre">submit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DictConfig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smart_run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbs_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slurm_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#flexlock.api.ExecutionResult" title="flexlock.api.ExecutionResult"><span class="pre">ExecutionResult</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#flexlock.api.ExecutionResult" title="flexlock.api.ExecutionResult"><span class="pre">ExecutionResult</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/flexlock/api.html#Project.submit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.api.Project.submit" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">submit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DictConfig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smart_run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pbs_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slurm_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sweep_dir_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_include</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#flexlock.api.ExecutionResult" title="flexlock.api.ExecutionResult"><span class="pre">ExecutionResult</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#flexlock.api.ExecutionResult" title="flexlock.api.ExecutionResult"><span class="pre">ExecutionResult</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/flexlock/api.html#Project.submit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.api.Project.submit" title="Link to this definition"></a></dt>
 <dd><p>Submit a configuration for execution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1474,6 +1459,8 @@ Now implemented by calling finalize() then writing.</p>
 <li><p><strong>search_dirs</strong> – Directories to search for cached runs (for smart_run)</p></li>
 <li><p><strong>pbs_config</strong> – Path to PBS configuration YAML (for HPC execution)</p></li>
 <li><p><strong>slurm_config</strong> – Path to Slurm configuration YAML (for HPC execution)</p></li>
+<li><p><strong>match_include</strong> – Override include patterns for git comparison during smart_run</p></li>
+<li><p><strong>match_exclude</strong> – Override exclude patterns for git comparison during smart_run</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1631,6 +1618,8 @@ Now implemented by calling finalize() then writing.</p>
 <dd><p>Extract tracking information from config’s _snapshot_ field.</p>
 <p>This is a unified function used across FlexLock to extract repository
 tracking, data hashing, and lineage information from configurations.</p>
+<p>If no repos.main is specified but the config has a _target_, automatically
+detects the git repository of the target function’s source file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>cfg</strong> – OmegaConf DictConfig with optional _snapshot_ field</p>
@@ -1638,7 +1627,7 @@ tracking, data hashing, and lineage information from configurations.</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><dl class="simple">
 <dt>(repos, data, prevs) where:</dt><dd><ul class="simple">
-<li><p>repos: dict of {name: path} for git repositories to track</p></li>
+<li><p>repos: dict of {name: {“path”: str, “include”: list|None, “exclude”: list|None}}</p></li>
 <li><p>data: dict of {name: path} for data files/dirs to hash</p></li>
 <li><p>prevs: list of paths to check for upstream FlexLock runs</p></li>
 </ul>
@@ -1662,7 +1651,7 @@ tracking, data hashing, and lineage information from configurations.</p>
 <span class="gp">... </span><span class="p">})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span> <span class="o">=</span> <span class="n">extract_tracking_info</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">repos</span>
-<span class="go">{&#39;main&#39;: &#39;.&#39;}</span>
+<span class="go">{&#39;main&#39;: {&#39;path&#39;: &#39;.&#39;}}</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -1676,8 +1665,7 @@ tracking, data hashing, and lineage information from configurations.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>config</strong> – The configuration dictionary (or value).</p></li>
 <li><p><strong>*args</strong> – Additional arguments to pass to the root object.</p></li>
-<li><p><strong>**kwargs</strong> – <p>Additional arguments to pass to the root object.</p>
-</p></li>
+<li><p><strong>**kwargs</strong> – Additional arguments to pass to the root object.</p></li>
 </ul>
 </dd>
 </dl>
@@ -1705,6 +1693,12 @@ tracking, data hashing, and lineage information from configurations.</p>
 <span class="sig-prename descclassname"><span class="pre">flexlock.utils.</span></span><span class="sig-name descname"><span class="pre">py2cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">overrides</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/utils.html#py2cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.utils.py2cfg" title="Link to this definition"></a></dt>
 <dd><p>Generates a default configuration dict from a function or class signature.
 Supports nested py2cfg calls and handles decorated functions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="flexlock.utils.resolve_module_to_repo_path">
+<span class="sig-prename descclassname"><span class="pre">flexlock.utils.</span></span><span class="sig-name descname"><span class="pre">resolve_module_to_repo_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/flexlock/utils.html#resolve_module_to_repo_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.utils.resolve_module_to_repo_path" title="Link to this definition"></a></dt>
+<dd><p>Resolve a Python module name to its containing git repository’s working directory.</p>
 </dd></dl>
 
 <dl class="py function">

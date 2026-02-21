@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Python API Reference &mdash; FlexLock 0.3.0 documentation</title>
+  <title>Python API Reference &mdash; FlexLock 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/python_api.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=f129cdf0"></script>
+      <script src="_static/documentation_options.js?v=78d8237d"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -293,7 +293,10 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
 <h4>With Snapshot Configuration<a class="headerlink" href="#with-snapshot-configuration" title="Link to this heading"></a></h4>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span><span class="p">(</span>
     <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
-        <span class="n">repos</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">main</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">),</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>                          <span class="c1"># string shorthand for path</span>
+            <span class="s1">&#39;mylib&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="s1">&#39;libs/mylib&#39;</span><span class="p">},</span>      <span class="c1"># explicit dict form</span>
+        <span class="p">},</span>
         <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_path}&#39;</span><span class="p">}</span>
     <span class="p">)</span>
 <span class="p">)</span>
@@ -307,6 +310,9 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
 <li><p>Data file hashing</p></li>
 <li><p>Reproducibility snapshots</p></li>
 </ul>
+<blockquote>
+<div><p><strong>Note:</strong> When the config has a <code class="docutils literal notranslate"><span class="pre">_target_</span></code> key, FlexLock automatically tracks the git repository of the target function’s source file — no explicit <code class="docutils literal notranslate"><span class="pre">repos</span></code> entry is needed in that case.</p>
+</div></blockquote>
 </section>
 <section id="debug-mode">
 <h4>Debug Mode<a class="headerlink" href="#debug-mode" title="Link to this heading"></a></h4>
@@ -378,10 +384,19 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
     <span class="n">search_dirs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">wait</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">pbs_config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">slurm_config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">slurm_config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sweep_dir_suffix</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">match_include</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">match_exclude</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutionResult</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">ExecutionResult</span><span class="p">]</span>
 </pre></div>
 </div>
+<p><strong>Parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sweep_dir_suffix</span></code>: When <code class="docutils literal notranslate"><span class="pre">True</span></code>, appends <code class="docutils literal notranslate"><span class="pre">_sweep_{i:04d}</span></code> to each sweep run’s <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>. Default <code class="docutils literal notranslate"><span class="pre">False</span></code> (all sweep runs share the base <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">match_include</span></code>: Override the git path include-patterns used during <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> comparison (takes priority over per-repo patterns stored in <code class="docutils literal notranslate"><span class="pre">run.lock</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">match_exclude</span></code>: Override the git path exclude-patterns used during <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> comparison.</p></li>
+</ul>
 </section>
 <section id="basic-execution">
 <h4>Basic Execution<a class="headerlink" href="#basic-execution" title="Link to this heading"></a></h4>
@@ -690,7 +705,7 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
     <span class="n">input_data</span><span class="o">=</span><span class="s1">&#39;data/train.csv&#39;</span><span class="p">,</span>
     <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train&#39;</span><span class="p">,</span>
     <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
-        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>          <span class="c1"># string shorthand</span>
         <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;train_data&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_data}&#39;</span><span class="p">}</span>
     <span class="p">)</span>
 <span class="p">)</span>
@@ -699,6 +714,26 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
 <span class="c1"># - Code version (git tree hash)</span>
 <span class="c1"># - Data version (file hash)</span>
 <span class="c1"># - Configuration</span>
+</pre></div>
+</div>
+<p>To track only specific files within a repo (speeds up <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> by ignoring irrelevant changes):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="n">repos</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;include&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;src/mymodule/**&#39;</span><span class="p">],</span>   <span class="c1"># only these paths matter</span>
+            <span class="s1">&#39;exclude&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;tests/**&#39;</span><span class="p">],</span>           <span class="c1"># ignore tests</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Or resolve the repo path automatically from a Python module name:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="n">repos</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;mylib&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;module&#39;</span><span class="p">:</span> <span class="s1">&#39;mylib&#39;</span><span class="p">}</span>   <span class="c1"># path resolved via importlib</span>
+    <span class="p">}</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 </section>
