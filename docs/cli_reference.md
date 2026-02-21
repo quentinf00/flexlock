@@ -285,6 +285,55 @@ flexlock-run -d defaults --debug
 
 ---
 
+### `--print-config`
+Print the fully compiled configuration and, if `_target_` is set, the target function's docstring, then exit without running.
+
+**Usage:**
+```bash
+flexlock-run -d defaults -s train --print-config
+flexlock-run -c config.yaml -O lr=0.1 --print-config
+```
+
+**Output example:**
+```
+=== COMPILED CONFIG ===
+_target_: myproject.train.train
+lr: 0.1
+epochs: 100
+save_dir: outputs/train
+
+=== TARGET FUNCTION DOCSTRING ===
+Target: myproject.train.train
+Docstring:
+    Train a model with the given configuration.
+    ...
+```
+
+Useful for inspecting the final merged config before running, especially when many override layers are involved.
+
+---
+
+### `-h`, `--help`
+Print the standard argument help followed by the compiled configuration (and target docstring if available), then exit. The config reflects all overrides provided on the command line.
+
+**Usage:**
+```bash
+flexlock-run -d defaults -s train -O lr=0.1 --help
+```
+
+**Output:**
+```
+usage: flexlock-run [OPTIONS]
+...
+
+=== COMPILED CONFIG ===
+_target_: myproject.train.train
+lr: 0.1
+...
+```
+
+---
+
 ## HPC Backend Configuration
 
 Execute sweeps on HPC clusters using Slurm or PBS job schedulers.

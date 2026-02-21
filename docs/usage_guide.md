@@ -229,6 +229,36 @@ cfg = py2cfg(
 )
 ```
 
+> **Auto-detection:** When the config specifies a `_target_` (e.g. with YAML configs or `py2cfg`), FlexLock automatically detects and tracks the git repository of the target function. No explicit `repos` entry is needed.
+
+### Repo Configuration Format
+
+`repos` values can be a plain path string or a dict with additional options:
+
+```python
+snapshot_config=dict(
+    repos={
+        # Simple: string path
+        'main': '.',
+
+        # Explicit dict
+        'mylib': {'path': 'libs/mylib'},
+
+        # Resolved from module name (auto-finds git root via importlib)
+        'external': {'module': 'some_package'},
+
+        # With include/exclude for filtered smart_run comparison
+        'filtered': {
+            'path': '.',
+            'include': ['src/mymodule/**'],  # only these paths are compared
+            'exclude': ['tests/**', 'docs/**'],
+        },
+    }
+)
+```
+
+When `include`/`exclude` patterns are specified, `smart_run` will consider two runs a match even if other files in the repo differ — only the filtered paths are compared.
+
 ---
 
 ### Snapshot Contents
@@ -244,6 +274,9 @@ repos:
     commit: "abc123..."     # Git commit hash
     tree: "def456..."       # Git tree hash (key for equality)
     is_dirty: false
+    path: "/abs/path/to/repo"
+    include: null           # include patterns (if set, used for filtered comparison)
+    exclude: null           # exclude patterns
 
 data:
   train_data: "xxh64_789xyz..."  # Data file hash
@@ -597,6 +630,21 @@ result = proj.submit(
 )
 ```
 
+### Filtered Comparison with `match_include` / `match_exclude`
+
+Override the git path patterns used during `smart_run` matching without changing the snapshot config:
+
+```python
+result = proj.submit(
+    cfg,
+    smart_run=True,
+    match_include=['src/model/**'],   # only compare these paths
+    match_exclude=['tests/**'],        # ignore these paths
+)
+```
+
+These take priority over any `include`/`exclude` stored in the repo's `run.lock`.
+
 ---
 
 ### Check Before Running
@@ -780,7 +828,7 @@ cfg = py2cfg(
     train,
     input_data='data/train.csv',
     snapshot_config=dict(
-        repos={'main': '.'},
+        repos={'main': '.'},              # or omit if using _target_ (auto-detected)
         data={'train': '${...input_data}'}
     )
 )

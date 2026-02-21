@@ -23,12 +23,36 @@ class FlexLockRunner:
     def __init__(self):
         self.parser = self._build_parser()
 
+    def _print_config_and_docstring(self, node_cfg):
+        """Print compiled config and target docstring."""
+        print("=== COMPILED CONFIG ===")
+        print(OmegaConf.to_yaml(node_cfg))
+
+        if "_target_" in node_cfg:
+            print("=== TARGET FUNCTION DOCSTRING ===")
+            try:
+                target_path = node_cfg._target_
+                module_name, func_name = target_path.rsplit('.', 1)
+                module = __import__(module_name, fromlist=[func_name])
+                target_func = getattr(module, func_name)
+                docstring = getattr(target_func, '__doc__', None)
+                print(f"Target: {target_path}")
+                print(f"Docstring:\n{docstring}" if docstring else "No docstring available.")
+            except (ImportError, AttributeError, ValueError) as e:
+                print(f"Could not import target function '{node_cfg._target_}': {e}")
+
     def _build_parser(self):
-        parser = argparse.ArgumentParser(description="FlexLock Execution Manager")
+        parser = argparse.ArgumentParser(description="FlexLock Execution Manager", add_help=False)
+
+        parser.add_argument("-h", "--help", action="store_true", help="Show this help message and exit.")
+        parser.add_argument(
+            "--print-config", action="store_true",
+            help="Print the compiled configuration and target function docstring, then exit."
+        )
 
         # Existing Config/Select args
         parser.add_argument(
-            "--defaults", "-d", 
+            "--defaults", "-d",
             help="Python import path for default config"
         )
         parser.add_argument(
@@ -83,11 +107,6 @@ class FlexLockRunner:
         parser.add_argument(
             "--debug", action="store_true",
             help="Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks)."
-        )
-
-        parser.add_argument(
-            "--print-config", action="store_true",
-            help="Print the compiled configuration and target function docstring when available."
         )
 
         # HPC Backend Configuration
@@ -306,35 +325,13 @@ class FlexLockRunner:
         if args.overrides_after_select:
             node_cfg.merge_with(OmegaConf.from_dotlist(args.overrides_after_select))
 
-        # Print config if requested
-        if args.print_config:
-            print("=== COMPILED CONFIG ===")
-            print(OmegaConf.to_yaml(node_cfg))
-
-            # Print target function docstring if available
-            if "_target_" in node_cfg:
-                try:
-                    target_path = node_cfg._target_
-                    # Import the target function dynamically
-                    module_name, func_name = target_path.rsplit('.', 1)
-                    module = __import__(module_name, fromlist=[func_name])
-                    target_func = getattr(module, func_name)
-
-                    docstring = getattr(target_func, '__doc__', None)
-                    if docstring:
-                        print("\n=== TARGET FUNCTION DOCSTRING ===")
-                        print(f"Target: {target_path}")
-                        print(f"Docstring:\n{docstring}")
-                    else:
-                        print(f"\n=== TARGET FUNCTION DOCSTRING ===")
-                        print(f"Target: {target_path}")
-                        print("No docstring available for this function.")
-                except (ImportError, AttributeError, ValueError) as e:
-                    print(f"\n=== TARGET FUNCTION DOCSTRING ===")
-                    print(f"Could not import target function '{node_cfg._target_}': {e}")
-            else:
-                print("\n=== TARGET FUNCTION DOCSTRING ===")
-                print("No '_target_' specified in config, no function to document.")
+        # Print config and exit if requested
+        if args.print_config or args.help:
+            if args.help:
+                self.parser.print_help()
+                print()
+            self._print_config_and_docstring(node_cfg)
+            return
 
         # --- SWEEP HANDLING ---
         tasks = self._load_sweep_tasks(args, root_cfg)

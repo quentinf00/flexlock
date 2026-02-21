@@ -146,7 +146,10 @@ def train(lr=0.01, epochs=10):
 ```python
 @flexcli(
     snapshot_config=dict(
-        repos=dict(main='.'),
+        repos={
+            'main': '.',                          # string shorthand for path
+            'mylib': {'path': 'libs/mylib'},      # explicit dict form
+        },
         data={'input': '${...input_path}'}
     )
 )
@@ -158,6 +161,8 @@ def train(input_path, lr=0.01, save_dir=None):
 - Git repository tracking
 - Data file hashing
 - Reproducibility snapshots
+
+> **Note:** When the config has a `_target_` key, FlexLock automatically tracks the git repository of the target function's source file — no explicit `repos` entry is needed in that case.
 
 #### Debug Mode
 
@@ -236,9 +241,17 @@ def submit(
     search_dirs: List[str] = None,
     wait: bool = True,
     pbs_config: str = None,
-    slurm_config: str = None
+    slurm_config: str = None,
+    sweep_dir_suffix: bool = False,
+    match_include: List[str] = None,
+    match_exclude: List[str] = None,
 ) -> ExecutionResult | List[ExecutionResult]
 ```
+
+**Parameters:**
+- `sweep_dir_suffix`: When `True`, appends `_sweep_{i:04d}` to each sweep run's `save_dir`. Default `False` (all sweep runs share the base `save_dir`).
+- `match_include`: Override the git path include-patterns used during `smart_run` comparison (takes priority over per-repo patterns stored in `run.lock`).
+- `match_exclude`: Override the git path exclude-patterns used during `smart_run` comparison.
 
 #### Basic Execution
 
@@ -557,7 +570,7 @@ cfg = py2cfg(
     input_data='data/train.csv',
     save_dir='outputs/train',
     snapshot_config=dict(
-        repos={'main': '.'},
+        repos={'main': '.'},          # string shorthand
         data={'train_data': '${...input_data}'}
     )
 )
@@ -566,6 +579,30 @@ cfg = py2cfg(
 # - Code version (git tree hash)
 # - Data version (file hash)
 # - Configuration
+```
+
+To track only specific files within a repo (speeds up `smart_run` by ignoring irrelevant changes):
+
+```python
+snapshot_config=dict(
+    repos={
+        'main': {
+            'path': '.',
+            'include': ['src/mymodule/**'],   # only these paths matter
+            'exclude': ['tests/**'],           # ignore tests
+        }
+    }
+)
+```
+
+Or resolve the repo path automatically from a Python module name:
+
+```python
+snapshot_config=dict(
+    repos={
+        'mylib': {'module': 'mylib'}   # path resolved via importlib
+    }
+)
 ```
 
 ### 5. Use Sweeps for Exploration
