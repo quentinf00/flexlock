@@ -7,6 +7,7 @@ from flexlock.taskdb import queue_tasks, pending_count
 from flexlock.worker import worker_loop
 from flexlock.backends.slurm import SlurmBackend
 from flexlock.backends.pbs import PBSBackend
+import multiprocessing
 from multiprocessing import Process
 import yaml
 from typing import Any, List
@@ -79,6 +80,18 @@ class ParallelExecutor:
         self.save_dir = Path(cfg.save_dir)
         self.db_path = self.save_dir / "run.lock.tasks.db"
 
+        if self.db_path.exists():
+            from flexlock.taskdb import get_status_counts
+            existing = get_status_counts(self.db_path)
+            logger.warning(
+                f"Task DB already exists: {self.db_path}\n"
+                f"  Existing tasks: {dict(existing)}\n"
+                f"  New sweep has {len(tasks)} tasks — tasks with matching hashes "
+                f"will be silently skipped (INSERT OR IGNORE).\n"
+                f"  If this is a different sweep reusing the same save_dir, "
+                f"consider using a per-sweep subdirectory to avoid DB collisions."
+            )
+
         queue_tasks(self.db_path, tasks)
         logger.info(f"Queued {len(tasks)} tasks")
 
@@ -96,8 +109,13 @@ class ParallelExecutor:
         if num_workers == 1:
             worker_loop(self.func, self.cfg, self.task_target, self.db_path)
         else:
+            # Use 'spawn' instead of the default 'fork' to avoid inheriting
+            # GPU/CUDA contexts and threading locks from the parent process.
+            # fork + CUDA (or any initialised GPU library) causes deadlocks
+            # in child processes.
+            ctx = multiprocessing.get_context("spawn")
             procs = [
-                Process(
+                ctx.Process(
                     target=worker_loop,
                     args=(self.func, self.cfg, self.task_target, self.db_path),
                 )
