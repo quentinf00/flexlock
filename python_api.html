@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Python API Reference &mdash; FlexLock 0.3.2 documentation</title>
+  <title>Python API Reference &mdash; FlexLock 0.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/python_api.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=78d8237d"></script>
+      <script src="_static/documentation_options.js?v=1437fa6d"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -91,6 +91,13 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#proj-exists-check-for-cached-run"><code class="docutils literal notranslate"><span class="pre">proj.exists()</span></code>: Check for Cached Run</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#proj-get-result-load-cached-results"><code class="docutils literal notranslate"><span class="pre">proj.get_result()</span></code>: Load Cached Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proj-run-stage-execute-a-pipeline-stage"><code class="docutils literal notranslate"><span class="pre">proj.run_stage()</span></code>: Execute a Pipeline Stage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2">Signature</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">Basic Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multi-stage-pipeline">Multi-Stage Pipeline</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#proj-save-snapshot-save-pipeline-config"><code class="docutils literal notranslate"><span class="pre">proj.save_snapshot()</span></code>: Save Pipeline Config</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#executionresult">ExecutionResult</a><ul>
@@ -535,6 +542,80 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
 <li><p>Falls back to <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> if available</p></li>
 <li><p>Returns <code class="docutils literal notranslate"><span class="pre">ExecutionResult</span></code> with <code class="docutils literal notranslate"><span class="pre">status=&quot;CACHED&quot;</span></code></p></li>
 </ul>
+</section>
+<hr class="docutils" />
+<section id="proj-run-stage-execute-a-pipeline-stage">
+<h3><code class="docutils literal notranslate"><span class="pre">proj.run_stage()</span></code>: Execute a Pipeline Stage<a class="headerlink" href="#proj-run-stage-execute-a-pipeline-stage" title="Link to this heading"></a></h3>
+<p>Convenience method that wraps <code class="docutils literal notranslate"><span class="pre">submit()</span></code> with automatic <code class="docutils literal notranslate"><span class="pre">search_dirs</span></code> discovery and <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> propagation — the two things you’d otherwise have to do manually in every pipeline.</p>
+<section id="id2">
+<h4>Signature<a class="headerlink" href="#id2" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">run_stage</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span>
+    <span class="n">stage_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">smart_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">search_dirs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">submit_kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutionResult</span>
+</pre></div>
+</div>
+<p><strong>Parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cfg</span></code>: Stage configuration (DictConfig)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">stage_name</span></code>: Name of the stage. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, inferred from <code class="docutils literal notranslate"><span class="pre">cfg.save_dir</span></code> (last path component).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">smart_run</span></code>: Whether to check for cached runs (default <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">search_dirs</span></code>: Directories to search for cached runs. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, auto-discovered by scanning sibling experiment directories with the same stage name.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">**submit_kwargs</span></code>: Additional arguments forwarded to <code class="docutils literal notranslate"><span class="pre">submit()</span></code> (e.g., <code class="docutils literal notranslate"><span class="pre">isolated=True</span></code>)</p></li>
+</ul>
+</section>
+<section id="id3">
+<h4>Basic Usage<a class="headerlink" href="#id3" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;pipeline.defaults&#39;</span><span class="p">)</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+<span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="s1">&#39;results/exp_001/train&#39;</span>
+
+<span class="c1"># Executes the stage, auto-discovers search_dirs, propagates save_dir</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">run_stage</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="c1"># cfg.save_dir is now updated to result.save_dir (useful for downstream stages)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>  <span class="c1"># results/exp_001/train</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-stage-pipeline">
+<h4>Multi-Stage Pipeline<a class="headerlink" href="#multi-stage-pipeline" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;pipeline.defaults&#39;</span><span class="p">)</span>
+
+<span class="c1"># Stage 1</span>
+<span class="n">prep_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">)</span>
+<span class="n">prep_cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="s1">&#39;results/exp_001/preprocess&#39;</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">run_stage</span><span class="p">(</span><span class="n">prep_cfg</span><span class="p">)</span>
+
+<span class="c1"># Stage 2 — uses prep_cfg.save_dir (propagated by run_stage)</span>
+<span class="n">train_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+<span class="n">train_cfg</span><span class="o">.</span><span class="n">data_dir</span> <span class="o">=</span> <span class="n">prep_cfg</span><span class="o">.</span><span class="n">save_dir</span>
+<span class="n">train_cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="s1">&#39;results/exp_001/train&#39;</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">run_stage</span><span class="p">(</span><span class="n">train_cfg</span><span class="p">,</span> <span class="n">isolated</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># GPU stage in subprocess</span>
+
+<span class="c1"># Save the full pipeline config for reproducibility</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">save_snapshot</span><span class="p">(</span><span class="s1">&#39;results/exp_001&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>How auto-discovery works:</strong>
+Given <code class="docutils literal notranslate"><span class="pre">save_dir</span> <span class="pre">=</span> <span class="pre">&quot;results/exp_001/train&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">run_stage</span></code> looks at <code class="docutils literal notranslate"><span class="pre">results/*/train/</span></code> for all sibling experiment directories with the same stage name. This means re-running a pipeline with different parameters will automatically find cached stages from previous experiments.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="proj-save-snapshot-save-pipeline-config">
+<h3><code class="docutils literal notranslate"><span class="pre">proj.save_snapshot()</span></code>: Save Pipeline Config<a class="headerlink" href="#proj-save-snapshot-save-pipeline-config" title="Link to this heading"></a></h3>
+<p>Save the current project defaults as <code class="docutils literal notranslate"><span class="pre">pipeline.yaml</span></code> for reproducibility.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span><span class="o">.</span><span class="n">save_snapshot</span><span class="p">(</span><span class="s1">&#39;results/exp_001&#39;</span><span class="p">)</span>
+<span class="c1"># Creates results/exp_001/pipeline.yaml</span>
+</pre></div>
+</div>
+<p>The saved <code class="docutils literal notranslate"><span class="pre">pipeline.yaml</span></code> can later be re-run with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-c<span class="w"> </span>results/exp_001/pipeline.yaml<span class="w"> </span>-s<span class="w"> </span>train
+</pre></div>
+</div>
 </section>
 </section>
 <hr class="docutils" />

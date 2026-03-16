@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.parallel &mdash; FlexLock 0.3.2 documentation</title>
+  <title>flexlock.parallel &mdash; FlexLock 0.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/parallel.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
+      <script src="../../_static/documentation_options.js?v=1437fa6d"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -99,6 +99,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.worker</span><span class="w"> </span><span class="kn">import</span> <span class="n">worker_loop</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.backends.slurm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlurmBackend</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.backends.pbs</span><span class="w"> </span><span class="kn">import</span> <span class="n">PBSBackend</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Process</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
@@ -153,6 +154,7 @@
         <span class="n">slurm_config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pbs_config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">local_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">isolated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes the ParallelExecutor.</span>
 
@@ -165,6 +167,9 @@
 <span class="sd">            slurm_config: Path to the Slurm configuration file.</span>
 <span class="sd">            pbs_config: Path to the PBS configuration file.</span>
 <span class="sd">            local_workers: Number of local worker processes to spawn.</span>
+<span class="sd">            isolated: If True, always run in a spawned subprocess even when n_jobs=1.</span>
+<span class="sd">                Use this for stages that initialise GPU/CUDA so that the CUDA context</span>
+<span class="sd">                is confined to the child and never leaks into the parent process.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="n">tasks</span>
@@ -172,9 +177,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">cfg</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">n_jobs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">local_workers</span> <span class="o">=</span> <span class="n">local_workers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isolated</span> <span class="o">=</span> <span class="n">isolated</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock.tasks.db&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_status_counts</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="n">get_status_counts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Task DB already exists: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;  Existing tasks: </span><span class="si">{</span><span class="nb">dict</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;  New sweep has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks — tasks with matching hashes &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;will be silently skipped (INSERT OR IGNORE).</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;  If this is a different sweep reusing the same save_dir, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;consider using a per-sweep subdirectory to avoid DB collisions.&quot;</span>
+            <span class="p">)</span>
 
         <span class="n">queue_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tasks</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Queued </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks&quot;</span><span class="p">)</span>
@@ -190,11 +208,16 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_locally</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">num_workers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_workers</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span>
-        <span class="k">if</span> <span class="n">num_workers</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">num_workers</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isolated</span><span class="p">:</span>
             <span class="n">worker_loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use &#39;spawn&#39; instead of the default &#39;fork&#39; to avoid inheriting</span>
+            <span class="c1"># GPU/CUDA contexts and threading locks from the parent process.</span>
+            <span class="c1"># fork + CUDA (or any initialised GPU library) causes deadlocks</span>
+            <span class="c1"># in child processes.</span>
+            <span class="n">ctx</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">get_context</span><span class="p">(</span><span class="s2">&quot;spawn&quot;</span><span class="p">)</span>
             <span class="n">procs</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">Process</span><span class="p">(</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span>
                     <span class="n">target</span><span class="o">=</span><span class="n">worker_loop</span><span class="p">,</span>
                     <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">),</span>
                 <span class="p">)</span>

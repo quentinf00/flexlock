@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.utils &mdash; FlexLock 0.3.2 documentation</title>
+  <title>flexlock.utils &mdash; FlexLock 0.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/utils.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
+      <script src="../../_static/documentation_options.js?v=1437fa6d"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -104,6 +104,61 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">fields</span>
+
+
+<div class="viewcode-block" id="collect_target_include_patterns">
+<a class="viewcode-back" href="../../api.html#flexlock.collect_target_include_patterns">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">collect_target_include_patterns</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">repo_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Recursively walk a config, collect all _target_ values, resolve them to</span>
+<span class="sd">    source file paths relative to the repo root. Returns a list of relative</span>
+<span class="sd">    file paths suitable for use as match_include patterns in smart_run.</span>
+
+<span class="sd">    External targets (site-packages, builtins) are silently skipped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+    <span class="n">targets</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">_walk_targets</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">targets</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">patterns</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">target_str</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">module_name</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">target_str</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">mod</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">repo_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">repo_path</span> <span class="o">=</span> <span class="n">resolve_module_to_repo_path</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
+
+            <span class="n">rel</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">repo_path</span><span class="p">)</span>
+            <span class="c1"># Skip if outside the repo (e.g. ../site-packages/...)</span>
+            <span class="k">if</span> <span class="n">rel</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">patterns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">patterns</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_walk_targets</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Recursively collect _target_ strings from a nested config.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;_snapshot_&quot;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;_target_&quot;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_walk_targets</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+            <span class="n">_walk_targets</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="resolve_module_to_repo_path">
@@ -251,12 +306,29 @@
                 <span class="s2">&quot;Could not auto-populate repo from _target_ (REPL or built-in?)&quot;</span>
             <span class="p">)</span>
 
-    <span class="c1"># &quot;prevs_from_data&quot;: Automatically treat data paths as lineage candidates</span>
-    <span class="c1"># This allows checking if data files came from FlexLock runs</span>
-    <span class="n">prevs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="c1"># &quot;prevs_from_data&quot;: Walk up from each data path to find the nearest</span>
+    <span class="c1"># run.lock, resolving data files to their containing flexlock run dir.</span>
+    <span class="c1"># This way snapshot() receives clean directory paths, not raw file paths.</span>
+    <span class="k">for</span> <span class="n">data_path</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">run_dir</span> <span class="o">=</span> <span class="n">_find_run_dir</span><span class="p">(</span><span class="n">data_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">run_dir</span> <span class="ow">and</span> <span class="n">run_dir</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prevs</span><span class="p">:</span>
+            <span class="n">prevs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">run_dir</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_run_dir</span><span class="p">(</span><span class="n">start_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Walk up from a path to find the nearest directory containing run.lock.&quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">start_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span>
+    <span class="c1"># Walk up, but stop at filesystem root</span>
+    <span class="k">while</span> <span class="n">p</span> <span class="o">!=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">return</span> <span class="kc">None</span>
 
 
 <div class="viewcode-block" id="to_dictconfig">

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CLI Reference &mdash; FlexLock 0.3.2 documentation</title>
+  <title>CLI Reference &mdash; FlexLock 0.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/cli_reference.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=78d8237d"></script>
+      <script src="_static/documentation_options.js?v=1437fa6d"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -58,6 +58,13 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="python_api.html">Python API Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">CLI Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#flexlock-experiment-management-cli"><code class="docutils literal notranslate"><span class="pre">flexlock</span></code> — Experiment Management CLI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#flexlock-ls-list-runs"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">ls</span></code> — List Runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flexlock-tag-tag-runs"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">tag</span></code> — Tag Runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flexlock-gc-garbage-collect"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">gc</span></code> — Garbage Collect</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#flexlock-run-run-experiments"><code class="docutils literal notranslate"><span class="pre">flexlock-run</span></code> — Run Experiments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-loading">Configuration Loading</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#defaults-d"><code class="docutils literal notranslate"><span class="pre">--defaults</span></code>, <code class="docutils literal notranslate"><span class="pre">-d</span></code></a></li>
@@ -69,9 +76,7 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-overrides">Configuration Overrides</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#merge-m"><code class="docutils literal notranslate"><span class="pre">--merge</span></code>, <code class="docutils literal notranslate"><span class="pre">-m</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#overrides-o"><code class="docutils literal notranslate"><span class="pre">--overrides</span></code>, <code class="docutils literal notranslate"><span class="pre">-o</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#merge-after-select-m"><code class="docutils literal notranslate"><span class="pre">--merge-after-select</span></code>, <code class="docutils literal notranslate"><span class="pre">-M</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#overrides-after-select-o"><code class="docutils literal notranslate"><span class="pre">--overrides-after-select</span></code>, <code class="docutils literal notranslate"><span class="pre">-O</span></code></a></li>
 </ul>
 </li>
@@ -99,7 +104,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#hpc-backend-configuration">HPC Backend Configuration</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#slurm-config"><code class="docutils literal notranslate"><span class="pre">--slurm-config</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pbs-config"><code class="docutils literal notranslate"><span class="pre">--pbs-config</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#containerized-execution">Containerized Execution</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-merging-order">Configuration Merging Order</a></li>
@@ -109,6 +113,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#pattern-3-hpc-sweep-with-slurm">Pattern 3: HPC Sweep with Slurm</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pattern-4-containerized-hpc">Pattern 4: Containerized HPC</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pattern-5-debug-specific-config">Pattern 5: Debug Specific Config</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-override-options">Advanced Override Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#merge-m"><code class="docutils literal notranslate"><span class="pre">--merge</span></code>, <code class="docutils literal notranslate"><span class="pre">-m</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#merge-after-select-m"><code class="docutils literal notranslate"><span class="pre">--merge-after-select</span></code>, <code class="docutils literal notranslate"><span class="pre">-M</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
@@ -150,7 +159,90 @@
              
   <section id="cli-reference">
 <h1>CLI Reference<a class="headerlink" href="#cli-reference" title="Link to this heading"></a></h1>
+<section id="flexlock-experiment-management-cli">
+<h2><code class="docutils literal notranslate"><span class="pre">flexlock</span></code> — Experiment Management CLI<a class="headerlink" href="#flexlock-experiment-management-cli" title="Link to this heading"></a></h2>
+<p>Unified CLI for listing, tagging, and cleaning up experiment runs.</p>
+<section id="flexlock-ls-list-runs">
+<h3><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">ls</span></code> — List Runs<a class="headerlink" href="#flexlock-ls-list-runs" title="Link to this heading"></a></h3>
+<p>List all runs (directories containing <code class="docutils literal notranslate"><span class="pre">run.lock</span></code>) under a given path.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># List runs in current directory</span>
+flexlock<span class="w"> </span>ls
+
+<span class="c1"># List runs under a specific path</span>
+flexlock<span class="w"> </span>ls<span class="w"> </span>results/
+
+<span class="c1"># Verbose output (shows _target_ and lineage)</span>
+flexlock<span class="w"> </span>ls<span class="w"> </span>results/<span class="w"> </span>-v
+
+<span class="c1"># JSON output (for scripting)</span>
+flexlock<span class="w"> </span>ls<span class="w"> </span>results/<span class="w"> </span>--format<span class="w"> </span>json
+</pre></div>
+</div>
+<p><strong>Output columns:</strong> timestamp, stage name, path, tag (if any)</p>
+</section>
+<hr class="docutils" />
+<section id="flexlock-tag-tag-runs">
+<h3><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">tag</span></code> — Tag Runs<a class="headerlink" href="#flexlock-tag-tag-runs" title="Link to this heading"></a></h3>
+<p>Assign a human-readable name to a run directory. Tags are stored as git refs under <code class="docutils literal notranslate"><span class="pre">refs/flexlock/tags/</span></code> and link to all lineage shadow commits as parents, so <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span> <span class="pre">&lt;tag-ref&gt;</span></code> shows the full provenance chain.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Tag a run</span>
+flexlock<span class="w"> </span>tag<span class="w"> </span>baseline_v1<span class="w"> </span>results/exp_001/train
+
+<span class="c1"># Tag with a message</span>
+flexlock<span class="w"> </span>tag<span class="w"> </span>best_model<span class="w"> </span>results/exp_003/train<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;92.5% accuracy on val set&quot;</span>
+
+<span class="c1"># List all tags</span>
+flexlock<span class="w"> </span>tag<span class="w"> </span>-l
+
+<span class="c1"># List tags with lineage details</span>
+flexlock<span class="w"> </span>tag<span class="w"> </span>-l<span class="w"> </span>-v
+
+<span class="c1"># Delete a tag</span>
+flexlock<span class="w"> </span>tag<span class="w"> </span>-d<span class="w"> </span>baseline_v1
+</pre></div>
+</div>
+<p><strong>How it works:</strong></p>
+<ol class="arabic simple">
+<li><p>Creates a git commit object with the run’s lineage shadow commits as parents</p></li>
+<li><p>Stores the commit under <code class="docutils literal notranslate"><span class="pre">refs/flexlock/tags/&lt;name&gt;</span></code></p></li>
+<li><p>The commit message records the path and timestamp</p></li>
+</ol>
+<p><strong>Viewing lineage of a tagged run:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Show all linked shadow commits</span>
+git<span class="w"> </span>log<span class="w"> </span>--oneline<span class="w"> </span>refs/flexlock/tags/baseline_v1
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="flexlock-gc-garbage-collect">
+<h3><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">gc</span></code> — Garbage Collect<a class="headerlink" href="#flexlock-gc-garbage-collect" title="Link to this heading"></a></h3>
+<p>Remove untagged run directories. Tagged runs and their lineage dependencies are protected.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Dry run — show what would be deleted</span>
+flexlock<span class="w"> </span>gc<span class="w"> </span>results/<span class="w"> </span>-n
+
+<span class="c1"># Delete untagged runs (with confirmation prompt)</span>
+flexlock<span class="w"> </span>gc<span class="w"> </span>results/
+
+<span class="c1"># Force delete without confirmation</span>
+flexlock<span class="w"> </span>gc<span class="w"> </span>results/<span class="w"> </span>-f
+
+<span class="c1"># Also clean orphaned shadow git refs</span>
+flexlock<span class="w"> </span>gc<span class="w"> </span>results/<span class="w"> </span>-f<span class="w"> </span>--refs
+</pre></div>
+</div>
+<p><strong>Protection rules:</strong></p>
+<ul class="simple">
+<li><p>Tagged runs are never deleted</p></li>
+<li><p>Lineage dependencies of tagged runs are protected (recursive)</p></li>
+<li><p>Only runs with no tag and no tagged descendant are eligible for deletion</p></li>
+</ul>
+<hr class="docutils" />
+</section>
+</section>
+<hr class="docutils" />
+<section id="flexlock-run-run-experiments">
+<h2><code class="docutils literal notranslate"><span class="pre">flexlock-run</span></code> — Run Experiments<a class="headerlink" href="#flexlock-run-run-experiments" title="Link to this heading"></a></h2>
 <p>Complete reference for <code class="docutils literal notranslate"><span class="pre">flexlock-run</span></code> command-line interface.</p>
+</section>
 <section id="basic-usage">
 <h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
@@ -221,20 +313,6 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.defaults
 <hr class="docutils" />
 <section id="configuration-overrides">
 <h2>Configuration Overrides<a class="headerlink" href="#configuration-overrides" title="Link to this heading"></a></h2>
-<section id="merge-m">
-<h3><code class="docutils literal notranslate"><span class="pre">--merge</span></code>, <code class="docutils literal notranslate"><span class="pre">-m</span></code><a class="headerlink" href="#merge-m" title="Link to this heading"></a></h3>
-<p>Merge a YAML/JSON file into the root config (before selection).</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-m<span class="w"> </span>overrides.yaml
-</pre></div>
-</div>
-<p><strong>Override file example:</strong></p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
-<span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">64</span>
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
 <section id="overrides-o">
 <h3><code class="docutils literal notranslate"><span class="pre">--overrides</span></code>, <code class="docutils literal notranslate"><span class="pre">-o</span></code><a class="headerlink" href="#overrides-o" title="Link to this heading"></a></h3>
 <p>Override specific keys in root config using dot-notation (before selection).</p>
@@ -255,16 +333,6 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span clas
 <li><p>Nested paths: <code class="docutils literal notranslate"><span class="pre">model.layers=12</span></code></p></li>
 <li><p>Lists: <code class="docutils literal notranslate"><span class="pre">devices=[0,1,2]</span></code></p></li>
 </ul>
-</section>
-<hr class="docutils" />
-<section id="merge-after-select-m">
-<h3><code class="docutils literal notranslate"><span class="pre">--merge-after-select</span></code>, <code class="docutils literal notranslate"><span class="pre">-M</span></code><a class="headerlink" href="#merge-after-select-m" title="Link to this heading"></a></h3>
-<p>Merge a file into the selected config node (after selection).</p>
-<p><strong>Usage:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Select train node, then merge experiment-specific settings</span>
-flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-M<span class="w"> </span>experiment1.yaml
-</pre></div>
-</div>
 </section>
 <hr class="docutils" />
 <section id="overrides-after-select-o">
@@ -529,28 +597,9 @@ flexlock-run<span class="w"> </span>-c<span class="w"> </span>config.yaml<span c
 </pre></div>
 </div>
 <p><strong>Mutually exclusive with:</strong> <code class="docutils literal notranslate"><span class="pre">--slurm-config</span></code></p>
-</section>
-<hr class="docutils" />
-<section id="containerized-execution">
-<h3>Containerized Execution<a class="headerlink" href="#containerized-execution" title="Link to this heading"></a></h3>
-<p>Run workers in Singularity/Docker containers by specifying custom <code class="docutils literal notranslate"><span class="pre">python_exe</span></code>:</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># pbs_singularity.yaml</span>
-<span class="nt">startup_lines</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=1:ncpus=4&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&quot;</span>
-
-<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
-<span class="w">  </span><span class="no">singularity run</span>
-<span class="w">  </span><span class="no">--bind $(pwd)/src:/app/src</span>
-<span class="w">  </span><span class="no">--bind $(pwd)/outputs:/workspace/outputs</span>
-<span class="w">  </span><span class="no">--pwd /workspace</span>
-<span class="w">  </span><span class="no">myenv.sif python</span>
-</pre></div>
-</div>
-<p><strong>Usage:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span>--pbs-config<span class="w"> </span>pbs_singularity.yaml
-</pre></div>
-</div>
+<blockquote>
+<div><p><strong>Tip:</strong> To run workers inside a Singularity/Docker container, set <code class="docutils literal notranslate"><span class="pre">python_exe</span></code> to the container invocation command (see the PBS example above). See <a class="reference internal" href="hpc_integration.html"><span class="std std-doc">HPC Integration</span></a> for more details.</p>
+</div></blockquote>
 </section>
 </section>
 <hr class="docutils" />
@@ -636,6 +685,25 @@ flexlock-run<span class="w"> </span>-c<span class="w"> </span>config.yaml<span c
 <span class="w">  </span>--debug
 </pre></div>
 </div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="advanced-override-options">
+<h2>Advanced Override Options<a class="headerlink" href="#advanced-override-options" title="Link to this heading"></a></h2>
+<section id="merge-m">
+<h3><code class="docutils literal notranslate"><span class="pre">--merge</span></code>, <code class="docutils literal notranslate"><span class="pre">-m</span></code><a class="headerlink" href="#merge-m" title="Link to this heading"></a></h3>
+<p>Merge a YAML/JSON file into the root config (before selection). Useful when you have a set of overrides stored in a file that apply at the top level.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-m<span class="w"> </span>overrides.yaml
+</pre></div>
+</div>
+</section>
+<section id="merge-after-select-m">
+<h3><code class="docutils literal notranslate"><span class="pre">--merge-after-select</span></code>, <code class="docutils literal notranslate"><span class="pre">-M</span></code><a class="headerlink" href="#merge-after-select-m" title="Link to this heading"></a></h3>
+<p>Merge a file into the selected config node (after selection). Useful for applying experiment-specific settings to an already-selected stage.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-M<span class="w"> </span>experiment1.yaml
+</pre></div>
+</div>
+<p>These are file-based equivalents of <code class="docutils literal notranslate"><span class="pre">-o</span></code>/<code class="docutils literal notranslate"><span class="pre">-O</span></code>. Use them when overrides are too many to pass on the command line.</p>
 </section>
 </section>
 <hr class="docutils" />

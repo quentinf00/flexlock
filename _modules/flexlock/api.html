@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.api &mdash; FlexLock 0.3.2 documentation</title>
+  <title>flexlock.api &mdash; FlexLock 0.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/api.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
+      <script src="../../_static/documentation_options.js?v=1437fa6d"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -93,7 +93,7 @@
 <span></span><span class="sd">&quot;&quot;&quot;Python API for FlexLock.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">open_dict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
@@ -234,6 +234,11 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Path to matching run directory, or None if no match found</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Auto-populate match_include from _target_ modules if not provided</span>
+        <span class="k">if</span> <span class="n">match_include</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_target_include_patterns</span>
+            <span class="n">match_include</span> <span class="o">=</span> <span class="n">collect_target_include_patterns</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+
         <span class="c1"># Generate fingerprint for this config</span>
         <span class="n">fingerprint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_fingerprint</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
 
@@ -359,6 +364,56 @@
         <span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="Project.run_stage">
+<a class="viewcode-back" href="../../api.html#flexlock.Project.run_stage">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">stage_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">search_dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">submit_kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run a single stage with automatic search_dirs and save_dir propagation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cfg: Stage configuration (DictConfig)</span>
+<span class="sd">            stage_name: Name of the stage (inferred from save_dir if None)</span>
+<span class="sd">            smart_run: If True, checks for cached runs</span>
+<span class="sd">            search_dirs: Directories to search for cached runs (auto-discovered if None)</span>
+<span class="sd">            **submit_kwargs: Additional arguments passed to submit()</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ExecutionResult (or list for sweeps)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Infer stage name from save_dir</span>
+        <span class="k">if</span> <span class="n">stage_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+            <span class="n">stage_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="c1"># Auto-discover search_dirs: look for sibling experiment dirs with same stage name</span>
+        <span class="k">if</span> <span class="n">search_dirs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">smart_run</span> <span class="ow">and</span> <span class="n">stage_name</span> <span class="ow">and</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span>
+            <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">search_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;*/</span><span class="si">{</span><span class="n">stage_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()]</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="n">smart_run</span><span class="p">,</span> <span class="n">search_dirs</span><span class="o">=</span><span class="n">search_dirs</span><span class="p">,</span> <span class="o">**</span><span class="n">submit_kwargs</span><span class="p">)</span>
+
+        <span class="c1"># For single runs, propagate save_dir back into cfg</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">with</span> <span class="n">open_dict</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">save_dir</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="Project.save_snapshot">
+<a class="viewcode-back" href="../../api.html#flexlock.Project.save_snapshot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the current project defaults as pipeline.yaml.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            save_dir: Directory to save the pipeline snapshot to</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">save_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span>
+        <span class="n">save_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">save_path</span> <span class="o">/</span> <span class="s2">&quot;pipeline.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_yaml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">))</span></div>
+
+
 <div class="viewcode-block" id="Project.submit">
 <a class="viewcode-back" href="../../api.html#flexlock.Project.submit">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">submit</span><span class="p">(</span>
@@ -374,6 +429,7 @@
         <span class="n">sweep_dir_suffix</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">match_include</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">match_exclude</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">isolated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutionResult</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">ExecutionResult</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Submit a configuration for execution.</span>
@@ -389,6 +445,10 @@
 <span class="sd">            slurm_config: Path to Slurm configuration YAML (for HPC execution)</span>
 <span class="sd">            match_include: Override include patterns for git comparison during smart_run</span>
 <span class="sd">            match_exclude: Override exclude patterns for git comparison during smart_run</span>
+<span class="sd">            isolated: If True, run in a spawned subprocess even for a single task.</span>
+<span class="sd">                Use this for GPU stages (e.g. predict) so the CUDA context is</span>
+<span class="sd">                confined to the child and never leaks into the parent process,</span>
+<span class="sd">                preventing fork-based deadlocks in subsequent parallel stages.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            ExecutionResult (single run) or List[ExecutionResult] (sweep)</span>
@@ -476,6 +536,44 @@
 
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Local execution</span>
+            <span class="k">if</span> <span class="n">isolated</span><span class="p">:</span>
+                <span class="c1"># Run in an isolated spawned subprocess so that any GPU/CUDA</span>
+                <span class="c1"># context initialised inside the task stays in the child and</span>
+                <span class="c1"># never leaks into the parent (which may later fork workers).</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">.parallel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelExecutor</span>
+
+                <span class="n">save_dir</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;outputs/job&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="s2">&quot;_snapshot_&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+                    <span class="n">snapshot_resolved</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">_snapshot_</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">snapshot_resolved</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">executor_cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                    <span class="p">{</span><span class="s2">&quot;save_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">save_dir</span><span class="p">),</span> <span class="s2">&quot;_snapshot_&quot;</span><span class="p">:</span> <span class="n">snapshot_resolved</span><span class="p">}</span>
+                <span class="p">)</span>
+                <span class="n">executor</span> <span class="o">=</span> <span class="n">ParallelExecutor</span><span class="p">(</span>
+                    <span class="n">func</span><span class="o">=</span><span class="n">instantiate</span><span class="p">,</span>
+                    <span class="n">tasks</span><span class="o">=</span><span class="p">[</span><span class="n">config</span><span class="p">],</span>
+                    <span class="n">task_target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">cfg</span><span class="o">=</span><span class="n">executor_cfg</span><span class="p">,</span>
+                    <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">isolated</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">result_data</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+                    <span class="n">results_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;results.json&quot;</span>
+                    <span class="k">if</span> <span class="n">results_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">results_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                            <span class="n">result_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">ExecutionResult</span><span class="p">(</span>
+                    <span class="n">save_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">save_dir</span><span class="p">),</span>
+                    <span class="n">status</span><span class="o">=</span><span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span>
+                    <span class="n">result</span><span class="o">=</span><span class="n">result_data</span><span class="p">,</span>
+                    <span class="n">cfg</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+                <span class="p">)</span>
+
             <span class="c1"># Extract tracking info</span>
             <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span> <span class="o">=</span> <span class="n">extract_tracking_info</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
