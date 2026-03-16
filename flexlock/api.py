@@ -131,6 +131,11 @@ class Project:
         Returns:
             Path to matching run directory, or None if no match found
         """
+        # Auto-populate match_include from _target_ modules if not provided
+        if match_include is None:
+            from .utils import collect_target_include_patterns
+            match_include = collect_target_include_patterns(cfg) or None
+
         # Generate fingerprint for this config
         fingerprint = self._generate_fingerprint(cfg)
 

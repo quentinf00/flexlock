@@ -163,22 +163,6 @@ flexlock-run -d myproject.defaults -s experiments.baseline
 
 ## Configuration Overrides
 
-### `--merge`, `-m`
-Merge a YAML/JSON file into the root config (before selection).
-
-**Usage:**
-```bash
-flexlock-run -d defaults -m overrides.yaml
-```
-
-**Override file example:**
-```yaml
-lr: 0.1
-batch_size: 64
-```
-
----
-
 ### `--overrides`, `-o`
 Override specific keys in root config using dot-notation (before selection).
 
@@ -198,17 +182,6 @@ flexlock-run -d defaults -o optimizer.lr=0.1 optimizer.momentum=0.9
 - Primitive types: `param=1`, `flag=true`, `name=model`
 - Nested paths: `model.layers=12`
 - Lists: `devices=[0,1,2]`
-
----
-
-### `--merge-after-select`, `-M`
-Merge a file into the selected config node (after selection).
-
-**Usage:**
-```bash
-# Select train node, then merge experiment-specific settings
-flexlock-run -d defaults -s train -M experiment1.yaml
-```
 
 ---
 
@@ -491,30 +464,7 @@ configure_name: true
 
 **Mutually exclusive with:** `--slurm-config`
 
----
-
-### Containerized Execution
-
-Run workers in Singularity/Docker containers by specifying custom `python_exe`:
-
-```yaml
-# pbs_singularity.yaml
-startup_lines:
-  - "#PBS -l select=1:ncpus=4"
-  - "cd $PBS_O_WORKDIR"
-
-python_exe: >-
-  singularity run
-  --bind $(pwd)/src:/app/src
-  --bind $(pwd)/outputs:/workspace/outputs
-  --pwd /workspace
-  myenv.sif python
-```
-
-**Usage:**
-```bash
-flexlock-run -d defaults --sweep-file sweep.yaml --pbs-config pbs_singularity.yaml
-```
+> **Tip:** To run workers inside a Singularity/Docker container, set `python_exe` to the container invocation command (see the PBS example above). See [HPC Integration](./hpc_integration.md) for more details.
 
 ---
 
@@ -597,6 +547,26 @@ flexlock-run \
   -s experiments.failing_exp \
   --debug
 ```
+
+---
+
+## Advanced Override Options
+
+### `--merge`, `-m`
+Merge a YAML/JSON file into the root config (before selection). Useful when you have a set of overrides stored in a file that apply at the top level.
+
+```bash
+flexlock-run -d defaults -m overrides.yaml
+```
+
+### `--merge-after-select`, `-M`
+Merge a file into the selected config node (after selection). Useful for applying experiment-specific settings to an already-selected stage.
+
+```bash
+flexlock-run -d defaults -s train -M experiment1.yaml
+```
+
+These are file-based equivalents of `-o`/`-O`. Use them when overrides are too many to pass on the command line.
 
 ---
 

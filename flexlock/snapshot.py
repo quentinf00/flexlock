@@ -138,62 +138,28 @@ def snapshot(
 
         def _find_snapshot_dir(start_path: Path) -> tuple[Path, dict] | None:
             """
-            Recursive search for FlexLock run metadata.
+            Find run.lock at or directly in start_path.
 
             Returns:
                 tuple: (snapshot_dir, snapshot_data) or None
-
-            Searches in order:
-            1. .flexlock_marker file (points to DB)
-            2. run.lock file (traditional file-based)
-            3. Recursively up the directory tree
             """
-            import json
-
             try:
                 p = Path(start_path).resolve()
             except Exception:
                 return None
-            p = Path(start_path)
             if p.is_file():
                 p = p.parent
 
-            # Safety brake: stop at root or if path is invalid
-            while p != p.parent:
-                logger.debug(f"Checking for FlexLock metadata in: {p}")
-
-                # Option 1: Check for marker file (DB-based snapshot)
-                marker_file = p / ".flexlock_marker"
-                if marker_file.exists():
-                    try:
-                        marker_data = json.loads(marker_file.read_text())
-                        db_path = p / marker_data.get("db", "tasks.db")
-                        task_id = marker_data.get("task_id")
-
-                        if db_path.exists() and task_id:
-                            from flexlock.taskdb import get_task_snapshot
-
-                            snapshot_data = get_task_snapshot(db_path, task_id)
-                            if snapshot_data:
-                                logger.debug(
-                                    f"Found DB-based snapshot via marker at: {p}"
-                                )
-                                return (p, snapshot_data)
-                    except Exception as e:
-                        logger.warning(
-                            f"Failed to read marker file at {marker_file}: {e}"
-                        )
-
-                # Option 2: Check for traditional run.lock file
-                if (p / "run.lock").exists():
-                    try:
-                        snapshot_data = OmegaConf.load(p / "run.lock")
-                        logger.debug(f"Found file-based snapshot at: {p}")
-                        return (p, snapshot_data)
-                    except Exception as e:
-                        logger.warning(f"Failed to read run.lock at {p}: {e}")
-
-                p = p.parent
+            lock_file = p / "run.lock"
+            if lock_file.exists():
+                try:
+                    data = OmegaConf.to_container(
+                        OmegaConf.load(lock_file), resolve=True
+                    )
+                    logger.debug(f"Found snapshot at: {p}")
+                    return (p, data)
+                except Exception as e:
+                    logger.warning(f"Failed to read run.lock at {p}: {e}")
 
             return None
 

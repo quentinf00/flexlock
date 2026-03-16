@@ -645,9 +645,10 @@ def test_extract_tracking_info_basic():
     assert repos['main']['path'] == '.'
     assert repos['lib']['path'] == './lib'
     assert data == {'input': 'data/train.csv', 'model': 'models/best.pt'}
-    # prevs should include data paths
-    assert 'data/train.csv' in prevs
-    assert 'models/best.pt' in prevs
+    # Data paths that aren't inside a flexlock run dir should not be added
+    # (no run.lock exists at these paths)
+    assert 'data/train.csv' not in prevs
+    assert 'models/best.pt' not in prevs
 
 
 def test_extract_tracking_info_no_snapshot():
@@ -679,10 +680,11 @@ def test_extract_tracking_info_with_prevs():
 
     assert repos['main']['path'] == '.'
     assert data == {'input': 'data/train.csv'}
-    # prevs should include both explicit prevs and data paths
+    # Explicit prevs should be preserved
     assert 'outputs/exp1/run.lock' in prevs
     assert 'outputs/exp2/run.lock' in prevs
-    assert 'data/train.csv' in prevs
+    # Data paths not inside a flexlock run dir should not be added
+    assert 'data/train.csv' not in prevs
 
 
 def test_extract_tracking_info_singular_repo_raises_error():
@@ -814,5 +816,87 @@ def test_extract_tracking_info_auto_detect_skips_if_exists():
 
     assert repos['my_pkg']['path'] == '/explicit/path'
     mock_resolve.assert_not_called()
+
+
+# ── _find_run_dir and prevs_from_data tests ────────────────────
+
+
+def test_find_run_dir_at_file(tmp_path):
+    """Test _find_run_dir walks up from a file to find run.lock."""
+    from flexlock.utils import _find_run_dir
+    import yaml
+
+    run_dir = tmp_path / "results" / "preprocess"
+    run_dir.mkdir(parents=True)
+    (run_dir / "run.lock").write_text(yaml.dump({"config": {}}))
+
+    # Data file inside the run dir
+    data_file = run_dir / "output" / "data.csv"
+    data_file.parent.mkdir()
+    data_file.write_text("col1,col2\n1,2\n")
+
+    assert _find_run_dir(str(data_file)) == str(run_dir)
+
+
+def test_find_run_dir_at_dir(tmp_path):
+    """Test _find_run_dir finds run.lock in the given directory."""
+    from flexlock.utils import _find_run_dir
+    import yaml
+
+    run_dir = tmp_path / "results" / "train"
+    run_dir.mkdir(parents=True)
+    (run_dir / "run.lock").write_text(yaml.dump({"config": {}}))
+
+    assert _find_run_dir(str(run_dir)) == str(run_dir)
+
+
+def test_find_run_dir_no_run_lock(tmp_path):
+    """Test _find_run_dir returns None when no run.lock exists."""
+    from flexlock.utils import _find_run_dir
+
+    plain_dir = tmp_path / "data" / "raw"
+    plain_dir.mkdir(parents=True)
+
+    assert _find_run_dir(str(plain_dir)) is None
+
+
+def test_extract_tracking_info_prevs_from_data_resolves_run_dir(tmp_path):
+    """Test that data paths pointing into a flexlock run dir are resolved to prevs."""
+    from flexlock.utils import extract_tracking_info
+    import yaml
+
+    run_dir = tmp_path / "results" / "preprocess"
+    run_dir.mkdir(parents=True)
+    (run_dir / "run.lock").write_text(yaml.dump({"config": {"save_dir": str(run_dir)}}))
+    data_file = run_dir / "output.h5"
+    data_file.write_text("data")
+
+    cfg = OmegaConf.create({
+        "_snapshot_": {
+            "data": {"input": str(data_file)},
+        }
+    })
+
+    repos, data, prevs = extract_tracking_info(cfg)
+    assert str(run_dir) in prevs
+
+
+def test_extract_tracking_info_prevs_from_data_skips_non_flexlock(tmp_path):
+    """Test that data paths not in a flexlock run dir are not added to prevs."""
+    from flexlock.utils import extract_tracking_info
+
+    plain_dir = tmp_path / "data" / "raw"
+    plain_dir.mkdir(parents=True)
+    data_file = plain_dir / "input.csv"
+    data_file.write_text("col1\n1\n")
+
+    cfg = OmegaConf.create({
+        "_snapshot_": {
+            "data": {"input": str(data_file)},
+        }
+    })
+
+    repos, data, prevs = extract_tracking_info(cfg)
+    assert prevs == []
 
 

@@ -14,6 +14,58 @@ import warnings
 from dataclasses import fields
 
 
+def collect_target_include_patterns(cfg, repo_path=None):
+    """
+    Recursively walk a config, collect all _target_ values, resolve them to
+    source file paths relative to the repo root. Returns a list of relative
+    file paths suitable for use as match_include patterns in smart_run.
+
+    External targets (site-packages, builtins) are silently skipped.
+    """
+    import os
+
+    targets = set()
+    _walk_targets(cfg, targets)
+
+    if not targets:
+        return []
+
+    patterns = []
+    for target_str in targets:
+        try:
+            module_name, _ = target_str.rsplit(".", 1)
+            mod = importlib.import_module(module_name)
+            source = inspect.getfile(mod)
+
+            if repo_path is None:
+                repo_path = resolve_module_to_repo_path(module_name)
+
+            rel = os.path.relpath(source, repo_path)
+            # Skip if outside the repo (e.g. ../site-packages/...)
+            if rel.startswith(".."):
+                continue
+            patterns.append(rel)
+        except Exception:
+            continue
+
+    return sorted(set(patterns))
+
+
+def _walk_targets(cfg, out):
+    """Recursively collect _target_ strings from a nested config."""
+    if isinstance(cfg, (dict, DictConfig)):
+        for key, val in cfg.items():
+            if key == "_snapshot_":
+                continue
+            if key == "_target_" and isinstance(val, str):
+                out.add(val)
+            else:
+                _walk_targets(val, out)
+    elif isinstance(cfg, (list, ListConfig)):
+        for item in cfg:
+            _walk_targets(item, out)
+
+
 def resolve_module_to_repo_path(module_name: str) -> str:
     """Resolve a Python module name to its containing git repository's working directory."""
     mod = importlib.import_module(module_name)
@@ -154,11 +206,28 @@ def extract_tracking_info(cfg) -> Tuple[Dict, Dict, List]:
                 "Could not auto-populate repo from _target_ (REPL or built-in?)"
             )
 
-    # "prevs_from_data": Automatically treat data paths as lineage candidates
-    # This allows checking if data files came from FlexLock runs
-    prevs.extend(list(data.values()))
+    # "prevs_from_data": Walk up from each data path to find the nearest
+    # run.lock, resolving data files to their containing flexlock run dir.
+    # This way snapshot() receives clean directory paths, not raw file paths.
+    for data_path in data.values():
+        run_dir = _find_run_dir(data_path)
+        if run_dir and run_dir not in prevs:
+            prevs.append(run_dir)
 
     return repos, data, prevs
+
+
+def _find_run_dir(start_path: str) -> str | None:
+    """Walk up from a path to find the nearest directory containing run.lock."""
+    p = Path(start_path)
+    if p.is_file():
+        p = p.parent
+    # Walk up, but stop at filesystem root
+    while p != p.parent:
+        if (p / "run.lock").exists():
+            return str(p)
+        p = p.parent
+    return None
 
 
 def to_dictconfig(incfg):
