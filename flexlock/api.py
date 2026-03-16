@@ -1,7 +1,7 @@
 """Python API for FlexLock."""
 
 from pathlib import Path
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import OmegaConf, DictConfig, open_dict
 from loguru import logger
 from typing import List, Dict, Any, Optional
 import yaml
@@ -250,6 +250,50 @@ class Project:
             save_dir=str(match_dir), status="CACHED", result=result_data, cfg=cfg
         )
 
+    def run_stage(self, cfg, stage_name=None, smart_run=True, search_dirs=None, **submit_kwargs):
+        """
+        Run a single stage with automatic search_dirs and save_dir propagation.
+
+        Args:
+            cfg: Stage configuration (DictConfig)
+            stage_name: Name of the stage (inferred from save_dir if None)
+            smart_run: If True, checks for cached runs
+            search_dirs: Directories to search for cached runs (auto-discovered if None)
+            **submit_kwargs: Additional arguments passed to submit()
+
+        Returns:
+            ExecutionResult (or list for sweeps)
+        """
+        # Infer stage name from save_dir
+        if stage_name is None and "save_dir" in cfg:
+            stage_name = Path(cfg.save_dir).name
+
+        # Auto-discover search_dirs: look for sibling experiment dirs with same stage name
+        if search_dirs is None and smart_run and stage_name and "save_dir" in cfg:
+            parent = Path(cfg.save_dir).parent.parent
+            if parent.exists():
+                search_dirs = [str(p) for p in parent.glob(f"*/{stage_name}") if p.is_dir()]
+
+        result = self.submit(cfg, smart_run=smart_run, search_dirs=search_dirs, **submit_kwargs)
+
+        # For single runs, propagate save_dir back into cfg
+        if isinstance(result, list):
+            return result
+        with open_dict(cfg):
+            cfg.save_dir = result.save_dir
+        return result
+
+    def save_snapshot(self, save_dir):
+        """
+        Save the current project defaults as pipeline.yaml.
+
+        Args:
+            save_dir: Directory to save the pipeline snapshot to
+        """
+        save_path = Path(save_dir)
+        save_path.mkdir(parents=True, exist_ok=True)
+        (save_path / "pipeline.yaml").write_text(OmegaConf.to_yaml(self.defaults))
+
     def submit(
         self,
         config: DictConfig,
@@ -263,6 +307,7 @@ class Project:
         sweep_dir_suffix: bool = False,
         match_include: List[str] = None,
         match_exclude: List[str] = None,
+        isolated: bool = False,
     ) -> ExecutionResult | List[ExecutionResult]:
         """
         Submit a configuration for execution.
@@ -278,6 +323,10 @@ class Project:
             slurm_config: Path to Slurm configuration YAML (for HPC execution)
             match_include: Override include patterns for git comparison during smart_run
             match_exclude: Override exclude patterns for git comparison during smart_run
+            isolated: If True, run in a spawned subprocess even for a single task.
+                Use this for GPU stages (e.g. predict) so the CUDA context is
+                confined to the child and never leaks into the parent process,
+                preventing fork-based deadlocks in subsequent parallel stages.
 
         Returns:
             ExecutionResult (single run) or List[ExecutionResult] (sweep)
@@ -365,6 +414,44 @@ class Project:
 
         else:
             # Local execution
+            if isolated:
+                # Run in an isolated spawned subprocess so that any GPU/CUDA
+                # context initialised inside the task stays in the child and
+                # never leaks into the parent (which may later fork workers).
+                from .parallel import ParallelExecutor
+
+                save_dir = config.get("save_dir", "outputs/job")
+                if "_snapshot_" in config:
+                    snapshot_resolved = OmegaConf.to_container(
+                        config._snapshot_, resolve=True
+                    )
+                else:
+                    snapshot_resolved = {}
+                executor_cfg = OmegaConf.create(
+                    {"save_dir": str(save_dir), "_snapshot_": snapshot_resolved}
+                )
+                executor = ParallelExecutor(
+                    func=instantiate,
+                    tasks=[config],
+                    task_target=None,
+                    cfg=executor_cfg,
+                    n_jobs=1,
+                    isolated=True,
+                )
+                executor.run(wait=True)
+                result_data = None
+                if "save_dir" in config:
+                    results_file = Path(save_dir) / "results.json"
+                    if results_file.exists():
+                        with open(results_file, "r") as f:
+                            result_data = json.load(f)
+                return ExecutionResult(
+                    save_dir=str(save_dir),
+                    status="SUCCESS",
+                    result=result_data,
+                    cfg=config,
+                )
+
             # Extract tracking info
             repos, data, prevs = extract_tracking_info(config)
 

@@ -207,3 +207,148 @@ defaults = {
     finally:
         Path(temp_file).unlink()
         shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+# ── run_stage tests ────────────────────────────────────────────
+
+
+def stage_func(lr=0.01, save_dir=None):
+    return {"lr": lr}
+
+
+def test_run_stage_basic():
+    """Test run_stage executes and propagates save_dir back into cfg."""
+    temp_dir = tempfile.mkdtemp()
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        temp_file = f.name
+        f.write(
+            'defaults = {"stage": {"_target_": "tests.test_api.stage_func", "lr": 0.01}}\n'
+        )
+
+    try:
+        project = Project(defaults=f"{temp_file}:defaults")
+        cfg = project.get("stage")
+        cfg = OmegaConf.create(cfg)
+        cfg.save_dir = temp_dir
+
+        result = project.run_stage(cfg, smart_run=False)
+
+        assert isinstance(result, ExecutionResult)
+        assert result.status == "SUCCESS"
+        # save_dir should be propagated back into cfg
+        assert cfg.save_dir == result.save_dir
+    finally:
+        Path(temp_file).unlink()
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+def test_run_stage_infers_stage_name():
+    """Test that run_stage infers stage name from save_dir."""
+    temp_dir = tempfile.mkdtemp()
+    stage_dir = Path(temp_dir) / "exp_001" / "train"
+    stage_dir.mkdir(parents=True)
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        temp_file = f.name
+        f.write(
+            'defaults = {"train": {"_target_": "tests.test_api.stage_func", "lr": 0.01}}\n'
+        )
+
+    try:
+        project = Project(defaults=f"{temp_file}:defaults")
+        cfg = project.get("train")
+        cfg = OmegaConf.create(cfg)
+        cfg.save_dir = str(stage_dir)
+
+        result = project.run_stage(cfg, smart_run=False)
+
+        assert isinstance(result, ExecutionResult)
+        assert result.status == "SUCCESS"
+    finally:
+        Path(temp_file).unlink()
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+def test_run_stage_auto_search_dirs():
+    """Test that run_stage auto-discovers search_dirs from sibling experiments."""
+    temp_dir = tempfile.mkdtemp()
+
+    old_train = Path(temp_dir) / "results" / "exp_old" / "train"
+    old_train.mkdir(parents=True)
+    new_train = Path(temp_dir) / "results" / "exp_new" / "train"
+    new_train.mkdir(parents=True)
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        temp_file = f.name
+        f.write(
+            'defaults = {"train": {"_target_": "tests.test_api.stage_func", "lr": 0.01}}\n'
+        )
+
+    try:
+        project = Project(defaults=f"{temp_file}:defaults")
+        cfg = project.get("train")
+        cfg = OmegaConf.create(cfg)
+        cfg.save_dir = str(new_train)
+
+        result = project.run_stage(cfg, smart_run=False)
+        assert result.status == "SUCCESS"
+    finally:
+        Path(temp_file).unlink()
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+# ── save_snapshot tests ────────────────────────────────────────
+
+
+def test_save_snapshot_creates_pipeline_yaml():
+    """Test that save_snapshot creates a pipeline.yaml file."""
+    temp_dir = tempfile.mkdtemp()
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        temp_file = f.name
+        f.write(
+            """
+defaults = {
+    "preprocess": {"_target_": "mod.preprocess", "input": "data/"},
+    "train": {"_target_": "mod.train", "lr": 0.01}
+}
+"""
+        )
+
+    try:
+        project = Project(defaults=f"{temp_file}:defaults")
+        project.save_snapshot(temp_dir)
+
+        pipeline_file = Path(temp_dir) / "pipeline.yaml"
+        assert pipeline_file.exists()
+
+        import yaml
+
+        with open(pipeline_file) as fh:
+            content = yaml.safe_load(fh)
+        assert "preprocess" in content
+        assert "train" in content
+        assert content["train"]["lr"] == 0.01
+    finally:
+        Path(temp_file).unlink()
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+def test_save_snapshot_creates_dirs():
+    """Test that save_snapshot creates parent directories."""
+    temp_dir = tempfile.mkdtemp()
+    nested = Path(temp_dir) / "deep" / "nested" / "dir"
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        temp_file = f.name
+        f.write('defaults = {"a": 1}\n')
+
+    try:
+        project = Project(defaults=f"{temp_file}:defaults")
+        project.save_snapshot(str(nested))
+
+        assert (nested / "pipeline.yaml").exists()
+    finally:
+        Path(temp_file).unlink()
+        shutil.rmtree(temp_dir, ignore_errors=True)

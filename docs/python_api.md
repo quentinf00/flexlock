@@ -396,6 +396,84 @@ print(result.result)
 
 ---
 
+### `proj.run_stage()`: Execute a Pipeline Stage
+
+Convenience method that wraps `submit()` with automatic `search_dirs` discovery and `save_dir` propagation — the two things you'd otherwise have to do manually in every pipeline.
+
+#### Signature
+
+```python
+def run_stage(
+    cfg: DictConfig,
+    stage_name: str = None,
+    smart_run: bool = True,
+    search_dirs: List[str] = None,
+    **submit_kwargs,
+) -> ExecutionResult
+```
+
+**Parameters:**
+- `cfg`: Stage configuration (DictConfig)
+- `stage_name`: Name of the stage. If `None`, inferred from `cfg.save_dir` (last path component).
+- `smart_run`: Whether to check for cached runs (default `True`)
+- `search_dirs`: Directories to search for cached runs. If `None`, auto-discovered by scanning sibling experiment directories with the same stage name.
+- `**submit_kwargs`: Additional arguments forwarded to `submit()` (e.g., `isolated=True`)
+
+#### Basic Usage
+
+```python
+proj = Project(defaults='pipeline.defaults')
+cfg = proj.get('train')
+cfg.save_dir = 'results/exp_001/train'
+
+# Executes the stage, auto-discovers search_dirs, propagates save_dir
+result = proj.run_stage(cfg)
+
+# cfg.save_dir is now updated to result.save_dir (useful for downstream stages)
+print(cfg.save_dir)  # results/exp_001/train
+```
+
+#### Multi-Stage Pipeline
+
+```python
+proj = Project(defaults='pipeline.defaults')
+
+# Stage 1
+prep_cfg = proj.get('preprocess')
+prep_cfg.save_dir = 'results/exp_001/preprocess'
+proj.run_stage(prep_cfg)
+
+# Stage 2 — uses prep_cfg.save_dir (propagated by run_stage)
+train_cfg = proj.get('train')
+train_cfg.data_dir = prep_cfg.save_dir
+train_cfg.save_dir = 'results/exp_001/train'
+proj.run_stage(train_cfg, isolated=True)  # GPU stage in subprocess
+
+# Save the full pipeline config for reproducibility
+proj.save_snapshot('results/exp_001')
+```
+
+**How auto-discovery works:**
+Given `save_dir = "results/exp_001/train"`, `run_stage` looks at `results/*/train/` for all sibling experiment directories with the same stage name. This means re-running a pipeline with different parameters will automatically find cached stages from previous experiments.
+
+---
+
+### `proj.save_snapshot()`: Save Pipeline Config
+
+Save the current project defaults as `pipeline.yaml` for reproducibility.
+
+```python
+proj.save_snapshot('results/exp_001')
+# Creates results/exp_001/pipeline.yaml
+```
+
+The saved `pipeline.yaml` can later be re-run with:
+```bash
+flexlock-run -c results/exp_001/pipeline.yaml -s train
+```
+
+---
+
 ## ExecutionResult
 
 Object returned by `proj.submit()`.

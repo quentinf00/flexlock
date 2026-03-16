@@ -1,5 +1,94 @@
 # CLI Reference
 
+## `flexlock` — Experiment Management CLI
+
+Unified CLI for listing, tagging, and cleaning up experiment runs.
+
+### `flexlock ls` — List Runs
+
+List all runs (directories containing `run.lock`) under a given path.
+
+```bash
+# List runs in current directory
+flexlock ls
+
+# List runs under a specific path
+flexlock ls results/
+
+# Verbose output (shows _target_ and lineage)
+flexlock ls results/ -v
+
+# JSON output (for scripting)
+flexlock ls results/ --format json
+```
+
+**Output columns:** timestamp, stage name, path, tag (if any)
+
+---
+
+### `flexlock tag` — Tag Runs
+
+Assign a human-readable name to a run directory. Tags are stored as git refs under `refs/flexlock/tags/` and link to all lineage shadow commits as parents, so `git log <tag-ref>` shows the full provenance chain.
+
+```bash
+# Tag a run
+flexlock tag baseline_v1 results/exp_001/train
+
+# Tag with a message
+flexlock tag best_model results/exp_003/train -m "92.5% accuracy on val set"
+
+# List all tags
+flexlock tag -l
+
+# List tags with lineage details
+flexlock tag -l -v
+
+# Delete a tag
+flexlock tag -d baseline_v1
+```
+
+**How it works:**
+1. Creates a git commit object with the run's lineage shadow commits as parents
+2. Stores the commit under `refs/flexlock/tags/<name>`
+3. The commit message records the path and timestamp
+
+**Viewing lineage of a tagged run:**
+```bash
+# Show all linked shadow commits
+git log --oneline refs/flexlock/tags/baseline_v1
+```
+
+---
+
+### `flexlock gc` — Garbage Collect
+
+Remove untagged run directories. Tagged runs and their lineage dependencies are protected.
+
+```bash
+# Dry run — show what would be deleted
+flexlock gc results/ -n
+
+# Delete untagged runs (with confirmation prompt)
+flexlock gc results/
+
+# Force delete without confirmation
+flexlock gc results/ -f
+
+# Also clean orphaned shadow git refs
+flexlock gc results/ -f --refs
+```
+
+**Protection rules:**
+- Tagged runs are never deleted
+- Lineage dependencies of tagged runs are protected (recursive)
+- Only runs with no tag and no tagged descendant are eligible for deletion
+
+---
+
+---
+
+## `flexlock-run` — Run Experiments
+
 Complete reference for `flexlock-run` command-line interface.
 
 ## Basic Usage

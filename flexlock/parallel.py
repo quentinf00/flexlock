@@ -57,6 +57,7 @@ class ParallelExecutor:
         slurm_config: str | None = None,
         pbs_config: str | None = None,
         local_workers: int | None = None,
+        isolated: bool = False,
     ):
         """Initializes the ParallelExecutor.
 
@@ -69,6 +70,9 @@ class ParallelExecutor:
             slurm_config: Path to the Slurm configuration file.
             pbs_config: Path to the PBS configuration file.
             local_workers: Number of local worker processes to spawn.
+            isolated: If True, always run in a spawned subprocess even when n_jobs=1.
+                Use this for stages that initialise GPU/CUDA so that the CUDA context
+                is confined to the child and never leaks into the parent process.
         """
         self.func = func
         self.tasks = tasks
@@ -76,6 +80,7 @@ class ParallelExecutor:
         self.cfg = cfg
         self.n_jobs = n_jobs
         self.local_workers = local_workers
+        self.isolated = isolated
 
         self.save_dir = Path(cfg.save_dir)
         self.db_path = self.save_dir / "run.lock.tasks.db"
@@ -106,7 +111,7 @@ class ParallelExecutor:
 
     def _run_locally(self):
         num_workers = self.local_workers or self.n_jobs
-        if num_workers == 1:
+        if num_workers == 1 and not self.isolated:
             worker_loop(self.func, self.cfg, self.task_target, self.db_path)
         else:
             # Use 'spawn' instead of the default 'fork' to avoid inheriting

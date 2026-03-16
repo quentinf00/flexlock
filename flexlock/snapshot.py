@@ -1,6 +1,5 @@
 """Snapshotting utilities for FlexLock."""
 
-import yaml
 import tempfile
 import os
 from datetime import datetime
@@ -86,7 +85,7 @@ class RunTracker:
         # Atomic Write
         self.save_dir.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile("w", dir=self.save_dir, delete=False) as tf:
-            yaml.dump(snapshot_data, tf, sort_keys=False)
+            tf.write(OmegaConf.to_yaml(snapshot_data))
             tmp_name = tf.name
         os.replace(tmp_name, self.save_dir / "run.lock")
 
@@ -188,8 +187,7 @@ def snapshot(
                 # Option 2: Check for traditional run.lock file
                 if (p / "run.lock").exists():
                     try:
-                        with open(p / "run.lock") as f:
-                            snapshot_data = yaml.safe_load(f)
+                        snapshot_data = OmegaConf.load(p / "run.lock")
                         logger.debug(f"Found file-based snapshot at: {p}")
                         return (p, snapshot_data)
                     except Exception as e:

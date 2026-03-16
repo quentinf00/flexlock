@@ -43,15 +43,18 @@ def _load_and_flatten_recursively(
         stage_data = yaml.safe_load(f)
 
     # Recurse into nested stages first (depth-first)
-    if "prevs" in stage_data:
-        for nested_key, nested_data in stage_data["prevs"].items():
-            nested_path = nested_data.get("config", {}).get("save_dir")
+    # Support both "lineage" (new) and "prevs" (legacy)
+    lineage = stage_data.get("lineage") or stage_data.get("prevs")
+    if lineage:
+        for nested_key, nested_data in lineage.items():
+            nested_path = nested_data.get("path") or nested_data.get("config", {}).get("save_dir")
             if not nested_path:
                 raise ValueError(
-                    f"Could not find 'config.save_dir' in nested stage '{nested_key}' from '{stage_key}'"
+                    f"Could not find path in nested stage '{nested_key}' from '{stage_key}'"
                 )
             _load_and_flatten_recursively(nested_key, nested_path, all_stages)
 
     # Add the current stage's data (without its own lineage) to the dict
+    stage_data.pop("lineage", None)
     stage_data.pop("prevs", None)
     all_stages[canonical_key] = stage_data
