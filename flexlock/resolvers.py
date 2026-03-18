@@ -78,6 +78,49 @@ def vinc_resolver(path: str, fmt: str = "_{i:04d}") -> str:
     return str(parent_dir / f"{base_name}{version_str}")
 
 
+def run_lock_resolver(run_dir: str, key: str, default: str = None) -> str:
+    """
+    OmegaConf resolver that reads a field from an upstream run.lock.
+
+    Navigates a dot-separated key path into the run.lock YAML.
+    Returns the value as a string, or the default if the key is not found.
+
+    Usage in configs:
+        ${run_lock:path/to/run_dir,config.datamodule.stats_file}
+        ${run_lock:${run_dir},config.lit_module.regression_checkpoint_path,null}
+    """
+    from loguru import logger
+    import yaml
+
+    lock_path = Path(run_dir) / "run.lock"
+    if not lock_path.exists():
+        if default is not None:
+            logger.warning(f"run_lock resolver: no run.lock at {run_dir}, using default")
+            return default
+        raise FileNotFoundError(f"run_lock resolver: no run.lock found in {run_dir}")
+
+    with open(lock_path) as f:
+        data = yaml.safe_load(f)
+
+    # Navigate dot-path
+    value = data
+    for part in key.split("."):
+        if isinstance(value, dict) and part in value:
+            value = value[part]
+        else:
+            if default is not None:
+                return default
+            raise KeyError(
+                f"run_lock resolver: key '{key}' not found in {lock_path} "
+                f"(failed at '{part}')"
+            )
+
+    # Convert to string for OmegaConf
+    if value is None:
+        return default if default is not None else ""
+    return str(value)
+
+
 def register_resolvers():
     """
     Registers the flexlock resolvers with OmegaConf.
@@ -85,3 +128,4 @@ def register_resolvers():
     OmegaConf.register_new_resolver("now", now_resolver)
     OmegaConf.register_new_resolver("vinc", vinc_resolver)
     OmegaConf.register_new_resolver("latest", latest_resolver)
+    OmegaConf.register_new_resolver("run_lock", run_lock_resolver, use_cache=False)

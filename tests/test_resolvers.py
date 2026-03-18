@@ -149,3 +149,130 @@ def test_latest_resolver_with_globbing_patterns(tmp_path):
 
     # Should return the most recently created file
     assert latest == str(file2)
+
+
+# ── run_lock resolver tests ────────────────────────────────────
+
+
+def test_run_lock_resolver_basic(tmp_path):
+    """Test reading a simple field from run.lock."""
+    from flexlock.resolvers import run_lock_resolver
+    import yaml
+
+    run_dir = tmp_path / "train_0001"
+    run_dir.mkdir()
+    (run_dir / "run.lock").write_text(yaml.dump({
+        "config": {
+            "lr": 0.01,
+            "save_dir": str(run_dir),
+            "datamodule": {"stats_file": "/data/stats.json"},
+        },
+        "timestamp": "2026-03-18T10:00:00",
+    }))
+
+    assert run_lock_resolver(str(run_dir), "config.lr") == "0.01"
+    assert run_lock_resolver(str(run_dir), "config.datamodule.stats_file") == "/data/stats.json"
+    assert run_lock_resolver(str(run_dir), "timestamp") == "2026-03-18T10:00:00"
+
+
+def test_run_lock_resolver_nested(tmp_path):
+    """Test reading deeply nested fields."""
+    from flexlock.resolvers import run_lock_resolver
+    import yaml
+
+    run_dir = tmp_path / "flow_0001"
+    run_dir.mkdir()
+    (run_dir / "run.lock").write_text(yaml.dump({
+        "config": {
+            "lit_module": {
+                "regression_checkpoint_path": "/models/reg.ckpt",
+                "residual_stats_file": "/data/residual_stats.json",
+            }
+        }
+    }))
+
+    result = run_lock_resolver(str(run_dir), "config.lit_module.regression_checkpoint_path")
+    assert result == "/models/reg.ckpt"
+
+
+def test_run_lock_resolver_missing_key_with_default(tmp_path):
+    """Test that missing key returns default when provided."""
+    from flexlock.resolvers import run_lock_resolver
+    import yaml
+
+    run_dir = tmp_path / "run_0001"
+    run_dir.mkdir()
+    (run_dir / "run.lock").write_text(yaml.dump({"config": {"lr": 0.01}}))
+
+    result = run_lock_resolver(str(run_dir), "config.nonexistent", "fallback")
+    assert result == "fallback"
+
+
+def test_run_lock_resolver_missing_key_no_default(tmp_path):
+    """Test that missing key without default raises KeyError."""
+    from flexlock.resolvers import run_lock_resolver
+    import yaml
+
+    run_dir = tmp_path / "run_0001"
+    run_dir.mkdir()
+    (run_dir / "run.lock").write_text(yaml.dump({"config": {"lr": 0.01}}))
+
+    with pytest.raises(KeyError, match="not found"):
+        run_lock_resolver(str(run_dir), "config.nonexistent")
+
+
+def test_run_lock_resolver_missing_run_lock_with_default(tmp_path):
+    """Test that missing run.lock returns default when provided."""
+    from flexlock.resolvers import run_lock_resolver
+
+    result = run_lock_resolver(str(tmp_path / "nonexistent"), "config.lr", "0.001")
+    assert result == "0.001"
+
+
+def test_run_lock_resolver_missing_run_lock_no_default(tmp_path):
+    """Test that missing run.lock without default raises FileNotFoundError."""
+    from flexlock.resolvers import run_lock_resolver
+
+    with pytest.raises(FileNotFoundError, match="no run.lock found"):
+        run_lock_resolver(str(tmp_path / "nonexistent"), "config.lr")
+
+
+def test_run_lock_resolver_in_omegaconf(tmp_path):
+    """Test the resolver works within OmegaConf interpolation."""
+    import yaml
+
+    # Register only run_lock if not already registered
+    if not OmegaConf.has_resolver("run_lock"):
+        from flexlock.resolvers import run_lock_resolver
+        OmegaConf.register_new_resolver("run_lock", run_lock_resolver, use_cache=False)
+
+    run_dir = tmp_path / "upstream_0001"
+    run_dir.mkdir()
+    (run_dir / "run.lock").write_text(yaml.dump({
+        "config": {
+            "datamodule": {"stats_file": "/data/norm_stats.json"},
+            "_target_": "pkg.train",
+        }
+    }))
+
+    cfg = OmegaConf.create({
+        "run_dir": str(run_dir),
+        "stats_file": "${run_lock:${run_dir},config.datamodule.stats_file}",
+        "missing_field": "${run_lock:${run_dir},config.nonexistent,none}",
+    })
+
+    assert OmegaConf.to_container(cfg, resolve=True)["stats_file"] == "/data/norm_stats.json"
+    assert OmegaConf.to_container(cfg, resolve=True)["missing_field"] == "none"
+
+
+def test_run_lock_resolver_null_value(tmp_path):
+    """Test that null values in run.lock return default."""
+    from flexlock.resolvers import run_lock_resolver
+    import yaml
+
+    run_dir = tmp_path / "run_0001"
+    run_dir.mkdir()
+    (run_dir / "run.lock").write_text(yaml.dump({"config": {"optional_field": None}}))
+
+    result = run_lock_resolver(str(run_dir), "config.optional_field", "fallback")
+    assert result == "fallback"
