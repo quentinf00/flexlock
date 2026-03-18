@@ -119,6 +119,52 @@ outputs/pipeline/run_0006/
 
 ---
 
+### `${run_lock:run_dir,key}` - Read from Upstream Run
+
+Read a field from an upstream run's `run.lock` file using a dot-separated key path. Essential for downstream stages that need config values from a training or preprocessing run.
+
+**Usage:**
+```yaml
+run_dir: results/train_0005
+stats_file: ${run_lock:${run_dir},config.datamodule.stats_file}
+checkpoint: ${run_lock:${run_dir},config.save_dir}/checkpoints/best.ckpt
+```
+
+**With default (optional third argument):**
+```yaml
+# Returns "none" if the key doesn't exist
+optional_field: ${run_lock:${run_dir},config.flow_checkpoint,none}
+```
+
+**Python config example — downstream inference from upstream training:**
+```python
+cfg = dict(
+    run_dir="results/train_0005",
+    main=py2cfg(inference,
+        stats_file="${run_lock:${run_dir},config.datamodule.stats_file}",
+        checkpoint="${run_lock:${run_dir},config.save_dir}/checkpoints/best.ckpt",
+        prepared_data_dir="${run_lock:${run_dir},config.datamodule.prepared_data_dir}",
+        # Override run_dir with -o to point to a different upstream run
+    )
+)
+```
+
+**Override the upstream run from CLI:**
+```bash
+flexlock-run -d myproject.inference_cfg -s main \
+    -o run_dir=results/train_0008
+```
+
+**Behavior:**
+- Reads `run_dir/run.lock` and navigates the dot-path (e.g., `config.datamodule.stats_file`)
+- Supports nested keys to any depth
+- Optional third argument provides a default if the key is missing or null
+- Raises `FileNotFoundError` if `run.lock` doesn't exist (unless default given)
+- Raises `KeyError` if key path doesn't exist (unless default given)
+- Not cached (`use_cache=False`) — re-reads on each resolution, so changing `run_dir` via `-o` works correctly
+
+---
+
 ## Using Resolvers
 
 ### In YAML Configs

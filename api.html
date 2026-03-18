@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlexLock API Reference &mdash; FlexLock 0.4.0 documentation</title>
+  <title>FlexLock API Reference &mdash; FlexLock 0.4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/api.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=1437fa6d"></script>
+      <script src="_static/documentation_options.js?v=bd778e0b"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -169,6 +169,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.resolvers.latest_resolver"><code class="docutils literal notranslate"><span class="pre">latest_resolver()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.resolvers.now_resolver"><code class="docutils literal notranslate"><span class="pre">now_resolver()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.resolvers.register_resolvers"><code class="docutils literal notranslate"><span class="pre">register_resolvers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#flexlock.resolvers.run_lock_resolver"><code class="docutils literal notranslate"><span class="pre">run_lock_resolver()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.resolvers.vinc_resolver"><code class="docutils literal notranslate"><span class="pre">vinc_resolver()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock.runner.FlexLockRunner"><code class="docutils literal notranslate"><span class="pre">FlexLockRunner</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#flexlock.runner.FlexLockRunner.check_if_exists"><code class="docutils literal notranslate"><span class="pre">FlexLockRunner.check_if_exists()</span></code></a></li>
@@ -1272,6 +1273,19 @@ distribution (pull model) and result aggregation.</p>
 <dt class="sig sig-object py" id="flexlock.resolvers.register_resolvers">
 <span class="sig-prename descclassname"><span class="pre">flexlock.resolvers.</span></span><span class="sig-name descname"><span class="pre">register_resolvers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/flexlock/resolvers.html#register_resolvers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.resolvers.register_resolvers" title="Link to this definition"></a></dt>
 <dd><p>Registers the flexlock resolvers with OmegaConf.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="flexlock.resolvers.run_lock_resolver">
+<span class="sig-prename descclassname"><span class="pre">flexlock.resolvers.</span></span><span class="sig-name descname"><span class="pre">run_lock_resolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">run_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/flexlock/resolvers.html#run_lock_resolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#flexlock.resolvers.run_lock_resolver" title="Link to this definition"></a></dt>
+<dd><p>OmegaConf resolver that reads a field from an upstream run.lock.</p>
+<p>Navigates a dot-separated key path into the run.lock YAML.
+Returns the value as a string, or the default if the key is not found.</p>
+<dl class="simple">
+<dt>Usage in configs:</dt><dd><p>${run_lock:path/to/run_dir,config.datamodule.stats_file}
+${run_lock:${run_dir},config.lit_module.regression_checkpoint_path,null}</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">

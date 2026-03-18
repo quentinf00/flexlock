@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OmegaConf Resolvers &mdash; FlexLock 0.4.0 documentation</title>
+  <title>OmegaConf Resolvers &mdash; FlexLock 0.4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/resolvers.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=1437fa6d"></script>
+      <script src="_static/documentation_options.js?v=bd778e0b"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -63,6 +63,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#now-format-current-timestamp"><code class="docutils literal notranslate"><span class="pre">${now:format}</span></code> - Current Timestamp</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#latest-glob-find-latest-path"><code class="docutils literal notranslate"><span class="pre">${latest:glob}</span></code> - Find Latest Path</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#vinc-path-version-increment"><code class="docutils literal notranslate"><span class="pre">${vinc:path}</span></code> - Version Increment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-lock-run-dir-key-read-from-upstream-run"><code class="docutils literal notranslate"><span class="pre">${run_lock:run_dir,key}</span></code> - Read from Upstream Run</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#using-resolvers">Using Resolvers</a><ul>
@@ -228,6 +229,48 @@
 <li><p>Auto-versioned experiment directories</p></li>
 <li><p>Sequential pipeline runs</p></li>
 <li><p>Avoid overwriting previous results</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="run-lock-run-dir-key-read-from-upstream-run">
+<h3><code class="docutils literal notranslate"><span class="pre">${run_lock:run_dir,key}</span></code> - Read from Upstream Run<a class="headerlink" href="#run-lock-run-dir-key-read-from-upstream-run" title="Link to this heading"></a></h3>
+<p>Read a field from an upstream run’s <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> file using a dot-separated key path. Essential for downstream stages that need config values from a training or preprocessing run.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">run_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">results/train_0005</span>
+<span class="nt">stats_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${run_lock:${run_dir},config.datamodule.stats_file}</span>
+<span class="nt">checkpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${run_lock:${run_dir},config.save_dir}/checkpoints/best.ckpt</span>
+</pre></div>
+</div>
+<p><strong>With default (optional third argument):</strong></p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Returns &quot;none&quot; if the key doesn&#39;t exist</span>
+<span class="nt">optional_field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${run_lock:${run_dir},config.flow_checkpoint,none}</span>
+</pre></div>
+</div>
+<p><strong>Python config example — downstream inference from upstream training:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">run_dir</span><span class="o">=</span><span class="s2">&quot;results/train_0005&quot;</span><span class="p">,</span>
+    <span class="n">main</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">inference</span><span class="p">,</span>
+        <span class="n">stats_file</span><span class="o">=</span><span class="s2">&quot;${run_lock:$</span><span class="si">{run_dir}</span><span class="s2">,config.datamodule.stats_file}&quot;</span><span class="p">,</span>
+        <span class="n">checkpoint</span><span class="o">=</span><span class="s2">&quot;${run_lock:$</span><span class="si">{run_dir}</span><span class="s2">,config.save_dir}/checkpoints/best.ckpt&quot;</span><span class="p">,</span>
+        <span class="n">prepared_data_dir</span><span class="o">=</span><span class="s2">&quot;${run_lock:$</span><span class="si">{run_dir}</span><span class="s2">,config.datamodule.prepared_data_dir}&quot;</span><span class="p">,</span>
+        <span class="c1"># Override run_dir with -o to point to a different upstream run</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Override the upstream run from CLI:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.inference_cfg<span class="w"> </span>-s<span class="w"> </span>main<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-o<span class="w"> </span><span class="nv">run_dir</span><span class="o">=</span>results/train_0008
+</pre></div>
+</div>
+<p><strong>Behavior:</strong></p>
+<ul class="simple">
+<li><p>Reads <code class="docutils literal notranslate"><span class="pre">run_dir/run.lock</span></code> and navigates the dot-path (e.g., <code class="docutils literal notranslate"><span class="pre">config.datamodule.stats_file</span></code>)</p></li>
+<li><p>Supports nested keys to any depth</p></li>
+<li><p>Optional third argument provides a default if the key is missing or null</p></li>
+<li><p>Raises <code class="docutils literal notranslate"><span class="pre">FileNotFoundError</span></code> if <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> doesn’t exist (unless default given)</p></li>
+<li><p>Raises <code class="docutils literal notranslate"><span class="pre">KeyError</span></code> if key path doesn’t exist (unless default given)</p></li>
+<li><p>Not cached (<code class="docutils literal notranslate"><span class="pre">use_cache=False</span></code>) — re-reads on each resolution, so changing <code class="docutils literal notranslate"><span class="pre">run_dir</span></code> via <code class="docutils literal notranslate"><span class="pre">-o</span></code> works correctly</p></li>
 </ul>
 </section>
 </section>

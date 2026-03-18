@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.resolvers &mdash; FlexLock 0.3.2 documentation</title>
+  <title>flexlock.resolvers &mdash; FlexLock 0.4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/resolvers.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
+      <script src="../../_static/documentation_options.js?v=bd778e0b"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -179,6 +179,52 @@
 
 
 
+<div class="viewcode-block" id="run_lock_resolver">
+<a class="viewcode-back" href="../../api.html#flexlock.resolvers.run_lock_resolver">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_lock_resolver</span><span class="p">(</span><span class="n">run_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    OmegaConf resolver that reads a field from an upstream run.lock.</span>
+
+<span class="sd">    Navigates a dot-separated key path into the run.lock YAML.</span>
+<span class="sd">    Returns the value as a string, or the default if the key is not found.</span>
+
+<span class="sd">    Usage in configs:</span>
+<span class="sd">        ${run_lock:path/to/run_dir,config.datamodule.stats_file}</span>
+<span class="sd">        ${run_lock:${run_dir},config.lit_module.regression_checkpoint_path,null}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+
+    <span class="n">lock_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">run_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">lock_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;run_lock resolver: no run.lock at </span><span class="si">{</span><span class="n">run_dir</span><span class="si">}</span><span class="s2">, using default&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">default</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;run_lock resolver: no run.lock found in </span><span class="si">{</span><span class="n">run_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">lock_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="c1"># Navigate dot-path</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">data</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">part</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">default</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;run_lock resolver: key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; not found in </span><span class="si">{</span><span class="n">lock_path</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(failed at &#39;</span><span class="si">{</span><span class="n">part</span><span class="si">}</span><span class="s2">&#39;)&quot;</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Convert to string for OmegaConf</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">default</span> <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="register_resolvers">
 <a class="viewcode-back" href="../../api.html#flexlock.resolvers.register_resolvers">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_resolvers</span><span class="p">():</span>
@@ -187,7 +233,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;now&quot;</span><span class="p">,</span> <span class="n">now_resolver</span><span class="p">)</span>
     <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;vinc&quot;</span><span class="p">,</span> <span class="n">vinc_resolver</span><span class="p">)</span>
-    <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;latest&quot;</span><span class="p">,</span> <span class="n">latest_resolver</span><span class="p">)</span></div>
+    <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;latest&quot;</span><span class="p">,</span> <span class="n">latest_resolver</span><span class="p">)</span>
+    <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;run_lock&quot;</span><span class="p">,</span> <span class="n">run_lock_resolver</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 </pre></div>
 
