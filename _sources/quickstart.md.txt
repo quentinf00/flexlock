@@ -3,12 +3,7 @@
 Get up and running with FlexLock in 5 minutes.
 
 ## Installation
-
-```bash
-pip install flexlock
-```
-
-Or with conda:
+With conda:
 
 ```bash
 conda install -c quentinf00 flexlock
@@ -23,7 +18,7 @@ conda install -c quentinf00 flexlock
 from flexlock import flexcli
 
 @flexcli
-def train(lr: float = 0.01, epochs: int = 10):
+def train(lr: float = 0.01, epochs: int = 10, save_dir='outputs'):
     """Train a model."""
     print(f"Training with lr={lr} for {epochs} epochs")
     # ... your training code ...

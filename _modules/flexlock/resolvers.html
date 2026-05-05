@@ -181,12 +181,12 @@
 
 <div class="viewcode-block" id="run_lock_resolver">
 <a class="viewcode-back" href="../../api.html#flexlock.resolvers.run_lock_resolver">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">run_lock_resolver</span><span class="p">(</span><span class="n">run_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_lock_resolver</span><span class="p">(</span><span class="n">run_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    OmegaConf resolver that reads a field from an upstream run.lock.</span>
 
-<span class="sd">    Navigates a dot-separated key path into the run.lock YAML.</span>
-<span class="sd">    Returns the value as a string, or the default if the key is not found.</span>
+<span class="sd">    Navigates a dot-separated key path into the run.lock YAML and returns</span>
+<span class="sd">    the value with its native type (int, float, bool, str, list, dict).</span>
 
 <span class="sd">    Usage in configs:</span>
 <span class="sd">        ${run_lock:path/to/run_dir,config.datamodule.stats_file}</span>
@@ -218,10 +218,9 @@
                 <span class="sa">f</span><span class="s2">&quot;(failed at &#39;</span><span class="si">{</span><span class="n">part</span><span class="si">}</span><span class="s2">&#39;)&quot;</span>
             <span class="p">)</span>
 
-    <span class="c1"># Convert to string for OmegaConf</span>
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">default</span> <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">default</span>
+    <span class="k">return</span> <span class="n">value</span></div>
 
 
 

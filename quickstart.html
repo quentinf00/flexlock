@@ -127,10 +127,7 @@
 <p>Get up and running with FlexLock in 5 minutes.</p>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>flexlock
-</pre></div>
-</div>
-<p>Or with conda:</p>
+<p>With conda:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>quentinf00<span class="w"> </span>flexlock
 </pre></div>
 </div>
@@ -143,7 +140,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
 
 <span class="nd">@flexcli</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Train a model.&quot;&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training with lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2"> epochs&quot;</span><span class="p">)</span>
     <span class="c1"># ... your training code ...</span>
