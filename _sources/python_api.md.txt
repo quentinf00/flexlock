@@ -80,31 +80,6 @@ cfg = py2cfg(train_adam, lr=0.01)
 
 ---
 
-### `instantiate`: Execute Configurations
-
-Execute a configuration dictionary by instantiating the target.
-
-```python
-from flexlock.utils import instantiate
-
-cfg = {
-    '_target_': 'myproject.train.train',
-    'lr': 0.01,
-    'epochs': 100
-}
-
-# Execute
-result = instantiate(cfg)
-```
-
-**Behavior:**
-- Imports the module and function specified in `_target_`
-- Passes config parameters as keyword arguments
-- Handles `_args_` for positional arguments
-- Supports `_partial_` for partial instantiation
-
----
-
 ### `@flexcli`: Command-Line Decorator
 
 Transform a Python function into a CLI-enabled experiment.
@@ -166,14 +141,14 @@ def train(input_path, lr=0.01, save_dir=None):
 
 #### Debug Mode
 
-```python
-@flexcli(debug=True)  # or set FLEXLOCK_DEBUG=1
-def train(lr=0.01):
-    if lr == 0:
-        raise ValueError("Invalid lr")
+Enable debug mode via the `--debug` CLI flag or the `FLEXLOCK_DEBUG=1` environment variable:
 
-# On error: Drops into interactive debugger
+```bash
+python train.py --debug
+FLEXLOCK_DEBUG=1 python train.py
 ```
+
+On error, FlexLock drops into an interactive debugger. See [Debugging](./debugging.md) for details.
 
 ---
 

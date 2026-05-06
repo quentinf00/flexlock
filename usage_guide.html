@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Complete Usage Guide &mdash; FlexLock 0.4.1 documentation</title>
+  <title>Usage Guide &mdash; FlexLock 0.4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -50,13 +50,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Complete Usage Guide</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#table-of-contents">Table of Contents</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#your-first-experiment">Your First Experiment</a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-methods">Configuration Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#function-defaults-flexcli">1. Function Defaults (<code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#python-configs-py2cfg">2. Python Configs (<code class="docutils literal notranslate"><span class="pre">py2cfg</span></code>)</a></li>
@@ -81,12 +76,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#python-api-sweeps">Python API Sweeps</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#hpc-integration">HPC Integration</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#slurm-configuration">Slurm Configuration</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#pbs-configuration">PBS Configuration</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#containerized-execution">Containerized Execution</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#hpc-integration">HPC Integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pipelines">Pipelines</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#basic-pipeline">Basic Pipeline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pipeline-with-config-links">Pipeline with Config Links</a></li>
@@ -157,7 +147,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Complete Usage Guide</li>
+      <li class="breadcrumb-item active">Usage Guide</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/usage_guide.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -167,13 +157,12 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="complete-usage-guide">
-<h1>Complete Usage Guide<a class="headerlink" href="#complete-usage-guide" title="Link to this heading"></a></h1>
-<p>Comprehensive guide covering all FlexLock features and use cases.</p>
+  <section id="usage-guide">
+<h1>Usage Guide<a class="headerlink" href="#usage-guide" title="Link to this heading"></a></h1>
+<p>A guide to FlexLock’s features and common patterns. Start with the <a class="reference internal" href="quickstart.html"><span class="std std-doc">Quickstart</span></a> if you haven’t yet.</p>
 <section id="table-of-contents">
 <h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Link to this heading"></a></h2>
 <ol class="arabic simple">
-<li><p><a class="reference internal" href="#getting-started">Getting Started</a></p></li>
 <li><p><a class="reference internal" href="#configuration-methods">Configuration Methods</a></p></li>
 <li><p><a class="reference internal" href="#execution-modes">Execution Modes</a></p></li>
 <li><p><a class="reference internal" href="#reproducibility">Reproducibility</a></p></li>
@@ -182,39 +171,8 @@
 <li><p><a class="reference internal" href="#pipelines">Pipelines</a></p></li>
 <li><p><a class="reference internal" href="#smart-caching">Smart Caching</a></p></li>
 <li><p><a class="reference internal" href="#common-patterns">Common Patterns</a></p></li>
+<li><p><a class="reference internal" href="#tips-best-practices">Tips &amp; Best Practices</a></p></li>
 </ol>
-</section>
-<hr class="docutils" />
-<section id="getting-started">
-<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
-<section id="installation">
-<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>flexlock
-</pre></div>
-</div>
-</section>
-<section id="your-first-experiment">
-<h3>Your First Experiment<a class="headerlink" href="#your-first-experiment" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># train.py</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
-
-<span class="nd">@flexcli</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Train a model.&quot;&quot;&quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training: lr=</span><span class="si">{</span><span class="n">lr</span><span class="si">}</span><span class="s2">, epochs=</span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span> <span class="s2">&quot;loss&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">}</span>
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">train</span><span class="p">()</span>
-</pre></div>
-</div>
-<p><strong>Run it:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>train.py<span class="w">                    </span><span class="c1"># Use defaults</span>
-python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1<span class="w">          </span><span class="c1"># Override learning rate</span>
-python<span class="w"> </span>train.py<span class="w"> </span>--debug<span class="w">            </span><span class="c1"># Enable debug mode</span>
-</pre></div>
-</div>
-</section>
 </section>
 <hr class="docutils" />
 <section id="configuration-methods">
@@ -525,90 +483,7 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
 <hr class="docutils" />
 <section id="hpc-integration">
 <h2>HPC Integration<a class="headerlink" href="#hpc-integration" title="Link to this heading"></a></h2>
-<p>Execute experiments on HPC clusters using Slurm or PBS.</p>
-<section id="slurm-configuration">
-<h3>Slurm Configuration<a class="headerlink" href="#slurm-configuration" title="Link to this heading"></a></h3>
-<p><strong>slurm.yaml:</strong></p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--job-name=flexlock&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--cpus-per-task=8&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--mem=32G&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--time=04:00:00&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--gres=gpu:1&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#SBATCH</span><span class="nv"> </span><span class="s">--array=0-99&quot;</span><span class="w">    </span><span class="c1"># 100 workers</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;module</span><span class="nv"> </span><span class="s">load</span><span class="nv"> </span><span class="s">cuda/11.8&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;source</span><span class="nv"> </span><span class="s">activate</span><span class="nv"> </span><span class="s">myenv&quot;</span>
-
-<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;python&quot;</span>
-</pre></div>
-</div>
-<p><strong>CLI:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--slurm-config<span class="w"> </span>slurm.yaml
-</pre></div>
-</div>
-<p><strong>Python:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
-    <span class="n">cfg</span><span class="p">,</span>
-    <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span>
-    <span class="n">slurm_config</span><span class="o">=</span><span class="s1">&#39;slurm.yaml&#39;</span><span class="p">,</span>
-    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Block until completion</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="pbs-configuration">
-<h3>PBS Configuration<a class="headerlink" href="#pbs-configuration" title="Link to this heading"></a></h3>
-<p><strong>pbs.yaml:</strong></p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=1:ncpus=8:mem=32gb&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">walltime=04:00:00&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-N</span><span class="nv"> </span><span class="s">flexlock&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-J</span><span class="nv"> </span><span class="s">0-99&quot;</span><span class="w">  </span><span class="c1"># 100 workers</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;conda</span><span class="nv"> </span><span class="s">activate</span><span class="nv"> </span><span class="s">myenv&quot;</span>
-
-<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;python&quot;</span>
-</pre></div>
-</div>
-<p><strong>CLI:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--sweep-file<span class="w"> </span>sweep.yaml<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--pbs-config<span class="w"> </span>pbs.yaml
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="containerized-execution">
-<h3>Containerized Execution<a class="headerlink" href="#containerized-execution" title="Link to this heading"></a></h3>
-<p><strong>Singularity:</strong></p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># pbs_singularity.yaml</span>
-<span class="nt">startup_lines</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;#PBS</span><span class="nv"> </span><span class="s">-l</span><span class="nv"> </span><span class="s">select=1:ncpus=4&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cd</span><span class="nv"> </span><span class="s">$PBS_O_WORKDIR&quot;</span>
-
-<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">  </span><span class="no">singularity run</span>
-<span class="w">  </span><span class="no">--bind $(pwd)/src:/app/src</span>
-<span class="w">  </span><span class="no">--bind $(pwd)/outputs:/workspace/outputs</span>
-<span class="w">  </span><span class="no">--pwd /workspace</span>
-<span class="w">  </span><span class="no">myenv.sif python</span>
-</pre></div>
-</div>
-<p><strong>Docker:</strong></p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">startup_lines</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;cd</span><span class="nv"> </span><span class="s">$WORKSPACE&quot;</span>
-
-<span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-<span class="w">  </span><span class="no">docker run</span>
-<span class="w">  </span><span class="no">-v $(pwd):/workspace</span>
-<span class="w">  </span><span class="no">-w /workspace</span>
-<span class="w">  </span><span class="no">myimage:latest python</span>
-</pre></div>
-</div>
-</section>
+<p>FlexLock supports Slurm and PBS via <code class="docutils literal notranslate"><span class="pre">--slurm-config</span></code> / <code class="docutils literal notranslate"><span class="pre">--pbs-config</span></code> (CLI) or <code class="docutils literal notranslate"><span class="pre">slurm_config=</span></code> / <code class="docutils literal notranslate"><span class="pre">pbs_config=</span></code> (<code class="docutils literal notranslate"><span class="pre">proj.submit()</span></code>). Singularity and Docker are supported through the <code class="docutils literal notranslate"><span class="pre">python_exe</span></code> field. See the <strong><a class="reference internal" href="hpc_integration.html"><span class="std std-doc">HPC Integration guide</span></a></strong> for full configuration examples.</p>
 </section>
 <hr class="docutils" />
 <section id="pipelines">
@@ -908,7 +783,8 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
     <span class="n">eval_result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">eval_cfg</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eval_result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CV Accuracy: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">std</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">statistics</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CV Accuracy: </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">statistics</span><span class="o">.</span><span class="n">stdev</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

@@ -1,51 +1,18 @@
-# Complete Usage Guide
+# Usage Guide
 
-Comprehensive guide covering all FlexLock features and use cases.
+A guide to FlexLock's features and common patterns. Start with the [Quickstart](./quickstart.md) if you haven't yet.
 
 ## Table of Contents
 
-1. [Getting Started](#getting-started)
-2. [Configuration Methods](#configuration-methods)
-3. [Execution Modes](#execution-modes)
-4. [Reproducibility](#reproducibility)
-5. [Parameter Sweeps](#parameter-sweeps)
-6. [HPC Integration](#hpc-integration)
-7. [Pipelines](#pipelines)
-8. [Smart Caching](#smart-caching)
-9. [Common Patterns](#common-patterns)
-
----
-
-## Getting Started
-
-### Installation
-
-```bash
-pip install flexlock
-```
-
-### Your First Experiment
-
-```python
-# train.py
-from flexlock import flexcli
-
-@flexcli
-def train(lr=0.01, epochs=10, save_dir=None):
-    """Train a model."""
-    print(f"Training: lr={lr}, epochs={epochs}")
-    return {"accuracy": 0.95, "loss": 0.05}
-
-if __name__ == "__main__":
-    train()
-```
-
-**Run it:**
-```bash
-python train.py                    # Use defaults
-python train.py -o lr=0.1          # Override learning rate
-python train.py --debug            # Enable debug mode
-```
+1. [Configuration Methods](#configuration-methods)
+2. [Execution Modes](#execution-modes)
+3. [Reproducibility](#reproducibility)
+4. [Parameter Sweeps](#parameter-sweeps)
+5. [HPC Integration](#hpc-integration)
+6. [Pipelines](#pipelines)
+7. [Smart Caching](#smart-caching)
+8. [Common Patterns](#common-patterns)
+9. [Tips & Best Practices](#tips--best-practices)
 
 ---
 
@@ -382,96 +349,7 @@ print(f"Best LR: {best.cfg.lr}")
 
 ## HPC Integration
 
-Execute experiments on HPC clusters using Slurm or PBS.
-
-### Slurm Configuration
-
-**slurm.yaml:**
-```yaml
-startup_lines:
-  - "#SBATCH --job-name=flexlock"
-  - "#SBATCH --cpus-per-task=8"
-  - "#SBATCH --mem=32G"
-  - "#SBATCH --time=04:00:00"
-  - "#SBATCH --gres=gpu:1"
-  - "#SBATCH --array=0-99"    # 100 workers
-  - "module load cuda/11.8"
-  - "source activate myenv"
-
-python_exe: "python"
-```
-
-**CLI:**
-```bash
-flexlock-run -d config -s train \
-  --sweep-file sweep.yaml \
-  --slurm-config slurm.yaml
-```
-
-**Python:**
-```python
-results = proj.submit(
-    cfg,
-    sweep=sweep,
-    slurm_config='slurm.yaml',
-    wait=True  # Block until completion
-)
-```
-
----
-
-### PBS Configuration
-
-**pbs.yaml:**
-```yaml
-startup_lines:
-  - "#PBS -l select=1:ncpus=8:mem=32gb"
-  - "#PBS -l walltime=04:00:00"
-  - "#PBS -N flexlock"
-  - "#PBS -J 0-99"  # 100 workers
-  - "cd $PBS_O_WORKDIR"
-  - "conda activate myenv"
-
-python_exe: "python"
-```
-
-**CLI:**
-```bash
-flexlock-run -d config -s train \
-  --sweep-file sweep.yaml \
-  --pbs-config pbs.yaml
-```
-
----
-
-### Containerized Execution
-
-**Singularity:**
-```yaml
-# pbs_singularity.yaml
-startup_lines:
-  - "#PBS -l select=1:ncpus=4"
-  - "cd $PBS_O_WORKDIR"
-
-python_exe: |
-  singularity run
-  --bind $(pwd)/src:/app/src
-  --bind $(pwd)/outputs:/workspace/outputs
-  --pwd /workspace
-  myenv.sif python
-```
-
-**Docker:**
-```yaml
-startup_lines:
-  - "cd $WORKSPACE"
-
-python_exe: |
-  docker run
-  -v $(pwd):/workspace
-  -w /workspace
-  myimage:latest python
-```
+FlexLock supports Slurm and PBS via `--slurm-config` / `--pbs-config` (CLI) or `slurm_config=` / `pbs_config=` (`proj.submit()`). Singularity and Docker are supported through the `python_exe` field. See the **[HPC Integration guide](./hpc_integration.md)** for full configuration examples.
 
 ---
 
@@ -787,7 +665,8 @@ for fold in range(folds):
     eval_result = proj.submit(eval_cfg, smart_run=True)
     results.append(eval_result['accuracy'])
 
-print(f"CV Accuracy: {sum(results)/len(results):.4f} ± {std(results):.4f}")
+import statistics
+print(f"CV Accuracy: {sum(results)/len(results):.4f} ± {statistics.stdev(results):.4f}")
 ```
 
 ---

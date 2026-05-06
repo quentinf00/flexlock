@@ -20,7 +20,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Complete Usage Guide" href="usage_guide.html" />
+    <link rel="next" title="Usage Guide" href="usage_guide.html" />
     <link rel="prev" title="Philosophy &amp; Design" href="philosophy.html" /> 
 </head>
 
@@ -68,19 +68,12 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#getting-help">Getting Help</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#common-patterns">Common Patterns</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#pattern-1-hyperparameter-sweep">Pattern 1: Hyperparameter Sweep</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#pattern-2-multi-stage-pipeline">Pattern 2: Multi-Stage Pipeline</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#pattern-3-iterative-development">Pattern 3: Iterative Development</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#tips-tricks">Tips &amp; Tricks</a></li>
 </ul>
 </li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -185,7 +178,7 @@ Training<span class="w"> </span>with<span class="w"> </span><span class="nv">lr<
 <section id="next-multi-stage-pipelines">
 <h2>Next: Multi-Stage Pipelines<a class="headerlink" href="#next-multi-stage-pipelines" title="Link to this heading"></a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># pipeline.py</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
 
 <span class="c1"># Load configurations</span>
 <span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;configs.defaults&#39;</span><span class="p">)</span>
@@ -297,65 +290,7 @@ Differences:
 <li><p><strong>GitHub Issues</strong>: <a class="reference external" href="https://github.com/quentinf00/flexlock/issues">Report bugs</a></p></li>
 <li><p><strong>Examples</strong>: Check <code class="docutils literal notranslate"><span class="pre">examples/</span></code> in the repository</p></li>
 </ul>
-</section>
-<section id="common-patterns">
-<h2>Common Patterns<a class="headerlink" href="#common-patterns" title="Link to this heading"></a></h2>
-<section id="pattern-1-hyperparameter-sweep">
-<h3>Pattern 1: Hyperparameter Sweep<a class="headerlink" href="#pattern-1-hyperparameter-sweep" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">):</span>
-    <span class="c1"># ... training code ...</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="n">accuracy</span><span class="p">}</span>
-
-<span class="c1"># Run sweep</span>
-<span class="c1"># $ python train.py --sweep &quot;0.001,0.01,0.1&quot; --sweep-target lr --n_jobs 3</span>
-</pre></div>
-</div>
-</section>
-<section id="pattern-2-multi-stage-pipeline">
-<h3>Pattern 2: Multi-Stage Pipeline<a class="headerlink" href="#pattern-2-multi-stage-pipeline" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;config.defaults&#39;</span><span class="p">)</span>
-
-<span class="c1"># Preprocess (runs once, cached thereafter)</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">))</span>
-
-<span class="c1"># Train sweep (finds best model)</span>
-<span class="n">sweep</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">}]</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">),</span> <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">accuracy</span><span class="p">)</span>
-
-<span class="c1"># Evaluate best model</span>
-<span class="n">eval_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;evaluate&#39;</span><span class="p">)</span>
-<span class="n">eval_cfg</span><span class="o">.</span><span class="n">model_dir</span> <span class="o">=</span> <span class="n">best</span><span class="o">.</span><span class="n">save_dir</span>
-<span class="n">final</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">eval_cfg</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="pattern-3-iterative-development">
-<h3>Pattern 3: Iterative Development<a class="headerlink" href="#pattern-3-iterative-development" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Develop a stage interactively</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;preprocess&#39;</span><span class="p">)</span>
-<span class="n">config</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Add debug flag</span>
-
-<span class="c1"># Run it</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Force rerun</span>
-
-<span class="c1"># Satisfied? Let it cache</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># Will cache next time</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="tips-tricks">
-<h2>Tips &amp; Tricks<a class="headerlink" href="#tips-tricks" title="Link to this heading"></a></h2>
-<ol class="arabic simple">
-<li><p><strong>Use <code class="docutils literal notranslate"><span class="pre">smart_run=True</span></code> (default)</strong> for automatic caching</p></li>
-<li><p><strong>Add <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> to configs</strong> for organized results</p></li>
-<li><p><strong>Use <code class="docutils literal notranslate"><span class="pre">${vinc:path}</span></code> for auto-versioning</strong> directories</p></li>
-<li><p><strong>Check <code class="docutils literal notranslate"><span class="pre">run.lock</span></code></strong> to understand what was tracked</p></li>
-<li><p><strong>Use sweeps for exploration</strong>, not just grid search</p></li>
-</ol>
-<p>Ready to dive deeper? Continue with the <a class="reference internal" href="usage_guide.html"><span class="std std-doc">Usage Guide</span></a>!</p>
+<p>Ready to dive deeper? Continue with the <a class="reference internal" href="usage_guide.html"><span class="std std-doc">Usage Guide</span></a>.</p>
 </section>
 </section>
 
@@ -364,7 +299,7 @@ Differences:
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="philosophy.html" class="btn btn-neutral float-left" title="Philosophy &amp; Design" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="usage_guide.html" class="btn btn-neutral float-right" title="Complete Usage Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="usage_guide.html" class="btn btn-neutral float-right" title="Usage Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

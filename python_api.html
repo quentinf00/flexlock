@@ -50,7 +50,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -66,7 +66,6 @@
 <li class="toctree-l4"><a class="reference internal" href="#partial-functions">Partial Functions</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#instantiate-execute-configurations"><code class="docutils literal notranslate"><span class="pre">instantiate</span></code>: Execute Configurations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#flexcli-command-line-decorator"><code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>: Command-Line Decorator</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id1">Basic Usage</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#with-defaults">With Defaults</a></li>
@@ -238,30 +237,6 @@
 </section>
 </section>
 <hr class="docutils" />
-<section id="instantiate-execute-configurations">
-<h3><code class="docutils literal notranslate"><span class="pre">instantiate</span></code>: Execute Configurations<a class="headerlink" href="#instantiate-execute-configurations" title="Link to this heading"></a></h3>
-<p>Execute a configuration dictionary by instantiating the target.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">instantiate</span>
-
-<span class="n">cfg</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;_target_&#39;</span><span class="p">:</span> <span class="s1">&#39;myproject.train.train&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;lr&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>
-    <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="mi">100</span>
-<span class="p">}</span>
-
-<span class="c1"># Execute</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">instantiate</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Behavior:</strong></p>
-<ul class="simple">
-<li><p>Imports the module and function specified in <code class="docutils literal notranslate"><span class="pre">_target_</span></code></p></li>
-<li><p>Passes config parameters as keyword arguments</p></li>
-<li><p>Handles <code class="docutils literal notranslate"><span class="pre">_args_</span></code> for positional arguments</p></li>
-<li><p>Supports <code class="docutils literal notranslate"><span class="pre">_partial_</span></code> for partial instantiation</p></li>
-</ul>
-</section>
-<hr class="docutils" />
 <section id="flexcli-command-line-decorator">
 <h3><code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>: Command-Line Decorator<a class="headerlink" href="#flexcli-command-line-decorator" title="Link to this heading"></a></h3>
 <p>Transform a Python function into a CLI-enabled experiment.</p>
@@ -323,14 +298,12 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
 </section>
 <section id="debug-mode">
 <h4>Debug Mode<a class="headerlink" href="#debug-mode" title="Link to this heading"></a></h4>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># or set FLEXLOCK_DEBUG=1</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">lr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid lr&quot;</span><span class="p">)</span>
-
-<span class="c1"># On error: Drops into interactive debugger</span>
+<p>Enable debug mode via the <code class="docutils literal notranslate"><span class="pre">--debug</span></code> CLI flag or the <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG=1</span></code> environment variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>train.py<span class="w"> </span>--debug
+<span class="nv">FLEXLOCK_DEBUG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>train.py
 </pre></div>
 </div>
+<p>On error, FlexLock drops into an interactive debugger. See <a class="reference internal" href="debugging.html"><span class="std std-doc">Debugging</span></a> for details.</p>
 </section>
 </section>
 </section>
