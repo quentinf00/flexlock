@@ -142,6 +142,12 @@ class FlexLockRunner:
         backend.add_argument(
             "--pbs-config", help="Path to PBS configuration YAML file for HPC execution"
         )
+        backend_group.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Render the HPC submission script and exit without submitting "
+            "(also prints validation warnings).",
+        )
 
         return parser
 
@@ -264,6 +270,7 @@ class FlexLockRunner:
             merge=args.merge_after_select,
             debug=debug,
             print_config=args.print_config,
+            dry_run=getattr(args, "dry_run", False),
         )
 
         # Back-compat: the runner historically returned the user function's

@@ -99,6 +99,42 @@ startup_lines:
 python_exe: python
 ```
 
+### Pre-flight checks: validation and dry-run
+
+FlexLock validates every Slurm submission against a short checklist drawn
+from the most common silent failures. Each missing piece produces a
+warning (not an error — power-user setups may intentionally omit them):
+
+| Missing | Symptom on the cluster |
+|---|---|
+| `#SBATCH --partition` (or `-p`) | Job lands on the default queue, often CPU when GPU was intended |
+| `cd` to the submission dir | Relative paths in user code resolve against `$HOME` on the node |
+| Env activation (`eval`, `source`, `conda/mamba activate`, `module load`, `pixi run/shell`, `spack load`) | Imports fail on the compute node |
+| `--gres` / `--gpus` when GPU expected | Job runs on CPU silently |
+
+Warnings appear in the submission log:
+
+```
+WARNING  flexlock.backends.slurm: Slurm config: No --partition directive
+```
+
+To preview the would-be submission script without sending anything to the
+cluster, pass `dry_run=True`:
+
+```python
+proj.submit(cfg, slurm_config='configs/slurm_gpu.yaml', dry_run=True)
+```
+
+Prints the rendered script plus any validation warnings, then returns
+`None` without submitting. Works without a real Slurm cluster — useful
+for verifying paths and directives locally before queueing.
+
+```bash
+# Same from the CLI:
+flexlock-run -d configs/defaults.py:defaults -s train \
+    --slurm-config configs/slurm_gpu.yaml --dry-run
+```
+
 ## Singularity Containers
 
 Singularity integration happens through the `python_exe` parameter:

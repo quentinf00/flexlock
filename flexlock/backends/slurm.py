@@ -1,11 +1,86 @@
 """Slurm backend for FlexLock parallel execution."""
 
 import cloudpickle, subprocess, os
+import re
 from pathlib import Path
 import secrets  # Better random for filenames
 import time
 from .base import Backend, Job, JobEnvironment
 from loguru import logger
+
+
+# Heuristics for recognising environment-activation lines in startup_lines.
+# These commands prepare the compute-node shell (PATH, libs, interpreters)
+# before the pickled task runs. Missing them is the wiki's most common
+# silent-failure mode ("import fails on node, looks fine locally").
+_ENV_ACTIVATION_PATTERNS = (
+    re.compile(r"\beval\s"),                   # eval "$(...)" — pixi shell-hook, conda hook
+    re.compile(r"\bsource\s"),                 # source venv/bin/activate
+    re.compile(r"\bconda\s+activate\b"),
+    re.compile(r"\bmamba\s+activate\b"),
+    re.compile(r"\bmodule\s+(load|add)\b"),    # HPC module systems
+    re.compile(r"\bpixi\s+(run|shell)\b"),
+    re.compile(r"\bspack\s+load\b"),
+)
+
+
+def validate_slurm_script(
+    script: str, *, expects_gpu: bool = False
+) -> list[str]:
+    """Return a list of human-readable warning strings for a Slurm script.
+
+    Empty list means no concerns. Each warning is independent — callers
+    decide whether to log or print. Validation is intentionally lenient
+    (warn, never fail) because power-user setups may intentionally omit
+    pieces this function expects.
+    """
+    warnings: list[str] = []
+
+    sbatch_lines = [
+        ln.strip() for ln in script.splitlines() if ln.strip().startswith("#SBATCH")
+    ]
+    body_lines = [
+        ln for ln in script.splitlines()
+        if ln.strip() and not ln.strip().startswith(("#!", "#SBATCH"))
+    ]
+
+    # 1. --partition is the most common forgotten directive — jobs land on
+    #    the default queue, often a CPU one when a GPU was wanted.
+    if not any("--partition" in ln or "-p " in ln for ln in sbatch_lines):
+        warnings.append(
+            "No --partition directive found. The job will land on the "
+            "cluster's default queue, which may not be the one you want."
+        )
+
+    # 2. cd to the submission dir keeps relative paths in user code working
+    #    from the compute node.
+    if not any(re.search(r"\bcd\b", ln) for ln in body_lines):
+        warnings.append(
+            "No 'cd' command in startup_lines. Relative paths in your "
+            "code will resolve against the compute node's HOME, not the "
+            "submission directory. Add 'cd $SLURM_SUBMIT_DIR' to "
+            "startup_lines."
+        )
+
+    # 3. Some form of env activation is almost always needed.
+    if not any(p.search(ln) for ln in body_lines for p in _ENV_ACTIVATION_PATTERNS):
+        warnings.append(
+            "No environment-activation command detected in startup_lines "
+            "(eval, source, conda/mamba activate, module load, pixi run/shell). "
+            "Python imports may fail on the compute node."
+        )
+
+    # 4. If the caller flagged this as a GPU config but the script doesn't
+    #    request a GPU, surface it.
+    if expects_gpu and not any(
+        "--gres" in ln or "--gpus" in ln for ln in sbatch_lines
+    ):
+        warnings.append(
+            "GPU config requested but no --gres or --gpus directive in "
+            "startup_lines. The job will run on CPU silently."
+        )
+
+    return warnings
 
 
 class SlurmJob(Job):
@@ -54,6 +129,14 @@ class SlurmBackend(Backend):
         self.configure_logging = configure_logging
         self.python_exe = python_exe
 
+    def render_script(self, pickled_path: "Path | str | None" = None) -> str:
+        """Render the would-be Slurm script without submitting.
+
+        ``pickled_path`` defaults to a placeholder path so users can preview
+        the script (e.g. via ``dry_run=True``) before any pickling happens.
+        """
+        return self._make_script(Path(pickled_path or "<pickled-task.pkl>"))
+
     def _make_script(self, pickled_path: Path) -> str:
         """Generates the Slurm submission script content."""
         lines = ["#!/bin/bash"]
@@ -91,7 +174,11 @@ class SlurmBackend(Backend):
             cloudpickle.dump(data, f)
 
         script_path = self.folder / f"job_{secrets.token_hex(4)}.slurm"
-        script_path.write_text(self._make_script(pkl_path))
+        script = self._make_script(pkl_path)
+        script_path.write_text(script)
+
+        for w in validate_slurm_script(script):
+            logger.warning(f"Slurm config: {w}")
 
         out = subprocess.check_output(["sbatch", str(script_path)], text=True).strip()
         job_id = out.split()[-1]

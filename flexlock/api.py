@@ -354,6 +354,7 @@ class Project:
         merge: "str | Path | dict | None" = None,
         debug: bool = False,
         print_config: bool = False,
+        dry_run: bool = False,
     ) -> "ExecutionResult | List[ExecutionResult] | None":
         """Submit a configuration for execution.
 
@@ -390,6 +391,10 @@ class Project:
                 exceptions drop into PDB.
             print_config: Print the fully-resolved config and return
                 ``None`` without executing.
+            dry_run: When using an HPC backend, render the would-be Slurm
+                or PBS submission script, print it (with any validation
+                warnings), and return ``None`` without submitting. No-op
+                for local execution.
 
         Returns:
             ``ExecutionResult`` (single), ``List[ExecutionResult]`` (sweep),
@@ -468,6 +473,13 @@ class Project:
 
         # Check if using HPC backend
         use_hpc = pbs_config is not None or slurm_config is not None
+
+        if dry_run:
+            if not use_hpc:
+                logger.info("dry_run is a no-op for local execution.")
+                return None
+            self._preview_hpc_script(config, slurm_config, pbs_config)
+            return None
 
         if use_hpc:
             # Execute via HPC backend
@@ -586,6 +598,61 @@ class Project:
             return ExecutionResult(
                 save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config
             )
+
+    @staticmethod
+    def _preview_hpc_script(config, slurm_config, pbs_config):
+        """Render the would-be HPC submission script and print it.
+
+        Used by ``submit(..., dry_run=True)``. Loads the backend YAML the
+        same way :class:`ParallelExecutor` would, instantiates the backend
+        targeting a temporary folder, and prints the rendered script plus
+        any validation warnings.
+        """
+        import tempfile
+
+        save_dir = Path(config.get("save_dir", "outputs/job"))
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            if slurm_config:
+                from .backends.slurm import SlurmBackend, validate_slurm_script
+
+                params = OmegaConf.to_container(
+                    OmegaConf.load(slurm_config), resolve=True
+                )
+                # Match ParallelExecutor's folder convention so paths in
+                # the preview look like the real submission.
+                params_folder = save_dir / "slurm_logs"
+                backend = SlurmBackend(folder=folder, **params)
+                script = backend.render_script()
+                # Rewrite the temp folder path to the would-be real one so
+                # the preview is faithful.
+                script = script.replace(str(folder), str(params_folder))
+
+                print("# === Slurm submission script (dry run) ===")
+                print(script)
+                print("# === end ===")
+                warnings = validate_slurm_script(script)
+                if warnings:
+                    print("\n# Warnings:")
+                    for w in warnings:
+                        print(f"#   - {w}")
+            elif pbs_config:
+                from .backends.pbs import PBSBackend
+
+                params = OmegaConf.to_container(
+                    OmegaConf.load(pbs_config), resolve=True
+                )
+                backend = PBSBackend(folder=folder, **params)
+                # PBS backend may or may not expose render_script — fall
+                # back to printing the YAML if not.
+                if hasattr(backend, "render_script"):
+                    print("# === PBS submission script (dry run) ===")
+                    print(backend.render_script())
+                    print("# === end ===")
+                else:
+                    print("# === PBS config (dry run) ===")
+                    print(OmegaConf.to_yaml(OmegaConf.create(params)))
+                    print("# === end ===")
 
     @staticmethod
     def _validate_sweep_save_dirs(base_config, merged_items):
