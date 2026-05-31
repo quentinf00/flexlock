@@ -400,6 +400,52 @@ best = max(results, key=lambda r: r['accuracy'])
 print(f"Best config: {best.cfg}")
 ```
 
+**Per-item `save_dir` containment.** Each sweep item's `save_dir` must
+nest under the sweep root (taken from the base config's `save_dir`, or
+the first item's parent dir). The tasks DB and per-item lineage markers
+all live in the sweep root tree. Violating containment raises a
+`FlexLockValidationError` listing the offending items before any work is
+queued.
+
+**Tracking per-item `save_dir` in derived paths.** Use *intra-node*
+references (relative to the same config node) rather than absolute root
+references:
+
+```python
+# ✅ Tracks per-item save_dir overrides — recommended
+cfg = py2cfg(train,
+    save_dir='outputs/train',
+    log_dir='${save_dir}/logs',           # intra-node ref
+    ckpt_dir='${save_dir}/checkpoints',
+)
+proj.submit(cfg, sweep=[
+    dict(save_dir='outputs/sweep/a'),     # log_dir becomes outputs/sweep/a/logs
+    dict(save_dir='outputs/sweep/b'),
+])
+
+# ❌ Frozen at proj.get() time — won't track sweep overrides
+cfg = py2cfg(train,
+    save_dir='outputs/train',
+    log_dir='${main.save_dir}/logs',      # cross-tree ref
+)
+```
+
+Cross-tree refs (`${main.save_dir}`, `${root_anchor}`) are frozen to
+concrete values at `proj.get()` so the sub-node remains self-contained
+under pickling and merge. Intra-node refs (`${save_dir}`,
+`${some_local_key}`) are preserved and re-resolve on each sweep item.
+
+**Previewing a sweep.** Set `print_config=True` while passing `sweep=...`
+to print each item's fully-merged config without executing:
+
+```python
+proj.submit(cfg, sweep=sweep, print_config=True)
+# --- sweep item 0 ---
+# lr: 0.001
+# batch_size: 32
+# ...
+```
+
 #### HPC Execution (Slurm)
 
 ```python

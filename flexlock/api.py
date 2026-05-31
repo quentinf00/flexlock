@@ -415,7 +415,18 @@ class Project:
             config.merge_with(OmegaConf.from_dotlist(overrides))
 
         if print_config:
-            print(OmegaConf.to_yaml(config))
+            # When a sweep is given, preview each item's merged config so
+            # the user can verify per-item interpolations resolve correctly
+            # before launching.
+            if sweep:
+                from .utils import merge_task_into_cfg
+
+                for i, override in enumerate(sweep):
+                    item_cfg = merge_task_into_cfg(config, override, sweep_target)
+                    print(f"# --- sweep item {i} ---")
+                    print(OmegaConf.to_yaml(item_cfg))
+            else:
+                print(OmegaConf.to_yaml(config))
             return None
 
         if force:
@@ -576,6 +587,53 @@ class Project:
                 save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config
             )
 
+    @staticmethod
+    def _validate_sweep_save_dirs(base_config, merged_items):
+        """Ensure every sweep item's save_dir nests under the sweep root.
+
+        The sweep root is taken from ``base_config.save_dir`` when present,
+        otherwise from the parent of the first item's save_dir. The tasks
+        DB and per-item lineage markers all assume containment; violating
+        it produces an opaque crash in the worker.
+        """
+        from .exceptions import FlexLockValidationError
+
+        if not merged_items:
+            return
+
+        # Determine sweep root.
+        if "save_dir" in base_config and base_config.save_dir is not None:
+            sweep_root = Path(base_config.save_dir).resolve()
+        else:
+            first_save = merged_items[0][1].get("save_dir")
+            if first_save is None:
+                return  # nothing to validate against
+            sweep_root = Path(first_save).resolve().parent
+
+        offenders = []
+        for i, sweep_cfg in merged_items:
+            sd = sweep_cfg.get("save_dir")
+            if sd is None:
+                continue
+            try:
+                Path(sd).resolve().relative_to(sweep_root)
+            except ValueError:
+                offenders.append((i, sd))
+
+        if offenders:
+            lines = [
+                f"  item {i}: save_dir={sd!r}" for i, sd in offenders
+            ]
+            raise FlexLockValidationError(
+                f"Sweep item save_dir(s) must nest under the sweep root "
+                f"({sweep_root}); the tasks DB and lineage markers live "
+                f"there. Offending items:\n"
+                + "\n".join(lines)
+                + f"\n\nFix: nest each item under {sweep_root} (e.g. "
+                f"{sweep_root}/<exp_name>/), or change the sweep root "
+                f"via overrides={{'save_dir': '<common_parent>'}}."
+            )
+
     @classmethod
     def submit_config(cls, config=None, **kwargs):
         """Shortcut for one-off submissions without holding a Project instance.
@@ -629,22 +687,31 @@ class Project:
         configs_to_run = []
         cached_results = []
 
-        # Check each sweep config for cached results
+        # Build sweep configs first so we can validate save_dir containment
+        # in one place, before any execution.
+        merged_items = []
         for i, override in enumerate(sweep):
             sweep_cfg = merge_task_into_cfg(base_config, override, sweep_target)
-
-            # This makes the config self-contained for DB serialization.
+            # Make self-contained for DB serialization.
             sweep_cfg = OmegaConf.create(
                 OmegaConf.to_container(sweep_cfg, resolve=True)
             )
-
-            # Update save_dir to include sweep index
             if dir_suffix and "save_dir" in sweep_cfg:
                 base_save_dir = Path(sweep_cfg.save_dir)
                 sweep_cfg.save_dir = str(
                     base_save_dir.parent / f"{base_save_dir.name}_sweep_{i:04d}"
                 )
+            merged_items.append((i, sweep_cfg))
 
+        # Validate per-item save_dir containment up front. The tasks DB lives
+        # at <sweep_root>/run.lock.tasks.db and each task records its path
+        # relative to its parent dir. If items sit outside the sweep tree the
+        # worker either fails opaquely (pre-validation) or can't form a
+        # relative path. Surface a clear error before we queue anything.
+        self._validate_sweep_save_dirs(base_config, merged_items)
+
+        # Check each sweep config for cached results
+        for i, sweep_cfg in merged_items:
             if smart_run:
                 match_dir = self._find_matching_run(
                     sweep_cfg, search_dirs, match_include, match_exclude

@@ -69,14 +69,19 @@ def worker_loop(func, cfg, task_to: str, db_path):
                 update_task_snapshot(db_path, task_id, snapshot_data)
                 logger.debug(f"Stored snapshot for task {task_id} in database")
 
-            # Write marker file for lineage discovery
+            # Write marker file for lineage discovery. Prefer a path
+            # relative to the task's parent dir (keeps the marker portable
+            # if the sweep tree is moved together) but fall back to the
+            # absolute path if the DB lives outside the task tree.
             import json
 
             marker_file = task_save_dir / ".flexlock_marker"
-            marker_data = {
-                "db": str(Path(db_path).relative_to(task_save_dir.parent)),
-                "task_id": task_id,
-            }
+            db_abs = Path(db_path).resolve()
+            try:
+                db_str = str(db_abs.relative_to(task_save_dir.parent.resolve()))
+            except ValueError:
+                db_str = str(db_abs)
+            marker_data = {"db": db_str, "task_id": task_id}
             marker_file.write_text(json.dumps(marker_data, indent=2))
             logger.debug(f"Wrote marker file at {marker_file}")
 
