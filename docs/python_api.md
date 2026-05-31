@@ -161,9 +161,32 @@ The `Project` class provides high-level orchestration for multi-stage experiment
 ```python
 from flexlock import Project
 
-# Load from Python module
+# Load defaults from a Python module
 proj = Project(defaults='myproject.config.defaults')
+
+# Or from a file path (colon syntax)
+proj = Project(defaults='configs/defaults.py:defaults')
+
+# Or from a pre-built DictConfig / dict
+proj = Project(defaults={'train': {'lr': 0.01}})
+
+# Or with no defaults — useful for one-off submissions
+proj = Project()
 ```
+
+### One-off submission without a Project
+
+For a single config that doesn't need pipeline plumbing:
+
+```python
+from flexlock import submit, py2cfg
+
+cfg = py2cfg(train, lr=0.01, save_dir='outputs/train')
+result = submit(cfg, slurm_config='configs/slurm_gpu.yaml')
+```
+
+`flexlock.submit` is a thin wrapper over `Project().submit` — all kwargs
+(`sweep`, `smart_run`, `overrides`, `force`, etc.) are forwarded.
 
 **Python module structure:**
 ```python

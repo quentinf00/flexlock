@@ -59,18 +59,33 @@ class ExecutionResult:
 
 
 class Project:
-    def __init__(self, defaults: str = None):
-        """
-        Initialize a FlexLock project.
+    def __init__(self, defaults: "str | DictConfig | dict | None" = None):
+        """Initialize a FlexLock project.
 
         Args:
-            defaults: Python import path (e.g., pkg.config.defaults) containing the schema.
+            defaults: One of:
+                - Python import path string (``'pkg.config.defaults'`` or
+                  ``'path/to/file.py:defaults'``)
+                - A pre-built ``DictConfig`` or plain dict
+                - ``None`` for a project with no defaults — useful for
+                  one-off submissions of an explicit config.
         """
-        self.defaults_str = defaults
-        defaults_dict = load_python_defaults(self.defaults_str)
-        if not isinstance(defaults_dict, DictConfig):
-            defaults_dict = OmegaConf.create(defaults_dict)
-        self.defaults = defaults_dict
+        if defaults is None:
+            self.defaults_str = None
+            self.defaults = OmegaConf.create({})
+        elif isinstance(defaults, str):
+            self.defaults_str = defaults
+            loaded = load_python_defaults(defaults)
+            self.defaults = (
+                loaded if isinstance(loaded, DictConfig) else OmegaConf.create(loaded)
+            )
+        else:
+            self.defaults_str = None
+            self.defaults = (
+                defaults
+                if isinstance(defaults, DictConfig)
+                else OmegaConf.create(defaults)
+            )
 
     def get(self, key: str):
         """
@@ -560,6 +575,18 @@ class Project:
             return ExecutionResult(
                 save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config
             )
+
+    @classmethod
+    def submit_config(cls, config=None, **kwargs):
+        """Shortcut for one-off submissions without holding a Project instance.
+
+        Equivalent to ``Project().submit(config, **kwargs)``. Use this when
+        you already have a ``DictConfig`` (from ``py2cfg`` or otherwise) and
+        don't need ``proj.get``/``proj.exists``/``proj.defaults`` plumbing.
+
+        See :func:`flexlock.submit` for the module-level alias.
+        """
+        return cls().submit(config, **kwargs)
 
     def _submit_sweep(
         self,

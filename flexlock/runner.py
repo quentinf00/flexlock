@@ -251,9 +251,7 @@ class FlexLockRunner:
         )
 
         # Hand off to the single execution kernel.
-        proj = Project.__new__(Project)
-        proj.defaults_str = None
-        proj.defaults = root_cfg
+        proj = Project(root_cfg)
         outcome = proj.submit(
             node_cfg,
             sweep=sweep_tasks or None,

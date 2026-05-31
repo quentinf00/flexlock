@@ -230,6 +230,53 @@ def test_submit_sweep_target_routes_items(tmp_path):
     assert sorted(lrs) == [0.5, 0.9]
 
 
+# --- Module-level submit & Project(None) ---
+
+def test_project_no_args_creates_empty_defaults():
+    """Project() with no arguments works and has empty defaults."""
+    from flexlock import Project
+
+    proj = Project()
+    assert proj.defaults is not None
+    assert len(proj.defaults) == 0
+
+
+def test_project_accepts_dictconfig_defaults():
+    """Project(DictConfig) accepts a pre-built config directly."""
+    from flexlock import Project
+
+    cfg = OmegaConf.create({"stage": {"x": 1}})
+    proj = Project(cfg)
+    assert proj.defaults is cfg or proj.get("stage").x == 1
+
+
+def test_module_level_submit(tmp_path):
+    """flexlock.submit(cfg, **kw) goes through the full submit path."""
+    import flexlock
+
+    cfg = OmegaConf.create({"save_dir": str(tmp_path / "out"), "x": 1})
+    with patch("flexlock.api.snapshot"), patch(
+        "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
+    ), patch("flexlock.api.instantiate", return_value={"ok": True}) as mock_inst:
+        result = flexlock.submit(cfg, smart_run=False)
+
+    assert result.status == "SUCCESS"
+    assert mock_inst.call_args[0][0].x == 1
+
+
+def test_project_submit_config_classmethod(tmp_path):
+    """Project.submit_config classmethod is equivalent to Project().submit."""
+    from flexlock import Project
+
+    cfg = OmegaConf.create({"save_dir": str(tmp_path / "out"), "x": 2})
+    with patch("flexlock.api.snapshot"), patch(
+        "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
+    ), patch("flexlock.api.instantiate", return_value={}) as mock_inst:
+        Project.submit_config(cfg, smart_run=False)
+
+    assert mock_inst.call_args[0][0].x == 2
+
+
 def test_submit_without_sweep_target_merges_at_root(tmp_path):
     """Default behavior: sweep items merge at root of base_config."""
     from flexlock.api import Project

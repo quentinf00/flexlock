@@ -12,6 +12,24 @@ from .mlflow import mlflow_context
 from .debug import debug_on_fail
 from .resolvers import register_resolvers
 from .api import Project
+
+
+def submit(config=None, **kwargs):
+    """Submit a configuration without instantiating a :class:`Project`.
+
+    Sugar over ``Project().submit(config, **kwargs)`` — use when you have a
+    ready ``DictConfig`` and don't need the multi-stage pipeline plumbing
+    (``proj.get``, ``proj.defaults``, etc.). All ``Project.submit`` kwargs
+    (``sweep``, ``slurm_config``, ``smart_run``, ``overrides``, …) are
+    forwarded as-is.
+
+    Example::
+
+        from flexlock import submit, py2cfg
+        cfg = py2cfg(train, lr=0.01, save_dir='outputs/train')
+        result = submit(cfg, slurm_config='configs/slurm_gpu.yaml')
+    """
+    return Project().submit(config, **kwargs)
 from .utils import (
     py2cfg,
     load_python_defaults,
@@ -45,6 +63,7 @@ __all__ = [
     "mlflow_context",
     "debug_on_fail",
     "Project",
+    "submit",
     "py2cfg",
     "load_python_defaults",
     "load_sweep",
