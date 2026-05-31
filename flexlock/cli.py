@@ -354,6 +354,39 @@ def cmd_gc(args):
         print(f"No runs found under {search_root}")
         return
 
+    # --incomplete: prune only run dirs that have run.lock but no run.complete.
+    # These are previous attempts interrupted before the user function returned;
+    # no tag protection logic is needed (they were never completed).
+    if getattr(args, "incomplete", False):
+        incomplete = [
+            r for r in runs
+            if not (Path(r["path"]) / "run.complete").exists()
+        ]
+        if not incomplete:
+            print("No incomplete runs found.")
+            return
+        print(f"Found {len(incomplete)} incomplete run(s) (run.lock without run.complete):")
+        for run in incomplete:
+            print(f"  {run['path']}")
+        if args.dry_run:
+            print("\n(dry run — no files deleted)")
+            return
+        if not args.force:
+            answer = input(f"\nDelete {len(incomplete)} incomplete run directories? [y/N] ")
+            if answer.lower() not in ("y", "yes"):
+                print("Aborted.")
+                return
+        import shutil
+        deleted = 0
+        for run in incomplete:
+            try:
+                shutil.rmtree(run["path"])
+                deleted += 1
+            except Exception as e:
+                print(f"  Error deleting {run['path']}: {e}", file=sys.stderr)
+        print(f"Deleted {deleted} incomplete run directories.")
+        return
+
     repo = find_git_repo(search_root)
 
     # Collect tagged paths
@@ -483,6 +516,65 @@ def _gc_shadow_refs(repo, protected_paths):
 
 # ── Main entry point ───────────────────────────────────────────
 
+def cmd_migrate_cache_markers(args):
+    """Backfill run.complete for pre-existing dirs that look complete.
+
+    The old heuristic (lock + any non-lock file present) is applied once
+    to existing run dirs so they remain cache-hits after the upgrade to
+    explicit completion markers.
+    """
+    from .snapshot import write_complete_marker
+
+    search_root = args.path or "."
+    runs = find_results_dirs(search_root)
+    if not runs:
+        print(f"No runs found under {search_root}")
+        return
+
+    candidates = []
+    for run in runs:
+        p = Path(run["path"])
+        if (p / "run.complete").exists():
+            continue
+        has_output = False
+        for f in p.iterdir():
+            if f.name in ("run.lock", "run.complete"):
+                continue
+            if f.name.startswith("."):
+                continue
+            has_output = True
+            break
+        if has_output:
+            candidates.append(p)
+
+    if not candidates:
+        print("No runs to migrate — every complete-looking dir already has run.complete.")
+        return
+
+    print(f"Will backfill run.complete in {len(candidates)} dir(s):")
+    for p in candidates:
+        print(f"  {p}")
+
+    if args.dry_run:
+        print("\n(dry run — no markers written)")
+        return
+
+    if not args.force:
+        answer = input(f"\nWrite run.complete in {len(candidates)} dirs? [y/N] ")
+        if answer.lower() not in ("y", "yes"):
+            print("Aborted.")
+            return
+
+    written = 0
+    for p in candidates:
+        try:
+            write_complete_marker(p)
+            written += 1
+        except Exception as e:
+            print(f"  Error writing marker for {p}: {e}", file=sys.stderr)
+    print(f"Wrote {written} markers.")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="flexlock",
@@ -513,7 +605,22 @@ def main():
     gc_parser.add_argument("-n", "--dry-run", action="store_true", help="Show what would be deleted")
     gc_parser.add_argument("-f", "--force", action="store_true", help="Skip confirmation")
     gc_parser.add_argument("--refs", action="store_true", help="Also clean orphaned shadow git refs")
+    gc_parser.add_argument(
+        "--incomplete",
+        action="store_true",
+        help="Only delete run dirs with run.lock but no run.complete (interrupted attempts)",
+    )
     gc_parser.set_defaults(func=cmd_gc)
+
+    # migrate-cache-markers
+    mig_parser = subparsers.add_parser(
+        "migrate-cache-markers",
+        help="Backfill run.complete for existing complete-looking run dirs",
+    )
+    mig_parser.add_argument("path", nargs="?", help="Root directory to search (default: .)")
+    mig_parser.add_argument("-n", "--dry-run", action="store_true")
+    mig_parser.add_argument("-f", "--force", action="store_true", help="Skip confirmation")
+    mig_parser.set_defaults(func=cmd_migrate_cache_markers)
 
     args = parser.parse_args()
 

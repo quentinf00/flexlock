@@ -6,7 +6,7 @@ from loguru import logger
 from multiprocessing import Process
 from .taskdb import claim_next_task, finish_task, pending_count
 from flexlock.utils import merge_task_into_cfg, instantiate, extract_tracking_info
-from flexlock.snapshot import snapshot
+from flexlock.snapshot import snapshot, write_complete_marker
 from pathlib import Path
 from omegaconf import OmegaConf
 
@@ -83,6 +83,7 @@ def worker_loop(func, cfg, task_to: str, db_path):
             # 5. Execute
             result = func(task_cfg)
             logger.info(f"Task successful: {task_cfg}")
+            write_complete_marker(task_save_dir, result=result)
             finish_task(db_path, task, result=result)
         except Exception as e:
             logger.error(f"Task failed: {e}", exc_info=True)

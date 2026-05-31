@@ -1,5 +1,6 @@
 """Snapshotting utilities for FlexLock."""
 
+import json
 import tempfile
 import os
 from datetime import datetime
@@ -10,6 +11,33 @@ from .data_hash import hash_data
 from .load_stage import load_stage_from_path
 from loguru import logger
 import uuid
+
+COMPLETE_MARKER = "run.complete"
+COMPLETE_VERSION = 1
+
+
+def write_complete_marker(save_dir: Path, result=None) -> Path:
+    """Write run.complete atomically into ``save_dir``.
+
+    Marks a run as successfully finished. ``_find_matching_run`` requires
+    both ``run.lock`` and ``run.complete`` for a cache hit.
+    """
+    save_dir = Path(save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
+    payload = {"ts": datetime.now().isoformat(), "version": COMPLETE_VERSION}
+    if result is not None:
+        payload["has_result"] = True
+    with tempfile.NamedTemporaryFile("w", dir=save_dir, delete=False) as tf:
+        json.dump(payload, tf)
+        tmp_name = tf.name
+    os.replace(tmp_name, save_dir / COMPLETE_MARKER)
+    return save_dir / COMPLETE_MARKER
+
+
+def is_complete(run_dir: Path) -> bool:
+    """Return True if ``run_dir`` has both ``run.lock`` and ``run.complete``."""
+    p = Path(run_dir)
+    return (p / "run.lock").exists() and (p / COMPLETE_MARKER).exists()
 
 
 class RunTracker:
@@ -97,7 +125,21 @@ class RunTracker:
             tmp_name = tf.name
         os.replace(tmp_name, resolved_save_dir / "run.lock")
 
+        # Remember the resolved dir so mark_complete can write next to run.lock
+        self._resolved_save_dir = resolved_save_dir
+
         return snapshot_data
+
+    def mark_complete(self, result=None) -> Path:
+        """Write ``run.complete`` next to the previously-written ``run.lock``.
+
+        Call this only after the user function returns successfully. The
+        ``_find_matching_run`` cache check requires both files; an
+        interrupted run leaves ``run.lock`` without ``run.complete`` and is
+        correctly skipped instead of being treated as a stale cache hit.
+        """
+        target = getattr(self, "_resolved_save_dir", self.save_dir)
+        return write_complete_marker(target, result=result)
 
 
 def snapshot(

@@ -18,7 +18,7 @@ from .utils import (
 )
 from .debug import debug_on_fail
 from .parallel import ParallelExecutor
-from .snapshot import snapshot
+from .snapshot import snapshot, write_complete_marker
 from .diff import RunDiff
 from .exceptions import FlexLockValidationError, FlexLockConfigError
 from . import config
@@ -407,4 +407,7 @@ class FlexLockRunner:
             with open_dict(node_cfg):
                 del node_cfg["_snapshot_"]
 
-        return run_func(node_cfg)
+        result = run_func(node_cfg)
+        if "save_dir" in node_cfg:
+            write_complete_marker(Path(node_cfg.save_dir), result=result)
+        return result

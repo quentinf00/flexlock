@@ -6,14 +6,13 @@ from loguru import logger
 from typing import List, Dict, Any, Optional
 import yaml
 import json
-import shutil
 from .utils import (
     instantiate,
     load_python_defaults,
     extract_tracking_info,
     select_and_freeze_root_refs,
 )
-from .snapshot import snapshot, RunTracker
+from .snapshot import snapshot, RunTracker, write_complete_marker
 from .diff import RunDiff
 from . import config as flexlock_config
 
@@ -194,21 +193,12 @@ class Project:
                     )
 
                     if differ.is_match():
-                        # Validate that the run isn't stale (interrupted before outputs saved)
-                        # A run is considered stale if it contains run.lock but no actual outputs.
-                        # We check for results.json or any non-hidden file other than run.lock.
-                        is_stale = True
-                        if (run_dir / "results.json").exists():
-                            is_stale = False
-                        else:
-                            for f in run_dir.iterdir():
-                                if f.name != "run.lock" and not f.name.startswith("."):
-                                    is_stale = False
-                                    break
-                        
-                        if is_stale:
+                        # Require run.complete — interrupted runs left only
+                        # run.lock and must not be treated as cache hits.
+                        if not (run_dir / "run.complete").exists():
                             logger.debug(
-                                f"Ignoring stale cache hit at {run_dir} (no outputs found)"
+                                f"Match at {run_dir} has no run.complete "
+                                f"(previous attempt incomplete); skipping"
                             )
                             continue
 
@@ -357,13 +347,14 @@ class Project:
             config = OmegaConf.create(config)
 
         if force:
-            # Clear save_dir if it exists
-            save_dir = config.get("save_dir", "outputs/job")
-            if Path(save_dir).exists():
-                logger.info(f"Force flag enabled: clearing save_dir {save_dir}")
-                shutil.rmtree(save_dir)
-            
-            # Force execution by disabling smart_run
+            # Invalidate the cache for this save_dir without touching outputs.
+            # Removing only run.complete causes _find_matching_run to skip
+            # the dir; the user function will overwrite outputs in place.
+            save_dir = Path(config.get("save_dir", "outputs/job"))
+            marker = save_dir / "run.complete"
+            if marker.exists():
+                logger.info(f"Force flag enabled: invalidating cache at {save_dir}")
+                marker.unlink()
             smart_run = False
 
 
@@ -503,6 +494,7 @@ class Project:
                         )
                 except Exception as e:
                     logger.warning(f"Could not save results to {results_file}: {e}")
+                write_complete_marker(Path(save_dir), result=result)
 
             return ExecutionResult(
                 save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config

@@ -274,8 +274,12 @@ result = proj.submit(cfg, smart_run=True)  # ⚡ Skipped! Returns cached result
 
 **How it works:**
 - Generates fingerprint (code + data + config)
-- Searches `search_dirs` for matching `run.lock`
-- Returns cached result if found
+- Searches `search_dirs` for run directories containing **both** `run.lock`
+  (written before execution) and `run.complete` (written after the user
+  function returns successfully)
+- Returns cached result on a match; runs that have only `run.lock` (previous
+  attempts interrupted before completion) are skipped, not treated as cache
+  hits
 
 **Custom search:**
 ```python
@@ -284,6 +288,37 @@ result = proj.submit(
     smart_run=True,
     search_dirs=['outputs/train/', 'archive/old_runs/']
 )
+```
+
+#### Cache markers and `force=True`
+
+Each completed run leaves two files alongside its outputs:
+
+- `run.lock` — config + provenance, written before execution starts.
+- `run.complete` — JSON with completion timestamp, written after the user
+  function returns. A cache hit requires both.
+
+To force re-execution while keeping prior outputs in place:
+
+```python
+proj.submit(cfg, force=True)   # deletes run.complete, runs again into same dir
+```
+
+`force=True` does **not** delete `save_dir` or `run.lock` — only the
+completion marker. The user function overwrites outputs in place.
+
+**Migrating from older versions:** runs created before this scheme exists
+have only `run.lock` and would be treated as incomplete. Backfill them once:
+
+```bash
+flexlock migrate-cache-markers outputs/
+```
+
+This writes `run.complete` for any dir that has `run.lock` plus at least one
+non-hidden output file. To prune stale lock-only dirs instead:
+
+```bash
+flexlock gc --incomplete outputs/
 ```
 
 #### Parameter Sweep
