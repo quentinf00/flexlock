@@ -7,7 +7,12 @@ from typing import List, Dict, Any, Optional
 import yaml
 import json
 import shutil
-from .utils import instantiate, load_python_defaults, extract_tracking_info
+from .utils import (
+    instantiate,
+    load_python_defaults,
+    extract_tracking_info,
+    select_and_freeze_root_refs,
+)
 from .snapshot import snapshot, RunTracker
 from .diff import RunDiff
 from . import config as flexlock_config
@@ -72,23 +77,22 @@ class Project:
         """
         Get a configuration by key from the defaults.
 
+        The returned config is self-contained: root-scope ``${...}`` references
+        are frozen into concrete values, while resolver calls (``${vinc:}``,
+        ``${latest:}``, ``${run_lock:}``, etc.) and intra-sub-tree refs are
+        preserved for resolution at submit time. This means the returned
+        config can be pickled, modified, and submitted without losing root
+        context (essential for HPC submission).
+
         Args:
-            key: Dot-path to select a specific node from the config.
+            key: Dot-path to select a specific node from the defaults.
 
         Returns:
             The selected configuration (as DictConfig).
         """
-        defaults_dict = self.defaults
-
-        if defaults_dict is None:
+        if self.defaults is None:
             raise ValueError("No defaults specified in Project initialization")
-
-        # Select the key from the defaults
-        if key in defaults_dict:
-            config = defaults_dict[key]
-            return config
-        else:
-            raise KeyError(f"Key '{key}' not found in defaults")
+        return select_and_freeze_root_refs(self.defaults, key)
 
     def _generate_fingerprint(self, cfg: DictConfig) -> dict:
         """
@@ -404,15 +408,9 @@ class Project:
                 {"save_dir": str(save_dir), "_snapshot_": config.get("_snapshot_", {})}
             )
 
-            # Pre-resolve config to avoid InterpolationKeyError in HPC backend
-            # by detaching it from parent configs and resolving all interpolations.
-            resolved_config = OmegaConf.create(
-                OmegaConf.to_container(config, resolve=True)
-            )
-            
             executor = ParallelExecutor(
                 func=instantiate,
-                tasks=[resolved_config],  # Single task as a list
+                tasks=[config],  # Single task as a list
                 task_target=None,
                 cfg=executor_cfg,
                 n_jobs=flexlock_config.DEFAULT_N_JOBS,

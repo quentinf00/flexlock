@@ -41,3 +41,10 @@ class FlexLockBackendError(FlexLockError):
     """Raised when there is an error with HPC backends (Slurm/PBS)."""
 
     pass
+
+
+class UnresolvedInterpolationError(FlexLockConfigError):
+    """Raised when a sub-node interpolation references a key that is not present
+    in the sub-tree and cannot be resolved against the root config either."""
+
+    pass

@@ -186,7 +186,11 @@ defaults = dict(
 
 ### `proj.get(key)`: Retrieve Configuration
 
-Get a configuration node from the defaults.
+Get a configuration node from the defaults. The returned config is
+**self-contained**: root-scope references (`${some_anchor}`) are frozen to
+concrete values, while resolver calls (`${vinc:}`, `${latest:}`,
+`${run_lock:}`) and intra-sub-tree references are preserved for resolution
+at submit time.
 
 ```python
 # Get config by key
@@ -195,7 +199,23 @@ train_cfg = proj.get('train')
 # Modify before execution
 train_cfg.lr = 0.1
 train_cfg.batch_size = 64
+
+# train_cfg can be pickled, merged, or shipped to an HPC worker
+# without losing root context — every ${root_anchor} has already been
+# substituted with its value at the moment of the get() call.
+proj.submit(train_cfg, slurm_config='configs/slurm_gpu.yaml')
 ```
+
+**Anchor-update workflow:** if you want a root-level anchor change to
+propagate into a stage, update `proj.defaults` *before* calling `proj.get`:
+
+```python
+OmegaConf.update(proj.defaults, 'cnf_run_dir', result.save_dir)
+eval_cfg = proj.get('cnf_eval_val')   # picks up the new anchor
+```
+
+A previously-fetched config will **not** see anchor updates retroactively —
+its root refs are already frozen. Re-call `proj.get` to refresh.
 
 **Returns:** `DictConfig` (OmegaConf)
 

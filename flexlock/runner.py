@@ -9,7 +9,13 @@ from pathlib import Path
 from typing import List, Any, Dict
 from omegaconf import OmegaConf, open_dict, ListConfig, DictConfig
 from datetime import datetime
-from .utils import load_python_defaults, instantiate, py2cfg, extract_tracking_info
+from .utils import (
+    load_python_defaults,
+    instantiate,
+    py2cfg,
+    extract_tracking_info,
+    select_and_freeze_root_refs,
+)
 from .debug import debug_on_fail
 from .parallel import ParallelExecutor
 from .snapshot import snapshot
@@ -279,47 +285,13 @@ class FlexLockRunner:
 
         return raw_tasks
 
-    def _prepare_node(self, cfg, root_cfg=None, name="exp"):
-        """
-        Prepare node config by ensuring it has a save_dir.
-
-        Resolution order:
-        1. If cfg already has save_dir → use it
-        2. If root_cfg has save_dir (and cfg doesn't) → propagate from root
-        3. Otherwise → generate a timestamped directory
-
-        Args:
-            cfg: Configuration node to prepare (may be a sub-node selected via -s)
-            root_cfg: Root config (before -s selection). Used as fallback for save_dir.
-            name: Name prefix for auto-generated save_dir (default: "exp")
-
-        Returns:
-            DictConfig: Updated configuration with save_dir set
-        """
-        has_save_dir = "save_dir" in cfg and cfg.save_dir is not None
-
-        if not has_save_dir:
-            # Check root config as fallback (relevant when -s selects a sub-node
-            # that doesn't have save_dir, but the root wrapper does)
-            if (
-                root_cfg is not None
-                and root_cfg is not cfg
-                and "save_dir" in root_cfg
-                and root_cfg.save_dir is not None
-            ):
-                with open_dict(cfg):
-                    cfg.save_dir = root_cfg.save_dir
-                logger.debug(
-                    f"Propagated save_dir from root config to selected node: {cfg.save_dir}"
-                )
-            else:
-                ts = datetime.now().strftime(config.TIMESTAMP_FORMAT)
-                path = Path("outputs") / name / ts
-                with open_dict(cfg):
-                    cfg.save_dir = str(path)
-
-        # Trigger resolution (replaces interpolation with concrete value)
-        cfg.save_dir = cfg.save_dir
+    def _prepare_node(self, cfg, name="exp"):
+        """Ensure ``cfg`` has a ``save_dir`` — fall back to ``outputs/<name>/<timestamp>``."""
+        if "save_dir" not in cfg or cfg.save_dir is None:
+            ts = datetime.now().strftime(config.TIMESTAMP_FORMAT)
+            with open_dict(cfg):
+                cfg.save_dir = str(Path("outputs") / name / ts)
+        cfg.save_dir = cfg.save_dir  # Force interpolation resolution
         return cfg
 
     def check_if_exists(self, cfg):
@@ -344,16 +316,18 @@ class FlexLockRunner:
 
         root_cfg = self.load_config(args)
         logger.info(f"Loaded root config: {root_cfg}")
-        # Select Node
-        node_cfg = root_cfg
+        # Select Node — freezes root-scope refs into the sub-node so it
+        # carries its dependencies and survives merges/pickling.
         if args.select:
-            node_cfg = OmegaConf.select(root_cfg, args.select)
-            logger.debug(f"Loaded node config: {node_cfg}")
-
-            if node_cfg is None:
+            try:
+                node_cfg = select_and_freeze_root_refs(root_cfg, args.select)
+            except KeyError as e:
                 raise FlexLockValidationError(
                     f"Selection '{args.select}' returned None."
-                )
+                ) from e
+            logger.debug(f"Loaded node config: {node_cfg}")
+        else:
+            node_cfg = root_cfg
 
         if base_cfg is not None:
             _b = base_cfg.copy()
@@ -378,9 +352,7 @@ class FlexLockRunner:
         tasks = self._load_sweep_tasks(args, root_cfg)
 
         # Prepare node (inject save_dir)
-        node_cfg = self._prepare_node(
-            node_cfg, root_cfg=root_cfg if args.select else None
-        )
+        node_cfg = self._prepare_node(node_cfg)
 
         # ACTIVATE DEBUGGING GLOBALLY
         debug = args.debug or os.environ.get("FLEXLOCK_DEBUG", "false").lower() in (
