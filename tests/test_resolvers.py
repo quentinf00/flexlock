@@ -170,7 +170,8 @@ def test_run_lock_resolver_basic(tmp_path):
         "timestamp": "2026-03-18T10:00:00",
     }))
 
-    assert run_lock_resolver(str(run_dir), "config.lr") == "0.01"
+    assert run_lock_resolver(str(run_dir), "config.lr") == 0.01
+    assert isinstance(run_lock_resolver(str(run_dir), "config.lr"), float)
     assert run_lock_resolver(str(run_dir), "config.datamodule.stats_file") == "/data/stats.json"
     assert run_lock_resolver(str(run_dir), "timestamp") == "2026-03-18T10:00:00"
 
@@ -266,7 +267,7 @@ def test_run_lock_resolver_in_omegaconf(tmp_path):
 
 
 def test_run_lock_resolver_null_value(tmp_path):
-    """Test that null values in run.lock return default."""
+    """Test that null values in run.lock return default or None."""
     from flexlock.resolvers import run_lock_resolver
     import yaml
 
@@ -274,5 +275,29 @@ def test_run_lock_resolver_null_value(tmp_path):
     run_dir.mkdir()
     (run_dir / "run.lock").write_text(yaml.dump({"config": {"optional_field": None}}))
 
-    result = run_lock_resolver(str(run_dir), "config.optional_field", "fallback")
-    assert result == "fallback"
+    assert run_lock_resolver(str(run_dir), "config.optional_field", "fallback") == "fallback"
+    assert run_lock_resolver(str(run_dir), "config.optional_field") is None
+
+
+def test_run_lock_resolver_native_types(tmp_path):
+    """Test that native YAML types are preserved: int, float, bool, list."""
+    from flexlock.resolvers import run_lock_resolver
+    import yaml
+
+    run_dir = tmp_path / "run_0001"
+    run_dir.mkdir()
+    (run_dir / "run.lock").write_text(yaml.dump({
+        "config": {
+            "epochs": 150,
+            "lr": 3e-4,
+            "use_amp": True,
+            "hidden_dims": [128, 256, 128],
+        }
+    }))
+
+    assert run_lock_resolver(str(run_dir), "config.epochs") == 150
+    assert isinstance(run_lock_resolver(str(run_dir), "config.epochs"), int)
+    assert run_lock_resolver(str(run_dir), "config.lr") == 3e-4
+    assert isinstance(run_lock_resolver(str(run_dir), "config.lr"), float)
+    assert run_lock_resolver(str(run_dir), "config.use_amp") is True
+    assert run_lock_resolver(str(run_dir), "config.hidden_dims") == [128, 256, 128]

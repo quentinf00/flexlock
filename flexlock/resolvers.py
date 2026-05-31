@@ -78,12 +78,12 @@ def vinc_resolver(path: str, fmt: str = "_{i:04d}") -> str:
     return str(parent_dir / f"{base_name}{version_str}")
 
 
-def run_lock_resolver(run_dir: str, key: str, default: str = None) -> str:
+def run_lock_resolver(run_dir: str, key: str, default=None):
     """
     OmegaConf resolver that reads a field from an upstream run.lock.
 
-    Navigates a dot-separated key path into the run.lock YAML.
-    Returns the value as a string, or the default if the key is not found.
+    Navigates a dot-separated key path into the run.lock YAML and returns
+    the value with its native type (int, float, bool, str, list, dict).
 
     Usage in configs:
         ${run_lock:path/to/run_dir,config.datamodule.stats_file}
@@ -115,10 +115,9 @@ def run_lock_resolver(run_dir: str, key: str, default: str = None) -> str:
                 f"(failed at '{part}')"
             )
 
-    # Convert to string for OmegaConf
     if value is None:
-        return default if default is not None else ""
-    return str(value)
+        return default
+    return value
 
 
 def register_resolvers():

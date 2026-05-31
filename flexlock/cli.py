@@ -12,11 +12,19 @@ from .git_utils import sanitize_ref_name
 
 
 def find_git_repo(start_path="."):
-    """Find the git repository from the given path."""
+    """Find the git repository from the given path, falling back to CWD."""
     try:
         return GitRepo(start_path, search_parent_directories=True)
     except Exception:
-        return None
+        pass
+    # Run dirs are often outside the project git tree (different mount, symlink, etc.)
+    # Fall back to searching from CWD so commands work from the project root.
+    if str(Path(start_path).resolve()) != str(Path(".").resolve()):
+        try:
+            return GitRepo(".", search_parent_directories=True)
+        except Exception:
+            pass
+    return None
 
 
 def find_results_dirs(root="."):

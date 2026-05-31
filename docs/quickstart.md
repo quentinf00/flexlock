@@ -3,12 +3,7 @@
 Get up and running with FlexLock in 5 minutes.
 
 ## Installation
-
-```bash
-pip install flexlock
-```
-
-Or with conda:
+With conda:
 
 ```bash
 conda install -c quentinf00 flexlock
@@ -23,7 +18,7 @@ conda install -c quentinf00 flexlock
 from flexlock import flexcli
 
 @flexcli
-def train(lr: float = 0.01, epochs: int = 10):
+def train(lr: float = 0.01, epochs: int = 10, save_dir='outputs'):
     """Train a model."""
     print(f"Training with lr={lr} for {epochs} epochs")
     # ... your training code ...
@@ -38,7 +33,7 @@ if __name__ == "__main__":
 ```bash
 $ python train.py
 Training with lr=0.01 for 10 epochs
-✓ Results saved to: results/train/run_0001/
+✓ Results saved to: outputs
 ```
 
 That's it! FlexLock automatically:
@@ -66,7 +61,7 @@ $ python train.py --sweep "0.001,0.01,0.1" --sweep-target lr --n_jobs 3
 
 ```python
 # pipeline.py
-from flexlock.api import Project
+from flexlock import Project
 
 # Load configurations
 proj = Project(defaults='configs.defaults')
@@ -177,59 +172,4 @@ result = proj.submit(config)  # ⚡ Skipped!
 - **GitHub Issues**: [Report bugs](https://github.com/quentinf00/flexlock/issues)
 - **Examples**: Check `examples/` in the repository
 
-## Common Patterns
-
-### Pattern 1: Hyperparameter Sweep
-
-```python
-@flexcli
-def train(lr=0.01, batch_size=32):
-    # ... training code ...
-    return {"accuracy": accuracy}
-
-# Run sweep
-# $ python train.py --sweep "0.001,0.01,0.1" --sweep-target lr --n_jobs 3
-```
-
-### Pattern 2: Multi-Stage Pipeline
-
-```python
-proj = Project(defaults='config.defaults')
-
-# Preprocess (runs once, cached thereafter)
-data = proj.submit(proj.get('preprocess'))
-
-# Train sweep (finds best model)
-sweep = [{"lr": 0.001}, {"lr": 0.01}, {"lr": 0.1}]
-results = proj.submit(proj.get('train'), sweep=sweep, n_jobs=3)
-best = max(results, key=lambda r: r.accuracy)
-
-# Evaluate best model
-eval_cfg = proj.get('evaluate')
-eval_cfg.model_dir = best.save_dir
-final = proj.submit(eval_cfg)
-```
-
-### Pattern 3: Iterative Development
-
-```python
-# Develop a stage interactively
-config = proj.get('preprocess')
-config.debug = True  # Add debug flag
-
-# Run it
-result = proj.submit(config, smart_run=False)  # Force rerun
-
-# Satisfied? Let it cache
-result = proj.submit(config)  # Will cache next time
-```
-
-## Tips & Tricks
-
-1. **Use `smart_run=True` (default)** for automatic caching
-2. **Add `save_dir` to configs** for organized results
-3. **Use `${vinc:path}` for auto-versioning** directories
-4. **Check `run.lock`** to understand what was tracked
-5. **Use sweeps for exploration**, not just grid search
-
-Ready to dive deeper? Continue with the [Usage Guide](./usage_guide.md)!
+Ready to dive deeper? Continue with the [Usage Guide](./usage_guide.md).

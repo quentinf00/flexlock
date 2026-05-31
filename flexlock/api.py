@@ -9,7 +9,7 @@ import json
 from .utils import instantiate, load_python_defaults, extract_tracking_info
 from .snapshot import snapshot, RunTracker
 from .diff import RunDiff
-from . import config
+from . import config as flexlock_config
 
 
 class ExecutionResult:
@@ -141,7 +141,7 @@ class Project:
 
         # Determine where to search
         if search_dirs is None:
-            if config.WARN_SMART_RUN_NO_SEARCH_DIRS:
+            if flexlock_config.WARN_SMART_RUN_NO_SEARCH_DIRS:
                 logger.warning(
                     "smart_run=True but search_dirs=None. "
                     "Defaulting to parent of save_dir. "
@@ -391,7 +391,7 @@ class Project:
                 tasks=[config],  # Single task as a list
                 task_target=None,
                 cfg=executor_cfg,
-                n_jobs=config.DEFAULT_N_JOBS,
+                n_jobs=flexlock_config.DEFAULT_N_JOBS,
                 pbs_config=pbs_config,
                 slurm_config=slurm_config,
                 local_workers=None,
@@ -399,7 +399,7 @@ class Project:
 
             # Run with wait parameter (executor handles waiting)
             success = executor.run(
-                wait=wait, timeout=config.DEFAULT_TIMEOUT if wait else None
+                wait=wait, timeout=flexlock_config.DEFAULT_TIMEOUT if wait else None
             )
 
             # Load result

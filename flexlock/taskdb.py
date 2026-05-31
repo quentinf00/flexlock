@@ -2,7 +2,7 @@
 
 from pathlib import Path
 import sqlite3
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig, ListConfig
 import threading
 from loguru import logger
 import yaml
@@ -18,6 +18,31 @@ _thread_local_conns = threading.local()
 def _hash_task(task: Any) -> str:
     """Generates a SHA1 hash for a given task object."""
     return hashlib.sha1(str(task).encode()).hexdigest()
+
+
+def _to_yaml(value: Any) -> str:
+    """Serialize any value to a YAML string without !! Python tags.
+
+    OmegaConf containers are serialized via OmegaConf.to_yaml (handles
+    interpolation correctly). Everything else — scalars, plain dicts/lists —
+    goes through yaml.safe_dump, which raises RepresenterError on arbitrary
+    Python objects instead of emitting !!python/object tags.
+    """
+    if isinstance(value, (DictConfig, ListConfig)):
+        return OmegaConf.to_yaml(value)
+    return yaml.safe_dump(value, default_flow_style=False)
+
+
+def _from_yaml(text: str) -> Any:
+    """Deserialize a YAML string back to a task or result value.
+
+    Mappings are wrapped in OmegaConf.create so the rest of the codebase
+    can treat them as DictConfig. Scalars and lists are returned as-is.
+    """
+    obj = yaml.safe_load(text)
+    if isinstance(obj, dict):
+        return OmegaConf.create(obj)
+    return obj
 
 
 @contextmanager
@@ -93,7 +118,7 @@ def queue_tasks(db_path: Path, tasks: List[Any]) -> None:
     with _conn(db_path) as c:
         c.executemany(
             "INSERT OR IGNORE INTO tasks (task_id, task_info) VALUES (?, ?)",
-            [(_hash_task(t), OmegaConf.to_yaml(t)) for t in tasks],
+            [(_hash_task(t), _to_yaml(t)) for t in tasks],
         )
         c.commit()
 
@@ -112,7 +137,7 @@ def claim_next_task(db_path: Path, node: str) -> Any | None:
         row = cur.fetchone()
         if row:
             c.commit()
-            return OmegaConf.create(row[0])
+            return _from_yaml(row[0])
     return None
 
 
@@ -122,7 +147,7 @@ def finish_task(
     """Marks a task as finished (done or failed) and records its result or error."""
     tid = _hash_task(task)
     status = "failed" if error else "done"
-    result_str = OmegaConf.to_yaml(result) if result is not None else None
+    result_str = _to_yaml(result) if result is not None else None
     with _conn(db_path) as c:
         c.execute(
             "UPDATE tasks SET status=?, error=?, result_info=?, ts_end=CURRENT_TIMESTAMP WHERE task_id=?",
@@ -147,9 +172,9 @@ def dump_to_yaml(db_path: Path, yaml_path: Path) -> None:
             "SELECT result_info, task_info, status FROM tasks WHERE status IN ('done','failed') ORDER BY ts_end"
         ).fetchall()
         data = [
-            dict(task=OmegaConf.create(r[0]), status=r[2])
+            dict(task=_from_yaml(r[0]), status=r[2])
             if r[0]
-            else dict(task=OmegaConf.create(r[1]), status=r[2])
+            else dict(task=_from_yaml(r[1]), status=r[2])
             for r in rows
             if r[0] or r[1]
         ]
@@ -258,7 +283,7 @@ def get_failed_tasks(db_path: Path) -> list:
 
         failed_tasks = []
         for row in rows:
-            task_info = OmegaConf.create(row[0]) if row[0] else {}
+            task_info = _from_yaml(row[0]) if row[0] else {}
             failed_tasks.append(
                 {
                     "task": task_info,
@@ -305,8 +330,8 @@ def get_all_tasks(db_path: Path, status: str = None) -> list:
 
         tasks = []
         for row in rows:
-            task_info = OmegaConf.create(row[1]) if row[1] else {}
-            result_info = OmegaConf.create(row[2]) if row[2] else {}
+            task_info = _from_yaml(row[1]) if row[1] else {}
+            result_info = _from_yaml(row[2]) if row[2] else {}
             tasks.append(
                 {
                     "task_id": row[0],
@@ -325,7 +350,16 @@ def get_all_tasks(db_path: Path, status: str = None) -> list:
 def _atomic_write_yaml(data: list, path: Path):
     import tempfile, os
 
+    def _to_primitive(v):
+        if isinstance(v, (DictConfig, ListConfig)):
+            return OmegaConf.to_container(v, resolve=True)
+        if isinstance(v, dict):
+            return {k: _to_primitive(val) for k, val in v.items()}
+        if isinstance(v, list):
+            return [_to_primitive(i) for i in v]
+        return v
+
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.tmp-")
     with os.fdopen(fd, "w") as f:
-        f.write(OmegaConf.to_yaml(data))
+        yaml.safe_dump(_to_primitive(data), f, default_flow_style=False)
     os.rename(tmp, path)

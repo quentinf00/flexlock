@@ -279,26 +279,46 @@ class FlexLockRunner:
 
         return raw_tasks
 
-    def _prepare_node(self, cfg, name="exp"):
+    def _prepare_node(self, cfg, root_cfg=None, name="exp"):
         """
         Prepare node config by ensuring it has a save_dir.
 
-        If save_dir is missing or None, generates a timestamped directory
-        path: outputs/{name}/{timestamp}
+        Resolution order:
+        1. If cfg already has save_dir → use it
+        2. If root_cfg has save_dir (and cfg doesn't) → propagate from root
+        3. Otherwise → generate a timestamped directory
 
         Args:
-            cfg: Configuration node to prepare
+            cfg: Configuration node to prepare (may be a sub-node selected via -s)
+            root_cfg: Root config (before -s selection). Used as fallback for save_dir.
             name: Name prefix for auto-generated save_dir (default: "exp")
 
         Returns:
             DictConfig: Updated configuration with save_dir set
         """
-        # Inject save_dir if missing
-        if "save_dir" not in cfg or cfg.save_dir is None:
-            ts = datetime.now().strftime(config.TIMESTAMP_FORMAT)
-            path = Path("outputs") / name / ts
-            with open_dict(cfg):
-                cfg.save_dir = str(path)
+        has_save_dir = "save_dir" in cfg and cfg.save_dir is not None
+
+        if not has_save_dir:
+            # Check root config as fallback (relevant when -s selects a sub-node
+            # that doesn't have save_dir, but the root wrapper does)
+            if (
+                root_cfg is not None
+                and root_cfg is not cfg
+                and "save_dir" in root_cfg
+                and root_cfg.save_dir is not None
+            ):
+                with open_dict(cfg):
+                    cfg.save_dir = root_cfg.save_dir
+                logger.debug(
+                    f"Propagated save_dir from root config to selected node: {cfg.save_dir}"
+                )
+            else:
+                ts = datetime.now().strftime(config.TIMESTAMP_FORMAT)
+                path = Path("outputs") / name / ts
+                with open_dict(cfg):
+                    cfg.save_dir = str(path)
+
+        # Trigger resolution (replaces interpolation with concrete value)
         cfg.save_dir = cfg.save_dir
         return cfg
 
@@ -358,7 +378,9 @@ class FlexLockRunner:
         tasks = self._load_sweep_tasks(args, root_cfg)
 
         # Prepare node (inject save_dir)
-        node_cfg = self._prepare_node(node_cfg)
+        node_cfg = self._prepare_node(
+            node_cfg, root_cfg=root_cfg if args.select else None
+        )
 
         # ACTIVATE DEBUGGING GLOBALLY
         debug = args.debug or os.environ.get("FLEXLOCK_DEBUG", "false").lower() in (
