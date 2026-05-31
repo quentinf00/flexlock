@@ -164,8 +164,12 @@ from flexlock import Project
 # Load defaults from a Python module
 proj = Project(defaults='myproject.config.defaults')
 
-# Or from a file path (colon syntax)
-proj = Project(defaults='configs/defaults.py:defaults')
+# Or from a file path — bare path infers the `defaults` variable name
+proj = Project(defaults='configs/defaults.py')
+# Equivalent to: Project(defaults='configs/defaults.py:defaults')
+
+# Or point at a differently-named variable
+proj = Project(defaults='configs/experiments.py:hyperparam_grid')
 
 # Or from a pre-built DictConfig / dict
 proj = Project(defaults={'train': {'lr': 0.01}})
@@ -445,6 +449,39 @@ proj.submit(cfg, sweep=sweep, print_config=True)
 # batch_size: 32
 # ...
 ```
+
+#### Post-sweep chaining
+
+After a sweep, downstream stages typically need to run once per sweep
+result, each anchored at the result's `save_dir`. `proj.submit_chained`
+packages this loop:
+
+```python
+chained = proj.submit_chained(
+    base_cfg,
+    sweep=[{'fourier_sigma': s} for s in [1.0, 2.0, 5.0]],
+    downstream=[
+        # (stage_key, anchor_wiring)
+        # anchor_wiring maps anchor name in proj.defaults → result attribute
+        ('encode_val',   {'cnf_run_dir': 'save_dir'}),
+        ('cnf_eval_val', {'cnf_run_dir': 'save_dir'}),
+    ],
+    sweep_kwargs={'slurm_config': 'configs/slurm_gpu.yaml', 'n_jobs': 3},
+    downstream_kwargs={'slurm_config': 'configs/slurm_gpu.yaml'},
+)
+
+# Iterate (sweep_result, downstream_results) pairs:
+for sweep_r, downstream_rs in chained:
+    encode_r, eval_r = downstream_rs
+    print(sweep_r.save_dir, eval_r['val_score'])
+```
+
+For each sweep item, the parent's `save_dir` is written into the named
+anchor on `proj.defaults`, then each downstream stage is fetched via
+`proj.get(key)` (so the new anchor propagates through interpolations)
+and submitted. `downstream_kwargs` defaults to `smart_run=False` to
+avoid stale-cache false hits between iterations — pass
+`{'smart_run': True}` explicitly if you want caching.
 
 #### HPC Execution (Slurm)
 

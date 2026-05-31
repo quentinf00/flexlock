@@ -58,6 +58,38 @@ class ExecutionResult:
         return f"ExecutionResult(save_dir={self.save_dir}, status={self.status})"
 
 
+class ChainedResult:
+    """Return type for :meth:`Project.submit_chained`.
+
+    Attributes:
+        sweep: List of sweep ``ExecutionResult`` objects.
+        downstream: List of lists; ``downstream[i][j]`` is the result of
+            the ``j``-th downstream stage for the ``i``-th sweep item.
+    """
+
+    def __init__(
+        self,
+        sweep: List[ExecutionResult],
+        downstream: List[List[ExecutionResult]],
+    ):
+        self.sweep = sweep
+        self.downstream = downstream
+
+    def __iter__(self):
+        """Iterate (sweep_result, downstream_results) pairs."""
+        return iter(zip(self.sweep, self.downstream))
+
+    def __len__(self):
+        return len(self.sweep)
+
+    def __repr__(self):
+        n_down = len(self.downstream[0]) if self.downstream else 0
+        return (
+            f"ChainedResult(sweep={len(self.sweep)}, "
+            f"downstream_per_item={n_down})"
+        )
+
+
 class Project:
     def __init__(self, defaults: "str | DictConfig | dict | None" = None):
         """Initialize a FlexLock project.
@@ -700,6 +732,75 @@ class Project:
                 f"{sweep_root}/<exp_name>/), or change the sweep root "
                 f"via overrides={{'save_dir': '<common_parent>'}}."
             )
+
+    def submit_chained(
+        self,
+        config=None,
+        *,
+        sweep: "List[Dict] | None" = None,
+        downstream: "List[tuple] | None" = None,
+        sweep_kwargs: "dict | None" = None,
+        downstream_kwargs: "dict | None" = None,
+    ) -> "ChainedResult":
+        """Run a sweep, then chain a sequence of downstream stages per result.
+
+        For each item in ``sweep``, this method submits the base config and
+        then, for each ``(stage_key, anchor_wiring)`` in ``downstream``,
+        propagates the sweep result's attributes into ``proj.defaults`` and
+        submits the downstream stage.
+
+        ``anchor_wiring`` maps an anchor name in ``proj.defaults`` to an
+        attribute of the parent ``ExecutionResult`` (typically
+        ``'save_dir'``).
+
+        Args:
+            config: Base config for the sweep (passed to :meth:`submit`).
+            sweep: List of override dicts for the parameter sweep.
+            downstream: List of ``(stage_key, anchor_wiring)`` tuples
+                describing the stages to run per sweep result.
+            sweep_kwargs: Extra kwargs forwarded to ``submit`` for the
+                sweep itself (e.g. ``slurm_config``, ``smart_run``).
+            downstream_kwargs: Extra kwargs forwarded to ``submit`` for
+                every downstream stage. Defaults to ``smart_run=False`` to
+                avoid stale-cache false hits between iterations.
+
+        Returns:
+            ``ChainedResult`` with ``sweep`` (list) and ``downstream`` (a
+            list of lists, one per sweep item, each inner list aligned to
+            the order of ``downstream``).
+        """
+        if sweep is None or downstream is None:
+            raise ValueError(
+                "submit_chained requires both `sweep` and `downstream` lists. "
+                "Use submit() if you don't need post-sweep chaining."
+            )
+
+        sweep_kwargs = dict(sweep_kwargs or {})
+        downstream_kwargs = {"smart_run": False, **(downstream_kwargs or {})}
+
+        sweep_results = self.submit(config, sweep=sweep, **sweep_kwargs)
+        if not isinstance(sweep_results, list):
+            sweep_results = [sweep_results]
+
+        downstream_results: list[list[ExecutionResult]] = []
+        for parent in sweep_results:
+            per_parent: list[ExecutionResult] = []
+            for entry in downstream:
+                stage_key, anchor_wiring = entry
+                for anchor_name, attr in anchor_wiring.items():
+                    value = getattr(parent, attr, None)
+                    if value is None:
+                        logger.warning(
+                            f"submit_chained: parent result has no '{attr}' "
+                            f"attribute; anchor '{anchor_name}' not updated."
+                        )
+                        continue
+                    OmegaConf.update(self.defaults, anchor_name, value)
+                result = self.submit(stage_key, **downstream_kwargs)
+                per_parent.append(result)
+            downstream_results.append(per_parent)
+
+        return ChainedResult(sweep=sweep_results, downstream=downstream_results)
 
     @classmethod
     def submit_config(cls, config=None, **kwargs):

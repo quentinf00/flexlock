@@ -645,20 +645,67 @@ def load_sweep(
 
 
 def load_python_defaults(import_path: str):
-    """Dynamically imports a module or file path to retrieve 'defaults'."""
+    """Dynamically import a module or file path to retrieve a variable.
+
+    Accepted forms:
+
+    - ``'pkg.config.defaults'`` — dotted module path, variable is the last
+      segment.
+    - ``'pkg.config:defaults'`` — module + colon-separated variable name.
+    - ``'configs/defaults.py:defaults'`` — file path + colon-separated
+      variable name.
+    - ``'configs/defaults.py'`` — bare file path, variable defaults to
+      ``defaults`` by convention.
+    """
+    # Bare file path: auto-append ":defaults" so users don't need to spell
+    # the conventional variable name.
+    if ":" not in import_path and (
+        import_path.endswith(".py") or Path(import_path).is_file()
+    ):
+        import_path = f"{import_path}:defaults"
+
     if ":" in import_path:
-        # Path based: "configs/my_conf.py:defaults"
-        path_str, var_name = import_path.split(":")
-        file_path = Path(path_str).resolve()
-        spec = importlib.util.spec_from_file_location("dynamic_defaults", file_path)
+        path_str, var_name = import_path.split(":", 1)
+        file_path = Path(path_str)
+        if not file_path.exists():
+            # A slashed left side that doesn't resolve to a file is almost
+            # always a typo — surface a clear hint instead of letting
+            # importlib.import_module mangle it.
+            if "/" in path_str:
+                from .exceptions import FlexLockConfigError
+
+                raise FlexLockConfigError(
+                    f"'{path_str}' does not exist. For file-based "
+                    f"defaults, use 'path/to/file.py:variable' (or just "
+                    f"'path/to/file.py' to default to the 'defaults' "
+                    f"variable)."
+                )
+            # Otherwise treat the left side as a dotted module name.
+            module = importlib.import_module(path_str)
+            return getattr(module, var_name)
+        spec = importlib.util.spec_from_file_location(
+            "dynamic_defaults", file_path.resolve()
+        )
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return getattr(module, var_name)
-    else:
-        # Module based: "pkg.config.defaults"
-        module_name, var_name = import_path.rsplit(".", 1)
-        module = importlib.import_module(module_name)
-        return getattr(module, var_name)
+
+    # Dotted module: "pkg.config.defaults" — module is "pkg.config", var is "defaults".
+    # If the left part looks like a filesystem path (contains '/'), the user
+    # almost certainly meant a file — surface a clear hint instead of letting
+    # importlib's mangled error bubble up.
+    if "/" in import_path:
+        from .exceptions import FlexLockConfigError
+
+        raise FlexLockConfigError(
+            f"'{import_path}' looks like a file path but does not exist and "
+            f"has no colon-separated variable name. For file-based defaults, "
+            f"use 'path/to/file.py:variable' (or just 'path/to/file.py' to "
+            f"default to the 'defaults' variable)."
+        )
+    module_name, var_name = import_path.rsplit(".", 1)
+    module = importlib.import_module(module_name)
+    return getattr(module, var_name)
 
 
 def merge_task_into_cfg(cfg: DictConfig, task: Any, task_to: str | None) -> DictConfig:
