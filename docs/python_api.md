@@ -120,7 +120,7 @@ def train(lr=0.01, epochs=10):
 
 ```python
 @flexcli(
-    snapshot_config=dict(
+    _snapshot_=dict(
         repos={
             'main': '.',                          # string shorthand for path
             'mylib': {'path': 'libs/mylib'},      # explicit dict form
@@ -622,7 +622,7 @@ cfg = py2cfg(
     train,
     input_data='data/train.csv',
     save_dir='outputs/train',
-    snapshot_config=dict(
+    _snapshot_=dict(
         repos={'main': '.'},          # string shorthand
         data={'train_data': '${...input_data}'}
     )
@@ -634,10 +634,12 @@ cfg = py2cfg(
 # - Configuration
 ```
 
+> **Note:** Use `_snapshot_=` inside `py2cfg`. The `snapshot_config=` spelling only works as a parameter to the `@flexcli` decorator.
+
 To track only specific files within a repo (speeds up `smart_run` by ignoring irrelevant changes):
 
 ```python
-snapshot_config=dict(
+_snapshot_=dict(
     repos={
         'main': {
             'path': '.',
@@ -651,7 +653,7 @@ snapshot_config=dict(
 Or resolve the repo path automatically from a Python module name:
 
 ```python
-snapshot_config=dict(
+_snapshot_=dict(
     repos={
         'mylib': {'module': 'mylib'}   # path resolved via importlib
     }

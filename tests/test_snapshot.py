@@ -199,7 +199,7 @@ def test_snapshot_function_custom_save_path():
         custom_save_dir = Path(tmp) / "custom_results"
         custom_save_dir.mkdir()
         
-        cfg = OmegaConf.create({"param": 1, "save_dir": "/different/path"})
+        cfg = OmegaConf.create({"param": 1, "save_dir": str(custom_save_dir)})
         
         # Mock dependencies to avoid git operations during test
         with patch("flexlock.snapshot.create_shadow_snapshot") as mock_snapshot, \

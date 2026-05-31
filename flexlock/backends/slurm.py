@@ -57,8 +57,8 @@ class SlurmBackend(Backend):
     def _make_script(self, pickled_path: Path) -> str:
         """Generates the Slurm submission script content."""
         lines = ["#!/bin/bash"]
-        lines.extend(self.startup_lines)
-
+        # SBATCH directives must all come before any shell commands —
+        # Slurm stops parsing directives at the first non-comment, non-blank line.
         if self.configure_logging:
             lines.extend(
                 [
@@ -66,6 +66,7 @@ class SlurmBackend(Backend):
                     f"#SBATCH --error={self.folder.absolute() / 'slurm.err'}",
                 ]
             )
+        lines.extend(self.startup_lines)
 
         python_script = [
             "import cloudpickle, sys, os",

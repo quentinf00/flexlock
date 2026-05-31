@@ -3,59 +3,16 @@
 FlexLock provides seamless integration with HPC cluster schedulers (PBS and Slurm) for running experiments at scale.
 
 ## Overview
+...
+(after line 15)
+**Task Database Location:**
+The tasks database (`run.lock.tasks.db`) is written to the **parent directory** of the `save_dir`, not inside the `save_dir` itself. For example, if `save_dir` is `outputs/train/run_0001`, the DB is at `outputs/train/run.lock.tasks.db`. This is a critical detail for monitoring jobs via `flexlock-status`.
+...
+(after line 61)
+**Task Database Location:**
+The tasks database (`run.lock.tasks.db`) is written to the **parent directory** of the `save_dir`, not inside the `save_dir` itself. For example, if `save_dir` is `outputs/train/run_0001`, the DB is at `outputs/train/run.lock.tasks.db`. This is a critical detail for monitoring jobs via `flexlock-status`.
+...
 
-FlexLock's HPC integration allows you to:
-
-- ✅ Submit jobs to PBS or Slurm queues with a single parameter
-- ✅ Monitor job status in real-time with `flexlock-status`
-- ✅ Wait for job completion or submit and continue
-- ✅ Run parameter sweeps across cluster nodes
-- ✅ Use Singularity containers for reproducible environments
-- ✅ Automatic task database for distributed job management
-
-## Quick Start
-
-### Basic HPC Submission
-
-```python
-from flexlock.api import Project
-
-proj = Project(defaults='configs.defaults')
-config = proj.get('train')
-
-# Submit to PBS and wait for completion
-result = proj.submit(
-    config,
-    pbs_config='configs/pbs.yaml',
-    wait=True
-)
-
-print(f"Accuracy: {result.accuracy}")
-```
-
-### Non-Blocking Submission
-
-```python
-# Submit and continue without waiting
-result = proj.submit(
-    config,
-    pbs_config='configs/pbs.yaml',
-    wait=False
-)
-
-print("Job submitted")
-# Job continues running on cluster
-```
-
-### Monitor Job Status
-
-```bash
-# Real-time monitoring
-flexlock-status outputs/train/run.lock.tasks.db --watch
-
-# Check failed tasks
-flexlock-status outputs/train/run.lock.tasks.db --failed --verbose
-```
 
 ## PBS Configuration
 
@@ -316,6 +273,25 @@ flexlock-status outputs/train/run.lock.tasks.db --watch
 # Watch job progress
 flexlock-status outputs/sweep/run.lock.tasks.db --watch
 ```
+
+Output:
+...
+(after line 337)
+Refreshing in 10s... (Ctrl+C to stop)
+```
+
+### Job Logs (Slurm)
+
+When a job is submitted via Slurm, stdout and stderr are written to `slurm-<JOBID>.out` in the directory where the job was submitted (the project root). The calling process does not relay this output. 
+
+To follow a running job:
+```bash
+tail -f slurm-<JOBID>.out
+```
+The job ID is printed in the submission log: `"Submitted SlurmBackend job <JOBID>"`.
+This file is the first place to look when a job fails silently.
+
+---
 
 Output:
 ```
