@@ -12,7 +12,14 @@ from .mlflow import mlflow_context
 from .debug import debug_on_fail
 from .resolvers import register_resolvers
 from .api import Project
-from .utils import py2cfg, load_python_defaults, extract_tracking_info
+from .utils import (
+    py2cfg,
+    load_python_defaults,
+    extract_tracking_info,
+    load_sweep,
+    parse_sweep_string,
+    select_and_freeze_root_refs,
+)
 from .runner import FlexLockRunner
 from .data_hash import hash_data
 from .git_utils import get_git_tree_hash
@@ -40,6 +47,9 @@ __all__ = [
     "Project",
     "py2cfg",
     "load_python_defaults",
+    "load_sweep",
+    "parse_sweep_string",
+    "select_and_freeze_root_refs",
     "FlexLockRunner",
     "hash_data",
     "get_git_tree_hash",

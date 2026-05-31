@@ -229,8 +229,9 @@ Execute a configuration, with smart caching and HPC support.
 
 ```python
 def submit(
-    config: DictConfig,
+    config: DictConfig | str | None = None,
     sweep: List[Dict] = None,
+    sweep_target: str = None,
     n_jobs: int = 1,
     smart_run: bool = True,
     search_dirs: List[str] = None,
@@ -240,13 +241,47 @@ def submit(
     sweep_dir_suffix: bool = False,
     match_include: List[str] = None,
     match_exclude: List[str] = None,
-) -> ExecutionResult | List[ExecutionResult]
+    isolated: bool = False,
+    force: bool = False,
+    overrides: dict | List[str] = None,
+    merge: str | Path | dict = None,
+    debug: bool = False,
+    print_config: bool = False,
+) -> ExecutionResult | List[ExecutionResult] | None
 ```
 
 **Parameters:**
+- `config`: Accepts a `DictConfig`, a key string (looked up via `proj.get`), or `None` (use `proj.defaults`).
+- `sweep_target`: Dot-path where each sweep item is merged into the base config. `None` merges items at the root.
+- `overrides`: Dict (`{'lr': 0.01}`) or dotlist (`['lr=0.01']`) merged into `config` before execution.
+- `merge`: Path to a YAML file (or a dict) merged into `config` before execution. `overrides` is applied after `merge`.
+- `debug`: Wrap the user function with the post-mortem debugger so exceptions drop into PDB.
+- `print_config`: Print the resolved config and return `None` without executing — useful for inspecting sweep-merged or override-merged configs before launching.
 - `sweep_dir_suffix`: When `True`, appends `_sweep_{i:04d}` to each sweep run's `save_dir`. Default `False` (all sweep runs share the base `save_dir`).
 - `match_include`: Override the git path include-patterns used during `smart_run` comparison (takes priority over per-repo patterns stored in `run.lock`).
 - `match_exclude`: Override the git path exclude-patterns used during `smart_run` comparison.
+
+#### CLI/Python parity
+
+`flexlock-run` and `proj.submit()` share the same execution kernel. Equivalences:
+
+| CLI flag                 | Python kwarg                              |
+|--------------------------|-------------------------------------------|
+| `-s <key>` (select)      | `submit('key', ...)` (str dispatches via `get`) |
+| `-O key=val` / `-M file` (post-select) | `overrides={...}` / `merge=...`     |
+| `--sweep-file path.yaml` | `sweep=load_sweep(sweep_file='path.yaml')` |
+| `--sweep-target X`       | `sweep_target='X'`                        |
+| `--debug`                | `debug=True`                              |
+| `--print-config`         | `print_config=True`                       |
+
+The `load_sweep` utility is also exported at the package level:
+
+```python
+from flexlock import load_sweep
+sweep = load_sweep(sweep_file='configs/ablation.yaml')
+proj.submit('train', sweep=sweep, sweep_target='lit_module',
+            slurm_config='configs/slurm_gpu.yaml')
+```
 
 #### Basic Execution
 

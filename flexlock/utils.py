@@ -548,6 +548,102 @@ def _process_one_interp(inner: str, sub_raw, root_raw) -> str:
     return str(val) if val is not None else "null"
 
 
+def parse_sweep_string(sweep_str: str) -> list:
+    """Parse a comma-separated CLI sweep value into a list.
+
+    Examples::
+
+        parse_sweep_string("1,2,3")              # → [1, 2, 3]
+        parse_sweep_string("lr=0.1,lr=0.2")      # → [{'lr': 0.1}, {'lr': 0.2}]
+        parse_sweep_string('"a,b",c')            # → ['a,b', 'c']
+    """
+    import csv
+    import yaml as _yaml
+
+    reader = csv.reader([sweep_str], skipinitialspace=True)
+    items = next(reader)
+    out = []
+    for item in items:
+        if "=" in item:
+            try:
+                conf = OmegaConf.from_dotlist([item])
+                out.append(OmegaConf.to_container(conf))
+            except Exception:
+                out.append(item)
+        else:
+            try:
+                out.append(_yaml.safe_load(item))
+            except Exception:
+                out.append(item)
+    return out
+
+
+def load_sweep(
+    *,
+    sweep: "list | str | None" = None,
+    sweep_file: "str | Path | None" = None,
+    sweep_key: "str | None" = None,
+    root_cfg: "DictConfig | None" = None,
+) -> list:
+    """Load a sweep list from one of several sources.
+
+    Exactly one source must be provided. Returns the parsed sweep list. If
+    the source yields a single value or dict, it is wrapped in a list.
+
+    Args:
+        sweep: A pre-built list, or a CLI-style comma-separated string.
+        sweep_file: Path to .yaml/.yml, .json, or text file (one item per line).
+        sweep_key: Dotted key into ``root_cfg`` whose value is the sweep list.
+        root_cfg: Required when ``sweep_key`` is used.
+    """
+    import json as _json
+    import yaml as _yaml
+    from .exceptions import FlexLockValidationError, FlexLockConfigError
+
+    sources = sum(x is not None for x in (sweep, sweep_file, sweep_key))
+    if sources > 1:
+        raise FlexLockValidationError(
+            "Multiple sweep sources provided. Use only ONE of "
+            "`sweep`, `sweep_file`, or `sweep_key`."
+        )
+    if sources == 0:
+        return []
+
+    if sweep is not None:
+        raw = parse_sweep_string(sweep) if isinstance(sweep, str) else sweep
+    elif sweep_file is not None:
+        fpath = Path(sweep_file)
+        if not fpath.exists():
+            raise FlexLockConfigError(f"Sweep file '{fpath}' not found.")
+        if fpath.suffix in (".yaml", ".yml"):
+            raw = OmegaConf.to_container(OmegaConf.load(fpath), resolve=True)
+        elif fpath.suffix == ".json":
+            with open(fpath) as f:
+                raw = _json.load(f)
+        else:
+            with open(fpath) as f:
+                raw = [_yaml.safe_load(line.strip()) for line in f if line.strip()]
+    else:  # sweep_key
+        if root_cfg is None:
+            raise FlexLockValidationError(
+                "sweep_key requires root_cfg to look up the value."
+            )
+        node = OmegaConf.select(root_cfg, sweep_key)
+        if node is None:
+            raise FlexLockValidationError(
+                f"Sweep key '{sweep_key}' not found in config."
+            )
+        raw = OmegaConf.to_container(node, resolve=True) if isinstance(
+            node, (DictConfig, ListConfig)
+        ) else node
+
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        raw = [raw]
+    return raw
+
+
 def load_python_defaults(import_path: str):
     """Dynamically imports a module or file path to retrieve 'defaults'."""
     if ":" in import_path:

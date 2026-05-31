@@ -321,8 +321,9 @@ class Project:
 
     def submit(
         self,
-        config: DictConfig,
+        config: "DictConfig | str | None" = None,
         sweep: List[Dict] = None,
+        sweep_target: str = None,
         n_jobs: int = 1,
         smart_run: bool = True,
         search_dirs: List[str] = None,
@@ -334,29 +335,82 @@ class Project:
         match_exclude: List[str] = None,
         isolated: bool = False,
         force: bool = False,
-    ) -> ExecutionResult | List[ExecutionResult]:
-        """
-        Submit a configuration for execution.
-        ...
+        overrides: "dict | List[str] | None" = None,
+        merge: "str | Path | dict | None" = None,
+        debug: bool = False,
+        print_config: bool = False,
+    ) -> "ExecutionResult | List[ExecutionResult] | None":
+        """Submit a configuration for execution.
+
         Args:
-            ...
-            force: If True, bypasses smart_run entirely and clears the save_dir before running.
+            config: The configuration to execute. Accepts a ``DictConfig``,
+                a key string (looked up via :meth:`get`), or ``None`` (uses
+                ``self.defaults`` as-is).
+            sweep: Optional list of override dicts for parameter sweep.
+            sweep_target: Dot-path inside each task config where the sweep
+                item is merged. When ``None``, items merge at the root of
+                ``config``.
+            n_jobs: Number of parallel workers (for sweeps).
+            smart_run: If True, checks for an existing cached run before
+                executing.
+            search_dirs: Directories to search for cached runs.
+            wait: If True, blocks until completion.
+            pbs_config / slurm_config: Path to HPC backend YAML.
+            sweep_dir_suffix: If True, append ``_sweep_{i:04d}`` to each
+                sweep item's ``save_dir``.
+            match_include / match_exclude: Override git path patterns used
+                during ``smart_run`` comparison.
+            isolated: If True, run in a spawned subprocess even for a
+                single task (use for GPU stages to confine the CUDA
+                context).
+            force: If True, invalidate the cache marker (``run.complete``)
+                for this ``save_dir`` and re-execute. Outputs and
+                ``run.lock`` are preserved; the user function overwrites
+                in place.
+            overrides: Dict (``{'lr': 0.01}``) or dotlist
+                (``['lr=0.01']``) merged into ``config`` before execution.
+            merge: Path to a YAML file (or a dict) merged into ``config``
+                before execution. ``overrides`` is applied after ``merge``.
+            debug: Wrap the user function with the post-mortem debugger so
+                exceptions drop into PDB.
+            print_config: Print the fully-resolved config and return
+                ``None`` without executing.
+
+        Returns:
+            ``ExecutionResult`` (single), ``List[ExecutionResult]`` (sweep),
+            or ``None`` (``print_config=True``).
         """
-        # Ensure config is a DictConfig
+        # Resolve config from a key, a DictConfig, or default to self.defaults.
+        if config is None:
+            config = self.defaults
+        elif isinstance(config, str):
+            config = self.get(config)
         if not isinstance(config, DictConfig):
             config = OmegaConf.create(config)
 
+        # Apply post-resolution merges and overrides (post-select equivalents).
+        if merge is not None:
+            if isinstance(merge, (str, Path)):
+                config.merge_with(OmegaConf.load(str(merge)))
+            else:
+                config.merge_with(OmegaConf.create(merge))
+        if overrides is not None:
+            if isinstance(overrides, dict):
+                overrides = [f"{k}={v}" for k, v in overrides.items()]
+            config.merge_with(OmegaConf.from_dotlist(overrides))
+
+        if print_config:
+            print(OmegaConf.to_yaml(config))
+            return None
+
         if force:
             # Invalidate the cache for this save_dir without touching outputs.
-            # Removing only run.complete causes _find_matching_run to skip
-            # the dir; the user function will overwrite outputs in place.
             save_dir = Path(config.get("save_dir", "outputs/job"))
             marker = save_dir / "run.complete"
             if marker.exists():
                 logger.info(f"Force flag enabled: invalidating cache at {save_dir}")
                 marker.unlink()
             smart_run = False
-
 
         # Handle sweep execution
         if sweep:
@@ -372,6 +426,8 @@ class Project:
                 sweep_dir_suffix,
                 match_include,
                 match_exclude,
+                sweep_target=sweep_target,
+                debug=debug,
             )
 
         # Single execution path
@@ -479,7 +535,12 @@ class Project:
 
             # Execute the function
             logger.info(f"Executing configuration...")
-            result = instantiate(config)
+            run_func = instantiate
+            if debug:
+                from .debug import debug_on_fail
+
+                run_func = debug_on_fail(run_func)
+            result = run_func(config)
 
             # Save results if save_dir is specified
             save_dir = config.get("save_dir", ".")
@@ -513,6 +574,8 @@ class Project:
         dir_suffix: bool = False,
         match_include: List[str] = None,
         match_exclude: List[str] = None,
+        sweep_target: str = None,
+        debug: bool = False,
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -541,7 +604,7 @@ class Project:
 
         # Check each sweep config for cached results
         for i, override in enumerate(sweep):
-            sweep_cfg = OmegaConf.merge(base_config, override)
+            sweep_cfg = merge_task_into_cfg(base_config, override, sweep_target)
 
             # This makes the config self-contained for DB serialization.
             sweep_cfg = OmegaConf.create(
@@ -646,7 +709,9 @@ class Project:
                 # Sequential execution (no backend, n_jobs=1)
                 for i, cfg in configs_to_run:
                     logger.info(f"Executing sweep {i}/{len(sweep)}")
-                    result = self.submit(cfg, sweep=None, smart_run=False, wait=True)
+                    result = self.submit(
+                        cfg, sweep=None, smart_run=False, wait=True, debug=debug
+                    )
                     results.append((i, result))
 
         # Combine cached and new results, sorted by index

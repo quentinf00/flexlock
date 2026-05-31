@@ -1,26 +1,21 @@
 """Runner for FlexLock experiments."""
 
 import argparse
-import json
-import csv
 import yaml
 import os
 from pathlib import Path
 from typing import List, Any, Dict
-from omegaconf import OmegaConf, open_dict, ListConfig, DictConfig
+from omegaconf import OmegaConf, open_dict
 from datetime import datetime
 from .utils import (
     load_python_defaults,
-    instantiate,
     py2cfg,
-    extract_tracking_info,
     select_and_freeze_root_refs,
+    parse_sweep_string,
+    load_sweep,
 )
-from .debug import debug_on_fail
-from .parallel import ParallelExecutor
-from .snapshot import snapshot, write_complete_marker
 from .diff import RunDiff
-from .exceptions import FlexLockValidationError, FlexLockConfigError
+from .exceptions import FlexLockValidationError
 from . import config
 from loguru import logger
 
@@ -173,117 +168,17 @@ class FlexLockRunner:
         return cfg
 
     def _parse_cli_sweep(self, sweep_str: str) -> List[Any]:
-        """
-        Parse comma-separated sweep values from CLI.
-
-        Handles:
-        - Simple values: "1,2,3" → [1, 2, 3]
-        - Key=value pairs: "lr=0.1,lr=0.2" → [{'lr': 0.1}, {'lr': 0.2}]
-        - Quoted strings: '"a,b",c' → ['a,b', 'c']
-
-        Args:
-            sweep_str: Comma-separated sweep values
-
-        Returns:
-            List of parsed values (int, float, dict, or str)
-
-        Examples:
-            >>> _parse_cli_sweep("1,2,3")
-            [1, 2, 3]
-            >>> _parse_cli_sweep("lr=0.1,lr=0.2")
-            [{'lr': 0.1}, {'lr': 0.2}]
-        """
-        # Use csv reader to handle quoted strings correctly
-        reader = csv.reader([sweep_str], skipinitialspace=True)
-        items = next(reader)
-
-        parsed_items = []
-        for item in items:
-            # Check for "key=value" format to support simple dict overrides
-            if "=" in item:
-                # This returns a DictConfig
-                try:
-                    conf = OmegaConf.from_dotlist([item])
-                    # Convert to primitive dict
-                    parsed_items.append(OmegaConf.to_container(conf))
-                except Exception:
-                    # Fallback to string if parsing fails
-                    parsed_items.append(item)
-            else:
-                # Try to cast to int/float/bool, fallback to string
-                try:
-                    # YAML safe load handles typing (1 -> int, 1.0 -> float, true -> bool)
-                    val = yaml.safe_load(item)
-                    parsed_items.append(val)
-                except Exception:
-                    parsed_items.append(item)
-        return parsed_items
+        """Back-compat shim — delegates to :func:`flexlock.utils.parse_sweep_string`."""
+        return parse_sweep_string(sweep_str)
 
     def _load_sweep_tasks(self, args, root_cfg) -> List[Dict]:
-        """
-        Extracts and normalizes the sweep list based on CLI arguments.
-        Returns a list of Dictionaries (Tasks).
-
-        Raises:
-            FlexLockValidationError: If multiple sweep sources are provided
-        """
-        # Validate mutual exclusivity of sweep sources
-        sources_provided = sum(
-            [
-                args.sweep_key is not None,
-                args.sweep_file is not None,
-                args.sweep is not None,
-            ]
+        """Back-compat shim — delegates to :func:`flexlock.utils.load_sweep`."""
+        return load_sweep(
+            sweep=args.sweep,
+            sweep_file=args.sweep_file,
+            sweep_key=args.sweep_key,
+            root_cfg=root_cfg,
         )
-
-        if sources_provided > 1:
-            raise FlexLockValidationError(
-                "Multiple sweep sources provided. "
-                "Use only ONE of: --sweep-key, --sweep-file, or --sweep"
-            )
-
-        raw_tasks = None
-
-        # 1. Determine Source
-        if args.sweep_key:
-            raw_tasks = OmegaConf.select(root_cfg, args.sweep_key)
-            if raw_tasks is None:
-                raise FlexLockValidationError(
-                    f"Sweep key '{args.sweep_key}' not found in config."
-                )
-            # Convert ListConfig to primitive list
-            if isinstance(raw_tasks, (ListConfig, DictConfig)):
-                raw_tasks = OmegaConf.to_container(raw_tasks, resolve=True)
-
-        elif args.sweep_file:
-            fpath = Path(args.sweep_file)
-            if not fpath.exists():
-                raise FlexLockConfigError(f"Sweep file '{fpath}' not found.")
-
-            if fpath.suffix in [".yaml", ".yml"]:
-                raw_tasks = OmegaConf.to_container(OmegaConf.load(fpath), resolve=True)
-            elif fpath.suffix == ".json":
-                with open(fpath) as f:
-                    raw_tasks = json.load(f)
-            else:
-                # Text file: Assume one value per line
-                with open(fpath) as f:
-                    # strip whitespace and skip empty lines
-                    raw_tasks = [line.strip() for line in f if line.strip()]
-                    # Attempt type conversion via YAML
-                    raw_tasks = [yaml.safe_load(t) for t in raw_tasks]
-
-        elif args.sweep:
-            raw_tasks = self._parse_cli_sweep(args.sweep)
-
-        if raw_tasks is None:
-            return []
-
-        # Ensure raw_tasks is a list (handle single dict/value case if user messed up config)
-        if not isinstance(raw_tasks, list):
-            raw_tasks = [raw_tasks]
-
-        return raw_tasks
 
     def _prepare_node(self, cfg, name="exp"):
         """Ensure ``cfg`` has a ``save_dir`` — fall back to ``outputs/<name>/<timestamp>``."""
@@ -311,13 +206,16 @@ class FlexLockRunner:
         return diff.is_match()
 
     def run(self, cli_args=None, base_cfg=None):
-        args = self.parser.parse_args(cli_args)
-        run_func = instantiate
+        """Thin layer over :meth:`Project.submit` — shapes CLI args and dispatches."""
+        from .api import Project
 
+        args = self.parser.parse_args(cli_args)
+
+        # Build the root config from CLI inputs (defaults + config + merge + overrides).
         root_cfg = self.load_config(args)
         logger.info(f"Loaded root config: {root_cfg}")
-        # Select Node — freezes root-scope refs into the sub-node so it
-        # carries its dependencies and survives merges/pickling.
+
+        # Selection happens at the node level — freezes root-scope refs.
         if args.select:
             try:
                 node_cfg = select_and_freeze_root_refs(root_cfg, args.select)
@@ -325,89 +223,56 @@ class FlexLockRunner:
                 raise FlexLockValidationError(
                     f"Selection '{args.select}' returned None."
                 ) from e
-            logger.debug(f"Loaded node config: {node_cfg}")
         else:
             node_cfg = root_cfg
 
+        # @flexcli decorator may inject a base_cfg — preserve the existing
+        # mutual-merge semantics so global keys keep their root pointers.
         if base_cfg is not None:
             _b = base_cfg.copy()
             _b.merge_with(node_cfg)
-            node_cfg.merge_with(_b)  # to keep global keys pointers from root_cfg
+            node_cfg.merge_with(_b)
 
-        # Inner Overrides
-        if args.merge_after_select:
-            node_cfg.merge_with(OmegaConf.load(args.merge_after_select))
-        if args.overrides_after_select:
-            node_cfg.merge_with(OmegaConf.from_dotlist(args.overrides_after_select))
-
-        # Print config and exit if requested
-        if args.print_config or args.help:
-            if args.help:
-                self.parser.print_help()
-                print()
-            self._print_config_and_docstring(node_cfg)
-            return
-
-        # --- SWEEP HANDLING ---
-        tasks = self._load_sweep_tasks(args, root_cfg)
-
-        # Prepare node (inject save_dir)
+        # Inject a default save_dir if the selected node doesn't carry one.
         node_cfg = self._prepare_node(node_cfg)
 
-        # ACTIVATE DEBUGGING GLOBALLY
+        # Load the sweep list from whichever source the user picked.
+        sweep_tasks = load_sweep(
+            sweep=args.sweep,
+            sweep_file=args.sweep_file,
+            sweep_key=args.sweep_key,
+            root_cfg=root_cfg,
+        )
+
+        # Honour FLEXLOCK_DEBUG env var as a CLI-side debug toggle.
         debug = args.debug or os.environ.get("FLEXLOCK_DEBUG", "false").lower() in (
             "1",
             "true",
         )
-        if debug:
-            logger.info("Debug mode enabled")
-            run_func = debug_on_fail(run_func)
 
-        # Check if run already exists
-        if args.check_exists and self.check_if_exists(node_cfg):
-            print("Run already exists and matches current configuration. Skipping.")
-            return
-        if tasks:
-            if debug:
-                logger.info(
-                    f"Running sweep with {len(tasks)} tasks in debug mode one job, no hpc."
-                )
-                # Batch execution
-                executor = ParallelExecutor(
-                    func=run_func,
-                    tasks=tasks,
-                    task_target=args.sweep_target,  # Use sweep_target as task_target
-                    cfg=node_cfg,
-                    n_jobs=1,
-                )
-                return executor.run()
-            else:
-                logger.info(f"Running sweep with {len(tasks)} tasks.")
-                # Batch execution
-                executor = ParallelExecutor(
-                    func=run_func,
-                    tasks=tasks,
-                    task_target=args.sweep_target,  # Use sweep_target as task_target
-                    cfg=node_cfg,
-                    n_jobs=args.n_jobs,
-                    slurm_config=getattr(args, "slurm_config", None),
-                    pbs_config=getattr(args, "pbs_config", None),
-                )
-                return executor.run()
+        # Hand off to the single execution kernel.
+        proj = Project.__new__(Project)
+        proj.defaults_str = None
+        proj.defaults = root_cfg
+        outcome = proj.submit(
+            node_cfg,
+            sweep=sweep_tasks or None,
+            sweep_target=args.sweep_target,
+            n_jobs=args.n_jobs,
+            smart_run=bool(args.check_exists),
+            slurm_config=getattr(args, "slurm_config", None),
+            pbs_config=getattr(args, "pbs_config", None),
+            overrides=args.overrides_after_select or None,
+            merge=args.merge_after_select,
+            debug=debug,
+            print_config=args.print_config,
+        )
 
-        # Single execution
-        # Extract tracking info from the node config
-        repos, data, prevs = extract_tracking_info(node_cfg)
-
-        # Snapshot before run
-        snapshot(node_cfg, repos=repos, data=data, prevs=prevs)
-
-        # Remove _snapshot_ so it is NOT passed to the user function
-        if "_snapshot_" in node_cfg:
-            with open_dict(node_cfg):
-                del node_cfg["_snapshot_"]
-
-        result = run_func(node_cfg)
-        if "save_dir" in node_cfg:
-            write_complete_marker(Path(node_cfg.save_dir), result=result)
-        return result
+        # Back-compat: the runner historically returned the user function's
+        # raw return value (and is consumed by @flexcli as such). Unwrap the
+        # ExecutionResult so existing callers keep working.
+        if outcome is None:
+            return None
+        if isinstance(outcome, list):
+            return [r.result if hasattr(r, "result") else r for r in outcome]
+        return outcome.result if hasattr(outcome, "result") else outcome
