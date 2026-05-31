@@ -6,10 +6,11 @@ from loguru import logger
 from typing import List, Dict, Any, Optional
 import yaml
 import json
+import shutil
 from .utils import instantiate, load_python_defaults, extract_tracking_info
 from .snapshot import snapshot, RunTracker
 from .diff import RunDiff
-from . import config
+from . import config as flexLock_config
 
 
 class ExecutionResult:
@@ -134,6 +135,7 @@ class Project:
         # Auto-populate match_include from _target_ modules if not provided
         if match_include is None:
             from .utils import collect_target_include_patterns
+
             match_include = collect_target_include_patterns(cfg) or None
 
         # Generate fingerprint for this config
@@ -141,7 +143,7 @@ class Project:
 
         # Determine where to search
         if search_dirs is None:
-            if config.WARN_SMART_RUN_NO_SEARCH_DIRS:
+            if flexLock_config.WARN_SMART_RUN_NO_SEARCH_DIRS:
                 logger.warning(
                     "smart_run=True but search_dirs=None. "
                     "Defaulting to parent of save_dir. "
@@ -188,6 +190,24 @@ class Project:
                     )
 
                     if differ.is_match():
+                        # Validate that the run isn't stale (interrupted before outputs saved)
+                        # A run is considered stale if it contains run.lock but no actual outputs.
+                        # We check for results.json or any non-hidden file other than run.lock.
+                        is_stale = True
+                        if (run_dir / "results.json").exists():
+                            is_stale = False
+                        else:
+                            for f in run_dir.iterdir():
+                                if f.name != "run.lock" and not f.name.startswith("."):
+                                    is_stale = False
+                                    break
+                        
+                        if is_stale:
+                            logger.debug(
+                                f"Ignoring stale cache hit at {run_dir} (no outputs found)"
+                            )
+                            continue
+
                         logger.success(
                             f"⚡ Cache Hit! Found matching run at: {run_dir}"
                         )
@@ -255,7 +275,9 @@ class Project:
             save_dir=str(match_dir), status="CACHED", result=result_data, cfg=cfg
         )
 
-    def run_stage(self, cfg, stage_name=None, smart_run=True, search_dirs=None, **submit_kwargs):
+    def run_stage(
+        self, cfg, stage_name=None, smart_run=True, search_dirs=None, **submit_kwargs
+    ):
         """
         Run a single stage with automatic search_dirs and save_dir propagation.
 
@@ -277,9 +299,13 @@ class Project:
         if search_dirs is None and smart_run and stage_name and "save_dir" in cfg:
             parent = Path(cfg.save_dir).parent.parent
             if parent.exists():
-                search_dirs = [str(p) for p in parent.glob(f"*/{stage_name}") if p.is_dir()]
+                search_dirs = [
+                    str(p) for p in parent.glob(f"*/{stage_name}") if p.is_dir()
+                ]
 
-        result = self.submit(cfg, smart_run=smart_run, search_dirs=search_dirs, **submit_kwargs)
+        result = self.submit(
+            cfg, smart_run=smart_run, search_dirs=search_dirs, **submit_kwargs
+        )
 
         # For single runs, propagate save_dir back into cfg
         if isinstance(result, list):
@@ -313,37 +339,29 @@ class Project:
         match_include: List[str] = None,
         match_exclude: List[str] = None,
         isolated: bool = False,
+        force: bool = False,
     ) -> ExecutionResult | List[ExecutionResult]:
         """
         Submit a configuration for execution.
-
+        ...
         Args:
-            config: The configuration to execute (from py2cfg or get())
-            sweep: Optional list of override dicts for parameter sweep
-            n_jobs: Number of parallel workers (for sweeps)
-            wait: If True, blocks until completion
-            smart_run: If True, checks for existing runs before executing
-            search_dirs: Directories to search for cached runs (for smart_run)
-            pbs_config: Path to PBS configuration YAML (for HPC execution)
-            slurm_config: Path to Slurm configuration YAML (for HPC execution)
-            match_include: Override include patterns for git comparison during smart_run
-            match_exclude: Override exclude patterns for git comparison during smart_run
-            isolated: If True, run in a spawned subprocess even for a single task.
-                Use this for GPU stages (e.g. predict) so the CUDA context is
-                confined to the child and never leaks into the parent process,
-                preventing fork-based deadlocks in subsequent parallel stages.
-
-        Returns:
-            ExecutionResult (single run) or List[ExecutionResult] (sweep)
-
-        Notes:
-            - Use pbs_config or slurm_config for HPC backend execution
-            - For Singularity containers, specify python_exe in the backend config
-            - wait=True will poll job status until completion (for HPC backends)
+            ...
+            force: If True, bypasses smart_run entirely and clears the save_dir before running.
         """
         # Ensure config is a DictConfig
         if not isinstance(config, DictConfig):
             config = OmegaConf.create(config)
+
+        if force:
+            # Clear save_dir if it exists
+            save_dir = config.get("save_dir", "outputs/job")
+            if Path(save_dir).exists():
+                logger.info(f"Force flag enabled: clearing save_dir {save_dir}")
+                shutil.rmtree(save_dir)
+            
+            # Force execution by disabling smart_run
+            smart_run = False
+
 
         # Handle sweep execution
         if sweep:
@@ -386,12 +404,18 @@ class Project:
                 {"save_dir": str(save_dir), "_snapshot_": config.get("_snapshot_", {})}
             )
 
+            # Pre-resolve config to avoid InterpolationKeyError in HPC backend
+            # by detaching it from parent configs and resolving all interpolations.
+            resolved_config = OmegaConf.create(
+                OmegaConf.to_container(config, resolve=True)
+            )
+            
             executor = ParallelExecutor(
                 func=instantiate,
-                tasks=[config],  # Single task as a list
+                tasks=[resolved_config],  # Single task as a list
                 task_target=None,
                 cfg=executor_cfg,
-                n_jobs=config.DEFAULT_N_JOBS,
+                n_jobs=flexLock_config.DEFAULT_N_JOBS,
                 pbs_config=pbs_config,
                 slurm_config=slurm_config,
                 local_workers=None,
@@ -399,7 +423,7 @@ class Project:
 
             # Run with wait parameter (executor handles waiting)
             success = executor.run(
-                wait=wait, timeout=config.DEFAULT_TIMEOUT if wait else None
+                wait=wait, timeout=flexLock_config.DEFAULT_TIMEOUT if wait else None
             )
 
             # Load result

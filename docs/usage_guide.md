@@ -216,18 +216,22 @@ def train(input_path, save_dir=None):
     pass
 ```
 
+# Complete Usage Guide
+...
+(after line 230)
 **With py2cfg:**
 ```python
 cfg = py2cfg(
     train,
     input_path='data/train.csv',
     save_dir='outputs/train',
-    snapshot_config=dict(
+    _snapshot_=dict(
         repos={'main': '.', 'submodule': 'libs/mylib'},
         data={'train_data': '${...input_path}'}
     )
 )
 ```
+...
 
 > **Auto-detection:** When the config specifies a `_target_` (e.g. with YAML configs or `py2cfg`), FlexLock automatically detects and tracks the git repository of the target function. No explicit `repos` entry is needed.
 
@@ -236,7 +240,7 @@ cfg = py2cfg(
 `repos` values can be a plain path string or a dict with additional options:
 
 ```python
-snapshot_config=dict(
+_snapshot_=dict(
     repos={
         # Simple: string path
         'main': '.',
@@ -827,7 +831,7 @@ cfg = py2cfg(train, data_path='${latest:outputs/preprocess/*/data.csv}')
 cfg = py2cfg(
     train,
     input_data='data/train.csv',
-    snapshot_config=dict(
+    _snapshot_=dict(
         repos={'main': '.'},              # or omit if using _target_ (auto-detected)
         data={'train': '${...input_data}'}
     )

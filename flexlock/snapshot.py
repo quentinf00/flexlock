@@ -82,12 +82,20 @@ class RunTracker:
         """
         snapshot_data = self.finalize(config)
 
+        # Resolve save_dir in case it's a resolver (like ${vinc:})
+        # We do this by accessing it from the finalized config in the snapshot
+        resolved_save_dir = Path(
+            snapshot_data["config"].get("save_dir", str(self.save_dir))
+        )
+
         # Atomic Write
-        self.save_dir.mkdir(parents=True, exist_ok=True)
-        with tempfile.NamedTemporaryFile("w", dir=self.save_dir, delete=False) as tf:
+        resolved_save_dir.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            "w", dir=resolved_save_dir, delete=False
+        ) as tf:
             tf.write(OmegaConf.to_yaml(snapshot_data))
             tmp_name = tf.name
-        os.replace(tmp_name, self.save_dir / "run.lock")
+        os.replace(tmp_name, resolved_save_dir / "run.lock")
 
         return snapshot_data
 
