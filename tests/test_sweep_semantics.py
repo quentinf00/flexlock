@@ -163,6 +163,39 @@ def test_intra_node_save_dir_ref_tracks_sweep_override(tmp_path):
     assert captured[1]["log_dir"] == str(sweep_root / "b" / "logs")
 
 
+def test_sweep_dir_suffix_nests_under_base_save_dir(tmp_path):
+    """sweep_dir_suffix=True must produce children of the sweep root, not
+    siblings — siblings always trip the containment validation.
+    """
+    proj = Project()
+    sweep_root = tmp_path / "train"
+    base = OmegaConf.create({"save_dir": str(sweep_root), "x": 0})
+
+    captured = []
+
+    def fake_instantiate(c):
+        captured.append(OmegaConf.to_container(c, resolve=True))
+        return {}
+
+    with patch("flexlock.api.snapshot"), patch(
+        "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
+    ), patch("flexlock.api.instantiate", side_effect=fake_instantiate):
+        proj.submit(
+            base,
+            sweep=[{"x": 1}, {"x": 2}],
+            sweep_dir_suffix=True,
+            smart_run=False,
+            n_jobs=1,
+        )
+
+    # Each item nests under sweep_root.
+    save_dirs = [c["save_dir"] for c in captured]
+    assert save_dirs == [
+        str(sweep_root / "sweep_0000"),
+        str(sweep_root / "sweep_0001"),
+    ]
+
+
 def test_cross_tree_ref_frozen_at_selection_then_static(tmp_path):
     """After Spec A, ${main.save_dir} refs are frozen at proj.get() time.
 

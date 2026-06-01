@@ -17,6 +17,29 @@ from .diff import RunDiff
 from . import config as flexlock_config
 
 
+def _print_compiled_config(cfg):
+    """Print the resolved config + the target function's docstring, matching
+    what the docs promise for ``--print-config`` / ``print_config=True``.
+    """
+    print("=== COMPILED CONFIG ===")
+    print(OmegaConf.to_yaml(cfg))
+    target = cfg.get("_target_") if isinstance(cfg, DictConfig) else None
+    if not target:
+        return
+    print("=== TARGET FUNCTION DOCSTRING ===")
+    print(f"Target: {target}")
+    try:
+        import importlib
+
+        module_name, func_name = target.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        func = getattr(module, func_name)
+        doc = getattr(func, "__doc__", None)
+        print(f"Docstring:\n{doc}" if doc else "No docstring available.")
+    except (ImportError, AttributeError, ValueError) as e:
+        print(f"Could not import target function '{target}': {e}")
+
+
 class ExecutionResult:
     """Result object from task execution."""
 
@@ -451,6 +474,14 @@ class Project:
                 overrides = [f"{k}={v}" for k, v in overrides.items()]
             config.merge_with(OmegaConf.from_dotlist(overrides))
 
+        # Resolve save_dir exactly once. Resolvers like ${vinc:} look at the
+        # filesystem and would otherwise advance the counter every time
+        # cfg.save_dir is read (snapshot phase vs. complete-marker phase),
+        # splitting run.lock and run.complete across different dirs.
+        if "save_dir" in config and config.save_dir is not None:
+            with open_dict(config):
+                config.save_dir = str(config.save_dir)
+
         if print_config:
             # When a sweep is given, preview each item's merged config so
             # the user can verify per-item interpolations resolve correctly
@@ -461,9 +492,9 @@ class Project:
                 for i, override in enumerate(sweep):
                     item_cfg = merge_task_into_cfg(config, override, sweep_target)
                     print(f"# --- sweep item {i} ---")
-                    print(OmegaConf.to_yaml(item_cfg))
+                    _print_compiled_config(item_cfg)
             else:
-                print(OmegaConf.to_yaml(config))
+                _print_compiled_config(config)
             return None
 
         if force:
@@ -865,10 +896,12 @@ class Project:
                 OmegaConf.to_container(sweep_cfg, resolve=True)
             )
             if dir_suffix and "save_dir" in sweep_cfg:
+                # Nest each item under the base save_dir (the sweep root) so
+                # tasks DB and lineage markers stay inside the same tree.
+                # Pre-fix this produced siblings (e.g. train_sweep_0000 next
+                # to train/), which always tripped the containment check.
                 base_save_dir = Path(sweep_cfg.save_dir)
-                sweep_cfg.save_dir = str(
-                    base_save_dir.parent / f"{base_save_dir.name}_sweep_{i:04d}"
-                )
+                sweep_cfg.save_dir = str(base_save_dir / f"sweep_{i:04d}")
             merged_items.append((i, sweep_cfg))
 
         # Validate per-item save_dir containment up front. The tasks DB lives

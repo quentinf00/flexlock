@@ -35,6 +35,7 @@ from .utils import (
     load_python_defaults,
     extract_tracking_info,
     load_sweep,
+    log_to_file,
     parse_sweep_string,
     select_and_freeze_root_refs,
 )
@@ -67,6 +68,7 @@ __all__ = [
     "py2cfg",
     "load_python_defaults",
     "load_sweep",
+    "log_to_file",
     "parse_sweep_string",
     "select_and_freeze_root_refs",
     "FlexLockRunner",

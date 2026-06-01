@@ -334,19 +334,22 @@ sweep = [
     dict(lr=0.1, batch_size=128),
 ]
 
-# Execute
-results = proj.submit(
-    proj.get('train'),
-    sweep=sweep,
-    n_jobs=3
-)
+if __name__ == "__main__":
+    # n_jobs > 1 uses multiprocessing (spawn) — module-scope calls must be
+    # guarded by `if __name__ == "__main__":` or the children will re-import
+    # and re-launch the sweep recursively.
+    results = proj.submit(
+        proj.get('train'),
+        sweep=sweep,
+        n_jobs=3
+    )
 
-# Process results
-for i, result in enumerate(results):
-    print(f"Run {i}: accuracy={result['accuracy']:.3f}")
+    # Process results
+    for i, result in enumerate(results):
+        print(f"Run {i}: accuracy={result['accuracy']:.3f}")
 
-best = max(results, key=lambda r: r['accuracy'])
-print(f"Best LR: {best.cfg.lr}")
+    best = max(results, key=lambda r: r['accuracy'])
+    print(f"Best LR: {best.cfg.lr}")
 ```
 
 ---

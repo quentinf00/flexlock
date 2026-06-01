@@ -318,6 +318,61 @@ def test_keyboard_interrupt_handling():
         assert success is False
 
 
+def test_worker_writes_results_json(base_cfg):
+    """Each task's return value lands in <task_save_dir>/results.json.
+
+    Without this, parallel sweeps and isolated runs come back with
+    ExecutionResult.result=None even though the function returned a value.
+    """
+    import json
+
+    sub_a = Path(base_cfg.save_dir) / "a"
+    sub_b = Path(base_cfg.save_dir) / "b"
+    tasks = [
+        {"task_id": 0, "worker_id": "w", "save_dir": str(sub_a)},
+        {"task_id": 1, "worker_id": "w", "save_dir": str(sub_b)},
+    ]
+
+    executor = ParallelExecutor(
+        func=dummy_task_func,
+        tasks=tasks,
+        task_target=".",
+        cfg=base_cfg,
+        n_jobs=1,
+    )
+    assert executor.run() is True
+
+    for sub, tid in [(sub_a, 0), (sub_b, 1)]:
+        results_file = sub / "results.json"
+        assert results_file.exists(), f"missing results.json under {sub}"
+        payload = json.loads(results_file.read_text())
+        assert payload["task"] == tid
+        assert payload["status"] == "completed"
+
+
+def test_worker_results_json_wraps_non_dict(base_cfg):
+    """Non-dict return values are wrapped as {'result': ...}."""
+    import json
+
+    def returns_scalar(cfg):
+        return 0.95
+
+    sub = Path(base_cfg.save_dir) / "scalar"
+    tasks = [{"task_id": 0, "worker_id": "w", "save_dir": str(sub)}]
+
+    executor = ParallelExecutor(
+        func=returns_scalar,
+        tasks=tasks,
+        task_target=".",
+        cfg=base_cfg,
+        n_jobs=1,
+    )
+    executor.run()
+
+    payload = json.loads((sub / "results.json").read_text())
+    assert payload == {"result": 0.95}
+
+
 def test_config_constants_used():
     """Test that config constants are used for defaults."""
     from flexlock.parallel import ParallelExecutor

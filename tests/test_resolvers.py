@@ -279,6 +279,65 @@ def test_run_lock_resolver_null_value(tmp_path):
     assert run_lock_resolver(str(run_dir), "config.optional_field") is None
 
 
+def test_vinc_stable_within_single_submit(tmp_path):
+    """${vinc:} must resolve once per submit() so run.lock and run.complete
+    land in the same dir.
+
+    Without eager save_dir resolution the resolver fires once during snapshot
+    (creates run_0000) and again when writing the complete marker (sees
+    run_0000 exists, returns run_0001), splitting the two files.
+    """
+    from unittest.mock import patch
+    from flexlock.api import Project
+
+    base = tmp_path / "exp" / "run"
+    cfg = OmegaConf.create({
+        "save_dir": "${vinc:" + str(base) + "}",
+        "x": 1,
+    })
+    proj = Project()
+    with patch("flexlock.api.snapshot") as mock_snap, patch(
+        "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
+    ), patch("flexlock.api.instantiate", return_value={"ok": True}):
+        result = proj.submit(cfg, smart_run=False)
+
+    # Both side-effects should target the same resolved dir.
+    assert (Path(result.save_dir) / "run.complete").exists()
+    assert Path(result.save_dir).name == "run_0000"
+    # snapshot was called with the resolved string, not the ${vinc:} template
+    snap_cfg = mock_snap.call_args[0][0]
+    assert "${vinc" not in snap_cfg.save_dir
+
+
+def test_vinc_advances_across_submits(tmp_path):
+    """Independent submit() calls must each get a fresh vinc value."""
+    from unittest.mock import patch
+    from flexlock.api import Project
+
+    base = tmp_path / "exp" / "run"
+    saved = []
+
+    def fake_snap(c, **kw):
+        # Mimic what real snapshot does: create the resolved dir
+        Path(c.save_dir).mkdir(parents=True, exist_ok=True)
+        saved.append(c.save_dir)
+
+    proj = Project()
+    for _ in range(3):
+        cfg = OmegaConf.create({
+            "save_dir": "${vinc:" + str(base) + "}",
+            "x": 1,
+        })
+        with patch("flexlock.api.snapshot", side_effect=fake_snap), patch(
+            "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
+        ), patch("flexlock.api.instantiate", return_value={"ok": True}):
+            proj.submit(cfg, smart_run=False)
+
+    # Each submit advances the counter; resolved dirs are unique.
+    assert len(set(saved)) == 3
+    assert [Path(s).name for s in saved] == ["run_0000", "run_0001", "run_0002"]
+
+
 def test_run_lock_resolver_native_types(tmp_path):
     """Test that native YAML types are preserved: int, float, bool, list."""
     from flexlock.resolvers import run_lock_resolver

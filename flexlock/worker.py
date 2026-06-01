@@ -88,6 +88,18 @@ def worker_loop(func, cfg, task_to: str, db_path):
             # 5. Execute
             result = func(task_cfg)
             logger.info(f"Task successful: {task_cfg}")
+
+            # Persist the function's return value as results.json so the
+            # parent (api.submit) can rehydrate `ExecutionResult.result`.
+            # Without this, parallel sweeps and isolated runs always come
+            # back with result=None.
+            try:
+                results_file = task_save_dir / "results.json"
+                payload = result if isinstance(result, dict) else {"result": result}
+                results_file.write_text(json.dumps(payload, indent=2, default=str))
+            except Exception as e:
+                logger.warning(f"Could not write results.json at {task_save_dir}: {e}")
+
             write_complete_marker(task_save_dir, result=result)
             finish_task(db_path, task, result=result)
         except Exception as e:

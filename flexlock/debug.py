@@ -391,7 +391,7 @@ def _handle_exception_debug(exc_info):
             pdb.post_mortem(exc_info[2])
 
 
-def debug_on_fail(fn=None):
+def debug_on_fail(fn=None, **legacy_kwargs):
     """
     A decorator that provides enhanced debugging on exception.
 
@@ -403,22 +403,20 @@ def debug_on_fail(fn=None):
     - Configurable via environment variables
 
     Environment Variables:
-        FLEXLOCK_DEBUG: Set to '1' or 'true' to enable (via runner or manually)
-        FLEXLOCK_NODEBUG: Set to '1' or 'true' to disable
-        FLEXLOCK_DEBUG_STRATEGY: 'auto' (default), 'pdb', or 'inject'
+        FLEXLOCK_NODEBUG: Set to '1' or 'true' to disable this decorator
+            (turns it into a no-op).
+        FLEXLOCK_DEBUG_STRATEGY: 'auto' (default), 'pdb', or 'inject'.
 
-    Args:
-        fn: The function to decorate. If None, returns a decorator.
-        stack_depth: DEPRECATED - kept for backward compatibility
+    Note: ``FLEXLOCK_DEBUG=1`` is consumed by ``flexlock-run`` and
+    ``@flexcli`` to *opt into* wrapping the user function with this
+    decorator. Setting ``FLEXLOCK_DEBUG=0`` does not disable a manually
+    applied ``@debug_on_fail`` — use ``FLEXLOCK_NODEBUG=1`` for that.
 
     Usage::
 
         @debug_on_fail
         def my_function():
             ...
-
-        # Or with explicit call:
-        debug_on_fail(my_function)()
 
     In notebooks after exception, the following helpers are injected:
 
@@ -427,6 +425,12 @@ def debug_on_fail(fn=None):
     - ``_debug_down()``: Move toward exception
     - ``_debug_goto(n)``: Jump to frame n
     """
+    if legacy_kwargs:
+        # `stack_depth=` was a real argument long ago; accept and ignore
+        # so older snippets in docs don't blow up.
+        logger.warning(
+            f"debug_on_fail: ignoring deprecated kwargs {sorted(legacy_kwargs)}."
+        )
 
     def decorator(fn):
         # Check if debug is disabled
@@ -464,5 +468,7 @@ def debug_on_fail(fn=None):
 
         return _fn
 
-    # Support both @debug_on_fail and @debug_on_fail(stack_depth=2) usage
+    if fn is None:
+        # Called as @debug_on_fail(...): return a decorator.
+        return decorator
     return decorator(fn)

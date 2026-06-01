@@ -187,8 +187,27 @@ def test_submit_print_config_short_circuits(tmp_path, capsys):
     assert result is None
     mock_inst.assert_not_called()
     out = capsys.readouterr().out
+    assert "=== COMPILED CONFIG ===" in out
     assert "lr:" in out
     assert "0.1" in out
+
+
+def test_submit_print_config_shows_target_docstring(tmp_path, capsys):
+    """When _target_ is set, print_config prints the docstring section too."""
+    from flexlock.api import Project
+
+    proj = Project.__new__(Project)
+    proj.defaults = OmegaConf.create({})
+
+    # Target a stdlib function we know has a docstring.
+    cfg = OmegaConf.create({
+        "_target_": "os.path.join",
+        "save_dir": str(tmp_path / "out"),
+    })
+    proj.submit(cfg, print_config=True)
+    out = capsys.readouterr().out
+    assert "=== TARGET FUNCTION DOCSTRING ===" in out
+    assert "Target: os.path.join" in out
 
 
 # --- sweep_target ---

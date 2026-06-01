@@ -41,6 +41,32 @@ def test_flexlockrunner_load_config_with_defaults():
 
 
 
+def test_help_flag_prints_help_and_does_not_execute(tmp_path, capsys):
+    """`flexlock-run --help` must print help and return without running.
+
+    Pre-fix the flag was parsed (action='store_true') but never honoured —
+    the runner went on to submit the configured task, running the user's
+    function instead of showing help.
+    """
+    import sys
+    from unittest.mock import patch
+
+    runner = FlexLockRunner()
+
+    # Build a minimal valid argv so any downstream code path would have
+    # something to execute if --help wasn't honoured.
+    cfg_file = tmp_path / "cfg.yaml"
+    cfg_file.write_text("lr: 0.01\nsave_dir: " + str(tmp_path / "out") + "\n")
+
+    with patch("flexlock.api.Project.submit") as mock_submit:
+        out = runner.run(["--help", "-c", str(cfg_file)])
+
+    assert out is None
+    mock_submit.assert_not_called()
+    captured = capsys.readouterr().out
+    assert "usage:" in captured.lower() or "--defaults" in captured
+
+
 def test_flexlockrunner_prepare_node_injects_save_dir():
     """Test that _prepare_node injects save_dir if missing."""
     runner = FlexLockRunner()

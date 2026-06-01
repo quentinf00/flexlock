@@ -217,6 +217,13 @@ class FlexLockRunner:
 
         args = self.parser.parse_args(cli_args)
 
+        # `--help` / `-h` is registered with action='store_true' (we own
+        # help formatting), so argparse parses but doesn't auto-exit. We
+        # honour it here before doing any work.
+        if args.help:
+            self.parser.print_help()
+            return None
+
         # Build the root config from CLI inputs (defaults + config + merge + overrides).
         root_cfg = self.load_config(args)
         logger.info(f"Loaded root config: {root_cfg}")

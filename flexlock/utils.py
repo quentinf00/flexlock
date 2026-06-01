@@ -406,6 +406,10 @@ def _freeze_walk(value, sub_raw, root_raw):
     if isinstance(value, str) and "${" in value:
         whole = _whole_string_interp(value)
         if whole is not None and _find_top_level_colon(whole) is None:
+            # OmegaConf relative refs (.foo, ..foo, ...foo) navigate from the
+            # interpolation site and can't be statically frozen — pass through.
+            if whole.startswith("."):
+                return value
             return _freeze_simple_ref(whole, sub_raw, root_raw, fallback_str=value)
         return _process_interps_in_string(value, sub_raw, root_raw)
     return value
@@ -527,6 +531,10 @@ def _process_one_interp(inner: str, sub_raw, root_raw) -> str:
         args = inner[colon_idx + 1 :]
         processed_args = _process_interps_in_string(args, sub_raw, root_raw)
         return "${" + resolver_name + ":" + processed_args + "}"
+
+    # Relative refs (.foo, ..foo) — resolved by OmegaConf at access time.
+    if inner.startswith("."):
+        return "${" + inner + "}"
 
     # Simple ref
     ref = inner
@@ -683,10 +691,18 @@ def load_python_defaults(import_path: str):
             # Otherwise treat the left side as a dotted module name.
             module = importlib.import_module(path_str)
             return getattr(module, var_name)
-        spec = importlib.util.spec_from_file_location(
-            "dynamic_defaults", file_path.resolve()
-        )
+        # Load file under its real stem and register in sys.modules so any
+        # `_target_: <stem>.fn` captured by py2cfg in that file remains
+        # importable later (during instantiate()). Also make sibling
+        # imports work by ensuring the parent dir is on sys.path.
+        file_path = file_path.resolve()
+        module_name = file_path.stem
+        parent_dir = str(file_path.parent)
+        if parent_dir not in sys.path:
+            sys.path.insert(0, parent_dir)
+        spec = importlib.util.spec_from_file_location(module_name, file_path)
         module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
         spec.loader.exec_module(module)
         return getattr(module, var_name)
 

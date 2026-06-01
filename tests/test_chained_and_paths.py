@@ -57,6 +57,40 @@ def test_project_accepts_bare_py_path(tmp_path):
     assert proj.defaults.stage.x == 1
 
 
+def test_file_based_target_is_reimportable(tmp_path):
+    """py2cfg captured inside a file-loaded defaults module must produce a
+    _target_ that can be re-imported (so submit() works, not just inspection).
+
+    Before the fix the module was loaded under the literal name
+    "dynamic_defaults", making `instantiate()` later fail with
+    `ModuleNotFoundError: No module named 'dynamic_defaults'`.
+    """
+    import importlib
+    import sys
+    from flexlock.utils import instantiate
+
+    cfg_file = tmp_path / "my_project_config.py"
+    cfg_file.write_text(
+        "from flexlock import py2cfg\n"
+        "def train(lr=0.01):\n"
+        "    return {'lr': lr}\n"
+        "defaults = {'train': py2cfg(train)}\n"
+    )
+
+    # Make sure no stale entry pollutes the test
+    sys.modules.pop("my_project_config", None)
+
+    proj = Project(str(cfg_file))
+    train_cfg = proj.get("train")
+    # _target_ uses the file's stem and is importable
+    assert train_cfg._target_ == "my_project_config.train"
+    mod = importlib.import_module("my_project_config")
+    assert hasattr(mod, "train")
+    # End-to-end: instantiate dispatches to the real function
+    result = instantiate(train_cfg)
+    assert result == {"lr": 0.01}
+
+
 # --- submit_chained ---
 
 def _make_proj_with_defaults():

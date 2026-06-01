@@ -1,5 +1,6 @@
 """CLI entry point for FlexLock runner."""
 
+import os
 import sys
 from loguru import logger
 from flexlock.runner import FlexLockRunner
@@ -18,6 +19,13 @@ def main():
         flexlock-run --config exp.yml --select experiments.exp1
         flexlock-run --sweep-file sweep.yaml --n_jobs 4
     """
+    # Make the current working directory importable so users can pass
+    # `-d mypkg.module.var` for a package in their project without having
+    # to set PYTHONPATH manually. Mirrors what `python -m mypkg` would do.
+    cwd = os.getcwd()
+    if cwd not in sys.path:
+        sys.path.insert(0, cwd)
+
     try:
         runner = FlexLockRunner()
         runner.run()

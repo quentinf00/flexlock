@@ -139,6 +139,39 @@ def test_intra_sub_tree_refs_preserved():
     assert container["logs"] == "outputs/stage/logs"
 
 
+def test_relative_interp_preserved():
+    """OmegaConf relative refs (`${...key}`) navigate from the access site and
+    can't be statically frozen — the freeze pass must pass them through."""
+    cfg = OmegaConf.create({
+        "train": {
+            "input_path": "data/train.csv",
+            "_snapshot_": {"data": {"main": "${...input_path}"}},
+        }
+    })
+    sub = select_and_freeze_root_refs(cfg, "train")
+    # Raw form preserved
+    raw = OmegaConf.to_container(sub, resolve=False)
+    assert raw["_snapshot_"]["data"]["main"] == "${...input_path}"
+    # Still resolves correctly when fully materialized via the root cfg
+    cfg.train = sub  # type: ignore[attr-defined]
+    resolved = OmegaConf.to_container(cfg.train, resolve=True)
+    assert resolved["_snapshot_"]["data"]["main"] == "data/train.csv"
+
+
+def test_relative_interp_embedded_in_string_preserved():
+    """A `${..key}` embedded in a larger string (e.g. `${..save_dir}/logs`)
+    must also be preserved verbatim."""
+    cfg = OmegaConf.create({
+        "stage": {
+            "save_dir": "outputs/stage",
+            "inner": {"logs": "${..save_dir}/logs"},
+        }
+    })
+    sub = select_and_freeze_root_refs(cfg, "stage")
+    raw = OmegaConf.to_container(sub, resolve=False)
+    assert raw["inner"]["logs"] == "${..save_dir}/logs"
+
+
 def test_dotted_intra_ref_preserved():
     cfg = OmegaConf.create({
         "stage": {

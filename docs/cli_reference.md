@@ -102,9 +102,31 @@ flexlock-run [OPTIONS]
 ### `--defaults`, `-d`
 Load Python module containing default configuration.
 
+**Accepted forms:**
+
+| Form                                  | Resolves to                                |
+|---------------------------------------|--------------------------------------------|
+| `pkg.module.variable`                 | `from pkg.module import variable`          |
+| `pkg.module:variable`                 | Same, with explicit colon split            |
+| `path/to/file.py`                     | `defaults` variable in that file           |
+| `path/to/file.py:variable`            | Named variable in that file                |
+
+For the dotted form, the **last** component is the variable name and
+everything before it is the module path. So `-d myconfig.defaults`
+expects a module called `myconfig` containing a `defaults` attribute —
+**not** `myconfig/defaults.py`. If your project layout is
+`myconfig/defaults.py` with `defaults = {...}` inside, use
+`-d myconfig.defaults.defaults` (or `-d myconfig/defaults.py`).
+
+`flexlock-run` inserts the current working directory at the front of
+`sys.path` for you, so dotted imports of packages in the project root
+work without setting `PYTHONPATH=.`.
+
 **Usage:**
 ```bash
 flexlock-run -d myproject.config.defaults
+flexlock-run -d configs/defaults.py
+flexlock-run -d configs/experiments.py:hyperparam_grid
 ```
 
 **Python module structure:**
@@ -115,7 +137,7 @@ from flexlock import py2cfg
 def train(lr=0.01, epochs=10):
     pass
 
-config = dict(
+defaults = dict(
     train=py2cfg(train, lr=0.001),
     eval=py2cfg(evaluate)
 )

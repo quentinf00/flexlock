@@ -372,5 +372,18 @@ class TestDebugOnFailEnhanced:
         assert 'y' not in locals()
 
 
+    @patch.dict(os.environ, {'FLEXLOCK_NODEBUG': '1'})
+    def test_debug_accepts_legacy_stack_depth_kwarg(self):
+        """Old docs use @debug_on_fail(stack_depth=2). Accept and ignore it
+        instead of crashing with TypeError so existing snippets still work.
+        """
+
+        @debug_on_fail(stack_depth=2)
+        def returns_one():
+            return 1
+
+        assert returns_one() == 1
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

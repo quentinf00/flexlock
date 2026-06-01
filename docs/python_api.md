@@ -19,8 +19,12 @@ def train(lr=0.01, epochs=10, model=None):
 
 # Convert function to config
 cfg = py2cfg(train)
-# Result: {'_target_': 'module.train', 'lr': 0.01, 'epochs': 10}
+# Result: {'_target_': 'module.train', 'lr': 0.01, 'epochs': 10, 'model': None}
 ```
+
+Every parameter with a default is captured — including ones whose default
+is ``None``. Override or remove them downstream if you don't want them in
+the run lock.
 
 #### With Overrides
 
@@ -284,7 +288,7 @@ def submit(
 - `merge`: Path to a YAML file (or a dict) merged into `config` before execution. `overrides` is applied after `merge`.
 - `debug`: Wrap the user function with the post-mortem debugger so exceptions drop into PDB.
 - `print_config`: Print the resolved config and return `None` without executing — useful for inspecting sweep-merged or override-merged configs before launching.
-- `sweep_dir_suffix`: When `True`, appends `_sweep_{i:04d}` to each sweep run's `save_dir`. Default `False` (all sweep runs share the base `save_dir`).
+- `sweep_dir_suffix`: When `True`, nests each sweep run under `<save_dir>/sweep_{i:04d}/`. Default `False` (all sweep runs share the base `save_dir`).
 - `match_include`: Override the git path include-patterns used during `smart_run` comparison (takes priority over per-repo patterns stored in `run.lock`).
 - `match_exclude`: Override the git path exclude-patterns used during `smart_run` comparison.
 
@@ -393,16 +397,29 @@ sweep = [
     dict(lr=0.1, batch_size=128),
 ]
 
-# Execute sweep
-results = proj.submit(cfg, sweep=sweep, n_jobs=3)
+if __name__ == "__main__":
+    # n_jobs > 1 spawns multiprocessing workers (see "Parallelism" note
+    # below) and therefore must be guarded by `if __name__ == "__main__":`
+    # when the call is at module scope. Without the guard, importing the
+    # script (which spawn does to bootstrap the children) re-runs the call
+    # and the process never terminates.
+    results = proj.submit(cfg, sweep=sweep, n_jobs=3)
 
-# Process results
-for i, result in enumerate(results):
-    print(f"Run {i}: accuracy={result['accuracy']}")
+    # Process results
+    for i, result in enumerate(results):
+        print(f"Run {i}: accuracy={result['accuracy']}")
 
-best = max(results, key=lambda r: r['accuracy'])
-print(f"Best config: {best.cfg}")
+    best = max(results, key=lambda r: r['accuracy'])
+    print(f"Best config: {best.cfg}")
 ```
+
+> **Parallelism note.** ``n_jobs > 1`` and ``isolated=True`` both use
+> Python's ``multiprocessing`` with the ``spawn`` start method (chosen to
+> avoid GPU/CUDA fork hazards). Spawn re-imports the launching script in
+> each child, so any module-scope ``proj.submit(...)`` call **must** be
+> placed under ``if __name__ == "__main__":``. Notebook and REPL contexts
+> are fine. ``n_jobs=1`` without ``isolated=True`` runs in-process and
+> does not need the guard.
 
 **Per-item `save_dir` containment.** Each sweep item's `save_dir` must
 nest under the sweep root (taken from the base config's `save_dir`, or
