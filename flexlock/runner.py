@@ -13,6 +13,7 @@ from .utils import (
     select_and_freeze_root_refs,
     parse_sweep_string,
     load_sweep,
+    enqueue_to_file,
 )
 from .diff import RunDiff
 from .exceptions import FlexLockValidationError
@@ -59,6 +60,25 @@ class FlexLockRunner:
             action="store_true",
             help="Print the compiled configuration and target function docstring, then exit.",
         )
+        parser.add_argument(
+            "--dump",
+            action="store_true",
+            help="Print the compiled configuration as clean YAML and exit (no headers). "
+                 "Redirect to a file to capture it for later use with --sweep-file or --enqueue.",
+        )
+        parser.add_argument(
+            "--edit-config", "-e",
+            action="store_true",
+            help="Open the compiled configuration in $EDITOR before running. "
+                 "Like 'git commit': edit the YAML, save and quit to proceed.",
+        )
+        parser.add_argument(
+            "--enqueue",
+            metavar="FILE",
+            help="Append the compiled configuration to a YAML queue file and exit. "
+                 "Creates the file if it does not exist. Run the queue later with "
+                 "--sweep-file FILE.",
+        )
 
         # Existing Config/Select args
         parser.add_argument(
@@ -100,11 +120,24 @@ class FlexLockRunner:
         )
         source.add_argument(
             "--sweep-file",
-            help="Path to a file (yaml, json, txt) containing the sweep list",
+            nargs="+",
+            metavar="FILE",
+            help="One or more files (yaml, json, txt) providing sweep tasks. "
+                 "Each file may contain a single config dict (one task) or a list "
+                 "of dicts (multiple tasks). Results are concatenated in order.",
         )
         source.add_argument(
             "--sweep",
             help="Comma-separated values (e.g. '0.01,0.02' or 'lr=0.1,lr=0.2')",
+        )
+
+        # Sweep root override
+        sweep_group.add_argument(
+            "--sweep-root",
+            metavar="DIR",
+            help="Override the directory used as the sweep root for the tasks DB "
+                 "and lineage markers. Use this when your sweep items have pre-set "
+                 "save_dirs that don't nest under the base config's save_dir.",
         )
 
         # Injection Target
@@ -236,6 +269,21 @@ class FlexLockRunner:
                 raise FlexLockValidationError(
                     f"Selection '{args.select}' returned None."
                 ) from e
+            # Warn when a -o key also exists in the selected subtree — the
+            # override landed on the root, not the stage. Root-only anchors
+            # (params, pipeline_dir, …) are intentional and stay silent.
+            if args.overrides:
+                _missing = object()
+                for kv in args.overrides:
+                    key = kv.split("=", 1)[0]
+                    if OmegaConf.select(node_cfg, key, default=_missing) is not _missing:
+                        logger.warning(
+                            f"'-o {kv}' was applied to the root config, but key '{key}' "
+                            f"also exists in the selected node '{args.select}' — "
+                            f"your override did NOT reach the stage. "
+                            f"Use '-O {kv}' to override the stage directly. "
+                            f"See docs/cli_reference.md § Configuration Overrides."
+                        )
         else:
             node_cfg = root_cfg
 
@@ -248,6 +296,49 @@ class FlexLockRunner:
 
         # Inject a default save_dir if the selected node doesn't carry one.
         node_cfg = self._prepare_node(node_cfg)
+
+        # --edit-config / -e: open compiled config in $EDITOR before running.
+        if args.edit_config:
+            import subprocess
+            import tempfile
+            editor = os.environ.get("EDITOR", "vi")
+            original_yaml = OmegaConf.to_yaml(node_cfg)
+            with tempfile.NamedTemporaryFile(
+                suffix=".yaml", mode="w", delete=False, prefix="flexlock_edit_"
+            ) as f:
+                f.write(original_yaml)
+                tmppath = f.name
+            try:
+                while True:
+                    subprocess.call([editor, tmppath])
+                    with open(tmppath) as fh:
+                        edited_raw = fh.read()
+                    try:
+                        node_cfg = OmegaConf.create(yaml.safe_load(edited_raw))
+                        break
+                    except Exception as exc:
+                        print(f"[flexlock] Invalid YAML: {exc}")
+                        answer = input("Re-open editor? [Y/n] ").strip().lower()
+                        if answer in ("n", "no"):
+                            raise SystemExit(1)
+                if edited_raw == original_yaml:
+                    answer = input("No changes detected, run anyway? [y/N] ").strip().lower()
+                    if answer not in ("y", "yes"):
+                        raise SystemExit(0)
+            finally:
+                Path(tmppath).unlink(missing_ok=True)
+
+        # --dump: emit clean YAML (no decorative headers) and exit.
+        if args.dump:
+            print(OmegaConf.to_yaml(node_cfg), end="")
+            return None
+
+        # --enqueue: append compiled config to a YAML queue file and exit.
+        if args.enqueue:
+            cfg_dict = OmegaConf.to_container(node_cfg, resolve=False, throw_on_missing=False)
+            n = enqueue_to_file(args.enqueue, cfg_dict)
+            logger.info(f"Enqueued 1 task → {args.enqueue} ({n} task(s) in queue)")
+            return None
 
         # Load the sweep list from whichever source the user picked.
         sweep_tasks = load_sweep(
@@ -269,6 +360,7 @@ class FlexLockRunner:
             node_cfg,
             sweep=sweep_tasks or None,
             sweep_target=args.sweep_target,
+            sweep_root=getattr(args, "sweep_root", None),
             n_jobs=args.n_jobs,
             smart_run=bool(args.check_exists),
             slurm_config=getattr(args, "slurm_config", None),

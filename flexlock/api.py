@@ -394,6 +394,7 @@ class Project:
         config: "DictConfig | str | None" = None,
         sweep: List[Dict] = None,
         sweep_target: str = None,
+        sweep_root: "str | None" = None,
         n_jobs: int = 1,
         smart_run: bool = True,
         search_dirs: List[str] = None,
@@ -521,6 +522,7 @@ class Project:
                 match_include,
                 match_exclude,
                 sweep_target=sweep_target,
+                sweep_root=sweep_root,
                 debug=debug,
             )
 
@@ -630,6 +632,23 @@ class Project:
             # Extract tracking info
             repos, data, prevs = extract_tracking_info(config)
 
+            # Eagerly freeze all resolver interpolations in one pass.
+            #
+            # select_and_freeze_root_refs preserves ${vinc:} resolver calls
+            # verbatim when freezing cross-tree refs (e.g. ${main.save_dir}
+            # pointing to ${vinc:results/exp} becomes a new ${vinc:} node).
+            # The save_dir freeze above already fired vinc: and cached the result
+            # in this OmegaConf instance.  A full to_container(resolve=True) drains
+            # that cache for every other ${vinc:} occurrence so they all get the same
+            # value.  Re-wrapping as a plain config prevents instantiate()'s internal
+            # config.copy() — which creates a new instance with an empty cache — from
+            # firing the resolver again after snapshot() has created save_dir on disk.
+            try:
+                _c = OmegaConf.to_container(config, resolve=True, throw_on_missing=False)
+                config = OmegaConf.create(_c)
+            except Exception as exc:
+                logger.warning(f"Could not fully resolve config before execution: {exc}")
+
             # Create snapshot before execution
             if "save_dir" in config:
                 snapshot(config, repos=repos, data=data, prevs=prevs)
@@ -718,27 +737,32 @@ class Project:
                     print("# === end ===")
 
     @staticmethod
-    def _validate_sweep_save_dirs(base_config, merged_items):
+    def _validate_sweep_save_dirs(base_config, merged_items, sweep_root=None):
         """Ensure every sweep item's save_dir nests under the sweep root.
 
-        The sweep root is taken from ``base_config.save_dir`` when present,
-        otherwise from the parent of the first item's save_dir. The tasks
-        DB and per-item lineage markers all assume containment; violating
-        it produces an opaque crash in the worker.
+        The sweep root is taken from ``sweep_root`` when provided, then from
+        ``base_config.save_dir``, otherwise from the parent of the first item's
+        save_dir. The tasks DB and per-item lineage markers all assume
+        containment; violating it produces an opaque crash in the worker.
         """
         from .exceptions import FlexLockValidationError
 
         if not merged_items:
             return
 
+        # When the user explicitly provides a sweep_root they've opted out of
+        # the containment constraint — trust them and skip validation.
+        if sweep_root is not None:
+            return
+
         # Determine sweep root.
         if "save_dir" in base_config and base_config.save_dir is not None:
-            sweep_root = Path(base_config.save_dir).resolve()
+            effective_root = Path(base_config.save_dir).resolve()
         else:
             first_save = merged_items[0][1].get("save_dir")
             if first_save is None:
                 return  # nothing to validate against
-            sweep_root = Path(first_save).resolve().parent
+            effective_root = Path(first_save).resolve().parent
 
         offenders = []
         for i, sweep_cfg in merged_items:
@@ -746,7 +770,7 @@ class Project:
             if sd is None:
                 continue
             try:
-                Path(sd).resolve().relative_to(sweep_root)
+                Path(sd).resolve().relative_to(effective_root)
             except ValueError:
                 offenders.append((i, sd))
 
@@ -756,12 +780,11 @@ class Project:
             ]
             raise FlexLockValidationError(
                 f"Sweep item save_dir(s) must nest under the sweep root "
-                f"({sweep_root}); the tasks DB and lineage markers live "
+                f"({effective_root}); the tasks DB and lineage markers live "
                 f"there. Offending items:\n"
                 + "\n".join(lines)
-                + f"\n\nFix: nest each item under {sweep_root} (e.g. "
-                f"{sweep_root}/<exp_name>/), or change the sweep root "
-                f"via overrides={{'save_dir': '<common_parent>'}}."
+                + f"\n\nTo keep the current save_dirs, use --sweep-root "
+                f"<common_parent> (e.g. --sweep-root {Path(offenders[0][1]).parent})."
             )
 
     def submit_chained(
@@ -859,6 +882,7 @@ class Project:
         match_include: List[str] = None,
         match_exclude: List[str] = None,
         sweep_target: str = None,
+        sweep_root: "str | None" = None,
         debug: bool = False,
     ) -> List[ExecutionResult]:
         """
@@ -909,7 +933,7 @@ class Project:
         # relative to its parent dir. If items sit outside the sweep tree the
         # worker either fails opaquely (pre-validation) or can't form a
         # relative path. Surface a clear error before we queue anything.
-        self._validate_sweep_save_dirs(base_config, merged_items)
+        self._validate_sweep_save_dirs(base_config, merged_items, sweep_root=sweep_root)
 
         # Check each sweep config for cached results
         for i, sweep_cfg in merged_items:
@@ -939,9 +963,10 @@ class Project:
                 task_configs = [cfg for _, cfg in configs_to_run]
                 indices = [i for i, _ in configs_to_run]
 
-                # Prepare a common save_dir for the sweep master
-                # Use the first config's save_dir as base
-                if "save_dir" in task_configs[0]:
+                # Prepare a common save_dir for the sweep master (tasks DB lives here).
+                if sweep_root is not None:
+                    sweep_save_dir = Path(sweep_root)
+                elif "save_dir" in task_configs[0]:
                     sweep_save_dir = Path(task_configs[0].save_dir).parent
                 else:
                     sweep_save_dir = Path("outputs/sweep")

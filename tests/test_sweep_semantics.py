@@ -38,7 +38,7 @@ def test_sweep_save_dir_outside_root_raises_clearly(tmp_path):
     assert "sweep root" in msg
     assert "item 1" in msg            # offender index named
     assert "outside_tree" in msg      # offender dir named
-    assert "Fix:" in msg              # suggested fix
+    assert "--sweep-root" in msg      # workaround hint
 
 
 def test_sweep_save_dir_all_inside_root_runs(tmp_path):
@@ -67,6 +67,39 @@ def test_sweep_save_dir_all_inside_root_runs(tmp_path):
         )
 
     assert len(captured) == 2
+    assert sorted(c["x"] for c in captured) == [1, 2]
+
+
+def test_sweep_root_overrides_validation(tmp_path):
+    """--sweep-root lets items live outside the base config's save_dir."""
+    proj = Project()
+    base = OmegaConf.create({
+        "_target_": "builtins.dict",
+        "save_dir": str(tmp_path / "base"),
+        "x": 0,
+    })
+    common_parent = tmp_path / "results"
+
+    captured = []
+
+    def fake_instantiate(c):
+        captured.append(OmegaConf.to_container(c, resolve=True))
+        return {}
+
+    with patch("flexlock.api.snapshot"), patch(
+        "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
+    ), patch("flexlock.api.instantiate", side_effect=fake_instantiate):
+        proj.submit(
+            base,
+            sweep=[
+                {"save_dir": str(common_parent / "exp_a"), "x": 1},
+                {"save_dir": str(common_parent / "exp_b"), "x": 2},
+            ],
+            sweep_root=str(common_parent),
+            smart_run=False,
+            n_jobs=1,
+        )
+
     assert sorted(c["x"] for c in captured) == [1, 2]
 
 

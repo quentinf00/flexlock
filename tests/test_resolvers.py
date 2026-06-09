@@ -338,6 +338,59 @@ def test_vinc_advances_across_submits(tmp_path):
     assert [Path(s).name for s in saved] == ["run_0000", "run_0001", "run_0002"]
 
 
+def test_vinc_stable_with_cross_tree_refs(tmp_path):
+    """${main.save_dir} refs frozen as ${vinc:} by select_and_freeze_root_refs
+    must not fire the resolver a second time after snapshot() creates the dir.
+
+    Regression: select_and_freeze_root_refs substitutes cross-tree refs with the
+    raw root value.  When save_dir=${vinc:...}, downstream refs (logger, dirpath)
+    are also frozen as ${vinc:...} interpolation nodes.  instantiate() calls
+    config.copy(), which creates a new OmegaConf instance with an empty resolver
+    cache; if those nodes are not eagerly resolved before the copy, vinc: fires
+    again after snapshot has created the directory and returns the next version.
+    """
+    from unittest.mock import patch
+    from flexlock.api import Project
+    from flexlock.utils import select_and_freeze_root_refs
+
+    base = tmp_path / "exp" / "run"
+    # Simulate the pattern from vae.py: save_dir is a vinc ref; logger and
+    # dirpath reference save_dir via ${main.save_dir}.
+    root_cfg = OmegaConf.create({
+        "main": {
+            "_target_": "builtins.dict",
+            "save_dir": "${vinc:" + str(base) + "}",
+            "logger_dir": "${main.save_dir}",
+            "dirpath": "${main.save_dir}/checkpoints",
+        }
+    })
+
+    # Simulate -s main: select the subtree (freezes ${main.save_dir} → ${vinc:...})
+    node_cfg = select_and_freeze_root_refs(root_cfg, "main")
+
+    captured = []
+
+    def fake_snap(c, **kw):
+        # Real snapshot creates the directory; mimic that so the next vinc: call
+        # would advance the counter if the bug is present.
+        Path(c.save_dir).mkdir(parents=True, exist_ok=True)
+        captured.append(dict(save_dir=c.save_dir, logger_dir=c.logger_dir, dirpath=c.dirpath))
+
+    proj = Project()
+    with patch("flexlock.api.snapshot", side_effect=fake_snap), patch(
+        "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
+    ), patch("flexlock.api.instantiate", return_value={"ok": True}):
+        result = proj.submit(node_cfg, smart_run=False)
+
+    assert len(captured) == 1
+    snap = captured[0]
+    resolved_save = snap["save_dir"]
+    # All three fields must resolve to the SAME version (not _0000 vs _0001)
+    assert snap["logger_dir"] == resolved_save
+    assert snap["dirpath"] == resolved_save + "/checkpoints"
+    assert Path(resolved_save).name == "run_0000"
+
+
 def test_run_lock_resolver_native_types(tmp_path):
     """Test that native YAML types are preserved: int, float, bool, list."""
     from flexlock.resolvers import run_lock_resolver

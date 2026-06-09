@@ -1500,7 +1500,7 @@ packages:
 - pypi: ./
   name: flexlock
   version: 0.4.1
-  sha256: f0c7ec5138de468afbec55a626639c7d4abf263bbe047cb0c68c93e42ee427bc
+  sha256: 75a70ec83c38fdbee48cb834f77477578c19a9c01989ee22fd52319d996d2ec0
   requires_python: '>=3.11'
 - conda: .
   name: flexlock

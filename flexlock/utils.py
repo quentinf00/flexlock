@@ -586,10 +586,39 @@ def parse_sweep_string(sweep_str: str) -> list:
     return out
 
 
+def _load_one_sweep_file(fpath: Path) -> list:
+    """Load a single sweep file and return its contents as a list of tasks.
+
+    YAML/JSON files that contain a list are expanded in-place; a single dict
+    is wrapped in a one-element list.  Plain text files treat each non-empty
+    line as one task value.
+
+    Interpolation strings (``${...}``) are intentionally preserved as raw
+    strings so that resolvers like ``${vinc:}`` fire at execution time rather
+    than at sweep-loading time.
+    """
+    import json as _json
+    import yaml as _yaml
+    from .exceptions import FlexLockConfigError
+
+    if not fpath.exists():
+        raise FlexLockConfigError(f"Sweep file '{fpath}' not found.")
+    if fpath.suffix in (".yaml", ".yml"):
+        raw = _yaml.safe_load(fpath.read_text())
+    elif fpath.suffix == ".json":
+        with open(fpath) as f:
+            raw = _json.load(f)
+    else:
+        raw = [_yaml.safe_load(line.strip()) for line in fpath.read_text().splitlines() if line.strip()]
+    if raw is None:
+        return []
+    return raw if isinstance(raw, list) else [raw]
+
+
 def load_sweep(
     *,
     sweep: "list | str | None" = None,
-    sweep_file: "str | Path | None" = None,
+    sweep_file: "str | Path | list[str | Path] | None" = None,
     sweep_key: "str | None" = None,
     root_cfg: "DictConfig | None" = None,
 ) -> list:
@@ -600,11 +629,14 @@ def load_sweep(
 
     Args:
         sweep: A pre-built list, or a CLI-style comma-separated string.
-        sweep_file: Path to .yaml/.yml, .json, or text file (one item per line).
+        sweep_file: Path (or list of paths) to .yaml/.yml, .json, or text
+            files.  When a list is given, each file is loaded independently
+            and results are concatenated.  A file containing a single dict
+            is treated as one task; a file containing a list expands into
+            multiple tasks.
         sweep_key: Dotted key into ``root_cfg`` whose value is the sweep list.
         root_cfg: Required when ``sweep_key`` is used.
     """
-    import json as _json
     import yaml as _yaml
     from .exceptions import FlexLockValidationError, FlexLockConfigError
 
@@ -620,17 +652,14 @@ def load_sweep(
     if sweep is not None:
         raw = parse_sweep_string(sweep) if isinstance(sweep, str) else sweep
     elif sweep_file is not None:
-        fpath = Path(sweep_file)
-        if not fpath.exists():
-            raise FlexLockConfigError(f"Sweep file '{fpath}' not found.")
-        if fpath.suffix in (".yaml", ".yml"):
-            raw = OmegaConf.to_container(OmegaConf.load(fpath), resolve=True)
-        elif fpath.suffix == ".json":
-            with open(fpath) as f:
-                raw = _json.load(f)
+        # Normalise to a list of Path objects.
+        if isinstance(sweep_file, (str, Path)):
+            files = [Path(sweep_file)]
         else:
-            with open(fpath) as f:
-                raw = [_yaml.safe_load(line.strip()) for line in f if line.strip()]
+            files = [Path(f) for f in sweep_file]
+        raw = []
+        for f in files:
+            raw.extend(_load_one_sweep_file(f))
     else:  # sweep_key
         if root_cfg is None:
             raise FlexLockValidationError(
@@ -806,3 +835,53 @@ def instantiate(config, *args, **kwargs):
         return functools.partial(target_class, *all_args, **init_args)
 
     return target_class(*all_args, **init_args)
+
+
+def enqueue_to_file(path: "str | Path", cfg_dict: dict) -> int:
+    """Atomically append *cfg_dict* to a YAML list file and return the new queue length.
+
+    The file is created if it does not exist.  Existing content must be a YAML
+    list (or an empty file).  The write is atomic: a temporary sibling file is
+    written first, then renamed over the target so partial writes are never
+    visible to concurrent readers.
+
+    Args:
+        path: Destination YAML file (created if absent).
+        cfg_dict: A plain Python dict (no OmegaConf nodes) to append.
+
+    Returns:
+        Number of items in the queue after appending.
+    """
+    import tempfile, os
+    import yaml as _yaml
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    existing: list = []
+    if path.exists() and path.stat().st_size > 0:
+        data = _yaml.safe_load(path.read_text())
+        if data is None:
+            existing = []
+        elif isinstance(data, list):
+            existing = data
+        else:
+            raise ValueError(
+                f"Queue file '{path}' must contain a YAML list, got {type(data).__name__}."
+            )
+
+    existing.append(cfg_dict)
+
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.tmp-", suffix=".yaml")
+    try:
+        with os.fdopen(fd, "w") as f:
+            _yaml.safe_dump(existing, f, default_flow_style=False, allow_unicode=True)
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+    return len(existing)
