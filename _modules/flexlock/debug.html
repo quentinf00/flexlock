@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.debug &mdash; FlexLock 0.3.2 documentation</title>
+  <title>flexlock.debug &mdash; FlexLock 0.4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/debug.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
+      <script src="../../_static/documentation_options.js?v=bd778e0b"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,7 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -80,6 +81,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../flexlock.html">flexlock</a></li>
       <li class="breadcrumb-item active">flexlock.debug</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -485,7 +487,7 @@
 
 <div class="viewcode-block" id="debug_on_fail">
 <a class="viewcode-back" href="../../api.html#flexlock.debug_on_fail">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">debug_on_fail</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">debug_on_fail</span><span class="p">(</span><span class="n">fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">legacy_kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A decorator that provides enhanced debugging on exception.</span>
 
@@ -497,22 +499,20 @@
 <span class="sd">    - Configurable via environment variables</span>
 
 <span class="sd">    Environment Variables:</span>
-<span class="sd">        FLEXLOCK_DEBUG: Set to &#39;1&#39; or &#39;true&#39; to enable (via runner or manually)</span>
-<span class="sd">        FLEXLOCK_NODEBUG: Set to &#39;1&#39; or &#39;true&#39; to disable</span>
-<span class="sd">        FLEXLOCK_DEBUG_STRATEGY: &#39;auto&#39; (default), &#39;pdb&#39;, or &#39;inject&#39;</span>
+<span class="sd">        FLEXLOCK_NODEBUG: Set to &#39;1&#39; or &#39;true&#39; to disable this decorator</span>
+<span class="sd">            (turns it into a no-op).</span>
+<span class="sd">        FLEXLOCK_DEBUG_STRATEGY: &#39;auto&#39; (default), &#39;pdb&#39;, or &#39;inject&#39;.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        fn: The function to decorate. If None, returns a decorator.</span>
-<span class="sd">        stack_depth: DEPRECATED - kept for backward compatibility</span>
+<span class="sd">    Note: ``FLEXLOCK_DEBUG=1`` is consumed by ``flexlock-run`` and</span>
+<span class="sd">    ``@flexcli`` to *opt into* wrapping the user function with this</span>
+<span class="sd">    decorator. Setting ``FLEXLOCK_DEBUG=0`` does not disable a manually</span>
+<span class="sd">    applied ``@debug_on_fail`` — use ``FLEXLOCK_NODEBUG=1`` for that.</span>
 
 <span class="sd">    Usage::</span>
 
 <span class="sd">        @debug_on_fail</span>
 <span class="sd">        def my_function():</span>
 <span class="sd">            ...</span>
-
-<span class="sd">        # Or with explicit call:</span>
-<span class="sd">        debug_on_fail(my_function)()</span>
 
 <span class="sd">    In notebooks after exception, the following helpers are injected:</span>
 
@@ -521,6 +521,12 @@
 <span class="sd">    - ``_debug_down()``: Move toward exception</span>
 <span class="sd">    - ``_debug_goto(n)``: Jump to frame n</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">legacy_kwargs</span><span class="p">:</span>
+        <span class="c1"># `stack_depth=` was a real argument long ago; accept and ignore</span>
+        <span class="c1"># so older snippets in docs don&#39;t blow up.</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;debug_on_fail: ignoring deprecated kwargs </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">legacy_kwargs</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
         <span class="c1"># Check if debug is disabled</span>
@@ -558,7 +564,9 @@
 
         <span class="k">return</span> <span class="n">_fn</span>
 
-    <span class="c1"># Support both @debug_on_fail and @debug_on_fail(stack_depth=2) usage</span>
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Called as @debug_on_fail(...): return a decorator.</span>
+        <span class="k">return</span> <span class="n">decorator</span>
     <span class="k">return</span> <span class="n">decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
 
 </pre></div>

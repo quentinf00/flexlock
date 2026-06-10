@@ -102,9 +102,31 @@ flexlock-run [OPTIONS]
 ### `--defaults`, `-d`
 Load Python module containing default configuration.
 
+**Accepted forms:**
+
+| Form                                  | Resolves to                                |
+|---------------------------------------|--------------------------------------------|
+| `pkg.module.variable`                 | `from pkg.module import variable`          |
+| `pkg.module:variable`                 | Same, with explicit colon split            |
+| `path/to/file.py`                     | `defaults` variable in that file           |
+| `path/to/file.py:variable`            | Named variable in that file                |
+
+For the dotted form, the **last** component is the variable name and
+everything before it is the module path. So `-d myconfig.defaults`
+expects a module called `myconfig` containing a `defaults` attribute —
+**not** `myconfig/defaults.py`. If your project layout is
+`myconfig/defaults.py` with `defaults = {...}` inside, use
+`-d myconfig.defaults.defaults` (or `-d myconfig/defaults.py`).
+
+`flexlock-run` inserts the current working directory at the front of
+`sys.path` for you, so dotted imports of packages in the project root
+work without setting `PYTHONPATH=.`.
+
 **Usage:**
 ```bash
 flexlock-run -d myproject.config.defaults
+flexlock-run -d configs/defaults.py
+flexlock-run -d configs/experiments.py:hyperparam_grid
 ```
 
 **Python module structure:**
@@ -115,7 +137,7 @@ from flexlock import py2cfg
 def train(lr=0.01, epochs=10):
     pass
 
-config = dict(
+defaults = dict(
     train=py2cfg(train, lr=0.001),
     eval=py2cfg(evaluate)
 )
@@ -164,18 +186,28 @@ flexlock-run -d myproject.defaults -s experiments.baseline
 ## Configuration Overrides
 
 ### `--overrides`, `-o`
-Override specific keys in root config using dot-notation (before selection).
+Override keys in the **root** config (applied before `-s` selection).
+
+Use `-o` for root-level anchors that downstream interpolations depend on (e.g.
+`pipeline_dir`, `base_dir`). These values are frozen into the selected subtree
+before execution, so interpolations like `${pipeline_dir}` in the stage config
+resolve correctly.
+
+> **When `-s` is used:** if a `-o` key also exists inside the selected node,
+> flexlock will warn — your override landed on the root, not the stage. Use
+> `-O` for those. Root-only anchors (`params`, `pipeline_dir`, …) are
+> intentional and stay silent.
 
 **Usage:**
 ```bash
-# Single override
+# No selection — override lands directly
 flexlock-run -d defaults -o lr=0.1
 
-# Multiple overrides
-flexlock-run -d defaults -o lr=0.1 epochs=100 batch_size=32
+# With selection — override a root anchor that the subtree interpolates
+flexlock-run -d defaults -s train -o pipeline_dir=results/run01
 
-# Nested overrides
-flexlock-run -d defaults -o optimizer.lr=0.1 optimizer.momentum=0.9
+# Multiple root overrides
+flexlock-run -d defaults -o base_dir=outputs seed=42
 ```
 
 **Supports:**
@@ -186,15 +218,23 @@ flexlock-run -d defaults -o optimizer.lr=0.1 optimizer.momentum=0.9
 ---
 
 ### `--overrides-after-select`, `-O`
-Override keys in selected config node (after selection).
+Override keys in the **selected** config node (applied after `-s` selection).
+
+Use `-O` whenever you want to change a value that lives inside the selected
+stage — `save_dir`, hyperparameters, datamodule settings, etc.
 
 **Usage:**
 ```bash
-# Select train, then override its lr parameter
+# Select train node, then override its lr
 flexlock-run -d defaults -s train -O lr=0.2
 
-# Useful for modifying nested configs without affecting root
-flexlock-run -d defaults -s experiments.exp1 -O model.depth=50
+# Override save_dir of the selected stage
+flexlock-run -d defaults -s train -O save_dir=results/my_run
+
+# Combine root anchor (-o) with stage overrides (-O)
+flexlock-run -d defaults -s train \
+  -o pipeline_dir=results/run01 \   # root anchor frozen into subtree refs
+  -O params.lr=5e-4 params.max_epochs=50  # stage-level overrides
 ```
 
 ---
@@ -229,12 +269,15 @@ config = dict(
 ---
 
 #### `--sweep-file`
-Load sweep values from a file (YAML, JSON, or TXT).
+Load sweep tasks from one or more files (YAML, JSON, or TXT). Pass multiple paths to concatenate them into a single sweep list.
 
 **Usage:**
 ```bash
-# YAML file with list of configs
+# Single YAML file with a list of override dicts
 flexlock-run -d defaults --sweep-file sweep.yaml
+
+# Multiple files — each file is loaded and results are concatenated
+flexlock-run -d defaults --sweep-file exp1.yaml exp2.yaml exp3.yaml
 
 # Text file with values (one per line)
 flexlock-run -d defaults --sweep-file lr_values.txt --sweep-target lr
@@ -242,12 +285,19 @@ flexlock-run -d defaults --sweep-file lr_values.txt --sweep-target lr
 
 **File formats:**
 
-**YAML/JSON:** List of dicts
+**YAML/JSON — list of dicts** (multiple tasks per file):
 ```yaml
 # sweep.yaml
 - {lr: 0.001, batch_size: 32}
 - {lr: 0.01, batch_size: 64}
 - {lr: 0.1, batch_size: 128}
+```
+
+**YAML/JSON — single dict** (one task per file, useful with `--dump` or `--enqueue`):
+```yaml
+# exp1.yaml  (produced by: flexlock-run ... --dump > exp1.yaml)
+lr: 0.001
+batch_size: 32
 ```
 
 **Text:** One value per line
@@ -257,6 +307,8 @@ flexlock-run -d defaults --sweep-file lr_values.txt --sweep-target lr
 0.01
 0.1
 ```
+
+**Multi-file behaviour:** A file containing a list contributes all its items; a file containing a single dict contributes one item. The results are concatenated in the order the files are listed.
 
 ---
 
@@ -344,6 +396,64 @@ flexlock-run -d defaults --debug
 - On exception: Drops into PDB debugger
 - In notebooks: Injects local variables into global scope
 - Useful for development and troubleshooting
+
+---
+
+### `--dump`
+Print the compiled configuration as clean YAML and exit — no decorative headers, no docstring. The output is machine-readable and can be redirected to a file for later use with `--sweep-file` or `--enqueue`.
+
+**Usage:**
+```bash
+# Capture a compiled config to a file
+flexlock-run -d defaults -s train --dump > experiments/base.yaml
+
+# Capture several variants
+flexlock-run -d defaults -s train -O lr=0.001 --dump > experiments/lr1e3.yaml
+flexlock-run -d defaults -s train -O lr=0.01  --dump > experiments/lr1e2.yaml
+
+# Later, run them as a sweep
+flexlock-run -d defaults -s train \
+  --sweep-file experiments/lr1e3.yaml experiments/lr1e2.yaml \
+  --slurm-config slurm.yaml
+```
+
+**Notes:**
+- `--dump` resolves interpolations lazily (uses `OmegaConf.to_yaml` without resolving), so `${vinc:}` paths remain in the output and fire correctly at run time.
+- For human inspection with docstring output, use `--print-config` instead.
+
+---
+
+### `--enqueue`
+Append the compiled configuration to a YAML queue file and exit without running. Creates the file if absent; subsequent calls append to it. The queue file is a plain YAML list and can be inspected, edited, or committed to version control.
+
+**Usage:**
+```bash
+# Queue experiments one at a time (e.g. while a previous run is active)
+flexlock-run -d defaults -s train -O lr=0.001 --enqueue queue.yaml
+flexlock-run -d defaults -s train -O lr=0.01  --enqueue queue.yaml
+flexlock-run -d defaults -s train -O lr=0.1   --enqueue queue.yaml
+
+# Inspect the queue
+cat queue.yaml
+
+# Submit the whole queue
+flexlock-run -d defaults -s train --sweep-file queue.yaml --slurm-config slurm.yaml
+```
+
+**Queue file format** (standard YAML list, one item per `--enqueue` call):
+```yaml
+- lr: 0.001
+  save_dir: results/exp
+- lr: 0.01
+  save_dir: results/exp
+- lr: 0.1
+  save_dir: results/exp
+```
+
+**Notes:**
+- The enqueued config is stored with interpolations **unresolved** so that resolvers like `${vinc:}` fire at run time and each task gets its own unique directory.
+- Writes are atomic (temp-file + rename) so concurrent `--enqueue` calls from different terminals are safe.
+- Re-running `--sweep-file queue.yaml` after adding new items is safe: tasks already completed are skipped via the `INSERT OR IGNORE` logic in the task DB.
 
 ---
 
@@ -512,7 +622,8 @@ flexlock-run \
 
 ### Pattern 1: Simple Experiment
 ```bash
-flexlock-run -d myproject.defaults -s train -o lr=0.1
+# -O because lr lives inside the train node (use -o only for root anchors)
+flexlock-run -d myproject.defaults -s train -O lr=0.1
 ```
 
 ### Pattern 2: Hyperparameter Sweep

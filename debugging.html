@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Debugging with FlexLock &mdash; FlexLock 0.4.1 documentation</title>
+  <title>Debugging with FlexLock &mdash; FlexLock 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,14 +14,14 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/debugging.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="_static/documentation_options.js?v=70f82a29"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="HPC Integration" href="hpc_integration.html" />
-    <link rel="prev" title="Complete Usage Guide" href="usage_guide.html" /> 
+    <link rel="prev" title="Usage Guide" href="usage_guide.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -50,14 +50,13 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Debugging with FlexLock</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#the-debug-on-fail-decorator">The <code class="docutils literal notranslate"><span class="pre">&#64;debug_on_fail</span></code> Decorator</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#activation">Activation</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#option-1-command-line-flag-recommended">Option 1: Command-line flag (Recommended)</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#option-2-environment-variable">Option 2: Environment variable</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#option-3-in-jupyter-ipython">Option 3: In Jupyter/IPython</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inside-jupyter-ipython">Inside Jupyter / IPython</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#interactive-debugging-workflow">Interactive Debugging Workflow</a><ul>
@@ -155,47 +154,35 @@
 </section>
 <section id="activation">
 <h3>Activation<a class="headerlink" href="#activation" title="Link to this heading"></a></h3>
-<p>The decorator can be activated in <strong>three ways</strong>:</p>
-<section id="option-1-command-line-flag-recommended">
-<h4>Option 1: Command-line flag (Recommended)<a class="headerlink" href="#option-1-command-line-flag-recommended" title="Link to this heading"></a></h4>
-<p>When using <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>, simply pass the <code class="docutils literal notranslate"><span class="pre">--debug</span></code> flag:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Enable debugging with CLI flag</span>
-python<span class="w"> </span>train.py<span class="w"> </span>--debug
-
-<span class="c1"># Combine with other options</span>
-python<span class="w"> </span>train.py<span class="w"> </span>--debug<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.01
-</pre></div>
-</div>
-<p>This automatically sets <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG=true</span></code> for you.</p>
-</section>
-<section id="option-2-environment-variable">
-<h4>Option 2: Environment variable<a class="headerlink" href="#option-2-environment-variable" title="Link to this heading"></a></h4>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Activate debugging</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">FLEXLOCK_DEBUG</span><span class="o">=</span><span class="m">1</span>
-
-<span class="c1"># Or inline</span>
+<p>Two control surfaces — they affect different things:</p>
+<ul>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code> / <code class="docutils literal notranslate"><span class="pre">flexlock-run</span> <span class="pre">--debug</span></code>:</strong> <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG=1</span></code> (or the
+<code class="docutils literal notranslate"><span class="pre">--debug</span></code> CLI flag) tells the runner to wrap the user function with
+<code class="docutils literal notranslate"><span class="pre">debug_on_fail</span></code> automatically. With <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code>, this is the easiest
+way to opt in:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>train.py<span class="w"> </span>--debug<span class="w">       </span><span class="c1"># sets FLEXLOCK_DEBUG=true for you</span>
 <span class="nv">FLEXLOCK_DEBUG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>train.py
-
-<span class="c1"># Run without debugging (default)</span>
-python<span class="w"> </span>train.py
 </pre></div>
 </div>
-</section>
-<section id="option-3-in-jupyter-ipython">
-<h4>Option 3: In Jupyter/IPython<a class="headerlink" href="#option-3-in-jupyter-ipython" title="Link to this heading"></a></h4>
+</li>
+<li><p><strong>Manually applied <code class="docutils literal notranslate"><span class="pre">&#64;debug_on_fail</span></code>:</strong> once you put the decorator on
+a function, it is active by default. <code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG=0</span></code> does <strong>not</strong>
+turn it off. To disable a manually applied decorator, set
+<code class="docutils literal notranslate"><span class="pre">FLEXLOCK_NODEBUG=1</span></code> — the decorator returns the original function
+unchanged.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">FLEXLOCK_NODEBUG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>train.py<span class="w">    </span><span class="c1"># @debug_on_fail becomes a no-op</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<section id="inside-jupyter-ipython">
+<h4>Inside Jupyter / IPython<a class="headerlink" href="#inside-jupyter-ipython" title="Link to this heading"></a></h4>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;FLEXLOCK_DEBUG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;1&#39;</span>
 
-<span class="c1"># Now all @flexcli decorated functions will have debug mode active</span>
+<span class="c1"># With @flexcli, this enables auto-wrapping on the next run.</span>
 </pre></div>
 </div>
-<p><strong>Accepted values:</strong></p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG=1</span></code> - Active</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG=true</span></code> - Active</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DEBUG=0</span></code> - Inactive</p></li>
-<li><p>Not set - Inactive (default)</p></li>
-</ul>
 </section>
 </section>
 <section id="interactive-debugging-workflow">
@@ -424,7 +411,7 @@ sbatch<span class="w"> </span>--export<span class="o">=</span><span class="nv">F
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 
 <span class="nd">@flexcli</span>
-<span class="nd">@debug_on_fail</span><span class="p">(</span><span class="n">stack_depth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="nd">@debug_on_fail</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">analyze_data</span><span class="p">(</span>
     <span class="n">data_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;data/results.csv&quot;</span><span class="p">,</span>
     <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
@@ -515,7 +502,7 @@ Index:<span class="w"> </span><span class="o">[]</span>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="usage_guide.html" class="btn btn-neutral float-left" title="Complete Usage Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="usage_guide.html" class="btn btn-neutral float-left" title="Usage Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="hpc_integration.html" class="btn btn-neutral float-right" title="HPC Integration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

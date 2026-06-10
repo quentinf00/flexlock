@@ -183,18 +183,22 @@ def train(input_path, save_dir=None):
     pass
 ```
 
+# Complete Usage Guide
+...
+(after line 230)
 **With py2cfg:**
 ```python
 cfg = py2cfg(
     train,
     input_path='data/train.csv',
     save_dir='outputs/train',
-    snapshot_config=dict(
+    _snapshot_=dict(
         repos={'main': '.', 'submodule': 'libs/mylib'},
         data={'train_data': '${...input_path}'}
     )
 )
 ```
+...
 
 > **Auto-detection:** When the config specifies a `_target_` (e.g. with YAML configs or `py2cfg`), FlexLock automatically detects and tracks the git repository of the target function. No explicit `repos` entry is needed.
 
@@ -203,7 +207,7 @@ cfg = py2cfg(
 `repos` values can be a plain path string or a dict with additional options:
 
 ```python
-snapshot_config=dict(
+_snapshot_=dict(
     repos={
         # Simple: string path
         'main': '.',
@@ -330,19 +334,22 @@ sweep = [
     dict(lr=0.1, batch_size=128),
 ]
 
-# Execute
-results = proj.submit(
-    proj.get('train'),
-    sweep=sweep,
-    n_jobs=3
-)
+if __name__ == "__main__":
+    # n_jobs > 1 uses multiprocessing (spawn) — module-scope calls must be
+    # guarded by `if __name__ == "__main__":` or the children will re-import
+    # and re-launch the sweep recursively.
+    results = proj.submit(
+        proj.get('train'),
+        sweep=sweep,
+        n_jobs=3
+    )
 
-# Process results
-for i, result in enumerate(results):
-    print(f"Run {i}: accuracy={result['accuracy']:.3f}")
+    # Process results
+    for i, result in enumerate(results):
+        print(f"Run {i}: accuracy={result['accuracy']:.3f}")
 
-best = max(results, key=lambda r: r['accuracy'])
-print(f"Best LR: {best.cfg.lr}")
+    best = max(results, key=lambda r: r['accuracy'])
+    print(f"Best LR: {best.cfg.lr}")
 ```
 
 ---
@@ -706,7 +713,7 @@ cfg = py2cfg(train, data_path='${latest:outputs/preprocess/*/data.csv}')
 cfg = py2cfg(
     train,
     input_data='data/train.csv',
-    snapshot_config=dict(
+    _snapshot_=dict(
         repos={'main': '.'},              # or omit if using _target_ (auto-detected)
         data={'train': '${...input_data}'}
     )

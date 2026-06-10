@@ -19,8 +19,12 @@ def train(lr=0.01, epochs=10, model=None):
 
 # Convert function to config
 cfg = py2cfg(train)
-# Result: {'_target_': 'module.train', 'lr': 0.01, 'epochs': 10}
+# Result: {'_target_': 'module.train', 'lr': 0.01, 'epochs': 10, 'model': None}
 ```
+
+Every parameter with a default is captured — including ones whose default
+is ``None``. Override or remove them downstream if you don't want them in
+the run lock.
 
 #### With Overrides
 
@@ -120,7 +124,7 @@ def train(lr=0.01, epochs=10):
 
 ```python
 @flexcli(
-    snapshot_config=dict(
+    _snapshot_=dict(
         repos={
             'main': '.',                          # string shorthand for path
             'mylib': {'path': 'libs/mylib'},      # explicit dict form
@@ -161,9 +165,36 @@ The `Project` class provides high-level orchestration for multi-stage experiment
 ```python
 from flexlock import Project
 
-# Load from Python module
+# Load defaults from a Python module
 proj = Project(defaults='myproject.config.defaults')
+
+# Or from a file path — bare path infers the `defaults` variable name
+proj = Project(defaults='configs/defaults.py')
+# Equivalent to: Project(defaults='configs/defaults.py:defaults')
+
+# Or point at a differently-named variable
+proj = Project(defaults='configs/experiments.py:hyperparam_grid')
+
+# Or from a pre-built DictConfig / dict
+proj = Project(defaults={'train': {'lr': 0.01}})
+
+# Or with no defaults — useful for one-off submissions
+proj = Project()
 ```
+
+### One-off submission without a Project
+
+For a single config that doesn't need pipeline plumbing:
+
+```python
+from flexlock import submit, py2cfg
+
+cfg = py2cfg(train, lr=0.01, save_dir='outputs/train')
+result = submit(cfg, slurm_config='configs/slurm_gpu.yaml')
+```
+
+`flexlock.submit` is a thin wrapper over `Project().submit` — all kwargs
+(`sweep`, `smart_run`, `overrides`, `force`, etc.) are forwarded.
 
 **Python module structure:**
 ```python
@@ -186,7 +217,11 @@ defaults = dict(
 
 ### `proj.get(key)`: Retrieve Configuration
 
-Get a configuration node from the defaults.
+Get a configuration node from the defaults. The returned config is
+**self-contained**: root-scope references (`${some_anchor}`) are frozen to
+concrete values, while resolver calls (`${vinc:}`, `${latest:}`,
+`${run_lock:}`) and intra-sub-tree references are preserved for resolution
+at submit time.
 
 ```python
 # Get config by key
@@ -195,7 +230,23 @@ train_cfg = proj.get('train')
 # Modify before execution
 train_cfg.lr = 0.1
 train_cfg.batch_size = 64
+
+# train_cfg can be pickled, merged, or shipped to an HPC worker
+# without losing root context — every ${root_anchor} has already been
+# substituted with its value at the moment of the get() call.
+proj.submit(train_cfg, slurm_config='configs/slurm_gpu.yaml')
 ```
+
+**Anchor-update workflow:** if you want a root-level anchor change to
+propagate into a stage, update `proj.defaults` *before* calling `proj.get`:
+
+```python
+OmegaConf.update(proj.defaults, 'cnf_run_dir', result.save_dir)
+eval_cfg = proj.get('cnf_eval_val')   # picks up the new anchor
+```
+
+A previously-fetched config will **not** see anchor updates retroactively —
+its root refs are already frozen. Re-call `proj.get` to refresh.
 
 **Returns:** `DictConfig` (OmegaConf)
 
@@ -209,8 +260,9 @@ Execute a configuration, with smart caching and HPC support.
 
 ```python
 def submit(
-    config: DictConfig,
+    config: DictConfig | str | None = None,
     sweep: List[Dict] = None,
+    sweep_target: str = None,
     n_jobs: int = 1,
     smart_run: bool = True,
     search_dirs: List[str] = None,
@@ -220,13 +272,47 @@ def submit(
     sweep_dir_suffix: bool = False,
     match_include: List[str] = None,
     match_exclude: List[str] = None,
-) -> ExecutionResult | List[ExecutionResult]
+    isolated: bool = False,
+    force: bool = False,
+    overrides: dict | List[str] = None,
+    merge: str | Path | dict = None,
+    debug: bool = False,
+    print_config: bool = False,
+) -> ExecutionResult | List[ExecutionResult] | None
 ```
 
 **Parameters:**
-- `sweep_dir_suffix`: When `True`, appends `_sweep_{i:04d}` to each sweep run's `save_dir`. Default `False` (all sweep runs share the base `save_dir`).
+- `config`: Accepts a `DictConfig`, a key string (looked up via `proj.get`), or `None` (use `proj.defaults`).
+- `sweep_target`: Dot-path where each sweep item is merged into the base config. `None` merges items at the root.
+- `overrides`: Dict (`{'lr': 0.01}`) or dotlist (`['lr=0.01']`) merged into `config` before execution.
+- `merge`: Path to a YAML file (or a dict) merged into `config` before execution. `overrides` is applied after `merge`.
+- `debug`: Wrap the user function with the post-mortem debugger so exceptions drop into PDB.
+- `print_config`: Print the resolved config and return `None` without executing — useful for inspecting sweep-merged or override-merged configs before launching.
+- `sweep_dir_suffix`: When `True`, nests each sweep run under `<save_dir>/sweep_{i:04d}/`. Default `False` (all sweep runs share the base `save_dir`).
 - `match_include`: Override the git path include-patterns used during `smart_run` comparison (takes priority over per-repo patterns stored in `run.lock`).
 - `match_exclude`: Override the git path exclude-patterns used during `smart_run` comparison.
+
+#### CLI/Python parity
+
+`flexlock-run` and `proj.submit()` share the same execution kernel. Equivalences:
+
+| CLI flag                 | Python kwarg                              |
+|--------------------------|-------------------------------------------|
+| `-s <key>` (select)      | `submit('key', ...)` (str dispatches via `get`) |
+| `-O key=val` / `-M file` (post-select) | `overrides={...}` / `merge=...`     |
+| `--sweep-file path.yaml` | `sweep=load_sweep(sweep_file='path.yaml')` |
+| `--sweep-target X`       | `sweep_target='X'`                        |
+| `--debug`                | `debug=True`                              |
+| `--print-config`         | `print_config=True`                       |
+
+The `load_sweep` utility is also exported at the package level:
+
+```python
+from flexlock import load_sweep
+sweep = load_sweep(sweep_file='configs/ablation.yaml')
+proj.submit('train', sweep=sweep, sweep_target='lit_module',
+            slurm_config='configs/slurm_gpu.yaml')
+```
 
 #### Basic Execution
 
@@ -254,8 +340,12 @@ result = proj.submit(cfg, smart_run=True)  # ⚡ Skipped! Returns cached result
 
 **How it works:**
 - Generates fingerprint (code + data + config)
-- Searches `search_dirs` for matching `run.lock`
-- Returns cached result if found
+- Searches `search_dirs` for run directories containing **both** `run.lock`
+  (written before execution) and `run.complete` (written after the user
+  function returns successfully)
+- Returns cached result on a match; runs that have only `run.lock` (previous
+  attempts interrupted before completion) are skipped, not treated as cache
+  hits
 
 **Custom search:**
 ```python
@@ -264,6 +354,37 @@ result = proj.submit(
     smart_run=True,
     search_dirs=['outputs/train/', 'archive/old_runs/']
 )
+```
+
+#### Cache markers and `force=True`
+
+Each completed run leaves two files alongside its outputs:
+
+- `run.lock` — config + provenance, written before execution starts.
+- `run.complete` — JSON with completion timestamp, written after the user
+  function returns. A cache hit requires both.
+
+To force re-execution while keeping prior outputs in place:
+
+```python
+proj.submit(cfg, force=True)   # deletes run.complete, runs again into same dir
+```
+
+`force=True` does **not** delete `save_dir` or `run.lock` — only the
+completion marker. The user function overwrites outputs in place.
+
+**Migrating from older versions:** runs created before this scheme exists
+have only `run.lock` and would be treated as incomplete. Backfill them once:
+
+```bash
+flexlock migrate-cache-markers outputs/
+```
+
+This writes `run.complete` for any dir that has `run.lock` plus at least one
+non-hidden output file. To prune stale lock-only dirs instead:
+
+```bash
+flexlock gc --incomplete outputs/
 ```
 
 #### Parameter Sweep
@@ -276,16 +397,108 @@ sweep = [
     dict(lr=0.1, batch_size=128),
 ]
 
-# Execute sweep
-results = proj.submit(cfg, sweep=sweep, n_jobs=3)
+if __name__ == "__main__":
+    # n_jobs > 1 spawns multiprocessing workers (see "Parallelism" note
+    # below) and therefore must be guarded by `if __name__ == "__main__":`
+    # when the call is at module scope. Without the guard, importing the
+    # script (which spawn does to bootstrap the children) re-runs the call
+    # and the process never terminates.
+    results = proj.submit(cfg, sweep=sweep, n_jobs=3)
 
-# Process results
-for i, result in enumerate(results):
-    print(f"Run {i}: accuracy={result['accuracy']}")
+    # Process results
+    for i, result in enumerate(results):
+        print(f"Run {i}: accuracy={result['accuracy']}")
 
-best = max(results, key=lambda r: r['accuracy'])
-print(f"Best config: {best.cfg}")
+    best = max(results, key=lambda r: r['accuracy'])
+    print(f"Best config: {best.cfg}")
 ```
+
+> **Parallelism note.** ``n_jobs > 1`` and ``isolated=True`` both use
+> Python's ``multiprocessing`` with the ``spawn`` start method (chosen to
+> avoid GPU/CUDA fork hazards). Spawn re-imports the launching script in
+> each child, so any module-scope ``proj.submit(...)`` call **must** be
+> placed under ``if __name__ == "__main__":``. Notebook and REPL contexts
+> are fine. ``n_jobs=1`` without ``isolated=True`` runs in-process and
+> does not need the guard.
+
+**Per-item `save_dir` containment.** Each sweep item's `save_dir` must
+nest under the sweep root (taken from the base config's `save_dir`, or
+the first item's parent dir). The tasks DB and per-item lineage markers
+all live in the sweep root tree. Violating containment raises a
+`FlexLockValidationError` listing the offending items before any work is
+queued.
+
+**Tracking per-item `save_dir` in derived paths.** Use *intra-node*
+references (relative to the same config node) rather than absolute root
+references:
+
+```python
+# ✅ Tracks per-item save_dir overrides — recommended
+cfg = py2cfg(train,
+    save_dir='outputs/train',
+    log_dir='${save_dir}/logs',           # intra-node ref
+    ckpt_dir='${save_dir}/checkpoints',
+)
+proj.submit(cfg, sweep=[
+    dict(save_dir='outputs/sweep/a'),     # log_dir becomes outputs/sweep/a/logs
+    dict(save_dir='outputs/sweep/b'),
+])
+
+# ❌ Frozen at proj.get() time — won't track sweep overrides
+cfg = py2cfg(train,
+    save_dir='outputs/train',
+    log_dir='${main.save_dir}/logs',      # cross-tree ref
+)
+```
+
+Cross-tree refs (`${main.save_dir}`, `${root_anchor}`) are frozen to
+concrete values at `proj.get()` so the sub-node remains self-contained
+under pickling and merge. Intra-node refs (`${save_dir}`,
+`${some_local_key}`) are preserved and re-resolve on each sweep item.
+
+**Previewing a sweep.** Set `print_config=True` while passing `sweep=...`
+to print each item's fully-merged config without executing:
+
+```python
+proj.submit(cfg, sweep=sweep, print_config=True)
+# --- sweep item 0 ---
+# lr: 0.001
+# batch_size: 32
+# ...
+```
+
+#### Post-sweep chaining
+
+After a sweep, downstream stages typically need to run once per sweep
+result, each anchored at the result's `save_dir`. `proj.submit_chained`
+packages this loop:
+
+```python
+chained = proj.submit_chained(
+    base_cfg,
+    sweep=[{'fourier_sigma': s} for s in [1.0, 2.0, 5.0]],
+    downstream=[
+        # (stage_key, anchor_wiring)
+        # anchor_wiring maps anchor name in proj.defaults → result attribute
+        ('encode_val',   {'cnf_run_dir': 'save_dir'}),
+        ('cnf_eval_val', {'cnf_run_dir': 'save_dir'}),
+    ],
+    sweep_kwargs={'slurm_config': 'configs/slurm_gpu.yaml', 'n_jobs': 3},
+    downstream_kwargs={'slurm_config': 'configs/slurm_gpu.yaml'},
+)
+
+# Iterate (sweep_result, downstream_results) pairs:
+for sweep_r, downstream_rs in chained:
+    encode_r, eval_r = downstream_rs
+    print(sweep_r.save_dir, eval_r['val_score'])
+```
+
+For each sweep item, the parent's `save_dir` is written into the named
+anchor on `proj.defaults`, then each downstream stage is fetched via
+`proj.get(key)` (so the new anchor propagates through interpolations)
+and submitted. `downstream_kwargs` defaults to `smart_run=False` to
+avoid stale-cache false hits between iterations — pass
+`{'smart_run': True}` explicitly if you want caching.
 
 #### HPC Execution (Slurm)
 
@@ -622,7 +835,7 @@ cfg = py2cfg(
     train,
     input_data='data/train.csv',
     save_dir='outputs/train',
-    snapshot_config=dict(
+    _snapshot_=dict(
         repos={'main': '.'},          # string shorthand
         data={'train_data': '${...input_data}'}
     )
@@ -634,10 +847,12 @@ cfg = py2cfg(
 # - Configuration
 ```
 
+> **Note:** Use `_snapshot_=` inside `py2cfg`. The `snapshot_config=` spelling only works as a parameter to the `@flexcli` decorator.
+
 To track only specific files within a repo (speeds up `smart_run` by ignoring irrelevant changes):
 
 ```python
-snapshot_config=dict(
+_snapshot_=dict(
     repos={
         'main': {
             'path': '.',
@@ -651,7 +866,7 @@ snapshot_config=dict(
 Or resolve the repo path automatically from a Python module name:
 
 ```python
-snapshot_config=dict(
+_snapshot_=dict(
     repos={
         'mylib': {'module': 'mylib'}   # path resolved via importlib
     }

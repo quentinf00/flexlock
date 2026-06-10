@@ -165,6 +165,27 @@ flexlock-run -d myproject.inference_cfg -s main \
 
 ---
 
+### Template configs with a single anchor
+
+Put one top-level variable in your `defaults` dict. All downstream
+templates derive their input paths from it via `${run_lock:}`:
+
+```python
+defaults = dict(
+    cnf_run_dir="${latest:outputs/cnf_train/run_*}",
+    eval=py2cfg(evaluate,
+        data_dir="${run_lock:${cnf_run_dir},config.data_dir}",
+        model_dir="${run_lock:${cnf_run_dir},config.save_dir}",
+        save_dir="${vinc:outputs/eval/run}",
+    ),
+)
+```
+
+Override from CLI:  `flexlock-run -d defaults -s eval -o cnf_run_dir=outputs/cnf_train/run_0003`
+Override from API:  `OmegaConf.update(proj.cfg, 'cnf_run_dir', result.save_dir)`
+
+---
+
 ## Using Resolvers
 
 ### In YAML Configs
@@ -353,18 +374,20 @@ upstream_dir: ${latest:outputs/stage1/run_*/}
 
 ### 4. Track Data with Snapshot Config
 
-For data tracking, use the `snapshot_config` in `@flexcli` or `py2cfg`:
+For data tracking, use `_snapshot_` in `py2cfg` (or `snapshot_config` when using the `@flexcli` decorator):
 
 ```python
 cfg = py2cfg(
     train,
     input_data='data/train.csv',
-    snapshot_config=dict(
+    _snapshot_=dict(
         repos={'main': '.'},
         data={'train': '${...input_data}'}
     )
 )
 ```
+
+> **Note:** Use `_snapshot_=` inside `py2cfg`. The `snapshot_config=` spelling only works as a parameter to the `@flexcli` decorator — passing it to `py2cfg` will forward it as an unexpected keyword argument to the function.
 
 ---
 

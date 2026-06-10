@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reference &mdash; FlexLock 0.4.1 documentation</title>
+  <title>Reference &mdash; FlexLock 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/reference.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="_static/documentation_options.js?v=70f82a29"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -50,7 +50,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -383,19 +384,23 @@
 </section>
 <section id="flexlockexecutionerror">
 <h4><code class="docutils literal notranslate"><span class="pre">FlexLockExecutionError</span></code><a class="headerlink" href="#flexlockexecutionerror" title="Link to this heading"></a></h4>
-<p>Raised when there is an error during execution.</p>
-<p><strong>Common causes:</strong></p>
-<ul class="simple">
-<li><p>Target function raises an exception</p></li>
-<li><p>Import errors for <code class="docutils literal notranslate"><span class="pre">_target_</span></code></p></li>
-<li><p>Argument mismatches</p></li>
-</ul>
+<p>Raised by FlexLock when execution machinery itself fails (for example,
+backend submission errors or task-database corruption).</p>
+<blockquote>
+<div><p><strong>Important:</strong> Exceptions raised <strong>inside the user’s target function</strong>
+are <em>not</em> wrapped — they propagate as the original exception type
+(e.g. <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>, <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code>). Use <code class="docutils literal notranslate"><span class="pre">except</span> <span class="pre">Exception</span></code> or the
+specific type if you need to catch them. <code class="docutils literal notranslate"><span class="pre">FlexLockExecutionError</span></code>
+only covers FlexLock-side failures around the call.</p>
+</div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockExecutionError</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
 <span class="k">except</span> <span class="n">FlexLockExecutionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Execution failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;FlexLock failed to dispatch: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;User function raised: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -420,17 +425,19 @@
 </section>
 <section id="flexlockvalidationerror">
 <h4><code class="docutils literal notranslate"><span class="pre">FlexLockValidationError</span></code><a class="headerlink" href="#flexlockvalidationerror" title="Link to this heading"></a></h4>
-<p>Raised when validation of inputs fails.</p>
-<p><strong>Common causes:</strong></p>
+<p>Raised when validation of inputs fails. Currently the main triggers are:</p>
 <ul class="simple">
-<li><p>Invalid parameter types</p></li>
-<li><p>Out-of-range values</p></li>
-<li><p>Missing required parameters</p></li>
+<li><p>Per-item sweep <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>s that fall outside the sweep root.</p></li>
+<li><p>Sweep source ambiguity (multiple of <code class="docutils literal notranslate"><span class="pre">sweep</span></code> / <code class="docutils literal notranslate"><span class="pre">sweep_file</span></code> /
+<code class="docutils literal notranslate"><span class="pre">sweep_key</span></code> given) or a missing <code class="docutils literal notranslate"><span class="pre">sweep_key</span></code>.</p></li>
+<li><p>Selection of a non-existent dotted key.</p></li>
 </ul>
+<p>Numeric/range checks like <code class="docutils literal notranslate"><span class="pre">n_jobs</span> <span class="pre">&lt;=</span> <span class="pre">0</span></code> are <strong>not</strong> enforced today —
+that example would simply behave like <code class="docutils literal notranslate"><span class="pre">n_jobs=1</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockValidationError</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Invalid</span>
+    <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="p">[{</span><span class="s1">&#39;save_dir&#39;</span><span class="p">:</span> <span class="s1">&#39;/elsewhere&#39;</span><span class="p">}])</span>
 <span class="k">except</span> <span class="n">FlexLockValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Validation error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>

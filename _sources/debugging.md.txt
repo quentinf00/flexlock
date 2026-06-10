@@ -28,49 +28,36 @@ When an exception occurs, the local variables (`data`, `model`, `epoch`, `loss`,
 
 ### Activation
 
-The decorator can be activated in **three ways**:
+Two control surfaces — they affect different things:
 
-#### Option 1: Command-line flag (Recommended)
+- **`@flexcli` / `flexlock-run --debug`:** `FLEXLOCK_DEBUG=1` (or the
+  `--debug` CLI flag) tells the runner to wrap the user function with
+  `debug_on_fail` automatically. With `@flexcli`, this is the easiest
+  way to opt in:
 
-When using `@flexcli`, simply pass the `--debug` flag:
+  ```bash
+  python train.py --debug       # sets FLEXLOCK_DEBUG=true for you
+  FLEXLOCK_DEBUG=1 python train.py
+  ```
 
-```bash
-# Enable debugging with CLI flag
-python train.py --debug
+- **Manually applied `@debug_on_fail`:** once you put the decorator on
+  a function, it is active by default. `FLEXLOCK_DEBUG=0` does **not**
+  turn it off. To disable a manually applied decorator, set
+  `FLEXLOCK_NODEBUG=1` — the decorator returns the original function
+  unchanged.
 
-# Combine with other options
-python train.py --debug -o lr=0.01
-```
+  ```bash
+  FLEXLOCK_NODEBUG=1 python train.py    # @debug_on_fail becomes a no-op
+  ```
 
-This automatically sets `FLEXLOCK_DEBUG=true` for you.
-
-#### Option 2: Environment variable
-
-```bash
-# Activate debugging
-export FLEXLOCK_DEBUG=1
-
-# Or inline
-FLEXLOCK_DEBUG=1 python train.py
-
-# Run without debugging (default)
-python train.py
-```
-
-#### Option 3: In Jupyter/IPython
+#### Inside Jupyter / IPython
 
 ```python
 import os
 os.environ['FLEXLOCK_DEBUG'] = '1'
 
-# Now all @flexcli decorated functions will have debug mode active
+# With @flexcli, this enables auto-wrapping on the next run.
 ```
-
-**Accepted values:**
-- `FLEXLOCK_DEBUG=1` - Active
-- `FLEXLOCK_DEBUG=true` - Active
-- `FLEXLOCK_DEBUG=0` - Inactive
-- Not set - Inactive (default)
 
 ### Interactive Debugging Workflow
 
@@ -277,7 +264,7 @@ from flexlock import flexcli, debug_on_fail
 import pandas as pd
 
 @flexcli
-@debug_on_fail(stack_depth=2)
+@debug_on_fail
 def analyze_data(
     data_path: str = "data/results.csv",
     threshold: float = 0.5,

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Python API Reference &mdash; FlexLock 0.4.1 documentation</title>
+  <title>Python API Reference &mdash; FlexLock 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/python_api.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="_static/documentation_options.js?v=70f82a29"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -51,6 +51,7 @@
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -77,12 +78,16 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#project-api">Project API</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#creating-a-project">Creating a Project</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#one-off-submission-without-a-project">One-off submission without a Project</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#proj-get-key-retrieve-configuration"><code class="docutils literal notranslate"><span class="pre">proj.get(key)</span></code>: Retrieve Configuration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#proj-submit-execute-configuration"><code class="docutils literal notranslate"><span class="pre">proj.submit()</span></code>: Execute Configuration</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#signature">Signature</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cli-python-parity">CLI/Python parity</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#basic-execution">Basic Execution</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#smart-run-caching">Smart Run (Caching)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache-markers-and-force-true">Cache markers and <code class="docutils literal notranslate"><span class="pre">force=True</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#parameter-sweep">Parameter Sweep</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#post-sweep-chaining">Post-sweep chaining</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#hpc-execution-slurm">HPC Execution (Slurm)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#hpc-execution-pbs">HPC Execution (PBS)</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#async-execution">Async Execution</a></li>
@@ -175,9 +180,12 @@
 
 <span class="c1"># Convert function to config</span>
 <span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
-<span class="c1"># Result: {&#39;_target_&#39;: &#39;module.train&#39;, &#39;lr&#39;: 0.01, &#39;epochs&#39;: 10}</span>
+<span class="c1"># Result: {&#39;_target_&#39;: &#39;module.train&#39;, &#39;lr&#39;: 0.01, &#39;epochs&#39;: 10, &#39;model&#39;: None}</span>
 </pre></div>
 </div>
+<p>Every parameter with a default is captured — including ones whose default
+is <code class="docutils literal notranslate"><span class="pre">None</span></code>. Override or remove them downstream if you don’t want them in
+the run lock.</p>
 </section>
 <section id="with-overrides">
 <h4>With Overrides<a class="headerlink" href="#with-overrides" title="Link to this heading"></a></h4>
@@ -274,7 +282,7 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
 <section id="with-snapshot-configuration">
 <h4>With Snapshot Configuration<a class="headerlink" href="#with-snapshot-configuration" title="Link to this heading"></a></h4>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@flexcli</span><span class="p">(</span>
-    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="n">_snapshot_</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
         <span class="n">repos</span><span class="o">=</span><span class="p">{</span>
             <span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>                          <span class="c1"># string shorthand for path</span>
             <span class="s1">&#39;mylib&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="s1">&#39;libs/mylib&#39;</span><span class="p">},</span>      <span class="c1"># explicit dict form</span>
@@ -315,10 +323,35 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
 <h3>Creating a Project<a class="headerlink" href="#creating-a-project" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
 
-<span class="c1"># Load from Python module</span>
+<span class="c1"># Load defaults from a Python module</span>
 <span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;myproject.config.defaults&#39;</span><span class="p">)</span>
+
+<span class="c1"># Or from a file path — bare path infers the `defaults` variable name</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;configs/defaults.py&#39;</span><span class="p">)</span>
+<span class="c1"># Equivalent to: Project(defaults=&#39;configs/defaults.py:defaults&#39;)</span>
+
+<span class="c1"># Or point at a differently-named variable</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;configs/experiments.py:hyperparam_grid&#39;</span><span class="p">)</span>
+
+<span class="c1"># Or from a pre-built DictConfig / dict</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;train&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;lr&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">}})</span>
+
+<span class="c1"># Or with no defaults — useful for one-off submissions</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">()</span>
 </pre></div>
 </div>
+</section>
+<section id="one-off-submission-without-a-project">
+<h3>One-off submission without a Project<a class="headerlink" href="#one-off-submission-without-a-project" title="Link to this heading"></a></h3>
+<p>For a single config that doesn’t need pipeline plumbing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">submit</span><span class="p">,</span> <span class="n">py2cfg</span>
+
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train&#39;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">slurm_config</span><span class="o">=</span><span class="s1">&#39;configs/slurm_gpu.yaml&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">flexlock.submit</span></code> is a thin wrapper over <code class="docutils literal notranslate"><span class="pre">Project().submit</span></code> — all kwargs
+(<code class="docutils literal notranslate"><span class="pre">sweep</span></code>, <code class="docutils literal notranslate"><span class="pre">smart_run</span></code>, <code class="docutils literal notranslate"><span class="pre">overrides</span></code>, <code class="docutils literal notranslate"><span class="pre">force</span></code>, etc.) are forwarded.</p>
 <p><strong>Python module structure:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># myproject/config/defaults.py</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">py2cfg</span>
@@ -339,15 +372,32 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
 <hr class="docutils" />
 <section id="proj-get-key-retrieve-configuration">
 <h3><code class="docutils literal notranslate"><span class="pre">proj.get(key)</span></code>: Retrieve Configuration<a class="headerlink" href="#proj-get-key-retrieve-configuration" title="Link to this heading"></a></h3>
-<p>Get a configuration node from the defaults.</p>
+<p>Get a configuration node from the defaults. The returned config is
+<strong>self-contained</strong>: root-scope references (<code class="docutils literal notranslate"><span class="pre">${some_anchor}</span></code>) are frozen to
+concrete values, while resolver calls (<code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code>, <code class="docutils literal notranslate"><span class="pre">${latest:}</span></code>,
+<code class="docutils literal notranslate"><span class="pre">${run_lock:}</span></code>) and intra-sub-tree references are preserved for resolution
+at submit time.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get config by key</span>
 <span class="n">train_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
 
 <span class="c1"># Modify before execution</span>
 <span class="n">train_cfg</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="mf">0.1</span>
 <span class="n">train_cfg</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span>
+
+<span class="c1"># train_cfg can be pickled, merged, or shipped to an HPC worker</span>
+<span class="c1"># without losing root context — every ${root_anchor} has already been</span>
+<span class="c1"># substituted with its value at the moment of the get() call.</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">train_cfg</span><span class="p">,</span> <span class="n">slurm_config</span><span class="o">=</span><span class="s1">&#39;configs/slurm_gpu.yaml&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p><strong>Anchor-update workflow:</strong> if you want a root-level anchor change to
+propagate into a stage, update <code class="docutils literal notranslate"><span class="pre">proj.defaults</span></code> <em>before</em> calling <code class="docutils literal notranslate"><span class="pre">proj.get</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">proj</span><span class="o">.</span><span class="n">defaults</span><span class="p">,</span> <span class="s1">&#39;cnf_run_dir&#39;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
+<span class="n">eval_cfg</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;cnf_eval_val&#39;</span><span class="p">)</span>   <span class="c1"># picks up the new anchor</span>
+</pre></div>
+</div>
+<p>A previously-fetched config will <strong>not</strong> see anchor updates retroactively —
+its root refs are already frozen. Re-call <code class="docutils literal notranslate"><span class="pre">proj.get</span></code> to refresh.</p>
 <p><strong>Returns:</strong> <code class="docutils literal notranslate"><span class="pre">DictConfig</span></code> (OmegaConf)</p>
 </section>
 <hr class="docutils" />
@@ -357,8 +407,9 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
 <section id="signature">
 <h4>Signature<a class="headerlink" href="#signature" title="Link to this heading"></a></h4>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">submit</span><span class="p">(</span>
-    <span class="n">config</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">DictConfig</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sweep</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sweep_target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">n_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">smart_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">search_dirs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -368,15 +419,65 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
     <span class="n">sweep_dir_suffix</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">match_include</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">match_exclude</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutionResult</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">ExecutionResult</span><span class="p">]</span>
+    <span class="n">isolated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">overrides</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">merge</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">print_config</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutionResult</span> <span class="o">|</span> <span class="n">List</span><span class="p">[</span><span class="n">ExecutionResult</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
 </pre></div>
 </div>
 <p><strong>Parameters:</strong></p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">sweep_dir_suffix</span></code>: When <code class="docutils literal notranslate"><span class="pre">True</span></code>, appends <code class="docutils literal notranslate"><span class="pre">_sweep_{i:04d}</span></code> to each sweep run’s <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>. Default <code class="docutils literal notranslate"><span class="pre">False</span></code> (all sweep runs share the base <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">config</span></code>: Accepts a <code class="docutils literal notranslate"><span class="pre">DictConfig</span></code>, a key string (looked up via <code class="docutils literal notranslate"><span class="pre">proj.get</span></code>), or <code class="docutils literal notranslate"><span class="pre">None</span></code> (use <code class="docutils literal notranslate"><span class="pre">proj.defaults</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sweep_target</span></code>: Dot-path where each sweep item is merged into the base config. <code class="docutils literal notranslate"><span class="pre">None</span></code> merges items at the root.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">overrides</span></code>: Dict (<code class="docutils literal notranslate"><span class="pre">{'lr':</span> <span class="pre">0.01}</span></code>) or dotlist (<code class="docutils literal notranslate"><span class="pre">['lr=0.01']</span></code>) merged into <code class="docutils literal notranslate"><span class="pre">config</span></code> before execution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">merge</span></code>: Path to a YAML file (or a dict) merged into <code class="docutils literal notranslate"><span class="pre">config</span></code> before execution. <code class="docutils literal notranslate"><span class="pre">overrides</span></code> is applied after <code class="docutils literal notranslate"><span class="pre">merge</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">debug</span></code>: Wrap the user function with the post-mortem debugger so exceptions drop into PDB.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">print_config</span></code>: Print the resolved config and return <code class="docutils literal notranslate"><span class="pre">None</span></code> without executing — useful for inspecting sweep-merged or override-merged configs before launching.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sweep_dir_suffix</span></code>: When <code class="docutils literal notranslate"><span class="pre">True</span></code>, nests each sweep run under <code class="docutils literal notranslate"><span class="pre">&lt;save_dir&gt;/sweep_{i:04d}/</span></code>. Default <code class="docutils literal notranslate"><span class="pre">False</span></code> (all sweep runs share the base <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">match_include</span></code>: Override the git path include-patterns used during <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> comparison (takes priority over per-repo patterns stored in <code class="docutils literal notranslate"><span class="pre">run.lock</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">match_exclude</span></code>: Override the git path exclude-patterns used during <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> comparison.</p></li>
 </ul>
+</section>
+<section id="cli-python-parity">
+<h4>CLI/Python parity<a class="headerlink" href="#cli-python-parity" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">flexlock-run</span></code> and <code class="docutils literal notranslate"><span class="pre">proj.submit()</span></code> share the same execution kernel. Equivalences:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>CLI flag</p></th>
+<th class="head"><p>Python kwarg</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-s</span> <span class="pre">&lt;key&gt;</span></code> (select)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">submit('key',</span> <span class="pre">...)</span></code> (str dispatches via <code class="docutils literal notranslate"><span class="pre">get</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-O</span> <span class="pre">key=val</span></code> / <code class="docutils literal notranslate"><span class="pre">-M</span> <span class="pre">file</span></code> (post-select)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">overrides={...}</span></code> / <code class="docutils literal notranslate"><span class="pre">merge=...</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--sweep-file</span> <span class="pre">path.yaml</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sweep=load_sweep(sweep_file='path.yaml')</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--sweep-target</span> <span class="pre">X</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">sweep_target='X'</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">--debug</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">debug=True</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--print-config</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">print_config=True</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal notranslate"><span class="pre">load_sweep</span></code> utility is also exported at the package level:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sweep</span>
+<span class="n">sweep</span> <span class="o">=</span> <span class="n">load_sweep</span><span class="p">(</span><span class="n">sweep_file</span><span class="o">=</span><span class="s1">&#39;configs/ablation.yaml&#39;</span><span class="p">)</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span> <span class="n">sweep_target</span><span class="o">=</span><span class="s1">&#39;lit_module&#39;</span><span class="p">,</span>
+            <span class="n">slurm_config</span><span class="o">=</span><span class="s1">&#39;configs/slurm_gpu.yaml&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="basic-execution">
 <h4>Basic Execution<a class="headerlink" href="#basic-execution" title="Link to this heading"></a></h4>
@@ -404,8 +505,12 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
 <p><strong>How it works:</strong></p>
 <ul class="simple">
 <li><p>Generates fingerprint (code + data + config)</p></li>
-<li><p>Searches <code class="docutils literal notranslate"><span class="pre">search_dirs</span></code> for matching <code class="docutils literal notranslate"><span class="pre">run.lock</span></code></p></li>
-<li><p>Returns cached result if found</p></li>
+<li><p>Searches <code class="docutils literal notranslate"><span class="pre">search_dirs</span></code> for run directories containing <strong>both</strong> <code class="docutils literal notranslate"><span class="pre">run.lock</span></code>
+(written before execution) and <code class="docutils literal notranslate"><span class="pre">run.complete</span></code> (written after the user
+function returns successfully)</p></li>
+<li><p>Returns cached result on a match; runs that have only <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> (previous
+attempts interrupted before completion) are skipped, not treated as cache
+hits</p></li>
 </ul>
 <p><strong>Custom search:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
@@ -413,6 +518,31 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
     <span class="n">smart_run</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">search_dirs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;outputs/train/&#39;</span><span class="p">,</span> <span class="s1">&#39;archive/old_runs/&#39;</span><span class="p">]</span>
 <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="cache-markers-and-force-true">
+<h4>Cache markers and <code class="docutils literal notranslate"><span class="pre">force=True</span></code><a class="headerlink" href="#cache-markers-and-force-true" title="Link to this heading"></a></h4>
+<p>Each completed run leaves two files alongside its outputs:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">run.lock</span></code> — config + provenance, written before execution starts.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">run.complete</span></code> — JSON with completion timestamp, written after the user
+function returns. A cache hit requires both.</p></li>
+</ul>
+<p>To force re-execution while keeping prior outputs in place:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>   <span class="c1"># deletes run.complete, runs again into same dir</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">force=True</span></code> does <strong>not</strong> delete <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> or <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> — only the
+completion marker. The user function overwrites outputs in place.</p>
+<p><strong>Migrating from older versions:</strong> runs created before this scheme exists
+have only <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> and would be treated as incomplete. Backfill them once:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock<span class="w"> </span>migrate-cache-markers<span class="w"> </span>outputs/
+</pre></div>
+</div>
+<p>This writes <code class="docutils literal notranslate"><span class="pre">run.complete</span></code> for any dir that has <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> plus at least one
+non-hidden output file. To prune stale lock-only dirs instead:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock<span class="w"> </span>gc<span class="w"> </span>--incomplete<span class="w"> </span>outputs/
 </pre></div>
 </div>
 </section>
@@ -425,17 +555,102 @@ python<span class="w"> </span>train.py<span class="w"> </span>-o<span class="w">
     <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">),</span>
 <span class="p">]</span>
 
-<span class="c1"># Execute sweep</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># n_jobs &gt; 1 spawns multiprocessing workers (see &quot;Parallelism&quot; note</span>
+    <span class="c1"># below) and therefore must be guarded by `if __name__ == &quot;__main__&quot;:`</span>
+    <span class="c1"># when the call is at module scope. Without the guard, importing the</span>
+    <span class="c1"># script (which spawn does to bootstrap the children) re-runs the call</span>
+    <span class="c1"># and the process never terminates.</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 
-<span class="c1"># Process results</span>
-<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: accuracy=</span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Process results</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: accuracy=</span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best config: </span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best config: </span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<blockquote>
+<div><p><strong>Parallelism note.</strong> <code class="docutils literal notranslate"><span class="pre">n_jobs</span> <span class="pre">&gt;</span> <span class="pre">1</span></code> and <code class="docutils literal notranslate"><span class="pre">isolated=True</span></code> both use
+Python’s <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> with the <code class="docutils literal notranslate"><span class="pre">spawn</span></code> start method (chosen to
+avoid GPU/CUDA fork hazards). Spawn re-imports the launching script in
+each child, so any module-scope <code class="docutils literal notranslate"><span class="pre">proj.submit(...)</span></code> call <strong>must</strong> be
+placed under <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">__name__</span> <span class="pre">==</span> <span class="pre">&quot;__main__&quot;:</span></code>. Notebook and REPL contexts
+are fine. <code class="docutils literal notranslate"><span class="pre">n_jobs=1</span></code> without <code class="docutils literal notranslate"><span class="pre">isolated=True</span></code> runs in-process and
+does not need the guard.</p>
+</div></blockquote>
+<p><strong>Per-item <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> containment.</strong> Each sweep item’s <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> must
+nest under the sweep root (taken from the base config’s <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>, or
+the first item’s parent dir). The tasks DB and per-item lineage markers
+all live in the sweep root tree. Violating containment raises a
+<code class="docutils literal notranslate"><span class="pre">FlexLockValidationError</span></code> listing the offending items before any work is
+queued.</p>
+<p><strong>Tracking per-item <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> in derived paths.</strong> Use <em>intra-node</em>
+references (relative to the same config node) rather than absolute root
+references:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✅ Tracks per-item save_dir overrides — recommended</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span>
+    <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train&#39;</span><span class="p">,</span>
+    <span class="n">log_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{save_dir}</span><span class="s1">/logs&#39;</span><span class="p">,</span>           <span class="c1"># intra-node ref</span>
+    <span class="n">ckpt_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{save_dir}</span><span class="s1">/checkpoints&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="p">[</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/sweep/a&#39;</span><span class="p">),</span>     <span class="c1"># log_dir becomes outputs/sweep/a/logs</span>
+    <span class="nb">dict</span><span class="p">(</span><span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/sweep/b&#39;</span><span class="p">),</span>
+<span class="p">])</span>
+
+<span class="c1"># ❌ Frozen at proj.get() time — won&#39;t track sweep overrides</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span>
+    <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train&#39;</span><span class="p">,</span>
+    <span class="n">log_dir</span><span class="o">=</span><span class="s1">&#39;$</span><span class="si">{main.save_dir}</span><span class="s1">/logs&#39;</span><span class="p">,</span>      <span class="c1"># cross-tree ref</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Cross-tree refs (<code class="docutils literal notranslate"><span class="pre">${main.save_dir}</span></code>, <code class="docutils literal notranslate"><span class="pre">${root_anchor}</span></code>) are frozen to
+concrete values at <code class="docutils literal notranslate"><span class="pre">proj.get()</span></code> so the sub-node remains self-contained
+under pickling and merge. Intra-node refs (<code class="docutils literal notranslate"><span class="pre">${save_dir}</span></code>,
+<code class="docutils literal notranslate"><span class="pre">${some_local_key}</span></code>) are preserved and re-resolve on each sweep item.</p>
+<p><strong>Previewing a sweep.</strong> Set <code class="docutils literal notranslate"><span class="pre">print_config=True</span></code> while passing <code class="docutils literal notranslate"><span class="pre">sweep=...</span></code>
+to print each item’s fully-merged config without executing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span> <span class="n">print_config</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1"># --- sweep item 0 ---</span>
+<span class="c1"># lr: 0.001</span>
+<span class="c1"># batch_size: 32</span>
+<span class="c1"># ...</span>
+</pre></div>
+</div>
+</section>
+<section id="post-sweep-chaining">
+<h4>Post-sweep chaining<a class="headerlink" href="#post-sweep-chaining" title="Link to this heading"></a></h4>
+<p>After a sweep, downstream stages typically need to run once per sweep
+result, each anchored at the result’s <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>. <code class="docutils literal notranslate"><span class="pre">proj.submit_chained</span></code>
+packages this loop:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">chained</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit_chained</span><span class="p">(</span>
+    <span class="n">base_cfg</span><span class="p">,</span>
+    <span class="n">sweep</span><span class="o">=</span><span class="p">[{</span><span class="s1">&#39;fourier_sigma&#39;</span><span class="p">:</span> <span class="n">s</span><span class="p">}</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">]],</span>
+    <span class="n">downstream</span><span class="o">=</span><span class="p">[</span>
+        <span class="c1"># (stage_key, anchor_wiring)</span>
+        <span class="c1"># anchor_wiring maps anchor name in proj.defaults → result attribute</span>
+        <span class="p">(</span><span class="s1">&#39;encode_val&#39;</span><span class="p">,</span>   <span class="p">{</span><span class="s1">&#39;cnf_run_dir&#39;</span><span class="p">:</span> <span class="s1">&#39;save_dir&#39;</span><span class="p">}),</span>
+        <span class="p">(</span><span class="s1">&#39;cnf_eval_val&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;cnf_run_dir&#39;</span><span class="p">:</span> <span class="s1">&#39;save_dir&#39;</span><span class="p">}),</span>
+    <span class="p">],</span>
+    <span class="n">sweep_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;slurm_config&#39;</span><span class="p">:</span> <span class="s1">&#39;configs/slurm_gpu.yaml&#39;</span><span class="p">,</span> <span class="s1">&#39;n_jobs&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
+    <span class="n">downstream_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;slurm_config&#39;</span><span class="p">:</span> <span class="s1">&#39;configs/slurm_gpu.yaml&#39;</span><span class="p">},</span>
+<span class="p">)</span>
+
+<span class="c1"># Iterate (sweep_result, downstream_results) pairs:</span>
+<span class="k">for</span> <span class="n">sweep_r</span><span class="p">,</span> <span class="n">downstream_rs</span> <span class="ow">in</span> <span class="n">chained</span><span class="p">:</span>
+    <span class="n">encode_r</span><span class="p">,</span> <span class="n">eval_r</span> <span class="o">=</span> <span class="n">downstream_rs</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">sweep_r</span><span class="o">.</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">eval_r</span><span class="p">[</span><span class="s1">&#39;val_score&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>For each sweep item, the parent’s <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> is written into the named
+anchor on <code class="docutils literal notranslate"><span class="pre">proj.defaults</span></code>, then each downstream stage is fetched via
+<code class="docutils literal notranslate"><span class="pre">proj.get(key)</span></code> (so the new anchor propagates through interpolations)
+and submitted. <code class="docutils literal notranslate"><span class="pre">downstream_kwargs</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">smart_run=False</span></code> to
+avoid stale-cache false hits between iterations — pass
+<code class="docutils literal notranslate"><span class="pre">{'smart_run':</span> <span class="pre">True}</span></code> explicitly if you want caching.</p>
 </section>
 <section id="hpc-execution-slurm">
 <h4>HPC Execution (Slurm)<a class="headerlink" href="#hpc-execution-slurm" title="Link to this heading"></a></h4>
@@ -758,7 +973,7 @@ Given <code class="docutils literal notranslate"><span class="pre">save_dir</spa
     <span class="n">train</span><span class="p">,</span>
     <span class="n">input_data</span><span class="o">=</span><span class="s1">&#39;data/train.csv&#39;</span><span class="p">,</span>
     <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train&#39;</span><span class="p">,</span>
-    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="n">_snapshot_</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
         <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>          <span class="c1"># string shorthand</span>
         <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;train_data&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_data}&#39;</span><span class="p">}</span>
     <span class="p">)</span>
@@ -770,8 +985,11 @@ Given <code class="docutils literal notranslate"><span class="pre">save_dir</spa
 <span class="c1"># - Configuration</span>
 </pre></div>
 </div>
+<blockquote>
+<div><p><strong>Note:</strong> Use <code class="docutils literal notranslate"><span class="pre">_snapshot_=</span></code> inside <code class="docutils literal notranslate"><span class="pre">py2cfg</span></code>. The <code class="docutils literal notranslate"><span class="pre">snapshot_config=</span></code> spelling only works as a parameter to the <code class="docutils literal notranslate"><span class="pre">&#64;flexcli</span></code> decorator.</p>
+</div></blockquote>
 <p>To track only specific files within a repo (speeds up <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> by ignoring irrelevant changes):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">_snapshot_</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
     <span class="n">repos</span><span class="o">=</span><span class="p">{</span>
         <span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
@@ -783,7 +1001,7 @@ Given <code class="docutils literal notranslate"><span class="pre">save_dir</spa
 </pre></div>
 </div>
 <p>Or resolve the repo path automatically from a Python module name:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">_snapshot_</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
     <span class="n">repos</span><span class="o">=</span><span class="p">{</span>
         <span class="s1">&#39;mylib&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;module&#39;</span><span class="p">:</span> <span class="s1">&#39;mylib&#39;</span><span class="p">}</span>   <span class="c1"># path resolved via importlib</span>
     <span class="p">}</span>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.run_cli &mdash; FlexLock 0.3.2 documentation</title>
+  <title>flexlock.run_cli &mdash; FlexLock 0.4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/run_cli.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
+      <script src="../../_static/documentation_options.js?v=bd778e0b"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,7 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -80,6 +81,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../flexlock.html">flexlock</a></li>
       <li class="breadcrumb-item active">flexlock.run_cli</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -92,6 +94,7 @@
   <h1>Source code for flexlock.run_cli</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;CLI entry point for FlexLock runner.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockRunner</span>
@@ -112,6 +115,13 @@
 <span class="sd">        flexlock-run --config exp.yml --select experiments.exp1</span>
 <span class="sd">        flexlock-run --sweep-file sweep.yaml --n_jobs 4</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Make the current working directory importable so users can pass</span>
+    <span class="c1"># `-d mypkg.module.var` for a package in their project without having</span>
+    <span class="c1"># to set PYTHONPATH manually. Mirrors what `python -m mypkg` would do.</span>
+    <span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">cwd</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cwd</span><span class="p">)</span>
+
     <span class="k">try</span><span class="p">:</span>
         <span class="n">runner</span> <span class="o">=</span> <span class="n">FlexLockRunner</span><span class="p">()</span>
         <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>

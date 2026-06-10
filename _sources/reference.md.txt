@@ -123,12 +123,14 @@ except FlexLockConfigError as e:
 
 #### `FlexLockExecutionError`
 
-Raised when there is an error during execution.
+Raised by FlexLock when execution machinery itself fails (for example,
+backend submission errors or task-database corruption).
 
-**Common causes:**
-- Target function raises an exception
-- Import errors for `_target_`
-- Argument mismatches
+> **Important:** Exceptions raised **inside the user's target function**
+> are *not* wrapped — they propagate as the original exception type
+> (e.g. `ValueError`, `RuntimeError`). Use `except Exception` or the
+> specific type if you need to catch them. `FlexLockExecutionError`
+> only covers FlexLock-side failures around the call.
 
 ```python
 from flexlock import FlexLockExecutionError
@@ -136,7 +138,9 @@ from flexlock import FlexLockExecutionError
 try:
     result = proj.submit(cfg)
 except FlexLockExecutionError as e:
-    print(f"Execution failed: {e}")
+    print(f"FlexLock failed to dispatch: {e}")
+except ValueError as e:
+    print(f"User function raised: {e}")
 ```
 
 #### `FlexLockSnapshotError`
@@ -160,18 +164,21 @@ except FlexLockSnapshotError as e:
 
 #### `FlexLockValidationError`
 
-Raised when validation of inputs fails.
+Raised when validation of inputs fails. Currently the main triggers are:
 
-**Common causes:**
-- Invalid parameter types
-- Out-of-range values
-- Missing required parameters
+- Per-item sweep `save_dir`s that fall outside the sweep root.
+- Sweep source ambiguity (multiple of `sweep` / `sweep_file` /
+  `sweep_key` given) or a missing `sweep_key`.
+- Selection of a non-existent dotted key.
+
+Numeric/range checks like `n_jobs <= 0` are **not** enforced today —
+that example would simply behave like `n_jobs=1`.
 
 ```python
 from flexlock import FlexLockValidationError
 
 try:
-    proj.submit(cfg, n_jobs=-1)  # Invalid
+    proj.submit(cfg, sweep=[{'save_dir': '/elsewhere'}])
 except FlexLockValidationError as e:
     print(f"Validation error: {e}")
 ```

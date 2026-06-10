@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Usage Guide &mdash; FlexLock 0.4.1 documentation</title>
+  <title>Usage Guide &mdash; FlexLock 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/usage_guide.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="_static/documentation_options.js?v=70f82a29"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -66,11 +66,14 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#reproducibility">Reproducibility</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#enable-tracking">Enable Tracking</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#repo-configuration-format">Repo Configuration Format</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#snapshot-contents">Snapshot Contents</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#compare-runs">Compare Runs</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#complete-usage-guide">Complete Usage Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#repo-configuration-format">Repo Configuration Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#snapshot-contents">Snapshot Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compare-runs">Compare Runs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#parameter-sweeps">Parameter Sweeps</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#cli-sweeps">CLI Sweeps</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#python-api-sweeps">Python API Sweeps</a></li>
@@ -328,26 +331,33 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
     <span class="k">pass</span>
 </pre></div>
 </div>
-<p><strong>With py2cfg:</strong></p>
+</section>
+</section>
+</section>
+<section id="complete-usage-guide">
+<h1>Complete Usage Guide<a class="headerlink" href="#complete-usage-guide" title="Link to this heading"></a></h1>
+<p>…
+(after line 230)
+<strong>With py2cfg:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
     <span class="n">train</span><span class="p">,</span>
     <span class="n">input_path</span><span class="o">=</span><span class="s1">&#39;data/train.csv&#39;</span><span class="p">,</span>
     <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/train&#39;</span><span class="p">,</span>
-    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="n">_snapshot_</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
         <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;submodule&#39;</span><span class="p">:</span> <span class="s1">&#39;libs/mylib&#39;</span><span class="p">},</span>
         <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;train_data&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_path}&#39;</span><span class="p">}</span>
     <span class="p">)</span>
 <span class="p">)</span>
 </pre></div>
 </div>
+<p>…</p>
 <blockquote>
 <div><p><strong>Auto-detection:</strong> When the config specifies a <code class="docutils literal notranslate"><span class="pre">_target_</span></code> (e.g. with YAML configs or <code class="docutils literal notranslate"><span class="pre">py2cfg</span></code>), FlexLock automatically detects and tracks the git repository of the target function. No explicit <code class="docutils literal notranslate"><span class="pre">repos</span></code> entry is needed.</p>
 </div></blockquote>
-</section>
 <section id="repo-configuration-format">
-<h3>Repo Configuration Format<a class="headerlink" href="#repo-configuration-format" title="Link to this heading"></a></h3>
+<h2>Repo Configuration Format<a class="headerlink" href="#repo-configuration-format" title="Link to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">repos</span></code> values can be a plain path string or a dict with additional options:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">_snapshot_</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
     <span class="n">repos</span><span class="o">=</span><span class="p">{</span>
         <span class="c1"># Simple: string path</span>
         <span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
@@ -369,10 +379,10 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
 </pre></div>
 </div>
 <p>When <code class="docutils literal notranslate"><span class="pre">include</span></code>/<code class="docutils literal notranslate"><span class="pre">exclude</span></code> patterns are specified, <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> will consider two runs a match even if other files in the repo differ — only the filtered paths are compared.</p>
-</section>
 <hr class="docutils" />
+</section>
 <section id="snapshot-contents">
-<h3>Snapshot Contents<a class="headerlink" href="#snapshot-contents" title="Link to this heading"></a></h3>
+<h2>Snapshot Contents<a class="headerlink" href="#snapshot-contents" title="Link to this heading"></a></h2>
 <p>Every run creates <code class="docutils literal notranslate"><span class="pre">run.lock</span></code>:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># outputs/train/run_0001/run.lock</span>
 <span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2024-01-15T14:30:00.123456&quot;</span>
@@ -396,10 +406,10 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
 <span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;outputs/train/run_0001&quot;</span>
 </pre></div>
 </div>
-</section>
 <hr class="docutils" />
+</section>
 <section id="compare-runs">
-<h3>Compare Runs<a class="headerlink" href="#compare-runs" title="Link to this heading"></a></h3>
+<h2>Compare Runs<a class="headerlink" href="#compare-runs" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-diff<span class="w"> </span>outputs/train/run_0001<span class="w"> </span>outputs/train/run_0002
 </pre></div>
 </div>
@@ -409,7 +419,6 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
   data.train_data: hash_abc → hash_xyz
 </pre></div>
 </div>
-</section>
 </section>
 <hr class="docutils" />
 <section id="parameter-sweeps">
@@ -463,19 +472,22 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
     <span class="nb">dict</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">),</span>
 <span class="p">]</span>
 
-<span class="c1"># Execute</span>
-<span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
-    <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">),</span>
-    <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span>
-    <span class="n">n_jobs</span><span class="o">=</span><span class="mi">3</span>
-<span class="p">)</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># n_jobs &gt; 1 uses multiprocessing (spawn) — module-scope calls must be</span>
+    <span class="c1"># guarded by `if __name__ == &quot;__main__&quot;:` or the children will re-import</span>
+    <span class="c1"># and re-launch the sweep recursively.</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+        <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">),</span>
+        <span class="n">sweep</span><span class="o">=</span><span class="n">sweep</span><span class="p">,</span>
+        <span class="n">n_jobs</span><span class="o">=</span><span class="mi">3</span>
+    <span class="p">)</span>
 
-<span class="c1"># Process results</span>
-<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: accuracy=</span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Process results</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: accuracy=</span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best LR: </span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">lr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best LR: </span><span class="si">{</span><span class="n">best</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">lr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -822,7 +834,7 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>config<span class=
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span>
     <span class="n">train</span><span class="p">,</span>
     <span class="n">input_data</span><span class="o">=</span><span class="s1">&#39;data/train.csv&#39;</span><span class="p">,</span>
-    <span class="n">snapshot_config</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+    <span class="n">_snapshot_</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
         <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;main&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">},</span>              <span class="c1"># or omit if using _target_ (auto-detected)</span>
         <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;train&#39;</span><span class="p">:</span> <span class="s1">&#39;${...input_data}&#39;</span><span class="p">}</span>
     <span class="p">)</span>

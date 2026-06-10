@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CLI Reference &mdash; FlexLock 0.4.1 documentation</title>
+  <title>CLI Reference &mdash; FlexLock 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/cli_reference.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="_static/documentation_options.js?v=70f82a29"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -50,7 +50,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -97,6 +98,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#n-jobs"><code class="docutils literal notranslate"><span class="pre">--n_jobs</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#check-exists"><code class="docutils literal notranslate"><span class="pre">--check-exists</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#debug"><code class="docutils literal notranslate"><span class="pre">--debug</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dump"><code class="docutils literal notranslate"><span class="pre">--dump</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enqueue"><code class="docutils literal notranslate"><span class="pre">--enqueue</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#print-config"><code class="docutils literal notranslate"><span class="pre">--print-config</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#h-help"><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code></a></li>
 </ul>
@@ -254,8 +257,41 @@ flexlock<span class="w"> </span>gc<span class="w"> </span>results/<span class="w
 <section id="defaults-d">
 <h3><code class="docutils literal notranslate"><span class="pre">--defaults</span></code>, <code class="docutils literal notranslate"><span class="pre">-d</span></code><a class="headerlink" href="#defaults-d" title="Link to this heading"></a></h3>
 <p>Load Python module containing default configuration.</p>
+<p><strong>Accepted forms:</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Form</p></th>
+<th class="head"><p>Resolves to</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pkg.module.variable</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pkg.module</span> <span class="pre">import</span> <span class="pre">variable</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pkg.module:variable</span></code></p></td>
+<td><p>Same, with explicit colon split</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">path/to/file.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">defaults</span></code> variable in that file</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">path/to/file.py:variable</span></code></p></td>
+<td><p>Named variable in that file</p></td>
+</tr>
+</tbody>
+</table>
+<p>For the dotted form, the <strong>last</strong> component is the variable name and
+everything before it is the module path. So <code class="docutils literal notranslate"><span class="pre">-d</span> <span class="pre">myconfig.defaults</span></code>
+expects a module called <code class="docutils literal notranslate"><span class="pre">myconfig</span></code> containing a <code class="docutils literal notranslate"><span class="pre">defaults</span></code> attribute —
+<strong>not</strong> <code class="docutils literal notranslate"><span class="pre">myconfig/defaults.py</span></code>. If your project layout is
+<code class="docutils literal notranslate"><span class="pre">myconfig/defaults.py</span></code> with <code class="docutils literal notranslate"><span class="pre">defaults</span> <span class="pre">=</span> <span class="pre">{...}</span></code> inside, use
+<code class="docutils literal notranslate"><span class="pre">-d</span> <span class="pre">myconfig.defaults.defaults</span></code> (or <code class="docutils literal notranslate"><span class="pre">-d</span> <span class="pre">myconfig/defaults.py</span></code>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">flexlock-run</span></code> inserts the current working directory at the front of
+<code class="docutils literal notranslate"><span class="pre">sys.path</span></code> for you, so dotted imports of packages in the project root
+work without setting <code class="docutils literal notranslate"><span class="pre">PYTHONPATH=.</span></code>.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.config.defaults
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>configs/defaults.py
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>configs/experiments.py:hyperparam_grid
 </pre></div>
 </div>
 <p><strong>Python module structure:</strong></p>
@@ -265,7 +301,7 @@ flexlock<span class="w"> </span>gc<span class="w"> </span>results/<span class="w
 <span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
     <span class="k">pass</span>
 
-<span class="n">config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+<span class="n">defaults</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
     <span class="n">train</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">),</span>
     <span class="nb">eval</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">evaluate</span><span class="p">)</span>
 <span class="p">)</span>
@@ -315,16 +351,26 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.defaults
 <h2>Configuration Overrides<a class="headerlink" href="#configuration-overrides" title="Link to this heading"></a></h2>
 <section id="overrides-o">
 <h3><code class="docutils literal notranslate"><span class="pre">--overrides</span></code>, <code class="docutils literal notranslate"><span class="pre">-o</span></code><a class="headerlink" href="#overrides-o" title="Link to this heading"></a></h3>
-<p>Override specific keys in root config using dot-notation (before selection).</p>
+<p>Override keys in the <strong>root</strong> config (applied before <code class="docutils literal notranslate"><span class="pre">-s</span></code> selection).</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">-o</span></code> for root-level anchors that downstream interpolations depend on (e.g.
+<code class="docutils literal notranslate"><span class="pre">pipeline_dir</span></code>, <code class="docutils literal notranslate"><span class="pre">base_dir</span></code>). These values are frozen into the selected subtree
+before execution, so interpolations like <code class="docutils literal notranslate"><span class="pre">${pipeline_dir}</span></code> in the stage config
+resolve correctly.</p>
+<blockquote>
+<div><p><strong>When <code class="docutils literal notranslate"><span class="pre">-s</span></code> is used:</strong> if a <code class="docutils literal notranslate"><span class="pre">-o</span></code> key also exists inside the selected node,
+flexlock will warn — your override landed on the root, not the stage. Use
+<code class="docutils literal notranslate"><span class="pre">-O</span></code> for those. Root-only anchors (<code class="docutils literal notranslate"><span class="pre">params</span></code>, <code class="docutils literal notranslate"><span class="pre">pipeline_dir</span></code>, …) are
+intentional and stay silent.</p>
+</div></blockquote>
 <p><strong>Usage:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Single override</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># No selection — override lands directly</span>
 flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1
 
-<span class="c1"># Multiple overrides</span>
-flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1<span class="w"> </span><span class="nv">epochs</span><span class="o">=</span><span class="m">100</span><span class="w"> </span><span class="nv">batch_size</span><span class="o">=</span><span class="m">32</span>
+<span class="c1"># With selection — override a root anchor that the subtree interpolates</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-o<span class="w"> </span><span class="nv">pipeline_dir</span><span class="o">=</span>results/run01
 
-<span class="c1"># Nested overrides</span>
-flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-o<span class="w"> </span>optimizer.lr<span class="o">=</span><span class="m">0</span>.1<span class="w"> </span>optimizer.momentum<span class="o">=</span><span class="m">0</span>.9
+<span class="c1"># Multiple root overrides</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-o<span class="w"> </span><span class="nv">base_dir</span><span class="o">=</span>outputs<span class="w"> </span><span class="nv">seed</span><span class="o">=</span><span class="m">42</span>
 </pre></div>
 </div>
 <p><strong>Supports:</strong></p>
@@ -337,13 +383,20 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span clas
 <hr class="docutils" />
 <section id="overrides-after-select-o">
 <h3><code class="docutils literal notranslate"><span class="pre">--overrides-after-select</span></code>, <code class="docutils literal notranslate"><span class="pre">-O</span></code><a class="headerlink" href="#overrides-after-select-o" title="Link to this heading"></a></h3>
-<p>Override keys in selected config node (after selection).</p>
+<p>Override keys in the <strong>selected</strong> config node (applied after <code class="docutils literal notranslate"><span class="pre">-s</span></code> selection).</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">-O</span></code> whenever you want to change a value that lives inside the selected
+stage — <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>, hyperparameters, datamodule settings, etc.</p>
 <p><strong>Usage:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Select train, then override its lr parameter</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Select train node, then override its lr</span>
 flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.2
 
-<span class="c1"># Useful for modifying nested configs without affecting root</span>
-flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>experiments.exp1<span class="w"> </span>-O<span class="w"> </span>model.depth<span class="o">=</span><span class="m">50</span>
+<span class="c1"># Override save_dir of the selected stage</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">save_dir</span><span class="o">=</span>results/my_run
+
+<span class="c1"># Combine root anchor (-o) with stage overrides (-O)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-o<span class="w"> </span><span class="nv">pipeline_dir</span><span class="o">=</span>results/run01<span class="w"> </span><span class="se">\ </span><span class="w">  </span><span class="c1"># root anchor frozen into subtree refs</span>
+<span class="w">  </span>-O<span class="w"> </span>params.lr<span class="o">=</span>5e-4<span class="w"> </span>params.max_epochs<span class="o">=</span><span class="m">50</span><span class="w">  </span><span class="c1"># stage-level overrides</span>
 </pre></div>
 </div>
 </section>
@@ -377,21 +430,30 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span clas
 <hr class="docutils" />
 <section id="sweep-file">
 <h4><code class="docutils literal notranslate"><span class="pre">--sweep-file</span></code><a class="headerlink" href="#sweep-file" title="Link to this heading"></a></h4>
-<p>Load sweep values from a file (YAML, JSON, or TXT).</p>
+<p>Load sweep tasks from one or more files (YAML, JSON, or TXT). Pass multiple paths to concatenate them into a single sweep list.</p>
 <p><strong>Usage:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># YAML file with list of configs</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Single YAML file with a list of override dicts</span>
 flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>sweep.yaml
+
+<span class="c1"># Multiple files — each file is loaded and results are concatenated</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>exp1.yaml<span class="w"> </span>exp2.yaml<span class="w"> </span>exp3.yaml
 
 <span class="c1"># Text file with values (one per line)</span>
 flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>--sweep-file<span class="w"> </span>lr_values.txt<span class="w"> </span>--sweep-target<span class="w"> </span>lr
 </pre></div>
 </div>
 <p><strong>File formats:</strong></p>
-<p><strong>YAML/JSON:</strong> List of dicts</p>
+<p><strong>YAML/JSON — list of dicts</strong> (multiple tasks per file):</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># sweep.yaml</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="nv">0.001</span><span class="p p-Indicator">,</span><span class="nt"> batch_size</span><span class="p">:</span><span class="w"> </span><span class="nv">32</span><span class="p p-Indicator">}</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="nv">0.01</span><span class="p p-Indicator">,</span><span class="nt"> batch_size</span><span class="p">:</span><span class="w"> </span><span class="nv">64</span><span class="p p-Indicator">}</span>
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="nv">0.1</span><span class="p p-Indicator">,</span><span class="nt"> batch_size</span><span class="p">:</span><span class="w"> </span><span class="nv">128</span><span class="p p-Indicator">}</span>
+</pre></div>
+</div>
+<p><strong>YAML/JSON — single dict</strong> (one task per file, useful with <code class="docutils literal notranslate"><span class="pre">--dump</span></code> or <code class="docutils literal notranslate"><span class="pre">--enqueue</span></code>):</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># exp1.yaml  (produced by: flexlock-run ... --dump &gt; exp1.yaml)</span>
+<span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span>
+<span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
 </pre></div>
 </div>
 <p><strong>Text:</strong> One value per line</p>
@@ -401,6 +463,7 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span clas
 0.1
 </pre></div>
 </div>
+<p><strong>Multi-file behaviour:</strong> A file containing a list contributes all its items; a file containing a single dict contributes one item. The results are concatenated in the order the files are listed.</p>
 </section>
 <hr class="docutils" />
 <section id="sweep">
@@ -488,6 +551,63 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span clas
 <li><p>On exception: Drops into PDB debugger</p></li>
 <li><p>In notebooks: Injects local variables into global scope</p></li>
 <li><p>Useful for development and troubleshooting</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="dump">
+<h3><code class="docutils literal notranslate"><span class="pre">--dump</span></code><a class="headerlink" href="#dump" title="Link to this heading"></a></h3>
+<p>Print the compiled configuration as clean YAML and exit — no decorative headers, no docstring. The output is machine-readable and can be redirected to a file for later use with <code class="docutils literal notranslate"><span class="pre">--sweep-file</span></code> or <code class="docutils literal notranslate"><span class="pre">--enqueue</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Capture a compiled config to a file</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>--dump<span class="w"> </span>&gt;<span class="w"> </span>experiments/base.yaml
+
+<span class="c1"># Capture several variants</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.001<span class="w"> </span>--dump<span class="w"> </span>&gt;<span class="w"> </span>experiments/lr1e3.yaml
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.01<span class="w">  </span>--dump<span class="w"> </span>&gt;<span class="w"> </span>experiments/lr1e2.yaml
+
+<span class="c1"># Later, run them as a sweep</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sweep-file<span class="w"> </span>experiments/lr1e3.yaml<span class="w"> </span>experiments/lr1e2.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--slurm-config<span class="w"> </span>slurm.yaml
+</pre></div>
+</div>
+<p><strong>Notes:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--dump</span></code> resolves interpolations lazily (uses <code class="docutils literal notranslate"><span class="pre">OmegaConf.to_yaml</span></code> without resolving), so <code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code> paths remain in the output and fire correctly at run time.</p></li>
+<li><p>For human inspection with docstring output, use <code class="docutils literal notranslate"><span class="pre">--print-config</span></code> instead.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="enqueue">
+<h3><code class="docutils literal notranslate"><span class="pre">--enqueue</span></code><a class="headerlink" href="#enqueue" title="Link to this heading"></a></h3>
+<p>Append the compiled configuration to a YAML queue file and exit without running. Creates the file if absent; subsequent calls append to it. The queue file is a plain YAML list and can be inspected, edited, or committed to version control.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Queue experiments one at a time (e.g. while a previous run is active)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.001<span class="w"> </span>--enqueue<span class="w"> </span>queue.yaml
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.01<span class="w">  </span>--enqueue<span class="w"> </span>queue.yaml
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1<span class="w">   </span>--enqueue<span class="w"> </span>queue.yaml
+
+<span class="c1"># Inspect the queue</span>
+cat<span class="w"> </span>queue.yaml
+
+<span class="c1"># Submit the whole queue</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>--sweep-file<span class="w"> </span>queue.yaml<span class="w"> </span>--slurm-config<span class="w"> </span>slurm.yaml
+</pre></div>
+</div>
+<p><strong>Queue file format</strong> (standard YAML list, one item per <code class="docutils literal notranslate"><span class="pre">--enqueue</span></code> call):</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">results/exp</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">results/exp</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">results/exp</span>
+</pre></div>
+</div>
+<p><strong>Notes:</strong></p>
+<ul class="simple">
+<li><p>The enqueued config is stored with interpolations <strong>unresolved</strong> so that resolvers like <code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code> fire at run time and each task gets its own unique directory.</p></li>
+<li><p>Writes are atomic (temp-file + rename) so concurrent <code class="docutils literal notranslate"><span class="pre">--enqueue</span></code> calls from different terminals are safe.</p></li>
+<li><p>Re-running <code class="docutils literal notranslate"><span class="pre">--sweep-file</span> <span class="pre">queue.yaml</span></code> after adding new items is safe: tasks already completed are skipped via the <code class="docutils literal notranslate"><span class="pre">INSERT</span> <span class="pre">OR</span> <span class="pre">IGNORE</span></code> logic in the task DB.</p></li>
 </ul>
 </section>
 <hr class="docutils" />
@@ -645,7 +765,8 @@ flexlock-run<span class="w"> </span>-c<span class="w"> </span>config.yaml<span c
 <h2>Common Patterns<a class="headerlink" href="#common-patterns" title="Link to this heading"></a></h2>
 <section id="pattern-1-simple-experiment">
 <h3>Pattern 1: Simple Experiment<a class="headerlink" href="#pattern-1-simple-experiment" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-o<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># -O because lr lives inside the train node (use -o only for root anchors)</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>myproject.defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>-O<span class="w"> </span><span class="nv">lr</span><span class="o">=</span><span class="m">0</span>.1
 </pre></div>
 </div>
 </section>

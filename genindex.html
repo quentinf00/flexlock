@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; FlexLock 0.4.1 documentation</title>
+  <title>Index &mdash; FlexLock 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/genindex.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="_static/documentation_options.js?v=70f82a29"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -48,6 +48,7 @@
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -137,6 +138,8 @@
         <li><a href="api.html#flexlock.backends.slurm.SlurmBackend.cancel_job">(flexlock.backends.slurm.SlurmBackend method)</a>
 </li>
       </ul></li>
+      <li><a href="api.html#flexlock.api.ChainedResult">ChainedResult (class in flexlock.api)</a>
+</li>
       <li><a href="api.html#flexlock.FlexLockRunner.check_if_exists">check_if_exists() (flexlock.FlexLockRunner method)</a>
 
       <ul>
@@ -181,6 +184,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.data_hash.dirhash">dirhash() (in module flexlock.data_hash)</a>
 </li>
+      <li><a href="api.html#flexlock.api.ChainedResult.downstream">downstream (flexlock.api.ChainedResult attribute)</a>
+</li>
       <li><a href="api.html#flexlock.taskdb.dump_to_yaml">dump_to_yaml() (in module flexlock.taskdb)</a>
 </li>
   </ul></td>
@@ -189,6 +194,12 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.enqueue_to_file">enqueue_to_file() (in module flexlock)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.utils.enqueue_to_file">(in module flexlock.utils)</a>
+</li>
+      </ul></li>
       <li><a href="api.html#flexlock.backends.base.Backend.environment">environment() (flexlock.backends.base.Backend method)</a>
 
       <ul>
@@ -197,10 +208,10 @@
         <li><a href="api.html#flexlock.backends.slurm.SlurmBackend.environment">(flexlock.backends.slurm.SlurmBackend method)</a>
 </li>
       </ul></li>
-      <li><a href="api.html#flexlock.api.ExecutionResult">ExecutionResult (class in flexlock.api)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.api.ExecutionResult">ExecutionResult (class in flexlock.api)</a>
+</li>
       <li><a href="api.html#flexlock.api.Project.exists">exists() (flexlock.api.Project method)</a>
 
       <ul>
@@ -505,18 +516,28 @@
         <li><a href="api.html#flexlock.utils.load_python_defaults">(in module flexlock.utils)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.diff_cli.load_snapshot_from_db">load_snapshot_from_db() (in module flexlock.diff_cli)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.diff_cli.load_snapshot_from_dir">load_snapshot_from_dir() (in module flexlock.diff_cli)</a>
 </li>
       <li><a href="api.html#flexlock.load_stage.load_stage_from_path">load_stage_from_path() (in module flexlock.load_stage)</a>
 </li>
+      <li><a href="api.html#flexlock.load_sweep">load_sweep() (in module flexlock)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.utils.load_sweep">(in module flexlock.utils)</a>
+</li>
+      </ul></li>
       <li><a href="api.html#flexlock.parallel.load_tasks">load_tasks() (in module flexlock.parallel)</a>
 </li>
-      <li><a href="api.html#flexlock.utils.log_to_file">log_to_file() (in module flexlock.utils)</a>
+      <li><a href="api.html#flexlock.log_to_file">log_to_file() (in module flexlock)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.utils.log_to_file">(in module flexlock.utils)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -606,16 +627,22 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.parallel.ParallelExecutor">ParallelExecutor (class in flexlock.parallel)</a>
 </li>
+      <li><a href="api.html#flexlock.parse_sweep_string">parse_sweep_string() (in module flexlock)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.utils.parse_sweep_string">(in module flexlock.utils)</a>
+</li>
+      </ul></li>
       <li><a href="api.html#flexlock.backends.pbs.PBSBackend">PBSBackend (class in flexlock.backends.pbs)</a>
 </li>
       <li><a href="api.html#flexlock.backends.pbs.PBSJob">PBSJob (class in flexlock.backends.pbs)</a>
 </li>
       <li><a href="api.html#flexlock.taskdb.pending_count">pending_count() (in module flexlock.taskdb)</a>
 </li>
-      <li><a href="api.html#flexlock.status_cli.print_all_tasks">print_all_tasks() (in module flexlock.status_cli)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.status_cli.print_all_tasks">print_all_tasks() (in module flexlock.status_cli)</a>
+</li>
       <li><a href="api.html#flexlock.status_cli.print_failed_tasks">print_failed_tasks() (in module flexlock.status_cli)</a>
 </li>
       <li><a href="api.html#flexlock.status_cli.print_status_summary">print_status_summary() (in module flexlock.status_cli)</a>
@@ -647,6 +674,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.resolvers.register_resolvers">register_resolvers() (in module flexlock.resolvers)</a>
+</li>
+      <li><a href="api.html#flexlock.backends.slurm.SlurmBackend.render_script">render_script() (flexlock.backends.slurm.SlurmBackend method)</a>
 </li>
       <li><a href="api.html#flexlock.utils.resolve_module_to_repo_path">resolve_module_to_repo_path() (in module flexlock.utils)</a>
 </li>
@@ -684,6 +713,12 @@
         <li><a href="api.html#flexlock.Project.save_snapshot">(flexlock.Project method)</a>
 </li>
       </ul></li>
+      <li><a href="api.html#flexlock.select_and_freeze_root_refs">select_and_freeze_root_refs() (in module flexlock)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.utils.select_and_freeze_root_refs">(in module flexlock.utils)</a>
+</li>
+      </ul></li>
       <li><a href="api.html#flexlock.git_utils.shadow_index">shadow_index() (in module flexlock.git_utils)</a>
 </li>
       <li><a href="api.html#flexlock.backends.slurm.SlurmBackend">SlurmBackend (class in flexlock.backends.slurm)</a>
@@ -692,14 +727,14 @@
 </li>
       <li><a href="api.html#flexlock.snapshot">snapshot() (in module flexlock)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.backends.pbs.PBSJob.status">status() (flexlock.backends.pbs.PBSJob method)</a>
 
       <ul>
         <li><a href="api.html#flexlock.backends.slurm.SlurmJob.status">(flexlock.backends.slurm.SlurmJob method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.api.Project.submit">submit() (flexlock.api.Project method)</a>
 
       <ul>
@@ -711,7 +746,23 @@
 </li>
         <li><a href="api.html#flexlock.Project.submit">(flexlock.Project method)</a>
 </li>
+        <li><a href="api.html#flexlock.submit">(in module flexlock)</a>
+</li>
       </ul></li>
+      <li><a href="api.html#flexlock.api.Project.submit_chained">submit_chained() (flexlock.api.Project method)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.Project.submit_chained">(flexlock.Project method)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#flexlock.api.Project.submit_config">submit_config() (flexlock.api.Project class method)</a>
+
+      <ul>
+        <li><a href="api.html#flexlock.Project.submit_config">(flexlock.Project class method)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#flexlock.api.ChainedResult.sweep">sweep (flexlock.api.ChainedResult attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -733,6 +784,10 @@
 
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#flexlock.backends.slurm.validate_slurm_script">validate_slurm_script() (in module flexlock.backends.slurm)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#flexlock.resolvers.vinc_resolver">vinc_resolver() (in module flexlock.resolvers)</a>
 </li>

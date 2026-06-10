@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlexLock Documentation &mdash; FlexLock 0.4.1 documentation</title>
+  <title>FlexLock Documentation &mdash; FlexLock 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/index.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="_static/documentation_options.js?v=70f82a29"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -50,6 +50,7 @@
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -120,6 +121,12 @@
 <li class="toctree-l2"><a class="reference internal" href="usage_guide.html#configuration-methods">Configuration Methods</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage_guide.html#execution-modes">Execution Modes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage_guide.html#reproducibility">Reproducibility</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage_guide.html#repo-configuration-format">Repo Configuration Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage_guide.html#snapshot-contents">Snapshot Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage_guide.html#compare-runs">Compare Runs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage_guide.html#parameter-sweeps">Parameter Sweeps</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage_guide.html#hpc-integration">HPC Integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="usage_guide.html#pipelines">Pipelines</a></li>
@@ -136,7 +143,6 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hpc_integration.html#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hpc_integration.html#quick-start">Quick Start</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hpc_integration.html#pbs-configuration">PBS Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hpc_integration.html#slurm-configuration">Slurm Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hpc_integration.html#singularity-containers">Singularity Containers</a></li>
@@ -224,13 +230,19 @@
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.FlexLockValidationError"><code class="docutils literal notranslate"><span class="pre">FlexLockValidationError</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.Project"><code class="docutils literal notranslate"><span class="pre">Project</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.debug_on_fail"><code class="docutils literal notranslate"><span class="pre">debug_on_fail()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.enqueue_to_file"><code class="docutils literal notranslate"><span class="pre">enqueue_to_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.flexcli"><code class="docutils literal notranslate"><span class="pre">flexcli()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.get_git_tree_hash"><code class="docutils literal notranslate"><span class="pre">get_git_tree_hash()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.hash_data"><code class="docutils literal notranslate"><span class="pre">hash_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.load_python_defaults"><code class="docutils literal notranslate"><span class="pre">load_python_defaults()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.load_sweep"><code class="docutils literal notranslate"><span class="pre">load_sweep()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.log_to_file"><code class="docutils literal notranslate"><span class="pre">log_to_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.mlflow_context"><code class="docutils literal notranslate"><span class="pre">mlflow_context()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.parse_sweep_string"><code class="docutils literal notranslate"><span class="pre">parse_sweep_string()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.py2cfg"><code class="docutils literal notranslate"><span class="pre">py2cfg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.select_and_freeze_root_refs"><code class="docutils literal notranslate"><span class="pre">select_and_freeze_root_refs()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.snapshot"><code class="docutils literal notranslate"><span class="pre">snapshot()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.submit"><code class="docutils literal notranslate"><span class="pre">submit()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.backends.base.Backend"><code class="docutils literal notranslate"><span class="pre">Backend</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.backends.base.Job"><code class="docutils literal notranslate"><span class="pre">Job</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.backends.base.JobEnvironment"><code class="docutils literal notranslate"><span class="pre">JobEnvironment</span></code></a></li>
@@ -238,6 +250,7 @@
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.backends.pbs.PBSJob"><code class="docutils literal notranslate"><span class="pre">PBSJob</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.backends.slurm.SlurmBackend"><code class="docutils literal notranslate"><span class="pre">SlurmBackend</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.backends.slurm.SlurmJob"><code class="docutils literal notranslate"><span class="pre">SlurmJob</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.backends.slurm.validate_slurm_script"><code class="docutils literal notranslate"><span class="pre">validate_slurm_script()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.data_hash.dirhash"><code class="docutils literal notranslate"><span class="pre">dirhash()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.data_hash.hash_data"><code class="docutils literal notranslate"><span class="pre">hash_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.debug.debug_on_fail"><code class="docutils literal notranslate"><span class="pre">debug_on_fail()</span></code></a></li>
@@ -270,6 +283,7 @@
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.status_cli.print_failed_tasks"><code class="docutils literal notranslate"><span class="pre">print_failed_tasks()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.status_cli.print_status_summary"><code class="docutils literal notranslate"><span class="pre">print_status_summary()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.status_cli.watch_status"><code class="docutils literal notranslate"><span class="pre">watch_status()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.api.ChainedResult"><code class="docutils literal notranslate"><span class="pre">ChainedResult</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.api.ExecutionResult"><code class="docutils literal notranslate"><span class="pre">ExecutionResult</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.api.Project"><code class="docutils literal notranslate"><span class="pre">Project</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.taskdb.claim_next_task"><code class="docutils literal notranslate"><span class="pre">claim_next_task()</span></code></a></li>
@@ -284,13 +298,17 @@
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.taskdb.queue_tasks"><code class="docutils literal notranslate"><span class="pre">queue_tasks()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.taskdb.update_task_snapshot"><code class="docutils literal notranslate"><span class="pre">update_task_snapshot()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.collect_target_include_patterns"><code class="docutils literal notranslate"><span class="pre">collect_target_include_patterns()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.enqueue_to_file"><code class="docutils literal notranslate"><span class="pre">enqueue_to_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.extract_tracking_info"><code class="docutils literal notranslate"><span class="pre">extract_tracking_info()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.instantiate"><code class="docutils literal notranslate"><span class="pre">instantiate()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.load_python_defaults"><code class="docutils literal notranslate"><span class="pre">load_python_defaults()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.load_sweep"><code class="docutils literal notranslate"><span class="pre">load_sweep()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.log_to_file"><code class="docutils literal notranslate"><span class="pre">log_to_file()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.merge_task_into_cfg"><code class="docutils literal notranslate"><span class="pre">merge_task_into_cfg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.parse_sweep_string"><code class="docutils literal notranslate"><span class="pre">parse_sweep_string()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.py2cfg"><code class="docutils literal notranslate"><span class="pre">py2cfg()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.resolve_module_to_repo_path"><code class="docutils literal notranslate"><span class="pre">resolve_module_to_repo_path()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.select_and_freeze_root_refs"><code class="docutils literal notranslate"><span class="pre">select_and_freeze_root_refs()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.utils.to_dictconfig"><code class="docutils literal notranslate"><span class="pre">to_dictconfig()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#flexlock.worker.worker_loop"><code class="docutils literal notranslate"><span class="pre">worker_loop()</span></code></a></li>
 </ul>

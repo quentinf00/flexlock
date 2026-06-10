@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HPC Integration &mdash; FlexLock 0.4.1 documentation</title>
+  <title>HPC Integration &mdash; FlexLock 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/hpc_integration.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="_static/documentation_options.js?v=70f82a29"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -50,16 +50,11 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">HPC Integration</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick Start</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#basic-hpc-submission">Basic HPC Submission</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#non-blocking-submission">Non-Blocking Submission</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#monitor-job-status">Monitor Job Status</a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="#pbs-configuration">PBS Configuration</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#basic-pbs-config">Basic PBS Config</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#gpu-jobs">GPU Jobs</a></li>
@@ -69,6 +64,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#slurm-configuration">Slurm Configuration</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#basic-slurm-config">Basic Slurm Config</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#gpu-with-slurm">GPU with Slurm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pre-flight-checks-validation-and-dry-run">Pre-flight checks: validation and dry-run</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#singularity-containers">Singularity Containers</a><ul>
@@ -170,60 +166,15 @@
 <p>FlexLock provides seamless integration with HPC cluster schedulers (PBS and Slurm) for running experiments at scale.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
-<p>FlexLock’s HPC integration allows you to:</p>
-<ul class="simple">
-<li><p>✅ Submit jobs to PBS or Slurm queues with a single parameter</p></li>
-<li><p>✅ Monitor job status in real-time with <code class="docutils literal notranslate"><span class="pre">flexlock-status</span></code></p></li>
-<li><p>✅ Wait for job completion or submit and continue</p></li>
-<li><p>✅ Run parameter sweeps across cluster nodes</p></li>
-<li><p>✅ Use Singularity containers for reproducible environments</p></li>
-<li><p>✅ Automatic task database for distributed job management</p></li>
-</ul>
-</section>
-<section id="quick-start">
-<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
-<section id="basic-hpc-submission">
-<h3>Basic HPC Submission<a class="headerlink" href="#basic-hpc-submission" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
-
-<span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;configs.defaults&#39;</span><span class="p">)</span>
-<span class="n">config</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
-
-<span class="c1"># Submit to PBS and wait for completion</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
-    <span class="n">config</span><span class="p">,</span>
-    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;configs/pbs.yaml&#39;</span><span class="p">,</span>
-    <span class="n">wait</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Accuracy: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">accuracy</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="non-blocking-submission">
-<h3>Non-Blocking Submission<a class="headerlink" href="#non-blocking-submission" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Submit and continue without waiting</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
-    <span class="n">config</span><span class="p">,</span>
-    <span class="n">pbs_config</span><span class="o">=</span><span class="s1">&#39;configs/pbs.yaml&#39;</span><span class="p">,</span>
-    <span class="n">wait</span><span class="o">=</span><span class="kc">False</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Job submitted&quot;</span><span class="p">)</span>
-<span class="c1"># Job continues running on cluster</span>
-</pre></div>
-</div>
-</section>
-<section id="monitor-job-status">
-<h3>Monitor Job Status<a class="headerlink" href="#monitor-job-status" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Real-time monitoring</span>
-flexlock-status<span class="w"> </span>outputs/train/run.lock.tasks.db<span class="w"> </span>--watch
-
-<span class="c1"># Check failed tasks</span>
-flexlock-status<span class="w"> </span>outputs/train/run.lock.tasks.db<span class="w"> </span>--failed<span class="w"> </span>--verbose
-</pre></div>
-</div>
-</section>
+<p>…
+(after line 15)
+<strong>Task Database Location:</strong>
+The tasks database (<code class="docutils literal notranslate"><span class="pre">run.lock.tasks.db</span></code>) is written to the <strong>parent directory</strong> of the <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>, not inside the <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> itself. For example, if <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> is <code class="docutils literal notranslate"><span class="pre">outputs/train/run_0001</span></code>, the DB is at <code class="docutils literal notranslate"><span class="pre">outputs/train/run.lock.tasks.db</span></code>. This is a critical detail for monitoring jobs via <code class="docutils literal notranslate"><span class="pre">flexlock-status</span></code>.
+…
+(after line 61)
+<strong>Task Database Location:</strong>
+The tasks database (<code class="docutils literal notranslate"><span class="pre">run.lock.tasks.db</span></code>) is written to the <strong>parent directory</strong> of the <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>, not inside the <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> itself. For example, if <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> is <code class="docutils literal notranslate"><span class="pre">outputs/train/run_0001</span></code>, the DB is at <code class="docutils literal notranslate"><span class="pre">outputs/train/run.lock.tasks.db</span></code>. This is a critical detail for monitoring jobs via <code class="docutils literal notranslate"><span class="pre">flexlock-status</span></code>.
+…</p>
 </section>
 <section id="pbs-configuration">
 <h2>PBS Configuration<a class="headerlink" href="#pbs-configuration" title="Link to this heading"></a></h2>
@@ -306,6 +257,50 @@ flexlock-status<span class="w"> </span>outputs/train/run.lock.tasks.db<span clas
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&#39;source</span><span class="nv"> </span><span class="s">activate</span><span class="nv"> </span><span class="s">myenv&#39;</span>
 
 <span class="nt">python_exe</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python</span>
+</pre></div>
+</div>
+</section>
+<section id="pre-flight-checks-validation-and-dry-run">
+<h3>Pre-flight checks: validation and dry-run<a class="headerlink" href="#pre-flight-checks-validation-and-dry-run" title="Link to this heading"></a></h3>
+<p>FlexLock validates every Slurm submission against a short checklist drawn
+from the most common silent failures. Each missing piece produces a
+warning (not an error — power-user setups may intentionally omit them):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Missing</p></th>
+<th class="head"><p>Symptom on the cluster</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">#SBATCH</span> <span class="pre">--partition</span></code> (or <code class="docutils literal notranslate"><span class="pre">-p</span></code>)</p></td>
+<td><p>Job lands on the default queue, often CPU when GPU was intended</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">cd</span></code> to the submission dir</p></td>
+<td><p>Relative paths in user code resolve against <code class="docutils literal notranslate"><span class="pre">$HOME</span></code> on the node</p></td>
+</tr>
+<tr class="row-even"><td><p>Env activation (<code class="docutils literal notranslate"><span class="pre">eval</span></code>, <code class="docutils literal notranslate"><span class="pre">source</span></code>, <code class="docutils literal notranslate"><span class="pre">conda/mamba</span> <span class="pre">activate</span></code>, <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span></code>, <code class="docutils literal notranslate"><span class="pre">pixi</span> <span class="pre">run/shell</span></code>, <code class="docutils literal notranslate"><span class="pre">spack</span> <span class="pre">load</span></code>)</p></td>
+<td><p>Imports fail on the compute node</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">--gres</span></code> / <code class="docutils literal notranslate"><span class="pre">--gpus</span></code> when GPU expected</p></td>
+<td><p>Job runs on CPU silently</p></td>
+</tr>
+</tbody>
+</table>
+<p>Warnings appear in the submission log:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">WARNING</span>  <span class="n">flexlock</span><span class="o">.</span><span class="n">backends</span><span class="o">.</span><span class="n">slurm</span><span class="p">:</span> <span class="n">Slurm</span> <span class="n">config</span><span class="p">:</span> <span class="n">No</span> <span class="o">--</span><span class="n">partition</span> <span class="n">directive</span>
+</pre></div>
+</div>
+<p>To preview the would-be submission script without sending anything to the
+cluster, pass <code class="docutils literal notranslate"><span class="pre">dry_run=True</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">slurm_config</span><span class="o">=</span><span class="s1">&#39;configs/slurm_gpu.yaml&#39;</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Prints the rendered script plus any validation warnings, then returns
+<code class="docutils literal notranslate"><span class="pre">None</span></code> without submitting. Works without a real Slurm cluster — useful
+for verifying paths and directives locally before queueing.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Same from the CLI:</span>
+flexlock-run<span class="w"> </span>-d<span class="w"> </span>configs/defaults.py:defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--slurm-config<span class="w"> </span>configs/slurm_gpu.yaml<span class="w"> </span>--dry-run
 </pre></div>
 </div>
 </section>
@@ -484,6 +479,23 @@ flexlock-status<span class="w"> </span>outputs/train/run.lock.tasks.db<span clas
 flexlock-status<span class="w"> </span>outputs/sweep/run.lock.tasks.db<span class="w"> </span>--watch
 </pre></div>
 </div>
+<p>Output:
+…
+(after line 337)
+Refreshing in 10s… (Ctrl+C to stop)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+### Job Logs (Slurm)
+
+When a job is submitted via Slurm, stdout and stderr are written to `slurm-&lt;JOBID&gt;.out` in the directory where the job was submitted (the project root). The calling process does not relay this output. 
+
+To follow a running job:
+```bash
+tail -f slurm-&lt;JOBID&gt;.out
+</pre></div>
+</div>
+<p>The job ID is printed in the submission log: <code class="docutils literal notranslate"><span class="pre">&quot;Submitted</span> <span class="pre">SlurmBackend</span> <span class="pre">job</span> <span class="pre">&lt;JOBID&gt;&quot;</span></code>.
+This file is the first place to look when a job fails silently.</p>
+<hr class="docutils" />
 <p>Output:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>============================================================
 Task Status Summary

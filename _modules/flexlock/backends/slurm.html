@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.backends.slurm &mdash; FlexLock 0.3.2 documentation</title>
+  <title>flexlock.backends.slurm &mdash; FlexLock 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/backends/slurm.html" />
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=78d8237d"></script>
+      <script src="../../../_static/documentation_options.js?v=70f82a29"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
@@ -47,7 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -80,6 +81,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../flexlock.html">flexlock</a></li>
       <li class="breadcrumb-item active">flexlock.backends.slurm</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -93,11 +95,89 @@
 <span></span><span class="sd">&quot;&quot;&quot;Slurm backend for FlexLock parallel execution.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">cloudpickle</span><span class="o">,</span><span class="w"> </span><span class="nn">subprocess</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>  <span class="c1"># Better random for filenames</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Backend</span><span class="p">,</span> <span class="n">Job</span><span class="p">,</span> <span class="n">JobEnvironment</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+
+<span class="c1"># Heuristics for recognising environment-activation lines in startup_lines.</span>
+<span class="c1"># These commands prepare the compute-node shell (PATH, libs, interpreters)</span>
+<span class="c1"># before the pickled task runs. Missing them is the wiki&#39;s most common</span>
+<span class="c1"># silent-failure mode (&quot;import fails on node, looks fine locally&quot;).</span>
+<span class="n">_ENV_ACTIVATION_PATTERNS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\beval\s&quot;</span><span class="p">),</span>                   <span class="c1"># eval &quot;$(...)&quot; — pixi shell-hook, conda hook</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\bsource\s&quot;</span><span class="p">),</span>                 <span class="c1"># source venv/bin/activate</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\bconda\s+activate\b&quot;</span><span class="p">),</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\bmamba\s+activate\b&quot;</span><span class="p">),</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\bmodule\s+(load|add)\b&quot;</span><span class="p">),</span>    <span class="c1"># HPC module systems</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\bpixi\s+(run|shell)\b&quot;</span><span class="p">),</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\bspack\s+load\b&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="validate_slurm_script">
+<a class="viewcode-back" href="../../../api.html#flexlock.backends.slurm.validate_slurm_script">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_slurm_script</span><span class="p">(</span>
+    <span class="n">script</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">expects_gpu</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a list of human-readable warning strings for a Slurm script.</span>
+
+<span class="sd">    Empty list means no concerns. Each warning is independent — callers</span>
+<span class="sd">    decide whether to log or print. Validation is intentionally lenient</span>
+<span class="sd">    (warn, never fail) because power-user setups may intentionally omit</span>
+<span class="sd">    pieces this function expects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">warnings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">sbatch_lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">script</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="k">if</span> <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#SBATCH&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">body_lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ln</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">script</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;#!&quot;</span><span class="p">,</span> <span class="s2">&quot;#SBATCH&quot;</span><span class="p">))</span>
+    <span class="p">]</span>
+
+    <span class="c1"># 1. --partition is the most common forgotten directive — jobs land on</span>
+    <span class="c1">#    the default queue, often a CPU one when a GPU was wanted.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="s2">&quot;--partition&quot;</span> <span class="ow">in</span> <span class="n">ln</span> <span class="ow">or</span> <span class="s2">&quot;-p &quot;</span> <span class="ow">in</span> <span class="n">ln</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">sbatch_lines</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;No --partition directive found. The job will land on the &quot;</span>
+            <span class="s2">&quot;cluster&#39;s default queue, which may not be the one you want.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># 2. cd to the submission dir keeps relative paths in user code working</span>
+    <span class="c1">#    from the compute node.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\bcd\b&quot;</span><span class="p">,</span> <span class="n">ln</span><span class="p">)</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">body_lines</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;No &#39;cd&#39; command in startup_lines. Relative paths in your &quot;</span>
+            <span class="s2">&quot;code will resolve against the compute node&#39;s HOME, not the &quot;</span>
+            <span class="s2">&quot;submission directory. Add &#39;cd $SLURM_SUBMIT_DIR&#39; to &quot;</span>
+            <span class="s2">&quot;startup_lines.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># 3. Some form of env activation is almost always needed.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">ln</span><span class="p">)</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">body_lines</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">_ENV_ACTIVATION_PATTERNS</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;No environment-activation command detected in startup_lines &quot;</span>
+            <span class="s2">&quot;(eval, source, conda/mamba activate, module load, pixi run/shell). &quot;</span>
+            <span class="s2">&quot;Python imports may fail on the compute node.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># 4. If the caller flagged this as a GPU config but the script doesn&#39;t</span>
+    <span class="c1">#    request a GPU, surface it.</span>
+    <span class="k">if</span> <span class="n">expects_gpu</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="s2">&quot;--gres&quot;</span> <span class="ow">in</span> <span class="n">ln</span> <span class="ow">or</span> <span class="s2">&quot;--gpus&quot;</span> <span class="ow">in</span> <span class="n">ln</span> <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">sbatch_lines</span>
+    <span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;GPU config requested but no --gres or --gpus directive in &quot;</span>
+            <span class="s2">&quot;startup_lines. The job will run on CPU silently.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">warnings</span></div>
+
 
 
 <div class="viewcode-block" id="SlurmJob">
@@ -160,11 +240,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">configure_logging</span> <span class="o">=</span> <span class="n">configure_logging</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">python_exe</span> <span class="o">=</span> <span class="n">python_exe</span>
 
+<div class="viewcode-block" id="SlurmBackend.render_script">
+<a class="viewcode-back" href="../../../api.html#flexlock.backends.slurm.SlurmBackend.render_script">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">render_script</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pickled_path</span><span class="p">:</span> <span class="s2">&quot;Path | str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Render the would-be Slurm script without submitting.</span>
+
+<span class="sd">        ``pickled_path`` defaults to a placeholder path so users can preview</span>
+<span class="sd">        the script (e.g. via ``dry_run=True``) before any pickling happens.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_script</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">pickled_path</span> <span class="ow">or</span> <span class="s2">&quot;&lt;pickled-task.pkl&gt;&quot;</span><span class="p">))</span></div>
+
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_make_script</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pickled_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generates the Slurm submission script content.&quot;&quot;&quot;</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;#!/bin/bash&quot;</span><span class="p">]</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">startup_lines</span><span class="p">)</span>
-
+        <span class="c1"># SBATCH directives must all come before any shell commands —</span>
+        <span class="c1"># Slurm stops parsing directives at the first non-comment, non-blank line.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">configure_logging</span><span class="p">:</span>
             <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
                 <span class="p">[</span>
@@ -172,9 +263,14 @@
                     <span class="sa">f</span><span class="s2">&quot;#SBATCH --error=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">folder</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s1">&#39;slurm.err&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="p">]</span>
             <span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">startup_lines</span><span class="p">)</span>
 
         <span class="n">python_script</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s2">&quot;import cloudpickle, sys, os&quot;</span><span class="p">,</span>
+            <span class="c1"># Ensure the submission directory is importable so that _target_</span>
+            <span class="c1"># strings like &#39;train.main&#39; resolve in the worker just as they</span>
+            <span class="c1"># would on the submitting machine.</span>
+            <span class="sa">f</span><span class="s2">&quot;sys.path.insert(0, </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span><span class="si">!r}</span><span class="s2">)&quot;</span><span class="p">,</span>
             <span class="sa">f</span><span class="s2">&quot;with open(&#39;</span><span class="si">{</span><span class="n">pickled_path</span><span class="si">}</span><span class="s2">&#39;, &#39;rb&#39;) as f:&quot;</span><span class="p">,</span>
             <span class="s2">&quot;    data = cloudpickle.load(f)&quot;</span><span class="p">,</span>
             <span class="s2">&quot;    fn, a, kw = data&quot;</span><span class="p">,</span>
@@ -198,7 +294,11 @@
             <span class="n">cloudpickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 
         <span class="n">script_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">folder</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;job_</span><span class="si">{</span><span class="n">secrets</span><span class="o">.</span><span class="n">token_hex</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="si">}</span><span class="s2">.slurm&quot;</span>
-        <span class="n">script_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_make_script</span><span class="p">(</span><span class="n">pkl_path</span><span class="p">))</span>
+        <span class="n">script</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_script</span><span class="p">(</span><span class="n">pkl_path</span><span class="p">)</span>
+        <span class="n">script_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">script</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">validate_slurm_script</span><span class="p">(</span><span class="n">script</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Slurm config: </span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="n">out</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s2">&quot;sbatch&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">script_path</span><span class="p">)],</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="n">job_id</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>

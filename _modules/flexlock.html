@@ -1,0 +1,213 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flexlock &mdash; FlexLock 0.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=70f82a29"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage_guide.html">Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">flexlock</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for flexlock</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;FlexLock: A lightweight library for reproducible ML experiments.&quot;&quot;&quot;</span>
+
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.5.0&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+<span class="n">logger</span><span class="o">.</span><span class="n">disable</span><span class="p">(</span><span class="s2">&quot;flexlock&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.flexcli</span><span class="w"> </span><span class="kn">import</span> <span class="n">flexcli</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.mlflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">mlflow_context</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.debug</span><span class="w"> </span><span class="kn">import</span> <span class="n">debug_on_fail</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.resolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_resolvers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+
+
+<div class="viewcode-block" id="submit">
+<a class="viewcode-back" href="../api.html#flexlock.submit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">submit</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Submit a configuration without instantiating a :class:`Project`.</span>
+
+<span class="sd">    Sugar over ``Project().submit(config, **kwargs)`` — use when you have a</span>
+<span class="sd">    ready ``DictConfig`` and don&#39;t need the multi-stage pipeline plumbing</span>
+<span class="sd">    (``proj.get``, ``proj.defaults``, etc.). All ``Project.submit`` kwargs</span>
+<span class="sd">    (``sweep``, ``slurm_config``, ``smart_run``, ``overrides``, …) are</span>
+<span class="sd">    forwarded as-is.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        from flexlock import submit, py2cfg</span>
+<span class="sd">        cfg = py2cfg(train, lr=0.01, save_dir=&#39;outputs/train&#39;)</span>
+<span class="sd">        result = submit(cfg, slurm_config=&#39;configs/slurm_gpu.yaml&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Project</span><span class="p">()</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">py2cfg</span><span class="p">,</span>
+    <span class="n">load_python_defaults</span><span class="p">,</span>
+    <span class="n">extract_tracking_info</span><span class="p">,</span>
+    <span class="n">load_sweep</span><span class="p">,</span>
+    <span class="n">enqueue_to_file</span><span class="p">,</span>
+    <span class="n">log_to_file</span><span class="p">,</span>
+    <span class="n">parse_sweep_string</span><span class="p">,</span>
+    <span class="n">select_and_freeze_root_refs</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockRunner</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.data_hash</span><span class="w"> </span><span class="kn">import</span> <span class="n">hash_data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.git_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_git_tree_hash</span>
+
+<span class="c1"># Import exceptions for public API</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FlexLockError</span><span class="p">,</span>
+    <span class="n">FlexLockConfigError</span><span class="p">,</span>
+    <span class="n">FlexLockExecutionError</span><span class="p">,</span>
+    <span class="n">FlexLockSnapshotError</span><span class="p">,</span>
+    <span class="n">FlexLockValidationError</span><span class="p">,</span>
+    <span class="n">FlexLockCacheError</span><span class="p">,</span>
+    <span class="n">FlexLockBackendError</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Register OmegaConf resolvers when the library is imported</span>
+<span class="n">register_resolvers</span><span class="p">()</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;__version__&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;flexcli&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;snapshot&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mlflow_context&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;debug_on_fail&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Project&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;submit&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;py2cfg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;load_python_defaults&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;load_sweep&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;enqueue_to_file&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;log_to_file&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;parse_sweep_string&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;select_and_freeze_root_refs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FlexLockRunner&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;hash_data&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_git_tree_hash&quot;</span><span class="p">,</span>
+    <span class="c1"># Exceptions</span>
+    <span class="s2">&quot;FlexLockError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FlexLockConfigError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FlexLockExecutionError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FlexLockSnapshotError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FlexLockValidationError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FlexLockCacheError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FlexLockBackendError&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
