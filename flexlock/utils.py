@@ -308,6 +308,26 @@ def py2cfg(obj, /, *pos, **overrides):
     else:
         raise ValueError(f"py2cfg expects class or function, got {type(obj)}")
 
+    # If the module is __main__ the _target_ won't import correctly in a
+    # Slurm/PBS worker or any subprocess that doesn't run the user's script
+    # as the entry point.  Try to resolve the real dotted module path from the
+    # file's location relative to CWD (which run_cli adds to sys.path).
+    if target.startswith("__main__."):
+        try:
+            file_path = Path(inspect.getfile(obj)).resolve()
+            module_name = str(
+                file_path.relative_to(Path.cwd().resolve()).with_suffix("")
+            ).replace("/", ".").replace("\\", ".")
+            target = f"{module_name}.{obj.__qualname__}"
+            logger.debug(f"py2cfg: resolved __main__ to '{target}'")
+        except (TypeError, ValueError, OSError):
+            logger.warning(
+                f"py2cfg: _target_ is '{target}'. This won't import correctly in a "
+                f"Slurm/PBS worker. Run your script as a module "
+                f"('python -m your.module') instead of 'python script.py' to get a "
+                f"stable importable _target_."
+            )
+
     # 3. Build Config
     config = {"_target_": target}
 

@@ -153,6 +153,10 @@ class SlurmBackend(Backend):
 
         python_script = [
             "import cloudpickle, sys, os",
+            # Ensure the submission directory is importable so that _target_
+            # strings like 'train.main' resolve in the worker just as they
+            # would on the submitting machine.
+            f"sys.path.insert(0, {str(Path.cwd().resolve())!r})",
             f"with open('{pickled_path}', 'rb') as f:",
             "    data = cloudpickle.load(f)",
             "    fn, a, kw = data",
