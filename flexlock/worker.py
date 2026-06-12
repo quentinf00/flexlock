@@ -1,7 +1,9 @@
 """Worker process for executing FlexLock tasks."""
 
 import os
+import random
 import time
+import traceback
 from loguru import logger
 from multiprocessing import Process
 from .taskdb import claim_next_task, finish_task, pending_count
@@ -21,6 +23,8 @@ def worker_loop(func, cfg, task_to: str, db_path):
     # The master lock should be in the parent directory of the db_path
     db_dir = Path(db_path).parent
     master_lock = db_dir / "run.lock"
+
+    time.sleep(random.uniform(0, 5))
 
     while True:
         task = claim_next_task(db_path, node)
@@ -103,5 +107,6 @@ def worker_loop(func, cfg, task_to: str, db_path):
             write_complete_marker(task_save_dir, result=result)
             finish_task(db_path, task, result=result)
         except Exception as e:
-            logger.error(f"Task failed: {e}", exc_info=True)
-            finish_task(db_path, task, error=str(e))
+            tb = traceback.format_exc()
+            logger.exception(f"Task failed: {e}")
+            finish_task(db_path, task, error=tb)

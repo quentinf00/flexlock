@@ -68,8 +68,8 @@ def _conn(db_path: Path):
         try:
             c = sqlite3.connect(db_path_str, check_same_thread=False)
             # Set PRAGMA for better performance and concurrency.
-            c.execute("PRAGMA journal_mode=WAL")
-            c.execute("PRAGMA busy_timeout=15000")
+            c.execute("PRAGMA journal_mode=DELETE")
+            c.execute("PRAGMA busy_timeout=30000")
             c.execute(
                 "PRAGMA foreign_keys=ON"
             )  # Good practice to enforce foreign key constraints
