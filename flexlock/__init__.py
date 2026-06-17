@@ -1,6 +1,6 @@
 """FlexLock: A lightweight library for reproducible ML experiments."""
 
-__version__ = "0.5.1"
+__version__ = "0.5.4"
 
 from loguru import logger
 

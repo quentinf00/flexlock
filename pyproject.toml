@@ -16,7 +16,7 @@ flexlock-status = "flexlock.status_cli:main"
 
 [tool.pixi.package]
 name = "flexlock"
-version = "0.5.1"
+version = "0.5.4"
 
 [build-system]
 build-backend = "hatchling.build"

@@ -505,11 +505,32 @@ def _get_raw(d, dotted: str):
     return cur
 
 
+def _resolve_in_root(ref: str, root_raw: dict, _visited: frozenset = frozenset()):
+    """Follow a chain of simple refs in root_raw to a concrete value.
+
+    Stops at resolver calls (``${name:args}``), relative refs, or concrete
+    values, so that resolver calls are preserved for runtime resolution while
+    simple-ref chains (e.g. ``pipeline_dir = ${save_dir}``) are fully expanded.
+    Returns ``None`` if ``ref`` is not found in ``root_raw``.
+    """
+    if ref in _visited or not _path_exists(root_raw, ref):
+        return None
+    val = _get_raw(root_raw, ref)
+    if not isinstance(val, str) or "${" not in val:
+        return val  # Concrete value
+    whole = _whole_string_interp(val)
+    if whole is None or _find_top_level_colon(whole) is not None or whole.startswith("."):
+        return val  # Resolver call, embedded interp, or relative ref — preserve as-is
+    return _resolve_in_root(whole, root_raw, _visited | {ref})
+
+
 def _freeze_simple_ref(ref: str, sub_raw, root_raw, fallback_str: str):
     """Process a simple ref (``${name}`` or ``${a.b}``). Used for whole-string
     interpolations where we want to preserve the target's native type."""
     if _path_exists(sub_raw, ref):
-        return fallback_str
+        sub_val = _get_raw(sub_raw, ref)
+        if not (isinstance(sub_val, str) and f"${{{ref}}}" in sub_val):
+            return fallback_str
     if not _path_exists(root_raw, ref):
         from .exceptions import UnresolvedInterpolationError
 
@@ -519,7 +540,7 @@ def _freeze_simple_ref(ref: str, sub_raw, root_raw, fallback_str: str):
             f"found in the sub-tree or root config. Set it via overrides= or "
             f"OmegaConf.update(proj.defaults, '{first}', ...)."
         )
-    return _get_raw(root_raw, ref)
+    return _resolve_in_root(ref, root_raw)
 
 
 def _process_interps_in_string(s: str, sub_raw, root_raw) -> str:
@@ -559,7 +580,9 @@ def _process_one_interp(inner: str, sub_raw, root_raw) -> str:
     # Simple ref
     ref = inner
     if _path_exists(sub_raw, ref):
-        return "${" + ref + "}"
+        sub_val = _get_raw(sub_raw, ref)
+        if not (isinstance(sub_val, str) and f"${{{ref}}}" in sub_val):
+            return "${" + ref + "}"
     if not _path_exists(root_raw, ref):
         from .exceptions import UnresolvedInterpolationError
 
@@ -569,9 +592,8 @@ def _process_one_interp(inner: str, sub_raw, root_raw) -> str:
             f"found in the sub-tree or root config. Set it via overrides= or "
             f"OmegaConf.update(proj.defaults, '{first}', ...)."
         )
-    val = _get_raw(root_raw, ref)
+    val = _resolve_in_root(ref, root_raw)
     if isinstance(val, str):
-        # Preserve any nested interpolations in the value (e.g. ${vinc:...})
         return val
     return str(val) if val is not None else "null"
 

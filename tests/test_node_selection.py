@@ -273,6 +273,60 @@ def test_list_values_walked():
     assert raw["paths"] == ["outputs/x/a", "outputs/x/b"]
 
 
+def test_chained_save_dir_via_pipeline_dir():
+    """extract.save_dir = ${pipeline_dir}/features where pipeline_dir = ${save_dir}.
+
+    The freeze must follow the two-hop chain pipeline_dir → save_dir → concrete
+    and produce a concrete path, not ${save_dir}/features which becomes
+    self-referential in the detached config.
+
+    Regression: _submit_sweep raised InterpolationResolutionError on
+    OmegaConf.to_container(sweep_cfg, resolve=True) because the freeze stopped
+    at the first hop, substituting ${pipeline_dir} with ${save_dir} verbatim.
+    """
+    cfg = OmegaConf.create({
+        "save_dir": "outputs/colloc_run",
+        "pipeline_dir": "${save_dir}",
+        "extract": {
+            "save_dir": "${pipeline_dir}/features",
+            "cols": ["longitude"],
+        },
+    })
+    sub = select_and_freeze_root_refs(cfg, "extract")
+    raw = OmegaConf.to_container(sub, resolve=False)
+    assert raw["save_dir"] == "outputs/colloc_run/features"
+    container = OmegaConf.to_container(sub, resolve=True)
+    assert container["save_dir"] == "outputs/colloc_run/features"
+
+
+def test_self_referential_save_dir_frozen_from_root():
+    """save_dir: ${save_dir}/features — sub-config's own save_dir shadows the
+    root ref, creating a circular interpolation at resolution time.
+
+    select_and_freeze_root_refs must detect that the sub-tree value for
+    save_dir is itself a string containing ${save_dir} and fall through to
+    the root lookup, producing a concrete path rather than a self-reference.
+
+    Regression: this pattern caused InterpolationResolutionError when
+    _submit_sweep called OmegaConf.to_container(sweep_cfg, resolve=True).
+    """
+    cfg = OmegaConf.create({
+        "save_dir": "outputs/colloc_run",
+        "extract": {
+            "save_dir": "${save_dir}/features",
+            "cols": ["longitude", "latitude"],
+        },
+    })
+    sub = select_and_freeze_root_refs(cfg, "extract")
+    # Raw form should already be concrete — no interpolation left
+    raw = OmegaConf.to_container(sub, resolve=False)
+    assert raw["save_dir"] == "outputs/colloc_run/features"
+    # Full resolution must not raise InterpolationResolutionError
+    container = OmegaConf.to_container(sub, resolve=True)
+    assert container["save_dir"] == "outputs/colloc_run/features"
+    assert container["cols"] == ["longitude", "latitude"]
+
+
 def test_nested_dict_walked():
     cfg = OmegaConf.create({
         "anchor": "outputs/x",

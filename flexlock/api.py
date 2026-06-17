@@ -479,9 +479,16 @@ class Project:
         # filesystem and would otherwise advance the counter every time
         # cfg.save_dir is read (snapshot phase vs. complete-marker phase),
         # splitting run.lock and run.complete across different dirs.
-        if "save_dir" in config and config.save_dir is not None:
-            with open_dict(config):
-                config.save_dir = str(config.save_dir)
+        if "save_dir" in config:
+            try:
+                if config.save_dir is not None:
+                    with open_dict(config):
+                        config.save_dir = str(config.save_dir)
+            except Exception:
+                # save_dir contains an interpolation that can't resolve in this
+                # config's scope (e.g. a sub-config passed in isolation with
+                # save_dir: ${save_dir}/features). Leave it unresolved.
+                pass
 
         if print_config:
             # When a sweep is given, preview each item's merged config so
