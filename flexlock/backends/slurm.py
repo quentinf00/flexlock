@@ -153,10 +153,13 @@ class SlurmBackend(Backend):
 
         python_script = [
             "import cloudpickle, sys, os",
-            # Ensure the submission directory is importable so that _target_
-            # strings like 'train.main' resolve in the worker just as they
-            # would on the submitting machine.
-            f"sys.path.insert(0, {str(Path.cwd().resolve())!r})",
+            # Make the submission directory importable so that _target_ strings
+            # like 'train.main' resolve in the worker as they do on the
+            # submitting machine. Append (not insert-at-0): cwd is a fallback
+            # only — it must never shadow installed packages, or a local file
+            # colliding with a dependency torch/lightning imports lazily during
+            # CUDA init can break the GPU stack in confusing ways.
+            f"sys.path.append({str(Path.cwd().resolve())!r})",
             f"with open('{pickled_path}', 'rb') as f:",
             "    data = cloudpickle.load(f)",
             "    fn, a, kw = data",
@@ -223,6 +226,31 @@ class SlurmBackend(Backend):
 
         logger.warning(f"Could not determine status for Slurm job {job_id}")
         return "unknown"
+
+    # States that mean the job has definitively ended. Anything else —
+    # active (PENDING/RUNNING/...) OR ambiguous ("unknown") — is NOT terminal.
+    TERMINAL_STATES = frozenset({
+        "COMPLETED", "FAILED", "TIMEOUT", "CANCELLED", "NODE_FAIL",
+        "PREEMPTED", "OUT_OF_MEMORY", "BOOT_FAIL", "DEADLINE", "REVOKED",
+        "SPECIAL_EXIT",
+    })
+
+    def is_terminal(self, job_id: str) -> bool:
+        """Return True only when the scheduler confirms the job has ended.
+
+        Used by the controller to decide whether tasks still marked
+        ``running``/``pending`` have been orphaned by a dead job. This is
+        deliberately conservative: ``unknown`` (e.g. ``squeue`` doesn't list a
+        just-submitted job yet and ``sacct`` hasn't recorded it) and all
+        active states return ``False``, so a transient/racy status read never
+        causes a healthy job to be reconciled away.
+        """
+        raw = self.check_status(job_id).strip()
+        if not raw:
+            return False
+        # Normalize forms like "CANCELLED by 12345" / "CANCELLED+".
+        token = raw.upper().split()[0].rstrip("+")
+        return token in self.TERMINAL_STATES
 
     def wait_for_job(self, job_id: str, timeout=None, poll_interval=5) -> bool:
         """

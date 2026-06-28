@@ -411,6 +411,7 @@ class Project:
         debug: bool = False,
         print_config: bool = False,
         dry_run: bool = False,
+        tag: "str | None" = None,
     ) -> "ExecutionResult | List[ExecutionResult] | None":
         """Submit a configuration for execution.
 
@@ -451,6 +452,10 @@ class Project:
                 or PBS submission script, print it (with any validation
                 warnings), and return ``None`` without submitting. No-op
                 for local execution.
+            tag: Human-readable label for this sweep's rows in the shared task
+                DB (e.g. ``"extract"`` or ``"collocate"``). Passed through to
+                ``ParallelExecutor`` so workers and the status CLI can scope to
+                it. When ``None`` a deterministic hash is auto-generated.
 
         Returns:
             ``ExecutionResult`` (single), ``List[ExecutionResult]`` (sweep),
@@ -531,6 +536,7 @@ class Project:
                 sweep_target=sweep_target,
                 sweep_root=sweep_root,
                 debug=debug,
+                tag=tag,
             )
 
         # Single execution path
@@ -574,6 +580,7 @@ class Project:
                 pbs_config=pbs_config,
                 slurm_config=slurm_config,
                 local_workers=None,
+                tag=tag,
             )
 
             # Run with wait parameter (executor handles waiting)
@@ -621,6 +628,7 @@ class Project:
                     cfg=executor_cfg,
                     n_jobs=1,
                     isolated=True,
+                    tag=tag,
                 )
                 executor.run(wait=True)
                 result_data = None
@@ -891,6 +899,7 @@ class Project:
         sweep_target: str = None,
         sweep_root: "str | None" = None,
         debug: bool = False,
+        tag: "str | None" = None,
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -1006,6 +1015,7 @@ class Project:
                     pbs_config=pbs_config,
                     slurm_config=slurm_config,
                     local_workers=n_jobs if not use_hpc else None,
+                    tag=tag,
                 )
 
                 # Run the sweep (executor handles waiting based on wait parameter)

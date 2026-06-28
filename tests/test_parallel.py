@@ -373,6 +373,85 @@ def test_worker_results_json_wraps_non_dict(base_cfg):
     assert payload == {"result": 0.95}
 
 
+class _FakeBackend:
+    """Minimal backend stub exposing the is_terminal contract."""
+
+    def __init__(self, terminal_sequence):
+        # list of bool results returned on successive is_terminal calls
+        self._seq = list(terminal_sequence)
+        self.calls = 0
+
+    def is_terminal(self, job_id):
+        self.calls += 1
+        # repeat the last value once the sequence is exhausted
+        idx = min(self.calls - 1, len(self._seq) - 1)
+        return self._seq[idx]
+
+
+class _FakeJob:
+    job_id = "999"
+
+
+def test_hpc_pending_job_not_reaped(base_cfg):
+    """A job that never reports terminal (e.g. stays PENDING) is never reaped.
+
+    Regression: an ambiguous/non-terminal status must not interrupt healthy
+    tasks. We stop the wait via KeyboardInterrupt and assert nothing was
+    marked interrupted.
+    """
+    from flexlock.taskdb import get_status_counts
+
+    executor = ParallelExecutor(
+        func=dummy_task_func, tasks=[{"task_id": 0}], task_target=".",
+        cfg=base_cfg, n_jobs=1,
+    )
+    executor.backend = _FakeBackend([False])  # always non-terminal
+    executor.job = _FakeJob()
+
+    calls = {"n": 0}
+
+    def fake_sleep(_):
+        calls["n"] += 1
+        if calls["n"] >= 5:
+            raise KeyboardInterrupt
+
+    with patch("time.sleep", side_effect=fake_sleep):
+        success = executor._wait_for_completion(timeout=None)
+
+    assert success is False
+    counts = get_status_counts(executor.db_path)
+    assert counts.get("interrupted", 0) == 0
+    assert counts.get("pending", 0) == 1
+
+
+def test_hpc_terminal_job_reaped_after_debounce(base_cfg):
+    """A confirmed-terminal job interrupts in-flight (running) tasks, but only
+    after the debounce threshold of consecutive terminal confirmations."""
+    from flexlock.taskdb import get_status_counts, claim_next_task
+
+    executor = ParallelExecutor(
+        func=dummy_task_func, tasks=[{"task_id": 0}], task_target=".",
+        cfg=base_cfg, n_jobs=1,
+    )
+    # Simulate a worker that claimed the task (now 'running') then died with
+    # the job, without recording a terminal state.
+    claim_next_task(executor.db_path, "node-1", "999")
+
+    backend = _FakeBackend([True])  # always terminal
+    executor.backend = backend
+    executor.job = _FakeJob()
+
+    with patch("time.sleep"):  # don't actually wait between polls
+        success = executor._wait_for_completion(timeout=None)
+
+    assert success is False
+    # Required 3 consecutive terminal reads before acting.
+    assert backend.calls == 3
+    counts = get_status_counts(executor.db_path)
+    assert counts.get("interrupted", 0) == 1
+    assert counts.get("running", 0) == 0
+
+
 def test_config_constants_used():
     """Test that config constants are used for defaults."""
     from flexlock.parallel import ParallelExecutor

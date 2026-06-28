@@ -126,9 +126,28 @@ def test_flexlockrunner_load_config_with_outer_overrides():
         args = ['--defaults', f'{temp_file}:defaults', '--overrides', 'param1=100', 'nested.value=200']
         parsed = runner.parser.parse_args(args)
         config = runner.load_config(parsed)
-        
+
         assert config['param1'] == 100
         assert config['nested']['value'] == 200
+    finally:
+        Path(temp_file).unlink()
+
+
+def test_flexlockrunner_overrides_repeatable():
+    """`-o` is repeatable: `-o a=1 -o b=2` merges both groups."""
+    runner = FlexLockRunner()
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        f.write('defaults = {"a": 0, "b": 0}\n')
+        temp_file = f.name
+
+    try:
+        args = ['--defaults', f'{temp_file}:defaults', '-o', 'a=1', '-o', 'b=2']
+        parsed = runner.parser.parse_args(args)
+        config = runner.load_config(parsed)
+
+        assert config['a'] == 1
+        assert config['b'] == 2
     finally:
         Path(temp_file).unlink()
 

@@ -76,6 +76,15 @@ SNAPSHOT_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 # Database filename suffix
 DB_FILENAME_SUFFIX = ".tasks.db"
 
+
+# ==================== Pre-flight checks ====================
+
+# When set, a worker verifies it can actually create a CUDA context before
+# claiming any task. Catches unhealthy GPU nodes (Fabric Manager down,
+# driver/kernel mismatch → cudaErrorSystemNotReady/802) up front with a clear
+# log, instead of an opaque traceback deep inside the user's training.
+PREFLIGHT_CUDA = get_env_bool("FLEXLOCK_PREFLIGHT_CUDA", False)
+
 # Default database filename pattern
 DB_FILENAME_PATTERN = "run.lock{suffix}"
 

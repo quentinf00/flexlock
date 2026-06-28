@@ -3,7 +3,9 @@
 from pathlib import Path
 from omegaconf import OmegaConf, DictConfig
 from loguru import logger
-from flexlock.taskdb import queue_tasks, pending_count
+import hashlib
+from flexlock.taskdb import queue_tasks, pending_count, get_status_counts_by_tag
+from flexlock.taskdb import _hash_task as _taskdb_hash_task
 from flexlock.worker import worker_loop
 from flexlock.backends.slurm import SlurmBackend
 from flexlock.backends.pbs import PBSBackend
@@ -39,6 +41,16 @@ def load_tasks(tasks: str, tasks_key: str, cfg: DictConfig) -> List[Any]:
     return []
 
 
+def _default_tag(tasks, save_dir) -> str:
+    """Deterministic 12-hex-char tag for a sweep.
+
+    Stable across re-runs of the same (tasks, save_dir) pair, so resume-aware
+    INSERT OR IGNORE dedup works correctly when a sweep is restarted.
+    """
+    task_ids = "".join(sorted(_taskdb_hash_task(t) for t in tasks))
+    return hashlib.sha1(f"{task_ids}{save_dir}".encode()).hexdigest()[:12]
+
+
 class ParallelExecutor:
     """Manages the execution of tasks in parallel using a centralized task queue.
 
@@ -58,6 +70,7 @@ class ParallelExecutor:
         pbs_config: str | None = None,
         local_workers: int | None = None,
         isolated: bool = False,
+        tag: str | None = None,
     ):
         """Initializes the ParallelExecutor.
 
@@ -73,6 +86,11 @@ class ParallelExecutor:
             isolated: If True, always run in a spawned subprocess even when n_jobs=1.
                 Use this for stages that initialise GPU/CUDA so that the CUDA context
                 is confined to the child and never leaks into the parent process.
+            tag: Tag scoping this sweep's rows in the shared task DB.  When ``None``
+                a deterministic hash of the task list + save_dir is used so that
+                re-runs reuse the same tag (resume-safe).  Pass an explicit human-
+                readable string (e.g. ``"extract"``) to target this sweep from the
+                ``flexlock-worker --tags`` CLI.
         """
         self.func = func
         self.tasks = tasks
@@ -85,22 +103,36 @@ class ParallelExecutor:
         self.save_dir = Path(cfg.save_dir)
         self.db_path = self.save_dir / "run.lock.tasks.db"
 
-        if self.db_path.exists():
-            from flexlock.taskdb import get_status_counts
-            existing = get_status_counts(self.db_path)
-            logger.warning(
-                f"Task DB already exists: {self.db_path}\n"
-                f"  Existing tasks: {dict(existing)}\n"
-                f"  New sweep has {len(tasks)} tasks — tasks with matching hashes "
-                f"will be silently skipped (INSERT OR IGNORE).\n"
-                f"  If this is a different sweep reusing the same save_dir, "
-                f"consider using a per-sweep subdirectory to avoid DB collisions."
-            )
+        self.tag = tag if tag is not None else _default_tag(tasks, self.save_dir)
 
-        queue_tasks(self.db_path, tasks)
-        logger.info(f"Queued {len(tasks)} tasks")
+        if self.db_path.exists():
+            existing_by_tag = get_status_counts_by_tag(self.db_path)
+            existing_tags = set(existing_by_tag.keys())
+            if existing_tags and self.tag not in existing_tags:
+                # Different sweeps coexisting in one DB — expected, log at INFO.
+                logger.info(
+                    f"Task DB already exists with tag(s) {existing_tags!r}: {self.db_path}\n"
+                    f"  New sweep (tag={self.tag!r}) will add {len(tasks)} rows alongside them."
+                )
+            elif self.tag in existing_tags:
+                logger.info(
+                    f"Resuming sweep (tag={self.tag!r}) in existing DB: {self.db_path}\n"
+                    f"  Tasks with matching hashes will be skipped (INSERT OR IGNORE)."
+                )
+            else:
+                logger.warning(
+                    f"Task DB already exists: {self.db_path}\n"
+                    f"  New sweep (tag={self.tag!r}) has {len(tasks)} tasks — tasks with "
+                    f"matching hashes will be silently skipped (INSERT OR IGNORE).\n"
+                    f"  If this is a different sweep reusing the same save_dir, "
+                    f"consider using a per-sweep subdirectory to avoid DB collisions."
+                )
+
+        queue_tasks(self.db_path, tasks, tag=self.tag)
+        logger.info(f"Queued {len(tasks)} tasks (tag={self.tag!r})")
 
         # ----- backend -----
+        self.job = None  # set in run() once an HPC job is submitted
         self.backend = None
         if slurm_config:
             p = OmegaConf.to_container(OmegaConf.load(slurm_config), resolve=True)
@@ -112,7 +144,8 @@ class ParallelExecutor:
     def _run_locally(self):
         num_workers = self.local_workers or self.n_jobs
         if num_workers == 1 and not self.isolated:
-            worker_loop(self.func, self.cfg, self.task_target, self.db_path)
+            worker_loop(self.func, self.cfg, self.task_target, self.db_path,
+                        tags=[self.tag])
         else:
             # Use 'spawn' instead of the default 'fork' to avoid inheriting
             # GPU/CUDA contexts and threading locks from the parent process.
@@ -122,14 +155,37 @@ class ParallelExecutor:
             procs = [
                 ctx.Process(
                     target=worker_loop,
-                    args=(self.func, self.cfg, self.task_target, self.db_path),
+                    args=(self.func, self.cfg, self.task_target, self.db_path,
+                          [self.tag]),
                 )
                 for _ in range(num_workers)
             ]
             for p in procs:
                 p.start()
-            for p in procs:
-                p.join()
+            try:
+                for p in procs:
+                    p.join()
+            except KeyboardInterrupt:
+                from .taskdb import mark_orphans_interrupted
+
+                logger.warning(
+                    "Keyboard interrupt — terminating worker processes. "
+                    "In-flight tasks will be marked interrupted."
+                )
+                for p in procs:
+                    p.terminate()
+                for p in procs:
+                    p.join(timeout=10)
+                # Force-kill any that didn't exit cleanly.
+                for p in procs:
+                    if p.is_alive():
+                        p.kill()
+                        p.join()
+                # Workers killed via SIGTERM don't run their own interrupt
+                # handler, so reconcile here: any task still 'running' is
+                # owned by a now-dead worker.
+                mark_orphans_interrupted(self.db_path, tags=[self.tag])
+                raise
 
     def _wait_for_completion(
         self, timeout: int = None, poll_interval: int = None
@@ -147,54 +203,90 @@ class ParallelExecutor:
         if poll_interval is None:
             poll_interval = config.POLL_INTERVAL
         import time
-        from .taskdb import get_status_counts
+        from .taskdb import get_status_counts, mark_orphans_interrupted
 
         logger.info("Waiting for tasks to complete...")
         start_time = time.time()
         last_log_time = start_time
 
+        job_id = self.job.job_id if self.job is not None else None
+        # Require the job to look terminal on this many consecutive polls
+        # before reconciling, so a single racy/transient status read (e.g.
+        # squeue+sacct both momentarily blank right after submission, or a
+        # qstat hiccup) can never reap a healthy job.
+        terminal_confirmations = 0
+        TERMINAL_DEBOUNCE = 3
+
         try:
             while True:
-                # Get current status
-                status_counts = get_status_counts(self.db_path)
+                status_counts = get_status_counts(self.db_path, tags=[self.tag])
                 pending = status_counts.get("pending", 0)
                 running = status_counts.get("running", 0)
                 done = status_counts.get("done", 0)
                 failed = status_counts.get("failed", 0)
-                total = pending + running + done + failed
+                interrupted = status_counts.get("interrupted", 0)
+                total = pending + running + done + failed + interrupted
 
-                # Check if complete
+                # All terminal — nothing left in flight.
                 if pending == 0 and running == 0:
-                    if failed > 0:
-                        logger.warning(f"All tasks completed with {failed} failures")
+                    issues = failed + interrupted
+                    if issues:
+                        logger.warning(
+                            f"Sweep finished with issues: {failed} failed, {interrupted} interrupted"
+                        )
                     else:
                         logger.success(f"All {done} tasks completed successfully")
-                    return failed == 0
+                    return issues == 0
+
+                # Reconcile against the scheduler's ground truth: only when the
+                # job is *confirmed* ended (not merely 'unknown'/unreported) yet
+                # tasks remain pending/running did the worker die (wall-time,
+                # OOM, crash) without finishing them. Debounced to ignore
+                # transient status reads.
+                if job_id is not None and self.backend is not None:
+                    if self.backend.is_terminal(job_id):
+                        terminal_confirmations += 1
+                    else:
+                        terminal_confirmations = 0
+
+                    if terminal_confirmations >= TERMINAL_DEBOUNCE:
+                        orphaned = mark_orphans_interrupted(
+                            self.db_path, job_id=job_id, tags=[self.tag]
+                        )
+                        logger.warning(
+                            f"HPC job {job_id} has ended but "
+                            f"{pending} task(s) pending / {running} running. "
+                            f"Marked {orphaned} orphaned task(s) interrupted. "
+                            f"Re-run pending/interrupted tasks with: "
+                            f"flexlock-worker --task-db {self.db_path} --reclaim"
+                        )
+                        return False
 
                 # Log progress periodically
                 elapsed = time.time() - start_time
                 if elapsed - (last_log_time - start_time) >= config.LOG_FREQUENCY:
-                    progress = (done + failed) / total * 100 if total > 0 else 0
+                    progress = (done + failed + interrupted) / total * 100 if total > 0 else 0
                     logger.info(
                         f"Progress: {progress:.1f}% "
-                        f"(pending: {pending}, running: {running}, done: {done}, failed: {failed})"
+                        f"(pending={pending}, running={running}, done={done}, "
+                        f"failed={failed}, interrupted={interrupted})"
                     )
                     last_log_time = time.time()
 
                 # Check timeout
                 if timeout and elapsed > timeout:
                     logger.warning(
-                        f"Timeout after {timeout}s (pending: {pending}, running: {running})"
+                        f"Timeout after {timeout}s "
+                        f"(pending={pending}, running={running})"
                     )
                     return False
 
-                # Wait before next check
                 time.sleep(poll_interval)
         except KeyboardInterrupt:
             logger.warning(
-                "Keyboard interrupt received. "
-                "Tasks are still running. "
-                f"Check status with: flexlock-status {self.db_path}"
+                "Keyboard interrupt received while waiting. "
+                "The submitted job keeps running on the cluster; "
+                f"monitor with: flexlock-status {self.db_path}"
             )
             return False
 
@@ -212,9 +304,10 @@ class ParallelExecutor:
         """
         from flexlock.taskdb import dump_to_yaml
 
-        if pending_count(self.db_path) == 0:
+        if pending_count(self.db_path, tags=[self.tag]) == 0:
             logger.info("All tasks already completed.")
-            dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks")
+            dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks",
+                         tags=[self.tag])
             return True
 
         # 1. Prepare Root Directory
@@ -242,19 +335,30 @@ class ParallelExecutor:
                 logger.info("Running locally (pull-from-DB)")
                 self._run_locally()
 
-                # Check if any tasks failed
-                from .taskdb import get_status_counts
+                # All local workers have exited. Any task still 'running' was
+                # owned by a worker that died (hard crash / OOM) without
+                # recording a terminal state — reconcile it now.
+                from .taskdb import get_status_counts, mark_orphans_interrupted
 
-                status_counts = get_status_counts(self.db_path)
+                orphaned = mark_orphans_interrupted(self.db_path, tags=[self.tag])
+                if orphaned:
+                    logger.warning(
+                        f"Marked {orphaned} task(s) interrupted "
+                        f"(worker exited without finishing them)."
+                    )
+
+                status_counts = get_status_counts(self.db_path, tags=[self.tag])
                 failed = status_counts.get("failed", 0)
-                success = failed == 0
+                interrupted = status_counts.get("interrupted", 0)
+                success = (failed + interrupted) == 0
             else:
                 # HPC backend execution
                 # Fixed args for worker_loop (as tuple for *args)
-                fixed_args = (self.func, self.cfg, self.task_target, self.db_path)
-                job = self.backend.submit(worker_loop, *fixed_args)
+                fixed_args = (self.func, self.cfg, self.task_target, self.db_path,
+                              [self.tag])
+                self.job = self.backend.submit(worker_loop, *fixed_args)
                 logger.info(
-                    f"Submitted {self.backend.__class__.__name__} job {job.job_id}"
+                    f"Submitted {self.backend.__class__.__name__} job {self.job.job_id}"
                 )
 
                 # Wait for completion if requested
@@ -266,6 +370,7 @@ class ParallelExecutor:
 
         finally:
             # Dump tasks to YAML after all jobs are submitted (or completed locally)
-            dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks")
+            dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks",
+                         tags=[self.tag])
 
         return success

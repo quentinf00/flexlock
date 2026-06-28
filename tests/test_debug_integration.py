@@ -94,8 +94,11 @@ def test_debug_flag_with_other_args():
 
     assert args.debug is True
     assert args.n_jobs == 4
-    assert "lr=0.01" in args.overrides
-    assert "epochs=10" in args.overrides
+    # --overrides is repeatable (nargs='+' + action='append'), so argparse
+    # produces a list of groups; flatten before asserting membership.
+    flat = FlexLockRunner._flatten_overrides(args.overrides)
+    assert "lr=0.01" in flat
+    assert "epochs=10" in flat
 
 
 if __name__ == "__main__":

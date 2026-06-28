@@ -15,9 +15,47 @@ logger = logging.getLogger(__name__)
 _thread_local_conns = threading.local()
 
 
+def _tag_filter(tag):
+    """Return (sql_fragment, params) for an optional tag scope.
+
+    tag=None  -> no filter (matches all rows, including legacy NULL rows).
+    str       -> single tag: AND tag = ?
+    list/tuple/set -> AND tag IN (?, ?, ...)  — empty collection = no filter.
+
+    The returned fragment is prefixed with 'AND ' and is '' when tag is None.
+    """
+    if tag is None:
+        return "", []
+    if isinstance(tag, (list, tuple, set)):
+        tags = list(tag)
+        if not tags:
+            return "", []
+        placeholders = ",".join("?" for _ in tags)
+        return f"AND tag IN ({placeholders})", tags
+    return "AND tag = ?", [tag]
+
+
 def _hash_task(task: Any) -> str:
-    """Generates a SHA1 hash for a given task object."""
-    return hashlib.sha1(str(task).encode()).hexdigest()
+    """Generate a stable SHA1 id for a task.
+
+    The id must be invariant across the ``_to_yaml``/``_from_yaml`` roundtrip
+    and across plain-dict vs ``DictConfig`` representations. ``str(task)`` is
+    neither: YAML serialization reorders keys, so a task claimed back from the
+    DB would hash differently than when it was queued — which silently breaks
+    ``finish_task`` (it can't find the row to mark done). Canonicalize to a
+    sorted-key JSON string first.
+    """
+    import json as _json
+
+    if isinstance(task, (DictConfig, ListConfig)):
+        obj = OmegaConf.to_container(task, resolve=False)
+    else:
+        obj = task
+    try:
+        canonical = _json.dumps(obj, sort_keys=True, default=str)
+    except TypeError:
+        canonical = str(obj)
+    return hashlib.sha1(canonical.encode()).hexdigest()
 
 
 def _to_yaml(value: Any) -> str:
@@ -83,18 +121,32 @@ def _conn(db_path: Path):
                     node TEXT,
                     error TEXT,
                     ts_start DATETIME,
-                    ts_end DATETIME
+                    ts_end DATETIME,
+                    snapshot TEXT,
+                    job_id TEXT,
+                    tag TEXT
                 )
                 """
             )
 
-            # Auto-migration: Add snapshot column if it doesn't exist
+            # Auto-migration: add columns introduced after the initial schema.
             cursor = c.execute("PRAGMA table_info(tasks)")
             columns = [row[1] for row in cursor.fetchall()]
-            if "snapshot" not in columns:
-                logger.debug(f"Adding snapshot column to {db_path_str}")
-                c.execute("ALTER TABLE tasks ADD COLUMN snapshot TEXT")
-                c.commit()
+            for col, ddl in [
+                ("snapshot", "ALTER TABLE tasks ADD COLUMN snapshot TEXT"),
+                ("job_id",   "ALTER TABLE tasks ADD COLUMN job_id TEXT"),
+                ("tag",      "ALTER TABLE tasks ADD COLUMN tag TEXT"),
+            ]:
+                if col not in columns:
+                    logger.debug(f"Adding {col} column to {db_path_str}")
+                    c.execute(ddl)
+                    c.commit()
+
+            c.execute(
+                "CREATE INDEX IF NOT EXISTS ix_tasks_tag_status "
+                "ON tasks(tag, status)"
+            )
+            c.commit()
 
             _thread_local_conns.conns[db_path_str] = c
             logger.debug(
@@ -113,26 +165,57 @@ def _conn(db_path: Path):
         pass
 
 
-def queue_tasks(db_path: Path, tasks: List[Any]) -> None:
-    """Adds a list of tasks to the database if they don't already exist."""
+def queue_tasks(db_path: Path, tasks: List[Any], tag: str | None = None) -> None:
+    """Adds a list of tasks to the database if they don't already exist.
+
+    ``tag`` scopes these rows to a particular sweep so concurrent sweeps (or a
+    parent pipeline job) sharing the same DB don't interfere with each other.
+
+    Note: ``task_id`` is a content hash of the task dict. If two sweeps queue
+    an *identical* task dict they share one row; ``INSERT OR IGNORE`` keeps the
+    first tag. That only happens when the work is truly identical, which is
+    acceptable.
+    """
     with _conn(db_path) as c:
         c.executemany(
-            "INSERT OR IGNORE INTO tasks (task_id, task_info) VALUES (?, ?)",
-            [(_hash_task(t), _to_yaml(t)) for t in tasks],
+            "INSERT OR IGNORE INTO tasks (task_id, task_info, tag) VALUES (?, ?, ?)",
+            [(_hash_task(t), _to_yaml(t), tag) for t in tasks],
         )
         c.commit()
 
 
-def claim_next_task(db_path: Path, node: str) -> Any | None:
-    """Claims the next available pending task from the database and marks it as running."""
+def claim_next_task(
+    db_path: Path,
+    node: str,
+    job_id: str | None = None,
+    tags=None,
+) -> Any | None:
+    """Claims the next available pending task and marks it as running.
+
+    ``node`` and ``job_id`` record which worker/scheduler job owns the task,
+    so the controller can later reconcile orphaned tasks against the OS/
+    scheduler's view of worker liveness (no self-reported heartbeat needed).
+
+    ``tags`` restricts the claim to rows whose ``tag`` matches (``None``
+    claims any row, preserving backwards-compatible behaviour for untagged DBs).
+    """
+    tag_frag, tag_params = _tag_filter(tags)
     with _conn(db_path) as c:
         cur = c.execute(
-            """
-            UPDATE tasks SET status='running', node=?, ts_start=CURRENT_TIMESTAMP
-            WHERE task_id = (SELECT task_id FROM tasks WHERE status='pending' LIMIT 1)
+            f"""
+            UPDATE tasks
+               SET status='running',
+                   node=?,
+                   job_id=?,
+                   ts_start=CURRENT_TIMESTAMP
+            WHERE task_id = (
+                SELECT task_id FROM tasks
+                WHERE status='pending' {tag_frag}
+                LIMIT 1
+            )
             RETURNING task_info
             """,
-            (node,),
+            (node, job_id, *tag_params),
         )
         row = cur.fetchone()
         if row:
@@ -142,11 +225,20 @@ def claim_next_task(db_path: Path, node: str) -> Any | None:
 
 
 def finish_task(
-    db_path: Path, task: Any, error: str | None = None, result: Any | None = None
+    db_path: Path,
+    task: Any,
+    error: str | None = None,
+    result: Any | None = None,
+    status: str | None = None,
 ) -> None:
-    """Marks a task as finished (done or failed) and records its result or error."""
+    """Marks a task as finished and records its result or error.
+
+    ``status`` defaults to ``'done'`` on success, ``'failed'`` on error.
+    Pass ``status='interrupted'`` when the worker was killed mid-task.
+    """
     tid = _hash_task(task)
-    status = "failed" if error else "done"
+    if status is None:
+        status = "failed" if error else "done"
     result_str = _to_yaml(result) if result is not None else None
     with _conn(db_path) as c:
         c.execute(
@@ -156,20 +248,96 @@ def finish_task(
         c.commit()
 
 
-def pending_count(db_path: Path) -> int:
-    """Returns the number of pending tasks in the database."""
+def _update_running(
+    db_path: Path,
+    new_status: str,
+    job_id: str | None = None,
+    tags=None,
+    error: str | None = None,
+) -> int:
+    """Move ``running`` tasks to ``new_status``; optionally scope to job/tags.
+
+    Returns the number of rows updated. Shared by the controller (which marks
+    orphans 'interrupted') and the reclaim path (which resets them 'pending').
+    """
+    tag_frag, tag_params = _tag_filter(tags)
+    clauses = [f"status='running' {tag_frag}"]
+    params: list = list(tag_params)
+    if job_id is not None:
+        clauses.append("job_id=?")
+        params.append(job_id)
+    where = " AND ".join(c for c in clauses if c)
+
+    if new_status == "pending":
+        # Clear ownership so the task is freely claimable again.
+        set_clause = "status='pending', node=NULL, job_id=NULL, ts_start=NULL"
+        set_params: list = []
+    else:
+        set_clause = "status=?, error=?, ts_end=CURRENT_TIMESTAMP"
+        set_params = [new_status, error]
+
+    with _conn(db_path) as c:
+        cur = c.execute(
+            f"UPDATE tasks SET {set_clause} WHERE {where}",
+            (*set_params, *params),
+        )
+        c.commit()
+        return cur.rowcount
+
+
+def mark_orphans_interrupted(
+    db_path: Path, job_id: str | None = None, tags=None
+) -> int:
+    """Mark still-``running`` tasks as ``interrupted``.
+
+    Called by the controller once it knows the owning worker(s) are dead
+    (local processes joined, or the HPC job left the scheduler's active set).
+    ``tags`` limits the reconcile to this sweep's rows so a parent pipeline
+    row in the same DB is never touched. Returns the number of tasks marked.
+    """
+    return _update_running(
+        db_path, "interrupted", job_id=job_id, tags=tags,
+        error="Worker died before the task finished (orphaned).",
+    )
+
+
+def reclaim_running(db_path: Path, job_id: str | None = None, tags=None) -> int:
+    """Reset ``running`` tasks back to ``pending`` so they can be re-claimed.
+
+    Used by ``flexlock-worker --reclaim`` to recover tasks stranded by a
+    previous worker that died without cleanup. ``tags`` limits the reclaim
+    to the specified sweep. Returns the number reset.
+    """
+    return _update_running(db_path, "pending", job_id=job_id, tags=tags)
+
+
+def pending_count(db_path: Path, tags=None) -> int:
+    """Returns the number of pending tasks in the database.
+
+    ``tags`` restricts the count to rows matching the given tag(s).
+    """
+    tag_frag, tag_params = _tag_filter(tags)
     with _conn(db_path) as c:
         return c.execute(
-            "SELECT COUNT(*) FROM tasks WHERE status='pending'"
+            f"SELECT COUNT(*) FROM tasks WHERE status='pending' {tag_frag}",
+            tag_params,
         ).fetchone()[0]
 
 
-def dump_to_yaml(db_path: Path, yaml_path: Path) -> None:
-    """Dumps all completed (done or failed) tasks and their results to a YAML file."""
+def dump_to_yaml(db_path: Path, yaml_path: Path, tags=None) -> None:
+    """Dumps all terminal (done/failed/interrupted) tasks and their results to a YAML file.
+
+    ``tags`` restricts the dump to the specified sweep's rows so each sweep
+    writes only its own results.
+    """
+    tag_frag, tag_params = _tag_filter(tags)
     with _conn(db_path) as c:
         logger.debug(f"using {c} for {db_path}")
         rows = c.execute(
-            "SELECT result_info, task_info, status FROM tasks WHERE status IN ('done','failed') ORDER BY ts_end"
+            f"SELECT result_info, task_info, status FROM tasks "
+            f"WHERE status IN ('done','failed','interrupted') {tag_frag} "
+            f"ORDER BY ts_end",
+            tag_params,
         ).fetchall()
         data = [
             dict(task=_from_yaml(r[0]), status=r[2])
@@ -251,34 +419,66 @@ def list_task_snapshots(db_path: Path, status: str = None) -> List[tuple]:
         return [(r[0], json.loads(r[1]) if r[1] else None, r[2]) for r in rows]
 
 
-def get_status_counts(db_path: Path) -> dict:
-    """
-    Get counts of tasks by status.
+def get_status_counts(db_path: Path, tags=None) -> dict:
+    """Get counts of tasks by status.
 
-    Returns:
-        dict: Status counts {'pending': N, 'running': N, 'done': N, 'failed': N}
+    Returns a dict with keys for every status that has at least one task,
+    always including 'pending', 'running', 'done', 'failed', 'interrupted'
+    (defaulting to 0 when absent).
+
+    ``tags`` restricts the counts to the specified sweep's rows.
+    """
+    tag_frag, tag_params = _tag_filter(tags)
+    with _conn(db_path) as c:
+        rows = c.execute(
+            f"SELECT status, COUNT(*) as count FROM tasks "
+            f"WHERE 1=1 {tag_frag} GROUP BY status",
+            tag_params,
+        ).fetchall()
+    counts = {row[0]: row[1] for row in rows}
+    for key in ("pending", "running", "done", "failed", "interrupted"):
+        counts.setdefault(key, 0)
+    return counts
+
+
+def get_status_counts_by_tag(db_path: Path) -> dict:
+    """Get per-tag status counts for all rows in the DB.
+
+    Returns ``{tag: {status: count, ...}}`` where ``tag`` may be ``None``
+    for legacy untagged rows. Each inner dict is zero-filled for the five
+    standard statuses.
     """
     with _conn(db_path) as c:
         rows = c.execute(
-            "SELECT status, COUNT(*) as count FROM tasks GROUP BY status"
+            "SELECT tag, status, COUNT(*) FROM tasks GROUP BY tag, status"
         ).fetchall()
-        return {row[0]: row[1] for row in rows}
+    result: dict = {}
+    for tag, status, count in rows:
+        bucket = result.setdefault(tag, {})
+        bucket[status] = count
+    for bucket in result.values():
+        for key in ("pending", "running", "done", "failed", "interrupted"):
+            bucket.setdefault(key, 0)
+    return result
 
 
-def get_failed_tasks(db_path: Path) -> list:
-    """
-    Get details of all failed tasks.
+def get_failed_tasks(db_path: Path, tags=None) -> list:
+    """Get details of failed and interrupted tasks.
+
+    ``tags`` restricts results to the specified sweep's rows.
 
     Returns:
         list: List of dicts with task info, error, and timestamps
     """
+    tag_frag, tag_params = _tag_filter(tags)
     with _conn(db_path) as c:
         rows = c.execute(
-            """
-            SELECT task_info, error, ts_start, ts_end, node
-            FROM tasks WHERE status='failed'
+            f"""
+            SELECT task_info, error, ts_start, ts_end, node, status
+            FROM tasks WHERE status IN ('failed', 'interrupted') {tag_frag}
             ORDER BY ts_end DESC
-            """
+            """,
+            tag_params,
         ).fetchall()
 
         failed_tasks = []
@@ -291,41 +491,44 @@ def get_failed_tasks(db_path: Path) -> list:
                     "ts_start": row[2],
                     "ts_end": row[3],
                     "node": row[4],
+                    "status": row[5],
                 }
             )
         return failed_tasks
 
 
-def get_all_tasks(db_path: Path, status: str = None) -> list:
-    """
-    Get all tasks, optionally filtered by status.
+def get_all_tasks(db_path: Path, status: str = None, tags=None) -> list:
+    """Get all tasks, optionally filtered by status and/or tag.
 
     Args:
         db_path: Path to database
-        status: Optional status filter ('pending', 'running', 'done', 'failed')
+        status: Optional status filter ('pending', 'running', 'done', 'failed', 'interrupted')
+        tags: Optional tag filter (str or list of str); ``None`` returns all rows.
 
     Returns:
         list: List of dicts with task details
     """
+    tag_frag, tag_params = _tag_filter(tags)
     with _conn(db_path) as c:
         if status:
             rows = c.execute(
-                """
+                f"""
                 SELECT task_id, task_info, result_info, status, error,
                        ts_start, ts_end, node
-                FROM tasks WHERE status=?
+                FROM tasks WHERE status=? {tag_frag}
                 ORDER BY ts_start DESC
                 """,
-                (status,),
+                (status, *tag_params),
             ).fetchall()
         else:
             rows = c.execute(
-                """
+                f"""
                 SELECT task_id, task_info, result_info, status, error,
                        ts_start, ts_end, node
-                FROM tasks
+                FROM tasks WHERE 1=1 {tag_frag}
                 ORDER BY ts_start DESC
-                """
+                """,
+                tag_params,
             ).fetchall()
 
         tasks = []

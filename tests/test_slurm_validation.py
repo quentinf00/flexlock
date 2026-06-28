@@ -172,6 +172,27 @@ def test_render_script_validation_catches_missing_partition(tmp_path):
     assert any(W_PARTITION in w for w in warnings)
 
 
+# --- is_terminal (orphan reconciliation depends on this) ---
+
+@pytest.mark.parametrize("status,expected", [
+    ("PENDING", False),
+    ("RUNNING", False),
+    ("CONFIGURING", False),
+    ("unknown", False),          # racy/unreported: must NOT look terminal
+    ("", False),
+    ("COMPLETED", True),
+    ("FAILED", True),
+    ("TIMEOUT", True),
+    ("OUT_OF_MEMORY", True),
+    ("CANCELLED by 12345", True),  # sacct verbose form
+    ("CANCELLED+", True),          # truncated form
+])
+def test_slurm_is_terminal(tmp_path, monkeypatch, status, expected):
+    backend = SlurmBackend(folder=tmp_path, startup_lines=[], python_exe="python")
+    monkeypatch.setattr(backend, "check_status", lambda job_id: status)
+    assert backend.is_terminal("123") is expected
+
+
 # --- dry_run end-to-end ---
 
 def _write_slurm_yaml(path: Path, *, partition="gpu", with_cd=True, with_env=True):

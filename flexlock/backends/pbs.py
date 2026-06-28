@@ -130,6 +130,21 @@ class PBSBackend(Backend):
             logger.warning(f"Failed to check PBS job status for {job_id}: {e}")
         return "unknown"
 
+    # States that mean the job has definitively ended: C(completed) F(finished).
+    # Everything else — active (Q/R/H/E/...) or "unknown" — is NOT terminal.
+    TERMINAL_STATES = frozenset({"C", "F"})
+
+    def is_terminal(self, job_id: str) -> bool:
+        """Return True only when PBS confirms the job has ended.
+
+        Conservative on purpose (see ``SlurmBackend.is_terminal``): ambiguous
+        reads return ``False`` so a healthy job is never reconciled away. The
+        controller additionally debounces across several polls, which guards
+        against ``qstat`` transiently failing (``check_status`` maps a
+        not-found job to ``"C"``).
+        """
+        return self.check_status(job_id).strip().upper() in self.TERMINAL_STATES
+
     def wait_for_job(self, job_id: str, timeout=None, poll_interval=5) -> bool:
         """
         Wait for a PBS job to complete.

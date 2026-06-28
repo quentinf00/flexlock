@@ -94,9 +94,10 @@ class FlexLockRunner:
         parser.add_argument(
             "--overrides",
             "-o",
-            nargs="*",
+            nargs="+",
+            action="append",
             default=[],
-            help="Dot-list overrides for Root config",
+            help="Dot-list overrides for Root config (repeatable: -o a=1 b=2  or  -o a=1 -o b=2)",
         )
         parser.add_argument(
             "--merge-after-select", "-M", help="Merge file into Selected config"
@@ -104,9 +105,10 @@ class FlexLockRunner:
         parser.add_argument(
             "--overrides-after-select",
             "-O",
-            nargs="*",
+            nargs="+",
+            action="append",
             default=[],
-            help="Dot-list overrides for Selected config",
+            help="Dot-list overrides for Selected config (repeatable)",
         )
 
         # NEW SWEEP ARGUMENTS
@@ -184,6 +186,25 @@ class FlexLockRunner:
 
         return parser
 
+    @staticmethod
+    def _flatten_overrides(value):
+        """Normalize ``--overrides``/``-o`` into a flat list of ``key=value``.
+
+        Because the argument uses ``nargs="+"`` plus ``action="append"`` to be
+        repeatable (``-o a=1 b=2`` and ``-o a=1 -o b=2``), argparse yields a
+        list of lists. This collapses it to the flat list OmegaConf expects.
+        Idempotent: an already-flat list of strings passes through unchanged.
+        """
+        if not value:
+            return []
+        flat = []
+        for item in value:
+            if isinstance(item, str):
+                flat.append(item)
+            else:  # a group produced by action="append"
+                flat.extend(item)
+        return flat
+
     def load_config(self, args):
         # 1. Start with Injected Base (from decorator) or Empty
         cfg = OmegaConf.create()
@@ -199,8 +220,9 @@ class FlexLockRunner:
             cfg.merge_with(OmegaConf.load(args.config))
         if args.merge:
             cfg.merge_with(OmegaConf.load(args.merge))
-        if args.overrides:
-            cfg.merge_with(OmegaConf.from_dotlist(args.overrides))
+        overrides = self._flatten_overrides(args.overrides)
+        if overrides:
+            cfg.merge_with(OmegaConf.from_dotlist(overrides))
 
         if args.debug:
             logger.debug(f"Final Root Config: {cfg}")
@@ -249,6 +271,8 @@ class FlexLockRunner:
         from .api import Project
 
         args = self.parser.parse_args(cli_args)
+        args.overrides = self._flatten_overrides(args.overrides)
+        args.overrides_after_select = self._flatten_overrides(args.overrides_after_select)
 
         # `--help` / `-h` is registered with action='store_true' (we own
         # help formatting), so argparse parses but doesn't auto-exit. We
