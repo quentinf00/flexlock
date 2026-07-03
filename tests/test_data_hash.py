@@ -171,3 +171,74 @@ def test_flexlock_no_cache_env_variable(test_data, monkeypatch):
         cursor.execute("SELECT mtime, file_count FROM cache WHERE path=?", (str(test_data.resolve()),))
         row = cursor.fetchone()
     assert row is None
+
+
+# --- use_cache argument (issue 4) ---
+
+
+def test_use_cache_false_does_not_write_cache(test_data):
+    """use_cache=False must recompute and never persist to the cache DB."""
+    hash_data(test_data, use_cache=False)
+    with _get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM cache WHERE path=?", (str(test_data.resolve()),))
+        assert cursor.fetchone() is None
+
+
+def test_use_cache_false_never_opens_db():
+    """use_cache=False must not touch the cache DB at all."""
+    with patch("flexlock.data_hash._get_db") as mock_db:
+        mock_db.side_effect = AssertionError("cache DB opened despite use_cache=False")
+        # Hash a temp file created inline so we don't depend on _get_db.
+        import tempfile
+
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as fh:
+            fh.write("payload")
+            fpath = fh.name
+        try:
+            hash_data(fpath, use_cache=False)
+        finally:
+            os.remove(fpath)
+
+
+def test_no_cache_env_forces_off_even_when_use_cache_true(test_data, monkeypatch):
+    """FLEXLOCK_NO_CACHE overrides use_cache=True (force-off only)."""
+    monkeypatch.setenv("FLEXLOCK_NO_CACHE", "yes")
+    hash_data(test_data, use_cache=True)
+    with _get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM cache WHERE path=?", (str(test_data.resolve()),))
+        assert cursor.fetchone() is None
+
+
+# --- dirhash includes file paths (issue 5) ---
+
+
+def test_dirhash_distinguishes_file_names(tmp_path):
+    """Identical contents under different names must hash differently."""
+    d1 = tmp_path / "d1"
+    d1.mkdir()
+    (d1 / "a.txt").write_text("same")
+    (d1 / "b.txt").write_text("content")
+
+    d2 = tmp_path / "d2"
+    d2.mkdir()
+    (d2 / "x.txt").write_text("same")
+    (d2 / "y.txt").write_text("content")
+
+    assert hash_data(d1, use_cache=False) != hash_data(d2, use_cache=False)
+
+
+def test_dirhash_detects_content_swap(tmp_path):
+    """Swapping contents between two files changes the directory hash."""
+    d = tmp_path / "d"
+    d.mkdir()
+    (d / "a.txt").write_text("AAA")
+    (d / "b.txt").write_text("BBB")
+    before = hash_data(d, use_cache=False)
+
+    (d / "a.txt").write_text("BBB")
+    (d / "b.txt").write_text("AAA")
+    after = hash_data(d, use_cache=False)
+
+    assert before != after

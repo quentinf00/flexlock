@@ -9,6 +9,13 @@ import hashlib
 from joblib import Parallel, delayed
 from contextlib import contextmanager
 
+from . import config
+
+# Hash-format version. Bump when the on-disk hash algorithm changes so stale
+# rows in an old cache file are never returned as valid hits. v2: dirhash now
+# folds each file's relative path into the digest (previously content-only).
+HASH_VERSION = 2
+
 # --- Cache Configuration ---
 CACHE_DIR = (
     Path(
@@ -18,7 +25,7 @@ CACHE_DIR = (
     )
     / "flexlock"
 )
-CACHE_DB = CACHE_DIR / "hashes.db"
+CACHE_DB = CACHE_DIR / f"hashes_v{HASH_VERSION}.db"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 DEFAULT_DIR_FILE_LIMIT = os.environ.get("FLEXLOCK_DIR_FILE_LIMIT", 1000)
 
@@ -168,13 +175,21 @@ def dirhash(
                 hasher.update(data)
         return hasher.hexdigest()
 
-    file_hashes = Parallel(n_jobs=jobs)(
+    content_hashes = Parallel(n_jobs=jobs)(
         delayed(_hash_file)(str(f), algorithm, chunk_size) for f in final_files
     )
 
+    # Fold the file's path into the digest so that two directories with
+    # identical file *contents* under different names hash differently, and so
+    # that swapping contents between two paths changes the hash.
+    entries = [
+        f"{f.relative_to(base_path).as_posix()}\0{h}"
+        for f, h in zip(final_files, content_hashes)
+    ]
+
     final_hasher = algorithm()
-    for h in sorted(file_hashes):
-        final_hasher.update(h.encode("utf-8"))
+    for entry in sorted(entries):
+        final_hasher.update(entry.encode("utf-8"))
 
     return final_hasher.hexdigest()
 
@@ -192,11 +207,9 @@ def hash_data(
     Computes a hash for a file or a directory, using an SQLite cache to avoid re-computation.
     """
     path = Path(path).resolve()
-    use_cache = os.environ.get("FLEXLOCK_NO_CACHE", use_cache) not in (
-        "1",
-        "true",
-        "True",
-    )
+    # Honour the ``use_cache`` argument; the env var can only *force* caching
+    # off (it never re-enables a cache the caller explicitly disabled).
+    use_cache = use_cache and not config.get_env_bool("FLEXLOCK_NO_CACHE", False)
     dir_file_limit = int(
         os.environ.get("FLEXLOCK_CACHE_DIR_FILE_LIMIT", DEFAULT_DIR_FILE_LIMIT)
     )
