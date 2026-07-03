@@ -114,15 +114,21 @@ def test_latest_resolver_with_files(tmp_path):
 
 
 def test_latest_resolver_no_matches():
-    """Test the latest_resolver returns the pattern when no matches are found."""
+    """latest_resolver raises when nothing matches (issue 20)."""
+    import pytest
     from flexlock.resolvers import latest_resolver
 
-    # Use a pattern that won't match anything
     pattern = "/nonexistent/directory/*.txt"
-    result = latest_resolver(pattern)
+    with pytest.raises(FileNotFoundError):
+        latest_resolver(pattern)
 
-    # Should return the original pattern when no matches
-    assert result == pattern
+
+def test_latest_resolver_no_matches_with_default():
+    """latest_resolver returns the supplied default instead of raising."""
+    from flexlock.resolvers import latest_resolver
+
+    pattern = "/nonexistent/directory/*.txt"
+    assert latest_resolver(pattern, "fallback/path") == "fallback/path"
 
 
 def test_latest_resolver_with_globbing_patterns(tmp_path):

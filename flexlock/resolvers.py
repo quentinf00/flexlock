@@ -9,6 +9,11 @@ from pathlib import Path
 from functools import wraps
 from . import config
 
+# Distinct "no default supplied" sentinel so that an explicit ``null`` default
+# (e.g. ``${run_lock:${dir},key,null}``) is honoured rather than treated as
+# "raise". ``None`` cannot serve as this marker because it is a valid default.
+_MISSING = object()
+
 
 def now_resolver(fmt: str = None) -> str:
     """
@@ -22,14 +27,17 @@ def now_resolver(fmt: str = None) -> str:
     return datetime.now().strftime(fmt)
 
 
-def latest_resolver(path_glob: str) -> str:
+def latest_resolver(path_glob: str, default=_MISSING) -> str:
     """
-    OmegaConf resolver that returns the latest path matching the given pattern
+    OmegaConf resolver that returns the latest path matching the given pattern.
+
+    Raises ``FileNotFoundError`` when nothing matches, unless a ``default`` is
+    supplied (``${latest:pattern,fallback}``), in which case the default is
+    returned. Returning the unmatched pattern silently — the old behaviour —
+    produced a bogus path that failed far downstream.
     """
     from glob import glob
     import os
-    from pathlib import Path
-    from loguru import logger
 
     # Expand user (~) and resolve the path
     path_glob = os.path.expanduser(path_glob)
@@ -38,9 +46,11 @@ def latest_resolver(path_glob: str) -> str:
     matching_paths = glob(path_glob, recursive=True)
 
     if not matching_paths:
-        # If no matches are found, warn and return the original pattern
-        logger.warning(f"No paths found matching pattern: {path_glob}")
-        return path_glob
+        if default is not _MISSING:
+            return default
+        raise FileNotFoundError(
+            f"latest resolver: no paths match pattern {path_glob!r}"
+        )
 
     # Find the latest path by modification time
     latest_path = max(matching_paths, key=os.path.getmtime)
@@ -51,8 +61,20 @@ def latest_resolver(path_glob: str) -> str:
 def vinc_resolver(path: str, fmt: str = "_{i:04d}") -> str:
     """
     OmegaConf resolver that finds the highest existing version of a folder/file
-    and returns the next versioned path as a string. Results are cached to ensure
-    consistent values within a single execution.
+    and returns the next versioned path as a string.
+
+    The value is a pure function of the current filesystem state (highest
+    existing version + 1) so that multiple references to the same ``${vinc:}``
+    within one ``submit()`` resolve idempotently to the *same* directory — the
+    counter only advances once the previous run's directory actually exists on
+    disk.
+
+    Concurrency note: because the claim is not taken here, two submits racing
+    from separate processes can compute the same next version and collide. The
+    atomic claim belongs at the point the run directory is committed (the run
+    creates its dir with ``exist_ok=False`` and retries), not in this resolver,
+    so that within-submit idempotency is preserved. Until that lands, serialise
+    concurrent submits that share a ``${vinc:}`` base or give them distinct bases.
     """
     # Compute the result (original logic)
     p = Path(path)
@@ -78,7 +100,7 @@ def vinc_resolver(path: str, fmt: str = "_{i:04d}") -> str:
     return str(parent_dir / f"{base_name}{version_str}")
 
 
-def run_lock_resolver(run_dir: str, key: str, default=None):
+def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
     """
     OmegaConf resolver that reads a field from an upstream run.lock.
 
@@ -94,7 +116,7 @@ def run_lock_resolver(run_dir: str, key: str, default=None):
 
     lock_path = Path(run_dir) / "run.lock"
     if not lock_path.exists():
-        if default is not None:
+        if default is not _MISSING:
             logger.warning(f"run_lock resolver: no run.lock at {run_dir}, using default")
             return default
         raise FileNotFoundError(f"run_lock resolver: no run.lock found in {run_dir}")
@@ -108,7 +130,7 @@ def run_lock_resolver(run_dir: str, key: str, default=None):
         if isinstance(value, dict) and part in value:
             value = value[part]
         else:
-            if default is not None:
+            if default is not _MISSING:
                 return default
             raise KeyError(
                 f"run_lock resolver: key '{key}' not found in {lock_path} "
@@ -116,7 +138,9 @@ def run_lock_resolver(run_dir: str, key: str, default=None):
             )
 
     if value is None:
-        return default
+        # A legitimately null value is returned as-is when no default was
+        # supplied; only substitute an explicitly provided default.
+        return None if default is _MISSING else default
     return value
 
 
