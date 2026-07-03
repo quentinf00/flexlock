@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 
 from flexlock.git_utils import get_git_commit, create_shadow_snapshot, get_git_tree_hash
+from flexlock.exceptions import FlexLockSnapshotError
 
 
 @pytest.fixture
@@ -40,16 +41,15 @@ def test_get_git_tree_hash(git_repo):
 
 
 def test_get_git_tree_hash_nonexistent_path():
-    """Test that get_git_tree_hash handles nonexistent paths."""
-    result = get_git_tree_hash(path="/nonexistent/path")
-    assert result.startswith("Error getting git tree hash")
+    """A non-repo path raises rather than returning an error string."""
+    with pytest.raises(FlexLockSnapshotError):
+        get_git_tree_hash(path="/nonexistent/path")
 
 
 def test_get_git_commit_error():
-    """Test that get_git_commit handles non-repo paths gracefully."""
-    # This will fail because the temp directory is not a git repo
-    error_message = get_git_commit(path="/tmp")
-    assert "Error getting git commit" in error_message
+    """A non-repo path raises rather than returning an error string."""
+    with pytest.raises(FlexLockSnapshotError):
+        get_git_commit(path="/nonexistent/path")
 
 
 def test_create_shadow_snapshot_basic(git_repo):

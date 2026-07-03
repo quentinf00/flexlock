@@ -9,6 +9,8 @@ from pathlib import Path
 from contextlib import contextmanager
 from git.repo import Repo as GitRepo
 
+from .exceptions import FlexLockSnapshotError
+
 
 @contextmanager
 def shadow_index(repo: GitRepo):
@@ -102,14 +104,19 @@ def get_git_tree_hash(path: str = ".") -> str:
         path (str): The path to the git repository.
 
     Returns:
-        str: The tree hash, or an error message if it fails.
+        str: The tree hash.
+
+    Raises:
+        FlexLockSnapshotError: if ``path`` is not a usable git repository.
     """
     try:
         repo = GitRepo(path, search_parent_directories=True)
         # Get the tree hash of the current commit
         return repo.head.commit.tree.hexsha
     except Exception as e:
-        return f"Error getting git tree hash: {e}"
+        raise FlexLockSnapshotError(
+            f"Could not get git tree hash for {path!r}: {e}"
+        ) from e
 
 
 def get_git_commit(path: str = ".") -> str:
@@ -120,10 +127,15 @@ def get_git_commit(path: str = ".") -> str:
         path (str): The path to the git repository.
 
     Returns:
-        str: The commit hash, or an error message if it fails.
+        str: The commit hash.
+
+    Raises:
+        FlexLockSnapshotError: if ``path`` is not a usable git repository.
     """
     try:
         repo = GitRepo(path, search_parent_directories=True)
         return repo.head.commit.hexsha
     except Exception as e:
-        return f"Error getting git commit: {e}"
+        raise FlexLockSnapshotError(
+            f"Could not get git commit for {path!r}: {e}"
+        ) from e
