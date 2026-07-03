@@ -270,6 +270,27 @@ def test_instantiate_simple_class():
     assert result.param2 == 100
 
 
+def test_instantiate_does_not_mutate_input():
+    """instantiate must not strip _snapshot_ from the caller's config (issue 11)."""
+    config = OmegaConf.create({
+        "_target_": "argparse.Namespace",
+        "name": "keep",
+        "_snapshot_": {"tracked": True},
+    })
+
+    instantiate(config)
+    assert "_snapshot_" in config
+
+    # Plain dict input must be preserved too.
+    plain = {
+        "_target_": "argparse.Namespace",
+        "name": "keep",
+        "_snapshot_": {"tracked": True},
+    }
+    instantiate(plain)
+    assert "_snapshot_" in plain
+
+
 def test_instantiate_with_actual_import():
     """Test instantiate with a class that can be imported."""
     from argparse import Namespace

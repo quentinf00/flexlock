@@ -834,9 +834,15 @@ def instantiate(config, *args, **kwargs):
     if isinstance(config, (list, ListConfig)):
         return [instantiate(item) for item in config]
 
-    # config is a dict
+    # config is a dict — never mutate the caller's object. Copy before
+    # stripping the tracking-only "_snapshot_" key so the original keeps it.
     if "_snapshot_" in config:
-        with open_dict(config):
+        if isinstance(config, DictConfig):
+            config = config.copy()
+            with open_dict(config):
+                del config["_snapshot_"]
+        else:
+            config = dict(config)
             del config["_snapshot_"]
 
     # 2. Check if this dict represents a target object
