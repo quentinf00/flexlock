@@ -7,11 +7,9 @@ import threading
 from loguru import logger
 import yaml
 import hashlib
-import logging
 from contextlib import contextmanager
 from typing import Any, List
 
-logger = logging.getLogger(__name__)
 _thread_local_conns = threading.local()
 
 

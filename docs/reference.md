@@ -53,18 +53,6 @@ All FlexLock environment variables are prefixed with `FLEXLOCK_`.
 - `pdb`: Always use PDB post-mortem debugger
 - `inject`: Always inject locals into caller's namespace (for notebooks)
 
-### Display
-
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `FLEXLOCK_MAX_DISPLAY_ITEMS` | int | `10` | Maximum items to show in summaries |
-
-### Validation
-
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `FLEXLOCK_STRICT_VALIDATION` | bool | `true` | Enable strict configuration validation |
-
 ### Boolean Values
 
 Boolean environment variables accept:

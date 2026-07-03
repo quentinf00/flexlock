@@ -722,7 +722,6 @@ except ValueError as e:
 | `FLEXLOCK_WARN_SMART_RUN`      | `true`                   | Warn when `smart_run=True` and `search_dirs=None`       |
 | `FLEXLOCK_TIMESTAMP_FORMAT`    | `%Y-%m-%dT%H-%M-%S`      | Directory timestamp format                              |
 | `FLEXLOCK_CONFIGURE_LOGGING`   | `true`                   | Configure Loguru on import                              |
-| `FLEXLOCK_STRICT_VALIDATION`   | `true`                   | Enforce strict config validation                        |
 
 Boolean values accept `1`/`true`/`yes`/`on` and `0`/`false`/`no`/`off`.
 See [reference.md](./reference.md) for the full list.

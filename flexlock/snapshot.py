@@ -168,7 +168,7 @@ def snapshot(
     """
     if "save_dir" not in cfg:
         logger.warning("No save_dir specified in config; skipping snapshot.")
-        return None if return_snapshot else None
+        return None
 
     # Use custom save_path if provided, otherwise use cfg.save_dir
     save_dir = Path(save_path) if save_path else Path(cfg.save_dir)

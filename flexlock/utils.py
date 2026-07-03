@@ -818,7 +818,7 @@ def log_to_file(path):
 
 
 def instantiate(config, *args, **kwargs):
-    """
+    r"""
     Recursively instantiate objects defined in dictionaries with a "_target_" key.
 
     Args:

@@ -159,8 +159,6 @@ class Project:
         Returns:
             The selected configuration (as DictConfig).
         """
-        if self.defaults is None:
-            raise ValueError("No defaults specified in Project initialization")
         return select_and_freeze_root_refs(self.defaults, key)
 
     def _generate_fingerprint(self, cfg: DictConfig) -> dict:

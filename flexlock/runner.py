@@ -15,7 +15,6 @@ from .utils import (
     load_sweep,
     enqueue_to_file,
 )
-from .diff import RunDiff
 from .exceptions import FlexLockValidationError
 from . import config
 from loguru import logger
@@ -249,22 +248,6 @@ class FlexLockRunner:
                 cfg.save_dir = str(Path("outputs") / name / ts)
         cfg.save_dir = cfg.save_dir  # Force interpolation resolution
         return cfg
-
-    def check_if_exists(self, cfg):
-        """Check if a run with the same configuration already exists."""
-        save_dir = Path(cfg.get("save_dir", "."))
-        lock_file = save_dir / "run.lock"
-
-        if not lock_file.exists():
-            return False
-
-        # Load existing run data
-        with open(lock_file, "r") as f:
-            existing_data = yaml.safe_load(f)
-
-        # Compare with current configuration
-        diff = RunDiff(cfg, existing_data)
-        return diff.is_match()
 
     def run(self, cli_args=None, base_cfg=None):
         """Thin layer over :meth:`Project.submit` — shapes CLI args and dispatches."""

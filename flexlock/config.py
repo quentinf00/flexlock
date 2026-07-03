@@ -105,15 +105,3 @@ NODEBUG = get_env_bool("FLEXLOCK_NODEBUG", False)
 
 # Debug strategy: 'auto', 'pdb', or 'inject'
 DEBUG_STRATEGY = os.environ.get("FLEXLOCK_DEBUG_STRATEGY", "auto")
-
-
-# ==================== Display ====================
-
-# Maximum number of items to show in summaries
-MAX_DISPLAY_ITEMS = get_env_int("FLEXLOCK_MAX_DISPLAY_ITEMS", 10)
-
-
-# ==================== Validation ====================
-
-# Whether to validate configuration strictly
-STRICT_VALIDATION = get_env_bool("FLEXLOCK_STRICT_VALIDATION", True)
