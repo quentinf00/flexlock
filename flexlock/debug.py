@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from loguru import logger
 
+from . import config
+
 
 def _is_notebook() -> bool:
     """Check if running in a Jupyter notebook or IPython environment."""
@@ -434,10 +436,7 @@ def debug_on_fail(fn=None, **legacy_kwargs):
 
     def decorator(fn):
         # Check if debug is disabled
-        flexlock_nodebug = os.environ.get("FLEXLOCK_NODEBUG", "false").lower() in (
-            "1",
-            "true",
-        )
+        flexlock_nodebug = config.get_env_bool("FLEXLOCK_NODEBUG", False)
 
         if flexlock_nodebug:
             return fn

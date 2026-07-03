@@ -372,6 +372,20 @@ class TestDebugOnFailEnhanced:
         assert 'y' not in locals()
 
 
+    @patch.dict(os.environ, {'FLEXLOCK_NODEBUG': 'yes'})
+    def test_debug_disabled_via_nodebug_yes(self):
+        """FLEXLOCK_NODEBUG=yes disables debug (env parsing unified, issue 10)."""
+
+        @debug_on_fail
+        def will_fail():
+            z = 30
+            raise ValueError("Test")
+
+        with pytest.raises(ValueError):
+            will_fail()
+
+        assert 'z' not in locals()
+
     @patch.dict(os.environ, {'FLEXLOCK_NODEBUG': '1'})
     def test_debug_accepts_legacy_stack_depth_kwarg(self):
         """Old docs use @debug_on_fail(stack_depth=2). Accept and ignore it

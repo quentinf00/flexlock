@@ -10,6 +10,7 @@ from .runner import FlexLockRunner
 from .utils import py2cfg, instantiate
 from .debug import debug_on_fail
 from .snapshot import snapshot
+from . import config
 
 
 def _is_jupyter_or_interactive():
@@ -120,7 +121,7 @@ def flexcli(_func=None, snapshot_config: Optional[Dict] = None, **defaults):
             if len(args) > 0 or len(kwargs) > 0:
                 # Direct call with arguments - execute immediately
                 # Apply debug wrapper if enabled
-                if os.environ.get("FLEXLOCK_DEBUG", "false").lower() in ("1", "true"):
+                if config.get_env_bool("FLEXLOCK_DEBUG", False):
                     return debug_on_fail(fn)(*args, **kwargs)
                 else:
                     return fn(*args, **kwargs)
@@ -146,7 +147,7 @@ def flexcli(_func=None, snapshot_config: Optional[Dict] = None, **defaults):
                 )
 
                 # Execute with debug wrapper if enabled
-                if os.environ.get("FLEXLOCK_DEBUG", "false").lower() in ("1", "true"):
+                if config.get_env_bool("FLEXLOCK_DEBUG", False):
                     return debug_on_fail(fn)(**defaults)
                 else:
                     return fn(**defaults)

@@ -373,10 +373,7 @@ class FlexLockRunner:
         )
 
         # Honour FLEXLOCK_DEBUG env var as a CLI-side debug toggle.
-        debug = args.debug or os.environ.get("FLEXLOCK_DEBUG", "false").lower() in (
-            "1",
-            "true",
-        )
+        debug = args.debug or config.get_env_bool("FLEXLOCK_DEBUG", False)
 
         # Hand off to the single execution kernel.
         proj = Project(root_cfg)
