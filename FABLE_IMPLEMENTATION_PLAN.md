@@ -332,31 +332,37 @@ those as "now handled" rather than warnings.
 ## Sequencing summary
 
 ```
-Phase 0  baseline + characterization tests (pin same-DB sweep resume; it already works)
-Phase 1  1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9        (independent, any order)
-Phase 2  2.1 -> 2.2 -> 2.3 -> 2.4 -> 2.5            (2.1 before 2.2; 2.3 feeds 2.2 status)
-         2.1 pure Fingerprint digest  |  2.2 project-wide index (sweep items first-class)
-Phase 3  3.1 RunRecord (writes the index) -> 2.2 final ; 3.2 ExecutionResult
+Phase 0  baseline (done: 407 green) 
+Phase 1  1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9        (DONE, 415 green)
+Phase 2/3 interleaved [DECIDED]:
+         2.1 pure Fingerprint digest
+         3.1 RunRecord (single on-disk-contract owner + sole index writer)
+         2.2 project-wide index (sweep items first-class, via RunRecord)
+         2.3 real statuses (collect_results) -> feeds 2.2 status
+         2.4 force reaches sweep items
+         2.5 RunDiff correctness (explainer only)
+         3.2 ExecutionResult typed dataclass
 Phase 4  docs + guidelines                          (last, matches shipped behaviour)
 ```
 
 Each phase ends green on `pixi run test`. Recommend a PR per phase (Phase 1 as one PR
 of small commits; Phase 2 as its own; Phase 3 optional separate PR).
 
-## Explicit decisions needed before Phase 2/3
-- **2.2 RESOLVED:** sweep items are first-class, delivered via the project-wide
-  fingerprint index (redesign 3). Remaining sub-decisions:
-  - **Index location scope** — `FLEXLOCK_INDEX` env vs nearest `.flexlock/index.db` up
-    from each `search_dir` vs per-`search_root`. Recommend: env override, else per
-    results-root `.flexlock/index.db`, with a project wrapper setting both `search_dirs`
-    and the index. Must agree or hits are missed.
-  - **Glob fallback lifetime** — keep `FLEXLOCK_INDEX_FALLBACK` (default on) for one
-    release so legacy runs still hit + backfill, then default off. Confirm.
-  - **Task-row git identity** — when writing a task's index row, include the master
-    snapshot's `repos` in its fingerprint (else `parent_lock` short-circuits git and the
-    fingerprint under-specifies code identity). Recommend yes.
-- **1.2 / 3.x hash format change** — confirm we accept invalidating existing data-hash
-  caches and stored `run.lock` data hashes (recommend yes + hash-version bump).
-- **Phase 3 scope** — do the two refactors now, or ship Phase 1+2 first and schedule
-  Phase 3 separately (recommend: ship 1+2, then decide on 3 from how fragile the interim
-  2.2/2.3 feel).
+## Explicit decisions — RESOLVED
+- **2.2 sweep items first-class** via the project-wide fingerprint index (redesign 3).
+  - **Index location scope [DECIDED]:** resolve in order (1) `FLEXLOCK_INDEX` env,
+    (2) nearest `.flexlock/index.db` walking up from each `search_dir`, (3) per
+    results-root `<results_root>/.flexlock/index.db`. A project wrapper should set both
+    `search_dirs` and the index so they agree.
+  - **Sequencing [DECIDED]:** interleave — **Phase 3.1 `RunRecord` lands before 2.2**
+    so the index has exactly one writer for serial runs *and* sweep tasks. Order:
+    `2.1 fingerprint -> 3.1 RunRecord -> 2.2 index -> 2.3 statuses -> 2.4 -> 2.5 -> 3.2`.
+  - **Glob fallback lifetime:** keep `FLEXLOCK_INDEX_FALLBACK` (default on) for one
+    release so legacy runs still hit + backfill, then default off.
+  - **Task-row git identity:** include the master snapshot's `repos` in a task's
+    fingerprint (else `parent_lock` short-circuits git and the fingerprint
+    under-specifies code identity).
+- **1.2 hash format change [DONE]:** accepted invalidating existing data-hash caches;
+  implemented via `HASH_VERSION` bump + versioned cache file (`hashes_v2.db`).
+- **1.7 vinc claim [REVISED]:** kept pure-scan; atomic claim deferred to 3.1 RunRecord
+  (see 1.7 above) because an in-resolver claim breaks within-submit idempotency.
