@@ -1,43 +1,29 @@
 """Snapshotting utilities for FlexLock."""
 
-import json
-import tempfile
-import os
 from datetime import datetime
 from pathlib import Path
 from omegaconf import OmegaConf
 from .git_utils import create_shadow_snapshot
 from .data_hash import hash_data
 from .load_stage import load_stage_from_path
+from .run_record import RunRecord, COMPLETE_MARKER, COMPLETE_VERSION
 from loguru import logger
 import uuid
-
-COMPLETE_MARKER = "run.complete"
-COMPLETE_VERSION = 1
 
 
 def write_complete_marker(save_dir: Path, result=None) -> Path:
     """Write run.complete atomically into ``save_dir``.
 
-    Marks a run as successfully finished. ``_find_matching_run`` requires
-    both ``run.lock`` and ``run.complete`` for a cache hit.
+    Thin wrapper over :meth:`RunRecord.mark_complete` kept for backward
+    compatibility. ``_find_matching_run`` requires both ``run.lock`` and
+    ``run.complete`` for a cache hit.
     """
-    save_dir = Path(save_dir)
-    save_dir.mkdir(parents=True, exist_ok=True)
-    payload = {"ts": datetime.now().isoformat(), "version": COMPLETE_VERSION}
-    if result is not None:
-        payload["has_result"] = True
-    with tempfile.NamedTemporaryFile("w", dir=save_dir, delete=False) as tf:
-        json.dump(payload, tf)
-        tmp_name = tf.name
-    os.replace(tmp_name, save_dir / COMPLETE_MARKER)
-    return save_dir / COMPLETE_MARKER
+    return RunRecord(save_dir).mark_complete(result=result)
 
 
 def is_complete(run_dir: Path) -> bool:
     """Return True if ``run_dir`` has both ``run.lock`` and ``run.complete``."""
-    p = Path(run_dir)
-    return (p / "run.lock").exists() and (p / COMPLETE_MARKER).exists()
+    return RunRecord(run_dir).is_complete
 
 
 class RunTracker:
@@ -116,14 +102,8 @@ class RunTracker:
             snapshot_data["config"].get("save_dir", str(self.save_dir))
         )
 
-        # Atomic Write
-        resolved_save_dir.mkdir(parents=True, exist_ok=True)
-        with tempfile.NamedTemporaryFile(
-            "w", dir=resolved_save_dir, delete=False
-        ) as tf:
-            tf.write(OmegaConf.to_yaml(snapshot_data))
-            tmp_name = tf.name
-        os.replace(tmp_name, resolved_save_dir / "run.lock")
+        # Single on-disk-contract owner performs the atomic write.
+        RunRecord(resolved_save_dir).write_lock(snapshot_data)
 
         # Remember the resolved dir so mark_complete can write next to run.lock
         self._resolved_save_dir = resolved_save_dir
@@ -139,7 +119,7 @@ class RunTracker:
         correctly skipped instead of being treated as a stale cache hit.
         """
         target = getattr(self, "_resolved_save_dir", self.save_dir)
-        return write_complete_marker(target, result=result)
+        return RunRecord(target).mark_complete(result=result)
 
 
 def snapshot(

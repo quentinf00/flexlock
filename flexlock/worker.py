@@ -20,7 +20,8 @@ from loguru import logger
 
 from .taskdb import claim_next_task, finish_task, pending_count
 from flexlock.utils import merge_task_into_cfg, instantiate, extract_tracking_info
-from flexlock.snapshot import snapshot, write_complete_marker
+from flexlock.snapshot import snapshot
+from flexlock.run_record import RunRecord
 from flexlock import config as _config
 
 
@@ -147,14 +148,13 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
             result = func(task_cfg)
             logger.info(f"Task successful: {task_cfg}")
 
+            record = RunRecord(task_save_dir)
             try:
-                results_file = task_save_dir / "results.json"
-                payload = result if isinstance(result, dict) else {"result": result}
-                results_file.write_text(json.dumps(payload, indent=2, default=str))
+                record.write_results(result)
             except Exception as e:
                 logger.warning(f"Could not write results.json at {task_save_dir}: {e}")
 
-            write_complete_marker(task_save_dir, result=result)
+            record.mark_complete(result=result)
             finish_task(db_path, task, result=result)
 
         except KeyboardInterrupt:

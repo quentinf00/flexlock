@@ -12,7 +12,8 @@ from .utils import (
     extract_tracking_info,
     select_and_freeze_root_refs,
 )
-from .snapshot import snapshot, RunTracker, write_complete_marker
+from .snapshot import snapshot, RunTracker
+from .run_record import RunRecord
 from .diff import RunDiff
 from . import config as flexlock_config
 
@@ -678,17 +679,14 @@ class Project:
             # Save results if save_dir is specified
             save_dir = config.get("save_dir", ".")
             if "save_dir" in config:
-                results_file = Path(save_dir) / "results.json"
+                record = RunRecord(save_dir)
                 try:
-                    with open(results_file, "w") as f:
-                        json.dump(
-                            result if isinstance(result, dict) else {"result": result},
-                            f,
-                            indent=2,
-                        )
+                    record.write_results(result)
                 except Exception as e:
-                    logger.warning(f"Could not save results to {results_file}: {e}")
-                write_complete_marker(Path(save_dir), result=result)
+                    logger.warning(
+                        f"Could not save results to {record.results_path}: {e}"
+                    )
+                record.mark_complete(result=result)
 
             return ExecutionResult(
                 save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config
