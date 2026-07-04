@@ -3,7 +3,12 @@ from git import Repo
 from pathlib import Path
 import os
 
-from flexlock.git_utils import get_git_commit, create_shadow_snapshot, get_git_tree_hash
+from flexlock.git_utils import (
+    get_git_commit,
+    create_shadow_snapshot,
+    create_shadow_tree,
+    get_git_tree_hash,
+)
 from flexlock.exceptions import FlexLockSnapshotError
 
 
@@ -115,3 +120,62 @@ def test_shadow_snapshot_ignores_patterns(git_repo):
 
     # The tree hashes should be different since we're including all files in the second case
     assert result_with_ignore["tree"] != result_without_ignore["tree"]
+
+# ── create_shadow_tree: write-tree only, no side effects (issue 3) ──
+
+
+def _list_flexlock_refs(repo):
+    refs_dir = Path(repo.git_dir) / "refs" / "flexlock"
+    if not refs_dir.exists():
+        return []
+    return [p for p in refs_dir.rglob("*") if p.is_file()]
+
+
+def test_create_shadow_tree_matches_shadow_snapshot(git_repo):
+    """Same working tree -> same tree hash as create_shadow_snapshot."""
+    repo_dir = Path(git_repo.working_dir)
+    (repo_dir / "extra.txt").write_text("payload")
+
+    snap = create_shadow_snapshot(repo_path=str(repo_dir))
+    tree = create_shadow_tree(repo_path=str(repo_dir))
+
+    assert tree["tree"] == snap["tree"]
+    assert isinstance(tree["is_dirty"], bool)
+    assert "commit" not in tree
+
+
+def test_create_shadow_tree_creates_no_refs_or_commits(git_repo):
+    """create_shadow_tree must not create refs/flexlock/runs/* or commits."""
+    repo_dir = Path(git_repo.working_dir)
+    (repo_dir / "extra.txt").write_text("payload")
+
+    commits_before = sum(1 for _ in git_repo.iter_commits())
+    refs_before = _list_flexlock_refs(git_repo)
+
+    create_shadow_tree(repo_path=str(repo_dir))
+
+    commits_after = sum(1 for _ in git_repo.iter_commits())
+    refs_after = _list_flexlock_refs(git_repo)
+
+    assert commits_after == commits_before
+    assert refs_after == refs_before == []
+
+
+def test_create_shadow_snapshot_does_create_a_ref(git_repo):
+    """Contrast: the real snapshot path *does* persist a ref."""
+    repo_dir = Path(git_repo.working_dir)
+    create_shadow_snapshot(repo_path=str(repo_dir))
+    assert _list_flexlock_refs(git_repo)  # non-empty
+
+
+def test_create_shadow_tree_exclude_changes_scope(git_repo):
+    """Excluding a file makes its content irrelevant to the tree hash."""
+    repo_dir = Path(git_repo.working_dir)
+    (repo_dir / "keep.txt").write_text("keep")
+    (repo_dir / "junk.log").write_text("v1")
+
+    t1 = create_shadow_tree(repo_path=str(repo_dir), exclude=["*.log"])["tree"]
+    (repo_dir / "junk.log").write_text("v2-different")
+    t2 = create_shadow_tree(repo_path=str(repo_dir), exclude=["*.log"])["tree"]
+
+    assert t1 == t2  # excluded file change is invisible

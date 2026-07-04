@@ -95,6 +95,61 @@ def create_shadow_snapshot(
         }
 
 
+def create_shadow_tree(
+    repo_path: str = ".",
+    include: list | None = None,
+    exclude: list | None = None,
+) -> dict:
+    """Compute a content tree hash for a working tree without side effects.
+
+    Unlike :func:`create_shadow_snapshot`, this stages into a throwaway shadow
+    index and runs **``write-tree`` only** — it creates no commit object and no
+    ``refs/flexlock/runs/*`` ref. It is therefore safe to call on every
+    fingerprint check (smart-run) without accumulating objects/refs in ``.git``.
+
+    Args:
+        repo_path: Path inside the repository.
+        include: Optional pathspec(s); when given, only these paths are staged
+            (the fingerprint is restricted to the "relevant" subtree, so an
+            include-match becomes plain tree-hash equality). Defaults to all
+            tracked + untracked files.
+        exclude: Optional pathspec(s) removed from the staged index.
+
+    Returns:
+        dict: ``{"tree": <hash>, "is_dirty": <bool>}``.
+    """
+    repo = GitRepo(repo_path, search_parent_directories=True)
+    include = include or None
+    exclude = exclude or []
+
+    with shadow_index(repo) as shadow_env:
+        git = repo.git
+
+        # 1. Stage into the shadow index. Restrict to `include` when provided so
+        #    the tree hash only reflects the relevant subtree.
+        if include:
+            git.add("--", *include, env=shadow_env)
+        else:
+            git.add("--all", env=shadow_env)
+
+        # 2. Drop excluded patterns from the shadow index.
+        if exclude:
+            try:
+                git.rm(
+                    "--cached", "-r", "--ignore-unmatch", *exclude, env=shadow_env
+                )
+            except Exception:
+                pass
+
+        # 3. Write the tree — the content fingerprint. No commit, no ref.
+        tree_hash = git.write_tree(env=shadow_env)
+
+        return {
+            "tree": tree_hash,
+            "is_dirty": repo.is_dirty(untracked_files=True),
+        }
+
+
 def get_git_tree_hash(path: str = ".") -> str:
     """
     Gets the current git tree hash for a repository without creating a new commit.
