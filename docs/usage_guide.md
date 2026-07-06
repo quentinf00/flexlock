@@ -483,14 +483,23 @@ proj.submit(cfg, smart_run=True, search_dirs=['outputs/train/'])
 
 Mechanism:
 
-1. Generate a fingerprint from `cfg` (git tree hashes + data hashes +
-   resolved config, minus `_snapshot_`).
-2. Walk each `search_dirs` entry looking for `**/run.lock`.
-3. For each candidate, compare fingerprints via `RunDiff`. Save-dir
-   paths are normalized so two runs with different output directories
-   can still match.
-4. On match: confirm `run.complete` exists. If it doesn't, the run was
-   interrupted — skip it. Otherwise return the cached result.
+1. Compute a stable **fingerprint** from `cfg` (per-repo git *tree* hashes
+   restricted to include/exclude, data hashes, and the resolved config with
+   `save_dir` prefix-normalized so output location doesn't affect it). This
+   uses `git write-tree` only — no commits or refs are created.
+2. Look the fingerprint up in the project-wide index (one indexed `SELECT`).
+   The index maps a fingerprint to where a completed run lives — a `run.lock`
+   directory **or** a sweep task `(task_db, task_id)`, so sweep items are
+   first-class cache entries.
+3. On a hit, verify the pointed-to run still exists and is complete
+   (`run.complete`, or the task's `results.json`). A stale pointer self-prunes
+   and is treated as a miss. Only `status='done'` runs are ever served.
+4. On an index miss, fall back to the legacy `**/run.lock` glob scan +
+   `RunDiff` (controlled by `FLEXLOCK_INDEX_FALLBACK`, default on) and backfill
+   the index on a hit, so the slow path self-eliminates.
+
+Rebuild the index at any time with `flexlock reindex <results_root>`; deleting
+it is always safe.
 
 ### When caches miss
 
@@ -511,8 +520,10 @@ flexlock-diff outputs/train/run_0001 outputs/train/run_0002
 | Knob                                | Effect                                     |
 |-------------------------------------|--------------------------------------------|
 | `smart_run=False`                   | Always execute                             |
-| `force=True`                        | Delete `run.complete`, then execute        |
+| `force=True`                        | Invalidate `run.complete` (and, for sweeps, per-item markers + the task DB), then execute |
 | `FLEXLOCK_NO_CACHE=1`               | Disable the on-disk data-hash cache        |
+| `FLEXLOCK_INDEX=/path/index.db`     | Explicit fingerprint-index location        |
+| `FLEXLOCK_INDEX_FALLBACK=0`         | Skip the legacy glob scan on an index miss |
 | `match_include` / `match_exclude`   | Override git path filters at compare time  |
 | `search_dirs=[...]`                 | Where to look for cached runs              |
 

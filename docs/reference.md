@@ -18,13 +18,31 @@ All FlexLock environment variables are prefixed with `FLEXLOCK_`.
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
 | `FLEXLOCK_WARN_SMART_RUN` | bool | `true` | Warn when `smart_run=True` but `search_dirs=None` |
+| `FLEXLOCK_INDEX` | path | *(auto)* | Explicit path to the project-wide fingerprint index DB. Overrides auto-discovery. |
+| `FLEXLOCK_INDEX_FALLBACK` | bool | `true` | On an index miss, fall back to the legacy `**/run.lock` glob scan and backfill the index on a hit. |
+
+**Project-wide fingerprint index.** `smart_run` cache hits are served from a
+derived SQLite index that maps a run *fingerprint* (config + code tree hashes +
+data hashes) to where a completed run lives — a `run.lock` directory **or** a
+sweep task `(task_db, task_id)`. This makes sweep items first-class: a config
+first run as a sweep task is a cache hit when re-run serially, and vice-versa.
+Only successful (`status='done'`) runs are ever served.
+
+The index is a *derived cache* — `run.lock` stays authoritative and the index
+can always be deleted and rebuilt with `flexlock reindex <dir>`. Its location is
+resolved as: `$FLEXLOCK_INDEX` → the nearest `.flexlock/index.db` walking up
+from each `search_dir` (skipping `$HOME`/tmp/filesystem-root) →
+`<results_root>/.flexlock/index.db`. For hits to land, the read and write paths
+must resolve to the same file — a project wrapper should set `search_dirs` (and,
+if needed, `$FLEXLOCK_INDEX`) so they agree. Auto-indexing is skipped when a run
+has no project context (its index would sit directly in `$HOME`/tmp/root).
 
 ### Data Hashing
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `FLEXLOCK_CACHE` | path | `~/.cache` | Base directory for FlexLock cache |
-| `FLEXLOCK_NO_CACHE` | bool | `false` | Disable hash caching |
+| `FLEXLOCK_CACHE` | path | `~/.cache` | Base dir for the data-hash cache (stored under `<FLEXLOCK_CACHE>/flexlock/hashes_v<N>.db`) |
+| `FLEXLOCK_NO_CACHE` | bool | `false` | Force-disable hash caching (overrides a `use_cache=True` argument; never re-enables `use_cache=False`) |
 | `FLEXLOCK_DIR_FILE_LIMIT` | int | `1000` | Max files to hash in a directory before warning |
 | `FLEXLOCK_CACHE_DIR_FILE_LIMIT` | int | `1000` | Override file limit for cache operations |
 
