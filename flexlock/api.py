@@ -533,12 +533,14 @@ class Project:
             return None
 
         if force:
-            # Invalidate the cache for this save_dir without touching outputs.
-            save_dir = Path(config.get("save_dir", "outputs/job"))
-            marker = save_dir / "run.complete"
-            if marker.exists():
-                logger.info(f"Force flag enabled: invalidating cache at {save_dir}")
-                marker.unlink()
+            # Invalidate the single-run cache marker. For sweeps the per-item
+            # markers and task DB are reset inside _submit_sweep (2.4).
+            if not sweep:
+                save_dir = Path(config.get("save_dir", "outputs/job"))
+                marker = save_dir / "run.complete"
+                if marker.exists():
+                    logger.info(f"Force flag enabled: invalidating cache at {save_dir}")
+                    marker.unlink()
             smart_run = False
 
         # Handle sweep execution
@@ -559,6 +561,7 @@ class Project:
                 sweep_root=sweep_root,
                 debug=debug,
                 tag=tag,
+                force=force,
             )
 
         # Single execution path
@@ -916,6 +919,32 @@ class Project:
         """
         return cls().submit(config, **kwargs)
 
+    @staticmethod
+    def _sweep_db_dir(merged_items, sweep_root) -> "Path | None":
+        """Directory that hosts the sweep's task DB (mirrors the parallel path)."""
+        if sweep_root is not None:
+            return Path(sweep_root)
+        for _, cfg in merged_items:
+            if "save_dir" in cfg:
+                return Path(cfg.save_dir).parent
+        return None
+
+    def _reset_sweep_for_force(self, merged_items, sweep_root) -> None:
+        """Invalidate per-item markers and the task DB so a forced sweep reruns."""
+        # Per-item completion markers + results (so RunRecord/index see fresh runs).
+        for _, cfg in merged_items:
+            if "save_dir" in cfg:
+                d = Path(cfg.save_dir)
+                (d / "run.complete").unlink(missing_ok=True)
+                (d / "results.json").unlink(missing_ok=True)
+
+        # Task DB (its pending_count==0 short-circuit would otherwise resume).
+        db_dir = self._sweep_db_dir(merged_items, sweep_root)
+        if db_dir is not None:
+            for suffix in ("", "-wal", "-shm"):
+                (db_dir / f"run.lock.tasks.db{suffix}").unlink(missing_ok=True)
+            logger.info(f"Force flag enabled: reset sweep task DB under {db_dir}")
+
     def _submit_sweep(
         self,
         base_config: DictConfig,
@@ -933,6 +962,7 @@ class Project:
         sweep_root: "str | None" = None,
         debug: bool = False,
         tag: "str | None" = None,
+        force: bool = False,
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -983,6 +1013,14 @@ class Project:
         # worker either fails opaquely (pre-validation) or can't form a
         # relative path. Surface a clear error before we queue anything.
         self._validate_sweep_save_dirs(base_config, merged_items, sweep_root=sweep_root)
+
+        # Force: reset the per-item completion markers *and* the task DB so every
+        # item re-executes. Unlinking only the base marker (the old behaviour)
+        # missed both the per-item markers and the DB's pending_count==0
+        # resume short-circuit, so a forced sweep silently re-used cached
+        # tasks (issue 15).
+        if force:
+            self._reset_sweep_for_force(merged_items, sweep_root)
 
         # Check each sweep config for cached results
         for i, sweep_cfg in merged_items:

@@ -325,3 +325,53 @@ def test_submit_without_sweep_target_merges_at_root(tmp_path):
     assert len(captured) == 2
     lrs = [c["lr"] for c in captured]
     assert sorted(lrs) == [0.5, 0.9]
+
+
+# --- force reaches sweep items (issue 15) ---
+
+def _counting_target(tick_file=None, x=0, save_dir=None):
+    """Append a tick per execution so tests can count real (re-)runs."""
+    with open(tick_file, "a") as f:
+        f.write("1")
+    return {"x": x}
+
+
+def test_forced_sweep_reexecutes_all_items(tmp_path, monkeypatch):
+    from flexlock.api import Project
+
+    monkeypatch.setenv("FLEXLOCK_INDEX", str(tmp_path / "idx.db"))
+    tick = tmp_path / "ticks.txt"
+    base = tmp_path / "exp"
+    cfg = OmegaConf.create(
+        {
+            "_target_": "tests.test_submit_params._counting_target",
+            "tick_file": str(tick),
+            "x": 0,
+            "save_dir": str(base),
+        }
+    )
+    sweep = [{"x": 1}, {"x": 2}]
+    proj = Project()
+
+    # First run: both items execute.
+    proj.submit(
+        cfg, sweep=sweep, n_jobs=1, sweep_dir_suffix=True, search_dirs=[str(base)]
+    )
+    assert len(tick.read_text()) == 2
+
+    # Re-run without force: both cached, no new executions.
+    proj.submit(
+        cfg, sweep=sweep, n_jobs=1, sweep_dir_suffix=True, search_dirs=[str(base)]
+    )
+    assert len(tick.read_text()) == 2
+
+    # Force: every item re-executes despite existing markers.
+    proj.submit(
+        cfg,
+        sweep=sweep,
+        n_jobs=1,
+        sweep_dir_suffix=True,
+        search_dirs=[str(base)],
+        force=True,
+    )
+    assert len(tick.read_text()) == 4
