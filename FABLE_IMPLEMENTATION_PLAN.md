@@ -332,17 +332,17 @@ those as "now handled" rather than warnings.
 ## Sequencing summary
 
 ```
-Phase 0  baseline (done: 407 green) 
+Phase 0  baseline (DONE: 407 green)
 Phase 1  1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9        (DONE, 415 green)
 Phase 2/3 interleaved [DECIDED]:
-         2.1 pure Fingerprint digest
-         3.1 RunRecord (single on-disk-contract owner + sole index writer)
-         2.2 project-wide index (sweep items first-class, via RunRecord)
-         2.3 real statuses (collect_results) -> feeds 2.2 status
-         2.4 force reaches sweep items
-         2.5 RunDiff correctness (explainer only)
-         3.2 ExecutionResult typed dataclass
-Phase 4  docs + guidelines                          (last, matches shipped behaviour)
+         2.1 pure Fingerprint digest                (DONE, 428 green)
+         3.1 RunRecord (on-disk-contract owner)     (DONE, 434 green)
+         2.2 project-wide index (sweep first-class) (DONE, 445 green)
+         2.5 RunDiff correctness (explainer only)   (DONE, 451 green)
+         2.4 force reaches sweep items              (DONE)
+         2.3 real statuses (collect_results)        (DONE, 453 green)
+         3.2 ExecutionResult typed (Status enum)    (DONE, 455 green)
+Phase 4  docs + guidelines                          (TODO)
 ```
 
 Each phase ends green on `pixi run test`. Recommend a PR per phase (Phase 1 as one PR
