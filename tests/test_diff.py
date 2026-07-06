@@ -491,5 +491,55 @@ class TestRunDiff:
         assert diff.is_match() is True
 
 
+class TestRunDiffCorrectness:
+    """Regression tests for issues 7, 8, 9."""
+
+    def test_nested_user_key_not_ignored(self):
+        """A user hyperparameter named 'time' nested in config must count (issue 7)."""
+        current = {"config": {"train": {"time": 100}}}
+        target = {"config": {"train": {"time": 200}}}
+        diff = RunDiff(current, target)
+        assert diff.compare_config() is False
+
+    def test_toplevel_metadata_still_ignored(self):
+        """Injected metadata at the config top level stays ignored."""
+        current = {"config": {"time": "2024-01-01", "lr": 0.1}}
+        target = {"config": {"time": "2024-12-31", "lr": 0.1}}
+        diff = RunDiff(current, target)
+        assert diff.compare_config() is True
+
+    def test_normalization_is_prefix_only(self):
+        """Only exact/path-prefix matches are normalized, not substrings (issue 8)."""
+        diff = RunDiff({}, {})
+        root = "outputs/run_001"
+        # A sibling dir that merely shares the string prefix (next char is not a
+        # separator) must be left intact — the old substring replace corrupted it.
+        assert diff._normalize_val("outputs/run_001_backup/x", root) == (
+            "outputs/run_001_backup/x"
+        )
+        # Genuine path prefix and exact match are normalized.
+        assert diff._normalize_val("outputs/run_001/model.pth", root) == (
+            "<SAVE_DIR>/model.pth"
+        )
+        assert diff._normalize_val(root, root) == "<SAVE_DIR>"
+
+    def test_git_repo_only_in_target_flagged(self):
+        """A repo present only in target is flagged (issue 9, symmetry)."""
+        current = {"repos": {"a": {"tree": "x"}}}
+        target = {"repos": {"a": {"tree": "x"}, "b": {"tree": "y"}}}
+        diff = RunDiff(current, target)
+        assert diff.compare_git() is False
+        assert any("only in target" in m for m in diff.diffs["git"])
+
+    def test_data_diff_names_the_key(self):
+        """compare_data reports which key differs (issue 9)."""
+        current = {"data": {"train": "h1", "val": "hv"}}
+        target = {"data": {"train": "h2", "val": "hv"}}
+        diff = RunDiff(current, target)
+        assert diff.compare_data() is False
+        assert any("train" in m for m in diff.diffs["data"])
+        assert not any("val" in m for m in diff.diffs["data"])
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

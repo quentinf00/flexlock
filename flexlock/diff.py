@@ -1,5 +1,6 @@
 """Diff utilities for FlexLock."""
 
+import os
 from typing import Any, Dict, Set
 from omegaconf import OmegaConf, DictConfig, ListConfig
 from loguru import logger
@@ -31,19 +32,27 @@ class RunDiff:
         self.current = current
         self.target = target
 
-        # Keys to strictly ignore during config comparison
-        self.ignore_keys = set(ignore_keys or []) | {
-            "save_dir",
+        # Keys that legitimately appear inside the user config and are
+        # FlexLock-managed (or explicitly requested) — ignored at *any* depth.
+        self.always_ignore = set(ignore_keys or []) | {"save_dir", "_snapshot_"}
+
+        # Keys FlexLock injects at the snapshot top level (run metadata). These
+        # are only ignored at the top of the config subtree — a user
+        # hyperparameter named e.g. ``time`` or ``system`` nested deeper must
+        # NOT be silently ignored (issue 7), which would cause false cache hits.
+        self.toplevel_ignore = {
             "timestamp",
             "system",
             "job_id",
             "work_dir",
             "cwd",
-            "_snapshot_",
             "date",
             "time",
             "datetime",
         }
+
+        # Back-compat: some callers/tests read ``ignore_keys``.
+        self.ignore_keys = self.always_ignore | self.toplevel_ignore
 
         # For value normalization (handling interpolation)
         self.c_dir = str(current_save_dir) if current_save_dir else None
@@ -67,12 +76,15 @@ class RunDiff:
         Returns:
             Normalized value
         """
-        logger.debug(
-            f"Normalizing value: {val} with root_dir: {root_dir}, {type(val)} {type(root_dir)}"
-        )
-        if root_dir and isinstance(val, str) and root_dir in val:
-            logger.debug(f"Value '{val}' contains root_dir '{root_dir}', normalizing.")
-            return val.replace(root_dir, "<SAVE_DIR>")
+        if not (root_dir and isinstance(val, str)):
+            return val
+        # Prefix-only: replace an exact match or a genuine path prefix, never an
+        # arbitrary substring (issue 8). ``outputs/other`` must not be rewritten
+        # just because save_dir is ``outputs``.
+        if val == root_dir:
+            return "<SAVE_DIR>"
+        if val.startswith(root_dir + os.sep):
+            return "<SAVE_DIR>" + val[len(root_dir):]
         return val
 
     def compare_git(self):
@@ -81,8 +93,14 @@ class RunDiff:
         c_repos = self.current.get("repos", {})
         t_repos = self.target.get("repos", {})
 
-        for name, c_info in c_repos.items():
+        # Iterate the union so a repo present on only one side is flagged
+        # symmetrically (issue 9) instead of being silently ignored.
+        for name in set(c_repos) | set(t_repos):
+            c_info = c_repos.get(name)
             t_info = t_repos.get(name)
+            if not c_info:
+                diff.append(f"Repo {name} only in target")
+                continue
             if not t_info:
                 diff.append(f"Repo {name} missing")
                 continue
@@ -157,9 +175,15 @@ class RunDiff:
             if isinstance(d1, (dict, DictConfig)) and isinstance(
                 d2, (dict, DictConfig)
             ):
+                # Injected run-metadata keys are ignored only at the top of the
+                # config subtree; user keys are compared at every depth.
+                ignore_here = self.always_ignore
+                if path == "":
+                    ignore_here = ignore_here | self.toplevel_ignore
+
                 all_keys = set(d1.keys()) | set(d2.keys())
                 for k in all_keys:
-                    if k in self.ignore_keys:
+                    if k in ignore_here:
                         continue
 
                     new_path = f"{path}.{k}" if path else k
@@ -206,11 +230,22 @@ class RunDiff:
         c_data = self.current.get("data", {})
         t_data = self.target.get("data", {})
 
-        data_match = c_data == t_data
-        if not data_match:
-            self.diffs["data"] = ["Data differs"]
+        if c_data == t_data:
+            return True
 
-        return data_match
+        # Name which keys/hashes differ instead of a bare "Data differs" (issue 9).
+        detail = []
+        for key in sorted(set(c_data) | set(t_data)):
+            cv = c_data.get(key)
+            tv = t_data.get(key)
+            if key not in c_data:
+                detail.append(f"{key}: only in target")
+            elif key not in t_data:
+                detail.append(f"{key}: only in current")
+            elif cv != tv:
+                detail.append(f"{key}: {cv} != {tv}")
+        self.diffs["data"] = detail or ["Data differs"]
+        return False
 
     def is_match(self):
         """Check if the current run matches the target run."""
