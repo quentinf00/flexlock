@@ -14,6 +14,8 @@ from .utils import (
 )
 from .snapshot import snapshot, RunTracker
 from .run_record import RunRecord
+from .fingerprint import fingerprint as compute_fingerprint
+from . import index
 from .diff import RunDiff
 from . import config as flexlock_config
 
@@ -210,8 +212,15 @@ class Project:
 
             match_include = collect_target_include_patterns(cfg) or None
 
-        # Generate fingerprint for this config
-        fingerprint = self._generate_fingerprint(cfg)
+        # Compute the pure fingerprint digest — the index key. Both sweep tasks
+        # and serial runs record under this same key, so a config first run as a
+        # sweep task hits here when re-run serially (sweep items are first-class).
+        repos, data, _ = extract_tracking_info(cfg)
+        try:
+            fp = compute_fingerprint(cfg, repos=repos, data=data)
+        except Exception as e:
+            logger.warning(f"Could not compute fingerprint for lookup: {e}")
+            fp = None
 
         # Determine where to search
         if search_dirs is None:
@@ -228,60 +237,74 @@ class Project:
                 logger.warning("No save_dir in config and no search_dirs provided")
                 return None
 
-        # Search for matching runs
+        fallback = flexlock_config.get_env_bool("FLEXLOCK_INDEX_FALLBACK", True)
+
         for search_root in search_dirs:
             logger.debug(f"Searching for matching runs in: {search_root}")
             root_path = Path(search_root)
-            if not root_path.exists():
-                continue
 
-            # Iterate over subdirectories (run directories)
-            for lock_file in Path(root_path).glob("**/run.lock"):
-                run_dir = Path(lock_file).parent
-                logger.debug(f"Checking run.lock at {lock_file}")
-                try:
-                    # Load candidate snapshot
-                    with open(lock_file, "r") as f:
-                        candidate_snapshot = yaml.safe_load(f)
+            # 1. Fast path: single indexed lookup by fingerprint.
+            if fp:
+                row = index.lookup(root_path, fp)
+                if row is not None:
+                    resolved = index.verify_and_resolve(root_path, row)
+                    if resolved is not None:
+                        logger.success(f"⚡ Cache Hit (index)! {resolved}")
+                        return resolved
 
-                    # Extract save_dir from both snapshots for normalization
-                    proposed_save_dir = fingerprint.get("config", {}).get("save_dir")
-                    candidate_save_dir = candidate_snapshot.get("config", {}).get(
-                        "save_dir"
-                    )
+            # 2. Fallback: legacy glob scan for runs predating the index. On a
+            #    hit, backfill the index so the slow path self-eliminates.
+            if fallback and root_path.exists():
+                match = self._glob_scan_match(
+                    cfg, root_path, match_include, match_exclude
+                )
+                if match is not None:
+                    if fp:
+                        index.record_run_lock(match, fp)
+                    logger.success(f"⚡ Cache Hit (glob)! {match}")
+                    return match
 
-                    # Compare using RunDiff with save_dir context
-                    differ = RunDiff(
-                        current=fingerprint,
-                        target=candidate_snapshot,
-                        current_save_dir=proposed_save_dir,
-                        target_save_dir=candidate_save_dir,
-                        ignore_keys=["_snapshot_"],
-                        match_include=match_include,
-                        match_exclude=match_exclude,
-                    )
+        return None
 
-                    if differ.is_match():
-                        # Require run.complete — interrupted runs left only
-                        # run.lock and must not be treated as cache hits.
-                        if not (run_dir / "run.complete").exists():
-                            logger.debug(
-                                f"Match at {run_dir} has no run.complete "
-                                f"(previous attempt incomplete); skipping"
-                            )
-                            continue
+    def _glob_scan_match(
+        self, cfg, root_path, match_include, match_exclude
+    ) -> Optional[Path]:
+        """Legacy O(N) content scan used only as an index fallback (RunDiff)."""
+        fingerprint = self._generate_fingerprint(cfg)
+        for lock_file in Path(root_path).glob("**/run.lock"):
+            run_dir = Path(lock_file).parent
+            try:
+                with open(lock_file, "r") as f:
+                    candidate_snapshot = yaml.safe_load(f)
 
-                        logger.success(
-                            f"⚡ Cache Hit! Found matching run at: {run_dir}"
+                proposed_save_dir = fingerprint.get("config", {}).get("save_dir")
+                candidate_save_dir = candidate_snapshot.get("config", {}).get(
+                    "save_dir"
+                )
+
+                differ = RunDiff(
+                    current=fingerprint,
+                    target=candidate_snapshot,
+                    current_save_dir=proposed_save_dir,
+                    target_save_dir=candidate_save_dir,
+                    ignore_keys=["_snapshot_"],
+                    match_include=match_include,
+                    match_exclude=match_exclude,
+                )
+
+                if differ.is_match():
+                    # Require run.complete — interrupted runs are not cache hits.
+                    if not (run_dir / "run.complete").exists():
+                        logger.debug(
+                            f"Match at {run_dir} has no run.complete; skipping"
                         )
-                        return run_dir
-                    else:
-                        logger.debug(f"No match for run at: {run_dir}: {differ.diffs}")
-
-                except Exception as e:
-                    logger.debug(f"Failed to read/compare {lock_file}: {e}")
-                    continue
-
+                        continue
+                    return run_dir
+                else:
+                    logger.debug(f"No match for run at: {run_dir}: {differ.diffs}")
+            except Exception as e:
+                logger.debug(f"Failed to read/compare {lock_file}: {e}")
+                continue
         return None
 
     def exists(self, cfg: DictConfig, search_dirs: List[str] = None) -> bool:
@@ -663,9 +686,20 @@ class Project:
             except Exception as exc:
                 logger.warning(f"Could not fully resolve config before execution: {exc}")
 
+            # Compute the fingerprint once (index key), stored in run.lock so
+            # `flexlock reindex` can rebuild the index from disk.
+            run_fp = None
+            if "save_dir" in config:
+                try:
+                    run_fp = compute_fingerprint(config, repos=repos, data=data)
+                except Exception as exc:
+                    logger.warning(f"Could not compute run fingerprint: {exc}")
+
             # Create snapshot before execution
             if "save_dir" in config:
-                snapshot(config, repos=repos, data=data, prevs=prevs)
+                snapshot(
+                    config, repos=repos, data=data, prevs=prevs, fingerprint=run_fp
+                )
 
             # Execute the function
             logger.info(f"Executing configuration...")
@@ -687,6 +721,9 @@ class Project:
                         f"Could not save results to {record.results_path}: {e}"
                     )
                 record.mark_complete(result=result)
+                # Record the completed run in the project-wide index (2.2).
+                if run_fp:
+                    index.record_run_lock(save_dir, run_fp)
 
             return ExecutionResult(
                 save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config

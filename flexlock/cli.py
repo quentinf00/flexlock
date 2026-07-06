@@ -575,6 +575,15 @@ def cmd_migrate_cache_markers(args):
     print(f"Wrote {written} markers.")
 
 
+def cmd_reindex(args):
+    """Rebuild the project-wide fingerprint index from run.lock files."""
+    from . import index
+
+    root = Path(args.path) if args.path else Path(".")
+    n = index.reindex(root)
+    print(f"Reindexed {n} run(s) under {root}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="flexlock",
@@ -621,6 +630,16 @@ def main():
     mig_parser.add_argument("-n", "--dry-run", action="store_true")
     mig_parser.add_argument("-f", "--force", action="store_true", help="Skip confirmation")
     mig_parser.set_defaults(func=cmd_migrate_cache_markers)
+
+    # reindex
+    reindex_parser = subparsers.add_parser(
+        "reindex",
+        help="Rebuild the project-wide fingerprint index from run.lock files",
+    )
+    reindex_parser.add_argument(
+        "path", nargs="?", help="Root directory to walk (default: .)"
+    )
+    reindex_parser.set_defaults(func=cmd_reindex)
 
     args = parser.parse_args()
 

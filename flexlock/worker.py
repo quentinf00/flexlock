@@ -22,6 +22,8 @@ from .taskdb import claim_next_task, finish_task, pending_count
 from flexlock.utils import merge_task_into_cfg, instantiate, extract_tracking_info
 from flexlock.snapshot import snapshot
 from flexlock.run_record import RunRecord
+from flexlock.fingerprint import fingerprint as compute_fingerprint
+from flexlock import index
 from flexlock import config as _config
 
 
@@ -119,10 +121,20 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
         try:
             task_cfg = merge_task_into_cfg(cfg, task, task_to)
 
-            _, data, prevs = extract_tracking_info(task_cfg)
+            repos, data, prevs = extract_tracking_info(task_cfg)
 
             task_save_dir = Path(task_cfg.get("save_dir", db_dir / f"task_{task_id}"))
             task_save_dir.mkdir(parents=True, exist_ok=True)
+
+            # Compute the fingerprint with the task's full git identity (repos
+            # from the merged config) so a task cache-hits when the same config
+            # is later run serially. The run.lock snapshot itself still uses the
+            # parent_lock delta optimisation (repos=None).
+            try:
+                task_fp = compute_fingerprint(task_cfg, repos=repos, data=data)
+            except Exception as exc:
+                logger.warning(f"Could not compute task fingerprint: {exc}")
+                task_fp = None
 
             snapshot_data = snapshot(
                 task_cfg,
@@ -131,6 +143,7 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
                 repos=None,
                 parent_lock=str(master_lock) if master_lock.exists() else None,
                 return_snapshot=True,
+                fingerprint=task_fp,
             )
 
             if snapshot_data:
@@ -155,6 +168,10 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
                 logger.warning(f"Could not write results.json at {task_save_dir}: {e}")
 
             record.mark_complete(result=result)
+            # Record this sweep task in the project-wide index so it's a
+            # first-class cache entry (issue 1).
+            if task_fp:
+                index.record_task(task_save_dir, db_path, task_id, task_fp)
             finish_task(db_path, task, result=result)
 
         except KeyboardInterrupt:

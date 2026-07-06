@@ -103,6 +103,11 @@ class RunRecord:
     def is_complete(self) -> bool:
         return self.lock_path.exists() and self.complete_path.exists()
 
+    def is_complete_task(self) -> bool:
+        """Completeness for a sweep-task dir, which carries ``run.complete`` and
+        ``results.json`` but no ``run.lock`` (its snapshot lives in the task DB)."""
+        return self.complete_path.exists() and self.results_path.exists()
+
     @property
     def status(self) -> str:
         if self.is_complete:

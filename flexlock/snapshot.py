@@ -130,6 +130,7 @@ def snapshot(
     parent_lock=None,
     save_path=None,
     return_snapshot=False,
+    fingerprint=None,
 ):
     """
     Create a snapshot of the current run state.
@@ -154,6 +155,11 @@ def snapshot(
     save_dir = Path(save_path) if save_path else Path(cfg.save_dir)
 
     tracker = RunTracker(save_dir, parent_lock=parent_lock)
+
+    # Store the precomputed fingerprint (index key) so run.lock/DB snapshots
+    # carry it and `flexlock reindex` can rebuild the index from disk.
+    if fingerprint is not None:
+        tracker.data["fingerprint"] = fingerprint
 
     # 1. Record Git & Data (Hashing)
     if repos:
