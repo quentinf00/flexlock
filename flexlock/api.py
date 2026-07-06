@@ -1,5 +1,6 @@
 """Python API for FlexLock."""
 
+from enum import Enum
 from pathlib import Path
 from omegaconf import OmegaConf, DictConfig, open_dict
 from loguru import logger
@@ -18,6 +19,7 @@ from .fingerprint import fingerprint as compute_fingerprint
 from . import index
 from .diff import RunDiff
 from . import config as flexlock_config
+from .exceptions import FlexLockExecutionError
 
 
 def _print_compiled_config(cfg):
@@ -43,38 +45,77 @@ def _print_compiled_config(cfg):
         print(f"Could not import target function '{target}': {e}")
 
 
+class Status(str, Enum):
+    """Terminal state of a run. A ``str`` subclass so ``status == "SUCCESS"``
+    and f-string formatting keep working for existing callers."""
+
+    SUCCESS = "SUCCESS"
+    CACHED = "CACHED"
+    FAILED = "FAILED"
+    INTERRUPTED = "INTERRUPTED"
+    SUBMITTED = "SUBMITTED"
+    SKIPPED = "SKIPPED"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+def _coerce_status(s):
+    if isinstance(s, Status):
+        return s
+    try:
+        return Status(s)
+    except ValueError:
+        return s  # tolerate unknown strings rather than raising
+
+
+# Real attributes that a result-dict key must never shadow (issue 6).
+_RESERVED_RESULT_KEYS = frozenset(
+    {"save_dir", "status", "result", "metrics", "cfg", "error", "get",
+     "raise_on_failure", "is_success"}
+)
+
+
 class ExecutionResult:
-    """Result object from task execution."""
+    """Typed result object from a run.
+
+    The function's return payload is kept in ``result`` (alias ``metrics``);
+    its keys are still reachable as attributes (``res.accuracy``) via
+    ``__getattr__`` — but only when they don't collide with a real attribute,
+    so a payload key named ``status``/``get`` no longer clobbers the object's
+    own API (issue 6).
+    """
 
     def __init__(
         self,
         save_dir: str,
-        status: str,
+        status: "str | Status",
         result: Any = None,
         cfg: DictConfig = None,
         error: "str | None" = None,
     ):
         """
-        Initialize execution result.
-
         Args:
             save_dir: Directory where results are saved
-            status: Status of execution ("SUCCESS", "CACHED", "FAILED",
-                "INTERRUPTED", "SUBMITTED")
+            status: One of the :class:`Status` values
             result: The actual return value from the function
             cfg: Configuration used for execution
             error: Error/traceback string for FAILED items (else None)
         """
         self.save_dir = save_dir
-        self.status = status
+        self.status = _coerce_status(status)
         self.result = result
         self.cfg = cfg
         self.error = error
 
-        # If result is a dict, expose its keys as attributes for convenience
-        if isinstance(result, dict):
-            for key, value in result.items():
-                setattr(self, key, value)
+    @property
+    def metrics(self):
+        """The return payload (alias for ``result``)."""
+        return self.result
+
+    @property
+    def is_success(self) -> bool:
+        return self.status in (Status.SUCCESS, Status.CACHED)
 
     def __getitem__(self, key):
         """Allow dict-like access to result."""
@@ -87,6 +128,27 @@ class ExecutionResult:
         if isinstance(self.result, dict):
             return self.result.get(key, default)
         return default
+
+    def __getattr__(self, name):
+        """Expose result-dict keys as attributes without clobbering real ones.
+
+        Only invoked when normal attribute lookup fails, so real attributes
+        (status, save_dir, ...) always win over same-named payload keys.
+        """
+        if name.startswith("__") or name in _RESERVED_RESULT_KEYS:
+            raise AttributeError(name)
+        result = self.__dict__.get("result")
+        if isinstance(result, dict) and name in result:
+            return result[name]
+        raise AttributeError(name)
+
+    def raise_on_failure(self) -> "ExecutionResult":
+        """Raise if the run did not succeed; return self otherwise (chainable)."""
+        if self.status in (Status.FAILED, Status.INTERRUPTED):
+            raise FlexLockExecutionError(
+                f"Run at {self.save_dir} ended {self.status}: {self.error}"
+            )
+        return self
 
     def __repr__(self):
         return f"ExecutionResult(save_dir={self.save_dir}, status={self.status})"

@@ -160,9 +160,42 @@ def test_execution_result_dict_access():
     assert result.get("loss") == 0.05
     assert result.get("nonexistent", "default") == "default"
 
-    # Test attribute access (set in __init__)
+    # Test attribute access (delegated to result dict)
     assert result.accuracy == 0.95
     assert result.loss == 0.05
+
+
+def test_execution_result_payload_keys_do_not_clobber():
+    """A payload key named 'status'/'get' must not shadow the real API (issue 6)."""
+    from flexlock.api import Status
+
+    result = ExecutionResult(
+        save_dir="/tmp/test",
+        status="SUCCESS",
+        result={"status": "user_value", "get": 1, "accuracy": 0.9},
+    )
+    # Real attributes/methods win over same-named payload keys.
+    assert result.status == Status.SUCCESS
+    assert result.status == "SUCCESS"
+    assert callable(result.get)
+    assert result.get("status") == "user_value"  # payload still reachable via get/[]
+    assert result["get"] == 1
+    # Non-colliding keys remain attribute-accessible.
+    assert result.accuracy == 0.9
+
+
+def test_execution_result_raise_on_failure():
+    from flexlock.api import Status
+    from flexlock.exceptions import FlexLockExecutionError
+
+    ok = ExecutionResult(save_dir="/tmp/t", status="SUCCESS", result={"a": 1})
+    assert ok.raise_on_failure() is ok  # chainable, no raise
+    assert ok.is_success
+
+    bad = ExecutionResult(save_dir="/tmp/t", status=Status.FAILED, error="boom")
+    with pytest.raises(FlexLockExecutionError):
+        bad.raise_on_failure()
+    assert not bad.is_success
 
 
 def simple_func(lr=0.01, save_dir=None):
