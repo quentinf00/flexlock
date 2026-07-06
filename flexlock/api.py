@@ -47,21 +47,29 @@ class ExecutionResult:
     """Result object from task execution."""
 
     def __init__(
-        self, save_dir: str, status: str, result: Any = None, cfg: DictConfig = None
+        self,
+        save_dir: str,
+        status: str,
+        result: Any = None,
+        cfg: DictConfig = None,
+        error: "str | None" = None,
     ):
         """
         Initialize execution result.
 
         Args:
             save_dir: Directory where results are saved
-            status: Status of execution ("SUCCESS", "SKIPPED", "FAILED")
+            status: Status of execution ("SUCCESS", "CACHED", "FAILED",
+                "INTERRUPTED", "SUBMITTED")
             result: The actual return value from the function
             cfg: Configuration used for execution
+            error: Error/traceback string for FAILED items (else None)
         """
         self.save_dir = save_dir
         self.status = status
         self.result = result
         self.cfg = cfg
+        self.error = error
 
         # If result is a dict, expose its keys as attributes for convenience
         if isinstance(result, dict):
@@ -434,6 +442,7 @@ class Project:
         print_config: bool = False,
         dry_run: bool = False,
         tag: "str | None" = None,
+        timeout: "int | None" = None,
     ) -> "ExecutionResult | List[ExecutionResult] | None":
         """Submit a configuration for execution.
 
@@ -545,6 +554,16 @@ class Project:
 
         # Handle sweep execution
         if sweep:
+            # A sweep runs each item in its own worker process; `isolated`
+            # (spawn a subprocess for a *single* run) can't be honoured here.
+            # Fail loudly rather than silently dropping it (issue 16).
+            if isolated:
+                from .exceptions import FlexLockConfigError
+
+                raise FlexLockConfigError(
+                    "isolated=True is not supported with sweep=... — sweep items "
+                    "already execute in separate worker processes."
+                )
             return self._submit_sweep(
                 config,
                 sweep,
@@ -562,6 +581,7 @@ class Project:
                 debug=debug,
                 tag=tag,
                 force=force,
+                timeout=timeout,
             )
 
         # Single execution path
@@ -920,6 +940,55 @@ class Project:
         return cls().submit(config, **kwargs)
 
     @staticmethod
+    def collect_results(indices, task_configs, db_path, tag) -> list:
+        """Build per-item ExecutionResults from the task DB's terminal state.
+
+        Replaces the old blanket ``status="SUCCESS"`` — a task that raised is
+        now reported as ``FAILED`` with its traceback, so a sweep result set
+        faithfully reflects what happened (issue 2).
+        """
+        from .taskdb import get_all_tasks, _hash_task
+
+        by_id = {
+            t["task_id"]: t
+            for t in get_all_tasks(db_path, tags=[tag] if tag else None)
+        }
+        status_map = {
+            "done": "SUCCESS",
+            "failed": "FAILED",
+            "interrupted": "INTERRUPTED",
+        }
+        out = []
+        for idx, cfg in zip(indices, task_configs):
+            save_dir = str(cfg.get("save_dir", "."))
+            row = by_id.get(_hash_task(cfg))
+            db_status = row["status"] if row else None
+            status = status_map.get(db_status, "SUBMITTED")
+
+            result_data = None
+            error = None
+            if status == "SUCCESS":
+                result_data = RunRecord(save_dir).load_results()
+                if result_data is None and row:
+                    result_data = row.get("result") or None
+            elif status == "FAILED":
+                error = row.get("error") if row else None
+
+            out.append(
+                (
+                    idx,
+                    ExecutionResult(
+                        save_dir=save_dir,
+                        status=status,
+                        result=result_data,
+                        cfg=cfg,
+                        error=error,
+                    ),
+                )
+            )
+        return out
+
+    @staticmethod
     def _sweep_db_dir(merged_items, sweep_root) -> "Path | None":
         """Directory that hosts the sweep's task DB (mirrors the parallel path)."""
         if sweep_root is not None:
@@ -963,6 +1032,7 @@ class Project:
         debug: bool = False,
         tag: "str | None" = None,
         force: bool = False,
+        timeout: "int | None" = None,
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -1090,29 +1160,14 @@ class Project:
                 )
 
                 # Run the sweep (executor handles waiting based on wait parameter)
-                success = executor.run(wait=wait, timeout=None)
+                success = executor.run(wait=wait, timeout=timeout)
 
-                # Collect results from executed configs
-                for idx, cfg in zip(indices, task_configs):
-                    # Try to load results
-                    result_data = None
-                    if "save_dir" in cfg:
-                        results_file = Path(cfg.save_dir) / "results.json"
-                        if results_file.exists():
-                            with open(results_file, "r") as f:
-                                result_data = json.load(f)
-
-                    results.append(
-                        (
-                            idx,
-                            ExecutionResult(
-                                save_dir=str(cfg.get("save_dir", ".")),
-                                status="SUCCESS",
-                                result=result_data,
-                                cfg=cfg,
-                            ),
-                        )
+                # Collect real per-task statuses from the task DB (issue 2).
+                results.extend(
+                    self.collect_results(
+                        indices, task_configs, executor.db_path, executor.tag
                     )
+                )
             else:
                 # Sequential execution (no backend, n_jobs=1)
                 for i, cfg in configs_to_run:

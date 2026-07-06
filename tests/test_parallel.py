@@ -488,3 +488,53 @@ def test_config_constants_used():
         # Test _wait_for_completion also accepts None
         sig2 = inspect.signature(executor._wait_for_completion)
         assert sig2.parameters['poll_interval'].default is None
+
+
+# --- real per-task statuses via collect_results (issue 2) ---
+
+def _maybe_fail_target(x=0, save_dir=None):
+    if x == 99:
+        raise ValueError("boom")
+    return {"x": x}
+
+
+def test_sweep_reports_failed_status(tmp_path, monkeypatch):
+    """A sweep where one task raises returns FAILED (not SUCCESS) with an error."""
+    monkeypatch.setenv("FLEXLOCK_INDEX", str(tmp_path / "idx.db"))
+    from flexlock.api import Project
+
+    base = tmp_path / "exp"
+    cfg = OmegaConf.create(
+        {
+            "_target_": "tests.test_parallel._maybe_fail_target",
+            "x": 0,
+            "save_dir": str(base),
+        }
+    )
+    sweep = [{"x": 1}, {"x": 99}]
+    res = Project().submit(
+        cfg,
+        sweep=sweep,
+        n_jobs=2,
+        sweep_dir_suffix=True,
+        smart_run=False,
+        search_dirs=[str(base)],
+    )
+    by_x = {r.cfg.x: r for r in res}
+    assert by_x[1].status == "SUCCESS"
+    assert by_x[1].get("x") == 1
+    assert by_x[99].status == "FAILED"
+    assert by_x[99].error and "boom" in by_x[99].error
+
+
+def test_sweep_isolated_raises(tmp_path):
+    """isolated=True with a sweep raises rather than being silently dropped."""
+    from flexlock.api import Project
+    from flexlock.exceptions import FlexLockConfigError
+
+    cfg = OmegaConf.create(
+        {"_target_": "tests.test_parallel._maybe_fail_target", "x": 0,
+         "save_dir": str(tmp_path / "exp")}
+    )
+    with pytest.raises(FlexLockConfigError):
+        Project().submit(cfg, sweep=[{"x": 1}], isolated=True)
