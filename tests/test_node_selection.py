@@ -339,3 +339,33 @@ def test_nested_dict_walked():
     raw = OmegaConf.to_container(sub, resolve=False)
     assert raw["datamodule"]["path"] == "outputs/x"
     assert raw["trainer"]["logger"]["dir"] == "outputs/x/logs"
+
+
+def test_two_hop_mixed_string_ref():
+    """Regression: ${split.save_dir}/train.txt where split.save_dir = ${pipeline_dir}/split.
+
+    The freeze must fully resolve the two-hop chain — concrete pipeline_dir →
+    mixed-string split.save_dir → embedded reference in prepare.listing_path —
+    and produce a concrete path in the frozen sub-config.
+
+    Bug: _resolve_in_root("split.save_dir") encountered "${pipeline_dir}/split"
+    (a mixed string, not whole-string), so _whole_string_interp returned None and
+    the chain stopped.  _process_one_interp then embedded the raw string verbatim,
+    leaving "${pipeline_dir}/split/train.txt" in the frozen config, which raised
+    InterpolationKeyError at snapshot time because pipeline_dir is absent from the
+    detached sub-config scope.
+    """
+    cfg = OmegaConf.create({
+        "pipeline_dir": "outputs/data_pipeline_0004",
+        "split": {
+            "save_dir": "${pipeline_dir}/split",
+        },
+        "prepare": {
+            "listing_path": "${split.save_dir}/train.txt",
+        },
+    })
+    sub = select_and_freeze_root_refs(cfg, "prepare")
+    raw = OmegaConf.to_container(sub, resolve=False)
+    assert raw["listing_path"] == "outputs/data_pipeline_0004/split/train.txt"
+    container = OmegaConf.to_container(sub, resolve=True)
+    assert container["listing_path"] == "outputs/data_pipeline_0004/split/train.txt"

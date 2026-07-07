@@ -519,9 +519,52 @@ def _resolve_in_root(ref: str, root_raw: dict, _visited: frozenset = frozenset()
     if not isinstance(val, str) or "${" not in val:
         return val  # Concrete value
     whole = _whole_string_interp(val)
-    if whole is None or _find_top_level_colon(whole) is not None or whole.startswith("."):
-        return val  # Resolver call, embedded interp, or relative ref — preserve as-is
+    if whole is None:
+        # Mixed string (embedded interps), e.g. split.save_dir =
+        # "${pipeline_dir}/split". The embedded refs are themselves root-scoped,
+        # so freeze them too — otherwise a multi-hop chain like
+        # prepare.listing_path = "${split.save_dir}/train.txt" leaves a dangling
+        # ${pipeline_dir} in the detached sub-config (InterpolationKeyError).
+        return _freeze_embedded_in_root(val, root_raw, _visited | {ref})
+    if _find_top_level_colon(whole) is not None or whole.startswith("."):
+        return val  # Resolver call or relative ref — preserve as-is
     return _resolve_in_root(whole, root_raw, _visited | {ref})
+
+
+def _freeze_embedded_in_root(s: str, root_raw: dict, _visited: frozenset) -> str:
+    """Freeze embedded ``${...}`` refs of a root-sourced mixed string.
+
+    Mirrors :func:`_process_one_interp` but with root-only scope (no sub-tree):
+    used when a simple root ref resolves to another mixed string, so multi-hop
+    chains collapse to concrete values. Resolver calls (``${name:args}``) and
+    relative refs (``${.foo}``) are preserved; refs absent from root are left
+    verbatim (they fail later at resolve time, as before).
+    """
+    out = []
+    pos = 0
+    while pos < len(s):
+        found = _find_balanced_interp(s, pos)
+        if found is None:
+            out.append(s[pos:])
+            break
+        start, end = found
+        out.append(s[pos:start])
+        inner = s[start + 2 : end - 1]
+        colon = _find_top_level_colon(inner)
+        if colon is not None:
+            name = inner[:colon]
+            args = _freeze_embedded_in_root(inner[colon + 1 :], root_raw, _visited)
+            out.append("${" + name + ":" + args + "}")
+        elif inner.startswith("."):
+            out.append("${" + inner + "}")
+        else:
+            resolved = _resolve_in_root(inner, root_raw, _visited)
+            if resolved is None:
+                out.append("${" + inner + "}")  # not in root — preserve verbatim
+            else:
+                out.append(str(resolved))
+        pos = end
+    return "".join(out)
 
 
 def _freeze_simple_ref(ref: str, sub_raw, root_raw, fallback_str: str):
