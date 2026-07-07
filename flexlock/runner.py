@@ -85,7 +85,14 @@ class FlexLockRunner:
         )
         parser.add_argument("--config", "-c", help="Path to base YAML config file")
         parser.add_argument(
-            "--select", "-s", help="Dot-separated key to select the node to run"
+            "--select",
+            "-s",
+            nargs="+",
+            help="Dot-separated key selecting the node to run. Pass several "
+            "(space- or comma-separated, e.g. '-s train linear_probe' or "
+            "'-s train,linear_probe') to run stages in order. Multi-stage is "
+            "incompatible with -O/-M, sweeps, and HPC backends (run those "
+            "stages one at a time).",
         )
 
         # Existing Override args
@@ -240,6 +247,121 @@ class FlexLockRunner:
             root_cfg=root_cfg,
         )
 
+    @staticmethod
+    def _parse_selects(value) -> List:
+        """Normalize ``--select``/``-s`` into a flat list of stage keys.
+
+        ``--select`` uses ``nargs="+"`` so space-separated stages arrive as a
+        list; each entry may also be comma-separated. Returns ``[None]`` when
+        no selection was given (the whole root config is the node).
+        """
+        if not value:
+            return [None]
+        keys = []
+        for item in value:
+            for part in str(item).split(","):
+                part = part.strip()
+                if part:
+                    keys.append(part)
+        return keys or [None]
+
+    def _validate_multiselect(self, args):
+        """Reject flags whose meaning is ambiguous with a stage *sequence*.
+
+        Phase 1 keeps multi-stage strictly local + sequential. After-select
+        overrides target *the* selected node (undefined with many), sweeps and
+        HPC backends need a defined cross-stage semantic that isn't wired yet.
+        Root-level ``-o``/``-m``/``-c`` remain valid — that's how you pass a
+        shared anchor like ``pipeline_dir``.
+        """
+        offending = []
+        if args.overrides_after_select:
+            offending.append("-O/--overrides-after-select")
+        if args.merge_after_select:
+            offending.append("-M/--merge-after-select")
+        if args.sweep or args.sweep_file or args.sweep_key:
+            offending.append("--sweep/--sweep-file/--sweep-key")
+        if getattr(args, "slurm_config", None) or getattr(args, "pbs_config", None):
+            offending.append("--slurm-config/--pbs-config")
+        if args.enqueue:
+            offending.append("--enqueue")
+        if args.edit_config:
+            offending.append("-e/--edit-config")
+        if offending:
+            raise FlexLockValidationError(
+                "Multi-stage selection (-s with >1 stage) is incompatible with: "
+                + ", ".join(offending)
+                + ". Run these stages one at a time, or pass shared values as "
+                "root-level overrides (-o pipeline_dir=..., -m, -c)."
+            )
+
+    def _build_node_cfg(self, args, root_cfg, base_cfg, select, name=None):
+        """Select a node from ``root_cfg`` and prepare it for submission.
+
+        Mirrors the single-stage path (selection → base_cfg mutual-merge →
+        save_dir default) so each stage in a sequence is built identically.
+        """
+        if select:
+            try:
+                node_cfg = select_and_freeze_root_refs(root_cfg, select)
+            except KeyError as e:
+                raise FlexLockValidationError(
+                    f"Selection '{select}' returned None."
+                ) from e
+        else:
+            node_cfg = root_cfg
+
+        if base_cfg is not None:
+            _b = base_cfg.copy()
+            _b.merge_with(node_cfg)
+            node_cfg.merge_with(_b)
+
+        return self._prepare_node(node_cfg, name=name or select or "exp")
+
+    def _run_multi(self, args, root_cfg, base_cfg, selects):
+        """Run a sequence of selected stages in order, locally and blocking.
+
+        Each stage is an independent :meth:`Project.submit` with ``wait=True``,
+        so downstream stages see upstream artifacts on disk (the ``pipeline_dir``
+        anchor pattern). Returns the list of raw stage return values.
+        """
+        from .api import Project
+
+        self._validate_multiselect(args)
+        debug = args.debug or config.get_env_bool("FLEXLOCK_DEBUG", False)
+        proj = Project(root_cfg)
+
+        results = []
+        for sel in selects:
+            node_cfg = self._build_node_cfg(args, root_cfg, base_cfg, sel)
+
+            # Preview flags iterate over the whole sequence rather than submit.
+            if args.print_config:
+                print(f"# --- stage: {sel} ---")
+                self._print_config_and_docstring(node_cfg)
+                continue
+            if args.dump:
+                print(f"# --- stage: {sel} ---")
+                print(OmegaConf.to_yaml(node_cfg), end="")
+                continue
+
+            logger.info(
+                f"[multi-select] stage '{sel}' → {node_cfg.get('save_dir')}"
+            )
+            outcome = proj.submit(
+                node_cfg,
+                n_jobs=args.n_jobs,
+                smart_run=bool(args.check_exists),
+                debug=debug,
+                print_config=False,
+                dry_run=getattr(args, "dry_run", False),
+            )
+            results.append(outcome)
+
+        if args.print_config or args.dump:
+            return None
+        return [r.result if hasattr(r, "result") else r for r in results]
+
     def _prepare_node(self, cfg, name="exp"):
         """Ensure ``cfg`` has a ``save_dir`` — fall back to ``outputs/<name>/<timestamp>``."""
         if "save_dir" not in cfg or cfg.save_dir is None:
@@ -268,13 +390,20 @@ class FlexLockRunner:
         root_cfg = self.load_config(args)
         logger.info(f"Loaded root config: {root_cfg}")
 
+        # Normalize -s into a list of stage keys. Several stages run in order
+        # via the multi-stage path; a single stage keeps the original flow.
+        selects = self._parse_selects(args.select)
+        if len(selects) > 1:
+            return self._run_multi(args, root_cfg, base_cfg, selects)
+        select = selects[0]
+
         # Selection happens at the node level — freezes root-scope refs.
-        if args.select:
+        if select:
             try:
-                node_cfg = select_and_freeze_root_refs(root_cfg, args.select)
+                node_cfg = select_and_freeze_root_refs(root_cfg, select)
             except KeyError as e:
                 raise FlexLockValidationError(
-                    f"Selection '{args.select}' returned None."
+                    f"Selection '{select}' returned None."
                 ) from e
             # Warn when a -o key also exists in the selected subtree — the
             # override landed on the root, not the stage. Root-only anchors
@@ -286,7 +415,7 @@ class FlexLockRunner:
                     if OmegaConf.select(node_cfg, key, default=_missing) is not _missing:
                         logger.warning(
                             f"'-o {kv}' was applied to the root config, but key '{key}' "
-                            f"also exists in the selected node '{args.select}' — "
+                            f"also exists in the selected node '{select}' — "
                             f"your override did NOT reach the stage. "
                             f"Use '-O {kv}' to override the stage directly. "
                             f"See docs/cli_reference.md § Configuration Overrides."

@@ -847,6 +847,141 @@ hyperparameters cache-hits where it can.
 
 ---
 
+### 14g. Experiment-directory pattern (`pipeline_dir` anchor)
+
+A single config declares every stage of a project and nests them all under one
+**experiment root** interpolation anchor. Each stage's `save_dir` — and every
+cross-stage reference (an upstream checkpoint, a stats file) — is written
+relative to that anchor:
+
+```python
+# project/pipeline.py
+from flexlock import py2cfg
+
+def make_pipeline_cfg():
+    return dict(
+        pipeline_dir="???",                       # required: the experiment root
+
+        params=dict(lr=1e-4, encoder_size="small", img_size=128),
+
+        train=py2cfg(
+            train_stage,
+            save_dir="${pipeline_dir}/train",
+            lr="${params.lr}",
+            encoder=py2cfg(Encoder, size="${params.encoder_size}",
+                           img_size="${params.img_size}"),
+        ),
+        linear_probe=py2cfg(
+            probe_stage,
+            save_dir="${pipeline_dir}/linear_probe",
+            checkpoint="${pipeline_dir}/train/checkpoints/best.ckpt",   # upstream artifact
+            encoder=py2cfg(Encoder, size="${params.encoder_size}",
+                           img_size="${params.img_size}"),
+        ),
+    )
+
+pipeline_cfg = make_pipeline_cfg()
+```
+
+Run one stage into an experiment; the anchor decides where it lands:
+
+```bash
+# train lands in results/myxp/train
+flexlock-run -d project.pipeline.pipeline_cfg -s train -o pipeline_dir=results/myxp
+
+# add a stage later against the SAME experiment -> results/myxp/linear_probe,
+# sitting next to the training run and reading its checkpoint
+flexlock-run -d project.pipeline.pipeline_cfg -s linear_probe -o pipeline_dir=results/myxp
+
+# run one stage across several experiments at once
+flexlock-run -d project.pipeline.pipeline_cfg -s linear_probe \
+    --sweep pipeline_dir=results/myxp1,results/myxp2
+
+# run several stages of ONE experiment in order (space- or comma-separated)
+flexlock-run -d project.pipeline.pipeline_cfg -s train linear_probe \
+    -o pipeline_dir=results/myxp
+```
+
+Passing several stages to `-s` runs them **sequentially and locally**, each as
+its own blocking `submit`, so a downstream stage sees the upstream stage's
+artifacts already on disk (that's the whole ordering contract — stages compose
+through `${pipeline_dir}/<stage>/...` paths, not in-memory wiring). With
+`--check-exists`, stages already completed for this `pipeline_dir` are skipped,
+so re-running the sequence resumes where it stopped.
+
+Multi-stage selection is deliberately restricted to the simple case: it is
+incompatible with `-O`/`-M` (they target *the* selected node — ambiguous across
+a sequence), with `--sweep*`, and with `--slurm-config`/`--pbs-config`. Pass
+shared values as root-level overrides (`-o pipeline_dir=...`, `-m`, `-c`), and
+run stages one at a time when you need a sweep, a per-stage after-select
+override, or an HPC backend.
+
+**Why it's convenient**
+
+- One anchor (`pipeline_dir`) namespaces a whole experiment; stages compose
+  purely through interpolation, no manual `save_dir`/path plumbing between calls.
+- Stages are *append-only*: add a new stage to the config and run it later
+  against an existing `pipeline_dir` — it lands beside the earlier stages and
+  can read their artifacts via `${pipeline_dir}/<stage>/...`.
+- Sweeping over `pipeline_dir` fans one stage out across experiments; sweeping
+  over `params.*` fans one experiment across hyperparameters.
+- The result tree *is* the index: `results/<xp>/<stage>/` is browsable, and
+  each stage dir carries its own `run.lock` / `run.complete` / `results.json`.
+
+**Scope — use this when**
+
+- Stages form a DAG rooted at one directory and mostly share a `params` block.
+- You want past experiments to stay browsable and re-runnable stage-by-stage.
+- Downstream stages consume upstream *artifacts* (checkpoints, stats files) by
+  path rather than needing the upstream *config* rebuilt.
+
+**Limitations & mitigations**
+
+1. **Config drift (the main sharp edge).** A downstream stage rebuilds its
+   config from the *current* `pipeline.py`. If you changed an architecture knob
+   (`encoder_size`, `img_size`, channel count) since a past experiment trained,
+   running e.g. `linear_probe -o pipeline_dir=<old xp>` builds an encoder that
+   no longer matches the frozen checkpoint → load failure. The `pipeline_dir`
+   anchor only pins *where* files go, not *what* the upstream config was.
+   Mitigations, in order of robustness:
+   - **Pull frozen values from the upstream `run.lock`** instead of rebuilding
+     them, using the `${run_lock:}` resolver:
+     ```python
+     encoder=py2cfg(
+         Encoder,
+         size="${run_lock:${pipeline_dir}/train,config.train.encoder.size}",
+         img_size="${run_lock:${pipeline_dir}/train,config.train.encoder.img_size}",
+     )
+     ```
+     Now the probe's encoder is defined by whatever trained, not by today's
+     defaults. Keep architecture-defining knobs in `params` so there's a single
+     dotted key to read back.
+   - **Run from the frozen pipeline snapshot.** `proj.save_snapshot(pipeline_dir)`
+     writes `pipeline.yaml`; re-run a later stage against the *frozen* config
+     with `flexlock-run -c results/myxp/pipeline.yaml -s linear_probe` instead of
+     `-d ...pipeline_cfg`. This ignores current `pipeline.py` entirely.
+   - Treat architecture-changing edits as a *new* experiment root rather than
+     reusing an old `pipeline_dir`.
+
+2. **`smart_run` and code changes.** Caching is safe here: the fingerprint
+   includes the git tree hash, so "same config text, different code" is a cache
+   *miss*, not a wrong reuse. But that also means a downstream stage won't
+   cache-hit a past run whose code has since changed — expected, and the reason
+   config drift (above) must be handled explicitly, not via the cache.
+
+3. **Anchor vs `search_dirs` for cross-experiment cache hits.** The sweep form
+   runs the *same* stage into *different* `pipeline_dir`s. If you also want a
+   fingerprint-index cache hit across experiments, the index root and
+   `search_dirs` must span all of them (see §8 / `FLEXLOCK_INDEX`). Within a
+   single `pipeline_dir` this is automatic.
+
+4. **`pipeline_dir="???"` is mandatory.** OmegaConf raises if it's left
+   unresolved, which is the intended guard — every run must name its experiment.
+   Combine with `${vinc:results/pipeline}` as the *default* anchor if you want
+   auto-numbered experiments when none is given.
+
+---
+
 ## 15. FAQ / gotchas
 
 **Why must I use `if __name__ == "__main__":` for sweeps?**

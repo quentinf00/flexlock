@@ -180,6 +180,144 @@ def test_py2cfg_defaults_and_overrides():
         assert res["epochs"] == 50
 
 
+# --- Multi-stage selection (Phase 1) ---
+#
+# The target records call order to a *file* (not a module global): the
+# `_target_` import can resolve to a different module instance than the one
+# pytest loaded this test from, so a shared list wouldn't be observed.
+
+
+def record_stage(name, save_dir, log, upstream=None):
+    """Append this stage's name to a shared log file; assert the upstream
+    stage's dir already exists on disk (the ordering guarantee)."""
+    if upstream is not None:
+        assert Path(upstream).exists(), f"upstream {upstream} not on disk yet"
+    with open(log, "a") as fh:
+        fh.write(name + "\n")
+    return {"name": name}
+
+
+def _pipeline_yaml(f):
+    f.write(
+        """
+pipeline_dir: ???
+
+stage_a:
+  _target_: tests.test_multistage_config.record_stage
+  name: a
+  save_dir: ${pipeline_dir}/a
+  log: ${pipeline_dir}/order.log
+
+stage_b:
+  _target_: tests.test_multistage_config.record_stage
+  name: b
+  save_dir: ${pipeline_dir}/b
+  log: ${pipeline_dir}/order.log
+  upstream: ${pipeline_dir}/a
+"""
+    )
+    f.close()
+
+
+def _read_order(tmp_path):
+    log = tmp_path / "order.log"
+    return log.read_text().split() if log.exists() else []
+
+
+def test_multistage_runs_in_order(temp_yaml, tmp_path):
+    """`-s stage_a stage_b` runs stages sequentially; downstream sees upstream."""
+    from flexlock.runner import FlexLockRunner
+
+    f, config_path = temp_yaml
+    _pipeline_yaml(f)
+
+    FlexLockRunner().run(
+        cli_args=[
+            "-c", str(config_path),
+            "-s", "stage_a", "stage_b",
+            "-o", f"pipeline_dir={tmp_path}",
+        ]
+    )
+
+    assert _read_order(tmp_path) == ["a", "b"]
+    assert (tmp_path / "a").exists()
+    assert (tmp_path / "b").exists()
+
+
+def test_multistage_comma_separated(temp_yaml, tmp_path):
+    """Comma-separated `-s stage_a,stage_b` is equivalent to space-separated."""
+    from flexlock.runner import FlexLockRunner
+
+    f, config_path = temp_yaml
+    _pipeline_yaml(f)
+
+    FlexLockRunner().run(
+        cli_args=[
+            "-c", str(config_path),
+            "-s", "stage_a,stage_b",
+            "-o", f"pipeline_dir={tmp_path}",
+        ]
+    )
+
+    assert _read_order(tmp_path) == ["a", "b"]
+
+
+def test_multistage_rejects_after_select_override(temp_yaml, tmp_path):
+    """-O targets a single node — ambiguous with a stage sequence."""
+    from flexlock.runner import FlexLockRunner
+    from flexlock.exceptions import FlexLockValidationError
+
+    f, config_path = temp_yaml
+    _pipeline_yaml(f)
+
+    with pytest.raises(FlexLockValidationError):
+        FlexLockRunner().run(
+            cli_args=[
+                "-c", str(config_path),
+                "-s", "stage_a", "stage_b",
+                "-o", f"pipeline_dir={tmp_path}",
+                "-O", "name=x",
+            ]
+        )
+
+
+def test_multistage_rejects_sweep(temp_yaml, tmp_path):
+    """Sweep + multi-stage has no defined Phase 1 semantic — reject it."""
+    from flexlock.runner import FlexLockRunner
+    from flexlock.exceptions import FlexLockValidationError
+
+    f, config_path = temp_yaml
+    _pipeline_yaml(f)
+
+    with pytest.raises(FlexLockValidationError):
+        FlexLockRunner().run(
+            cli_args=[
+                "-c", str(config_path),
+                "-s", "stage_a", "stage_b",
+                "-o", f"pipeline_dir={tmp_path}",
+                "--sweep", "1,2",
+            ]
+        )
+
+
+def test_single_select_unchanged(temp_yaml, tmp_path):
+    """A single `-s stage_a` still runs exactly one stage (back-compat)."""
+    from flexlock.runner import FlexLockRunner
+
+    f, config_path = temp_yaml
+    _pipeline_yaml(f)
+
+    FlexLockRunner().run(
+        cli_args=[
+            "-c", str(config_path),
+            "-s", "stage_a",
+            "-o", f"pipeline_dir={tmp_path}",
+        ]
+    )
+
+    assert _read_order(tmp_path) == ["a"]
+
+
 def test_context_preservation_sanity():
     """
     Direct OmegaConf sanity check to ensure the library behavior 
