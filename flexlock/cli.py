@@ -584,6 +584,209 @@ def cmd_reindex(args):
     print(f"Reindexed {n} run(s) under {root}")
 
 
+# ── show subcommand ────────────────────────────────────────────
+
+def cmd_show(args):
+    """Show a single run's status, metadata, lineage, and config."""
+    from . import query
+
+    run_dir = Path(args.run_dir)
+    if not run_dir.exists():
+        print(f"Error: no such directory: {run_dir}", file=sys.stderr)
+        sys.exit(1)
+
+    summary = query.load_run_summary(
+        run_dir,
+        scan_root=args.root,
+        downstream=not args.no_downstream,
+    )
+
+    if args.format == "json":
+        print(json.dumps(summary, indent=2, default=str))
+    else:
+        print(query.format_summary_md(summary))
+
+
+# ── graph subcommand ───────────────────────────────────────────
+
+def cmd_graph(args):
+    """Emit the experiment DAG as JSON, Mermaid, or DOT."""
+    from . import query
+
+    root = Path(args.path or ".")
+    graph = query.build_graph(root, include_groups=args.groups)
+
+    if args.format == "mermaid":
+        print(query.graph_to_mermaid(graph))
+    elif args.format == "dot":
+        print(query.graph_to_dot(graph))
+    else:
+        print(json.dumps(graph, indent=2, default=str))
+
+
+# ── why subcommand ─────────────────────────────────────────────
+
+def cmd_why(args):
+    """Explain the difference between two runs (config/git/data + commits)."""
+    from . import query
+
+    for p in (args.run_a, args.run_b):
+        if not Path(p).exists():
+            print(f"Error: no such directory: {p}", file=sys.stderr)
+            sys.exit(1)
+
+    result = query.why(args.run_a, args.run_b)
+    if args.format == "json":
+        print(json.dumps(result, indent=2, default=str))
+    else:
+        print(query.format_why_text(result))
+
+
+# ── stages subcommand ──────────────────────────────────────────
+
+def _load_defaults_cfg(defaults, config_path=None):
+    """Load a defaults tree (+ optional -c YAML merge) as a DictConfig.
+
+    Shared loader used by ``stages``; kept decoupled from argparse so callers
+    can pass plain strings.
+    """
+    from omegaconf import OmegaConf
+    from .utils import load_python_defaults
+
+    loaded = load_python_defaults(defaults)
+    cfg = loaded if OmegaConf.is_config(loaded) else OmegaConf.create(loaded)
+    if config_path:
+        cfg.merge_with(OmegaConf.load(config_path))
+    return cfg
+
+
+def cmd_stages(args):
+    """List runnable stages (mappings with _target_) in a defaults tree."""
+    from . import query
+
+    if not args.defaults:
+        print("Error: -d/--defaults is required", file=sys.stderr)
+        sys.exit(1)
+
+    cfg = _load_defaults_cfg(args.defaults, args.config)
+    stages = query.list_stage_nodes(cfg)
+
+    if args.format == "json":
+        print(json.dumps(stages, indent=2, default=str))
+    elif args.format == "keys":
+        for s in stages:
+            print(s["key"])
+    else:
+        if not stages:
+            print("No stages (mappings with _target_) found.")
+            return
+        for s in stages:
+            indent = "  " * max(s["depth"] - 1, 0)
+            save = f"  → {s['save_dir']}" if s.get("save_dir") else ""
+            print(f"{indent}{s['key']:30s} {s['target']}{save}")
+
+
+# ── report subcommand ──────────────────────────────────────────
+
+def cmd_report(args):
+    """Generate a static, self-contained HTML report of a results tree."""
+    from . import report
+
+    out = report.generate_report(
+        args.path or ".",
+        args.output,
+        title=args.title,
+        include_groups=args.groups,
+        embed_configs=args.embed_configs,
+    )
+    print(f"Wrote report to {out}")
+
+
+# ── skills subcommand ──────────────────────────────────────────
+
+def _parse_skill_frontmatter(text: str) -> dict:
+    """Pull ``name``/``description`` from a SKILL.md YAML frontmatter block."""
+    meta = {}
+    if not text.startswith("---"):
+        return meta
+    end = text.find("\n---", 3)
+    if end == -1:
+        return meta
+    try:
+        meta = yaml.safe_load(text[3:end]) or {}
+    except Exception:
+        meta = {}
+    return meta if isinstance(meta, dict) else {}
+
+
+def _iter_skills():
+    """Yield ``(name, description, traversable_dir)`` for every shipped skill."""
+    from importlib.resources import files
+
+    skills_root = files("flexlock").joinpath("skills")
+    if not skills_root.is_dir():
+        return
+    for entry in sorted(skills_root.iterdir(), key=lambda p: p.name):
+        if not entry.is_dir():
+            continue
+        skill_md = entry.joinpath("SKILL.md")
+        if not skill_md.is_file():
+            continue
+        meta = _parse_skill_frontmatter(skill_md.read_text(encoding="utf-8"))
+        yield meta.get("name", entry.name), meta.get("description", ""), entry
+
+
+def cmd_skills(args):
+    """List or install the FlexLock Claude Code skills shipped in the package."""
+    import shutil
+    from importlib.resources import as_file
+
+    if args.skills_command == "list":
+        found = False
+        for name, desc, _ in _iter_skills():
+            found = True
+            print(f"{name}\n    {desc}")
+        if not found:
+            print("No skills packaged.")
+        return
+
+    # install
+    available = {name: entry for name, _, entry in _iter_skills()}
+    if not available:
+        print("No skills packaged.", file=sys.stderr)
+        sys.exit(1)
+
+    wanted = args.names or list(available.keys())
+    unknown = [n for n in wanted if n not in available]
+    if unknown:
+        print(f"Error: unknown skill(s): {', '.join(unknown)}", file=sys.stderr)
+        print(f"Available: {', '.join(available)}", file=sys.stderr)
+        sys.exit(1)
+
+    dest_root = Path(args.dest)
+    dest_root.mkdir(parents=True, exist_ok=True)
+
+    written = []
+    for name in wanted:
+        target = dest_root / name
+        if target.exists() and not args.force:
+            print(f"Skipping {name}: {target} exists (use --force to overwrite)")
+            continue
+        if target.exists():
+            shutil.rmtree(target)
+        with as_file(available[name]) as src:
+            shutil.copytree(src, target)
+        written.append(str(target))
+
+    if written:
+        print("Installed:")
+        for w in written:
+            print(f"  {w}")
+        print("Upgrade later by re-running `flexlock skills install --force`.")
+    else:
+        print("Nothing written.")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="flexlock",
@@ -640,6 +843,102 @@ def main():
         "path", nargs="?", help="Root directory to walk (default: .)"
     )
     reindex_parser.set_defaults(func=cmd_reindex)
+
+    # show
+    show_parser = subparsers.add_parser(
+        "show", help="Show a single run's status, metadata, lineage, and config"
+    )
+    show_parser.add_argument("run_dir", help="Path to the run directory")
+    show_parser.add_argument(
+        "--format", choices=["md", "json"], default="md",
+        help="Output format (default: md; agents use json)",
+    )
+    show_parser.add_argument(
+        "--root", metavar="DIR",
+        help="Root to scan for downstream runs and tags (default: run's parent)",
+    )
+    show_parser.add_argument(
+        "--no-downstream", action="store_true",
+        help="Skip the downstream lineage scan (faster)",
+    )
+    show_parser.set_defaults(func=cmd_show)
+
+    # graph
+    graph_parser = subparsers.add_parser(
+        "graph", help="Emit the experiment DAG (json/mermaid/dot)"
+    )
+    graph_parser.add_argument("path", nargs="?", help="Results root (default: .)")
+    graph_parser.add_argument(
+        "--format", choices=["json", "mermaid", "dot"], default="json"
+    )
+    graph_parser.add_argument(
+        "--groups", action="store_true",
+        help="Include same-tree / same-data groupings in JSON output",
+    )
+    graph_parser.set_defaults(func=cmd_graph)
+
+    # why
+    why_parser = subparsers.add_parser(
+        "why", help="Explain the difference between two runs"
+    )
+    why_parser.add_argument("run_a", help="First run directory")
+    why_parser.add_argument("run_b", help="Second run directory")
+    why_parser.add_argument("--format", choices=["text", "json"], default="text")
+    why_parser.set_defaults(func=cmd_why)
+
+    # stages
+    stages_parser = subparsers.add_parser(
+        "stages", help="List runnable stages in a defaults tree"
+    )
+    stages_parser.add_argument(
+        "-d", "--defaults", required=True,
+        help="Python import path for the defaults (pkg.mod.var or file.py:var)",
+    )
+    stages_parser.add_argument(
+        "-c", "--config", metavar="FILE", help="Optional YAML to merge into defaults"
+    )
+    stages_parser.add_argument(
+        "--format", choices=["text", "keys", "json"], default="text",
+        help="text (default), keys (bare keys for fzf), or json",
+    )
+    stages_parser.set_defaults(func=cmd_stages)
+
+    # report
+    report_parser = subparsers.add_parser(
+        "report", help="Generate a static HTML report of a results tree"
+    )
+    report_parser.add_argument("path", nargs="?", help="Results root (default: .)")
+    report_parser.add_argument(
+        "-o", "--output", default="report.html", help="Output HTML file"
+    )
+    report_parser.add_argument("--title", help="Report title")
+    report_parser.add_argument(
+        "--groups", action="store_true", help="Include same-tree/same-data groups"
+    )
+    report_parser.add_argument(
+        "--embed-configs", action="store_true",
+        help="Embed each run's full config (larger file)",
+    )
+    report_parser.set_defaults(func=cmd_report)
+
+    # skills
+    skills_parser = subparsers.add_parser(
+        "skills", help="List or install the shipped FlexLock Claude Code skills"
+    )
+    skills_sub = skills_parser.add_subparsers(dest="skills_command", required=True)
+    skills_list = skills_sub.add_parser("list", help="List packaged skills")
+    skills_list.set_defaults(func=cmd_skills)
+    skills_install = skills_sub.add_parser("install", help="Install skill folders")
+    skills_install.add_argument(
+        "names", nargs="*", help="Skill names to install (default: all)"
+    )
+    skills_install.add_argument(
+        "--dest", default=".claude/skills", help="Destination dir (default: .claude/skills)"
+    )
+    skills_install.add_argument(
+        "--force", action="store_true", help="Overwrite existing skill folders"
+    )
+    skills_install.set_defaults(func=cmd_skills)
 
     args = parser.parse_args()
 

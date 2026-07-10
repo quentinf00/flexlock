@@ -118,6 +118,7 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
         from flexlock.taskdb import _hash_task
         task_id = _hash_task(task)
 
+        task_save_dir = None
         try:
             task_cfg = merge_task_into_cfg(cfg, task, task_to)
 
@@ -184,4 +185,8 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
         except Exception as e:
             tb = traceback.format_exc()
             logger.exception(f"Task failed: {e}")
+            # Mirror the failure into the task dir as run.error so triage needs
+            # no sqlite; taskdb keeps the traceback too. write_error never raises.
+            if task_save_dir is not None:
+                RunRecord(task_save_dir).write_error(e, task_id=task_id, node=node)
             finish_task(db_path, task, error=tb)

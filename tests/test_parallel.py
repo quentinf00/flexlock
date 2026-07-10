@@ -158,6 +158,50 @@ def test_task_failure_is_recorded(base_cfg):
         assert failed_task[2] is None
 
 
+def test_task_failure_writes_run_error_sidecar(base_cfg, tmp_path):
+    """A failing task mirrors its traceback into run.error in the task dir."""
+    from flexlock.run_record import RunRecord
+    from flexlock.taskdb import _hash_task, get_all_tasks
+
+    fail_dir = tmp_path / "task_fail"
+
+    def failing_func(cfg):
+        raise ValueError("designed to fail")
+
+    task = {"task_id": 7, "save_dir": str(fail_dir)}
+    executor = ParallelExecutor(
+        func=failing_func, tasks=[task], task_target=".", cfg=base_cfg, n_jobs=1
+    )
+    assert executor.run() is False
+
+    rec = RunRecord(fail_dir)
+    err = rec.load_error()
+    assert err is not None
+    assert err["exc_type"] == "ValueError"
+    assert "designed to fail" in err["exc_message"]
+
+    # task_id in the sidecar matches the DB row's task_id.
+    from omegaconf import OmegaConf as _OC
+
+    expected_id = _hash_task(_OC.create(task))
+    assert err["task_id"] == expected_id
+    rows = get_all_tasks(executor.db_path, tags=[executor.tag])
+    assert any(r["task_id"] == expected_id and r["status"] == "failed" for r in rows)
+
+
+def test_sweep_master_lock_carries_note(base_cfg):
+    """A note passed to ParallelExecutor lands on the master run.lock."""
+    tasks = [{"task_id": i, "worker_id": "local"} for i in range(2)]
+    executor = ParallelExecutor(
+        func=dummy_task_func, tasks=tasks, task_target=".", cfg=base_cfg,
+        n_jobs=1, note="sweep intent",
+    )
+    executor.run()
+    master_lock = Path(base_cfg.save_dir) / "run.lock"
+    data = yaml.safe_load(master_lock.read_text())
+    assert data["note"] == "sweep intent"
+
+
 def test_wait_parameter_with_local_execution(base_cfg):
     """Tests that wait parameter works correctly with local execution."""
     tasks = [{"task_id": i, "worker_id": "local"} for i in range(4)]

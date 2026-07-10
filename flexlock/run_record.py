@@ -15,16 +15,20 @@ never observes a partial file.
 import json
 import os
 import tempfile
+import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
+from loguru import logger
 from omegaconf import OmegaConf
 
 LOCK_NAME = "run.lock"
 COMPLETE_MARKER = "run.complete"
 RESULTS_NAME = "results.json"
+ERROR_NAME = "run.error"
 COMPLETE_VERSION = 1
+ERROR_VERSION = 1
 
 # Run lifecycle states derived from what's on disk.
 STATUS_DONE = "DONE"          # run.lock + run.complete
@@ -60,6 +64,10 @@ class RunRecord:
     def results_path(self) -> Path:
         return self.save_dir / RESULTS_NAME
 
+    @property
+    def error_path(self) -> Path:
+        return self.save_dir / ERROR_NAME
+
     # ── writers ──
     def write_lock(self, snapshot_data: dict) -> Path:
         """Write ``run.lock`` (the snapshot) atomically before execution."""
@@ -79,10 +87,47 @@ class RunRecord:
         interrupted run leaves ``run.lock`` alone and is correctly skipped.
         This is the single place the fingerprint index is refreshed (2.2).
         """
+        # Success removes any stale failure record. Because every writer routes
+        # through RunRecord, this single hook implements "a completed run has no
+        # run.error" for the serial, sweep-worker, and legacy marker paths.
+        self.clear_error()
         payload = {"ts": datetime.now().isoformat(), "version": COMPLETE_VERSION}
         if result is not None:
             payload["has_result"] = True
         return _atomic_write(self.complete_path, json.dumps(payload))
+
+    def write_error(self, exc: BaseException, *, task_id=None, node=None) -> "Path | None":
+        """Record a ``run.error`` JSON sidecar describing a failed run.
+
+        Capturing the failure must *never* mask the original exception, so the
+        entire body is defensive: any problem writing the record is logged and
+        swallowed, and the caller re-raises the user's exception unchanged.
+        """
+        try:
+            payload = {
+                "version": ERROR_VERSION,
+                "exc_type": type(exc).__name__,
+                "exc_message": str(exc),
+                "traceback": "".join(
+                    traceback.format_exception(type(exc), exc, exc.__traceback__)
+                ),
+                "timestamp": datetime.now().isoformat(),
+            }
+            if task_id is not None:
+                payload["task_id"] = task_id
+            if node is not None:
+                payload["node"] = node
+            return _atomic_write(self.error_path, json.dumps(payload, indent=2))
+        except Exception as write_exc:  # pragma: no cover - defensive
+            logger.warning(f"Could not write {ERROR_NAME} at {self.save_dir}: {write_exc}")
+            return None
+
+    def clear_error(self) -> None:
+        """Remove a stale ``run.error`` if present (no-op otherwise)."""
+        try:
+            self.error_path.unlink(missing_ok=True)
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning(f"Could not clear {ERROR_NAME} at {self.save_dir}: {exc}")
 
     # ── readers ──
     def load(self) -> Optional[dict]:
@@ -97,6 +142,17 @@ class RunRecord:
             return None
         with open(self.results_path) as f:
             return json.load(f)
+
+    def load_error(self) -> Optional[dict]:
+        """Return the parsed ``run.error`` payload, or ``None`` if absent."""
+        if not self.error_path.exists():
+            return None
+        try:
+            with open(self.error_path) as f:
+                return json.load(f)
+        except Exception as exc:  # pragma: no cover - corrupt sidecar
+            logger.warning(f"Could not read {ERROR_NAME} at {self.save_dir}: {exc}")
+            return None
 
     # ── lifecycle ──
     @property

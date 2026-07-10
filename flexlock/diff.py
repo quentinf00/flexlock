@@ -42,6 +42,7 @@ class RunDiff:
         # NOT be silently ignored (issue 7), which would cause false cache hits.
         self.toplevel_ignore = {
             "timestamp",
+            "note",
             "system",
             "job_id",
             "work_dir",

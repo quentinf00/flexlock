@@ -389,6 +389,29 @@ def get_task_snapshot(db_path: Path, task_id: str) -> dict | None:
     return None
 
 
+def get_task_status(db_path: Path, task_id: str) -> dict | None:
+    """Return a single task's status row, or ``None`` if not found.
+
+    Thin SELECT used by the query layer to classify a sweep-task dir from its
+    ``.flexlock_marker`` without loading the whole DB.
+    """
+    with _conn(db_path) as c:
+        cur = c.execute(
+            "SELECT status, error, node, ts_start, ts_end FROM tasks WHERE task_id=?",
+            (task_id,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        return {
+            "status": row[0],
+            "error": row[1],
+            "node": row[2],
+            "ts_start": row[3],
+            "ts_end": row[4],
+        }
+
+
 def list_task_snapshots(db_path: Path, status: str = None) -> List[tuple]:
     """
     Lists all tasks with their snapshots.
