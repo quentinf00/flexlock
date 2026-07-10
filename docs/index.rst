@@ -17,6 +17,7 @@ FlexLock Documentation
    :caption: User Guide
 
    usage_guide
+   agentic_workflows
    debugging
    hpc_integration
 

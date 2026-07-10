@@ -210,11 +210,16 @@ if __name__ == "__main__":
 ```bash
 python train.py -o lr=0.1
 flexlock-run -d train.train -O lr=0.1     # equivalent
+flexlock-run -d train.train --note "baseline before lr sweep"   # record intent
 flexlock-run --help                        # prints argparse help + compiled config
 ```
 
 You get an `ExecutionResult.result` back (the dict), `run.lock`,
 `run.complete`, and `results.json` on disk.
+
+Pass `--note` (CLI) or `note="…"` (`proj.submit(cfg, note=…)`) to record a
+free-text intent in `run.lock`. It never affects caching and shows up in
+`flexlock show`/`graph`/`report`.
 
 ### 4b. Python `Project().submit(cfg)`
 
@@ -512,8 +517,24 @@ it is always safe.
 To debug a miss:
 
 ```bash
-flexlock-diff outputs/train/run_0001 outputs/train/run_0002
+flexlock-diff dirs outputs/train/run_0001 outputs/train/run_0002
+# exit code: 0 = match, 1 = differ, 2 = error; add --format json for scripting
+flexlock why outputs/train/run_0001 outputs/train/run_0002   # + the commits between them
 ```
+
+### Failure records (`run.error`)
+
+When a run's user function raises, FlexLock writes a `run.error` JSON sidecar next
+to `run.lock` (`exc_type`, `exc_message`, full `traceback`, timestamp; plus
+`task_id`/`node` for sweep tasks). The original exception still propagates
+unwrapped — capture never masks it. Triage without opening sqlite:
+
+```bash
+flexlock show outputs/train/run_0001 --format json    # .status == "failed", .error.*
+```
+
+A successful re-run (`force=True` / `--force`) clears the stale `run.error`. See
+[Agentic Workflows](agentic_workflows.md) for the full schema and triage guidance.
 
 ### Knobs
 
@@ -820,6 +841,16 @@ cfg = py2cfg(train, lr=0.01, save_dir='outputs/train')
 if __name__ == "__main__":
     result = submit(cfg, isolated=True)
     print(result['accuracy'])
+```
+
+### 14e-bis. Pick a stage to run with `fzf`
+
+`flexlock stages` lists a defaults tree's runnable stages without resolving the
+config (so `${vinc:}` never fires):
+
+```bash
+DEF=myproject.pipeline.cfg
+flexlock-run -d "$DEF" -s "$(flexlock stages -d "$DEF" --format keys | fzf)"
 ```
 
 ### 14f. Multi-stage pipeline with auto-discovery

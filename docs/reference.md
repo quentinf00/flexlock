@@ -245,3 +245,61 @@ except FlexLockExecutionError as e:
 except FlexLockError as e:
     print(f"Other FlexLock error: {e}")
 ```
+
+## On-Disk Run Files
+
+A run directory is owned by `RunRecord` (`flexlock/run_record.py`). Every file is
+written atomically (temp file + `os.replace`).
+
+### `run.lock` (YAML)
+
+The snapshot written *before* execution — the human-editable record. Top-level
+keys: `timestamp`, `config` (resolved), and optionally `note`, `repos` (git
+tree/commit per tracked repo), `data` (data hashes), `lineage` (upstream runs),
+`fingerprint`, `parent`.
+
+```yaml
+timestamp: "2026-07-10T10:00:00"
+note: "baseline before lr sweep"     # only present when --note / note= was passed
+config:
+  _target_: myproject.train.train
+  save_dir: outputs/exp/train
+  lr: 0.1
+repos:
+  main: {commit: "abc…", tree: "def…", path: "/repo", is_dirty: false}
+data: {train_csv: "xxh64:…"}
+lineage:
+  extract: {path: "/abs/outputs/exp/extract", info: {...}}
+fingerprint: "sha256:…"
+```
+
+`note` is metadata only — it is excluded from the fingerprint (which hashes
+`{config, repos, data}`) and ignored by `RunDiff`, so it never affects caching.
+
+### `run.complete` (JSON)
+
+Success marker written after the user function returns. A cache hit requires
+*both* `run.lock` and `run.complete`. Writing it also clears any stale
+`run.error`.
+
+### `run.error` (JSON, schema v1)
+
+Failure sidecar written next to `run.lock` when the user function raises. Mirrors
+the traceback the task DB also stores, so triage needs no sqlite. Capturing it
+never masks the original exception (which still propagates unwrapped).
+
+```json
+{"version": 1, "exc_type": "ValueError", "exc_message": "...",
+ "traceback": "full formatted chain", "timestamp": "ISO-8601",
+ "task_id": "optional (sweep)", "node": "optional (sweep)"}
+```
+
+`KeyboardInterrupt` is deliberately not captured — a bare `run.lock` with no
+`run.complete`/`run.error` is the interrupted signature.
+
+### `results.json` (JSON)
+
+The user function's return payload (`{"result": value}` when it isn't a dict).
+
+For the JSON contracts of the query commands (`show`, `graph`, `why`), see
+[Agentic Workflows](agentic_workflows.md).
