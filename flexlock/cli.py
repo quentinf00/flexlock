@@ -702,6 +702,91 @@ def cmd_report(args):
     print(f"Wrote report to {out}")
 
 
+# ── skills subcommand ──────────────────────────────────────────
+
+def _parse_skill_frontmatter(text: str) -> dict:
+    """Pull ``name``/``description`` from a SKILL.md YAML frontmatter block."""
+    meta = {}
+    if not text.startswith("---"):
+        return meta
+    end = text.find("\n---", 3)
+    if end == -1:
+        return meta
+    try:
+        meta = yaml.safe_load(text[3:end]) or {}
+    except Exception:
+        meta = {}
+    return meta if isinstance(meta, dict) else {}
+
+
+def _iter_skills():
+    """Yield ``(name, description, traversable_dir)`` for every shipped skill."""
+    from importlib.resources import files
+
+    skills_root = files("flexlock").joinpath("skills")
+    if not skills_root.is_dir():
+        return
+    for entry in sorted(skills_root.iterdir(), key=lambda p: p.name):
+        if not entry.is_dir():
+            continue
+        skill_md = entry.joinpath("SKILL.md")
+        if not skill_md.is_file():
+            continue
+        meta = _parse_skill_frontmatter(skill_md.read_text(encoding="utf-8"))
+        yield meta.get("name", entry.name), meta.get("description", ""), entry
+
+
+def cmd_skills(args):
+    """List or install the FlexLock Claude Code skills shipped in the package."""
+    import shutil
+    from importlib.resources import as_file
+
+    if args.skills_command == "list":
+        found = False
+        for name, desc, _ in _iter_skills():
+            found = True
+            print(f"{name}\n    {desc}")
+        if not found:
+            print("No skills packaged.")
+        return
+
+    # install
+    available = {name: entry for name, _, entry in _iter_skills()}
+    if not available:
+        print("No skills packaged.", file=sys.stderr)
+        sys.exit(1)
+
+    wanted = args.names or list(available.keys())
+    unknown = [n for n in wanted if n not in available]
+    if unknown:
+        print(f"Error: unknown skill(s): {', '.join(unknown)}", file=sys.stderr)
+        print(f"Available: {', '.join(available)}", file=sys.stderr)
+        sys.exit(1)
+
+    dest_root = Path(args.dest)
+    dest_root.mkdir(parents=True, exist_ok=True)
+
+    written = []
+    for name in wanted:
+        target = dest_root / name
+        if target.exists() and not args.force:
+            print(f"Skipping {name}: {target} exists (use --force to overwrite)")
+            continue
+        if target.exists():
+            shutil.rmtree(target)
+        with as_file(available[name]) as src:
+            shutil.copytree(src, target)
+        written.append(str(target))
+
+    if written:
+        print("Installed:")
+        for w in written:
+            print(f"  {w}")
+        print("Upgrade later by re-running `flexlock skills install --force`.")
+    else:
+        print("Nothing written.")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="flexlock",
@@ -835,6 +920,25 @@ def main():
         help="Embed each run's full config (larger file)",
     )
     report_parser.set_defaults(func=cmd_report)
+
+    # skills
+    skills_parser = subparsers.add_parser(
+        "skills", help="List or install the shipped FlexLock Claude Code skills"
+    )
+    skills_sub = skills_parser.add_subparsers(dest="skills_command", required=True)
+    skills_list = skills_sub.add_parser("list", help="List packaged skills")
+    skills_list.set_defaults(func=cmd_skills)
+    skills_install = skills_sub.add_parser("install", help="Install skill folders")
+    skills_install.add_argument(
+        "names", nargs="*", help="Skill names to install (default: all)"
+    )
+    skills_install.add_argument(
+        "--dest", default=".claude/skills", help="Destination dir (default: .claude/skills)"
+    )
+    skills_install.add_argument(
+        "--force", action="store_true", help="Overwrite existing skill folders"
+    )
+    skills_install.set_defaults(func=cmd_skills)
 
     args = parser.parse_args()
 
