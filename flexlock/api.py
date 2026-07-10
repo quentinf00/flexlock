@@ -3,6 +3,7 @@
 from enum import Enum
 from pathlib import Path
 from omegaconf import OmegaConf, DictConfig, open_dict
+from omegaconf.errors import InterpolationKeyError
 from loguru import logger
 from typing import List, Dict, Any, Optional
 import yaml
@@ -889,8 +890,18 @@ class Project:
             return
 
         # Determine sweep root.
-        if "save_dir" in base_config and base_config.save_dir is not None:
-            effective_root = Path(base_config.save_dir).resolve()
+        base_save_dir = None
+        if "save_dir" in base_config:
+            try:
+                base_save_dir = base_config.save_dir
+            except InterpolationKeyError:
+                # The base save_dir carries a relative interpolation (e.g.
+                # ${.variable}) that is only supplied per sweep item. Fall
+                # back to deriving the root from the merged items below.
+                base_save_dir = None
+
+        if base_save_dir is not None:
+            effective_root = Path(base_save_dir).resolve()
         else:
             first_save = merged_items[0][1].get("save_dir")
             if first_save is None:

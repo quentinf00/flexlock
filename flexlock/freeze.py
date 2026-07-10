@@ -185,8 +185,13 @@ def _resolve_in_root(ref: str, root_raw: dict, _visited: frozenset = frozenset()
         # prepare.listing_path = "${split.save_dir}/train.txt" leaves a dangling
         # ${pipeline_dir} in the detached sub-config (InterpolationKeyError).
         return _freeze_embedded_in_root(val, root_raw, _visited | {ref})
-    if _find_top_level_colon(whole) is not None or whole.startswith("."):
-        return val  # Resolver call or relative ref — preserve as-is
+    if whole.startswith("."):
+        return val  # Relative ref — preserve as-is
+    if _find_top_level_colon(whole) is not None:
+        # Resolver call — preserve the call itself but freeze nested simple
+        # root refs in its args, so the detached sub-config stays
+        # self-contained (e.g. ${run_lock:${precompute_dir},...}).
+        return _freeze_embedded_in_root(val, root_raw, _visited | {ref})
     return _resolve_in_root(whole, root_raw, _visited | {ref})
 
 

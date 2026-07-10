@@ -369,3 +369,156 @@ def test_two_hop_mixed_string_ref():
     assert raw["listing_path"] == "outputs/data_pipeline_0004/split/train.txt"
     container = OmegaConf.to_container(sub, resolve=True)
     assert container["listing_path"] == "outputs/data_pipeline_0004/split/train.txt"
+
+
+def test_sweep_relative_ref_via_sweep_target():
+    """Regression: ${.variable} in save_dir fails when sweep_target nests the
+    value one level too deep relative to the frozen sub-config.
+
+    Pattern: scatter config has save_dir="${pipeline_dir}/scatter/${.variable}".
+    After proj.get('scatter') the sub-config is frozen to:
+        save_dir = "outputs/.../scatter/${.variable}"  (relative ref preserved)
+
+    proj.submit(scatter_cfg, sweep=["hs", "phs0"], sweep_target='scatter.variable')
+    calls merge_task_into_cfg(sub, "hs", "scatter.variable"), which places the
+    value at sub["scatter"]["variable"] — one level deeper than expected.
+    ${.variable} looks for a sibling at the frozen sub-config ROOT, so the key
+    is absent and OmegaConf.to_container(sweep_cfg, resolve=True) raises
+    InterpolationKeyError: variable not found.
+
+    After the fix, merging a scalar sweep item via sweep_target should make the
+    value reachable by the relative ref, producing concrete save_dir and pred_variable.
+    """
+    from flexlock.utils import merge_task_into_cfg
+
+    cfg = OmegaConf.create({
+        "pipeline_dir": "outputs/diags_0046",
+        "scatter": {
+            "save_dir": "${pipeline_dir}/scatter/${.variable}",
+            "pred_variable": "${.variable}",
+        },
+    })
+    sub = select_and_freeze_root_refs(cfg, "scatter")
+
+    # sweep_target='variable' — the path the sweep scalar is placed at
+    # within the merged config (as _submit_sweep does it).
+    sweep_cfg = merge_task_into_cfg(sub, "hs", "variable")
+
+    # Should resolve without error; ${.variable} must find "hs".
+    container = OmegaConf.to_container(sweep_cfg, resolve=True)
+    assert container["save_dir"] == "outputs/diags_0046/scatter/hs"
+    assert container["pred_variable"] == "hs"
+
+
+def test_sweep_relative_ref_resolves_with_sibling():
+    """Complement to test_sweep_relative_ref_via_wrong_target_path.
+
+    When the sweep item is merged at the ROOT of the frozen sub-config (i.e.
+    sweep_target=None or sweep_target='.'), ${.variable} finds its sibling and
+    resolves correctly.  This is the expected / working path.
+    """
+    from flexlock.utils import merge_task_into_cfg
+
+    cfg = OmegaConf.create({
+        "pipeline_dir": "outputs/diags_0046",
+        "scatter": {
+            "save_dir": "${pipeline_dir}/scatter/${.variable}",
+            "pred_variable": "${.variable}",
+        },
+    })
+    sub = select_and_freeze_root_refs(cfg, "scatter")
+
+    # Merge at the root (sweep_target=None) → variable is a sibling of save_dir.
+    sweep_cfg = merge_task_into_cfg(sub, {"variable": "hs"}, None)
+
+    container = OmegaConf.to_container(sweep_cfg, resolve=True)
+    assert container["save_dir"] == "outputs/diags_0046/scatter/hs"
+    assert container["pred_variable"] == "hs"
+
+
+def test_cross_tree_ref_to_resolver_with_nested_root_ref():
+    """Cross-tree ref pointing at a resolver call that has ${root_key} in its args.
+
+    Reproduces: InterpolationKeyError: Interpolation key 'precompute_dir' not found
+                full_key: trainer.callbacks[0].zarr_path
+
+    Pattern (from xps_glob._make_trainer("main")):
+      - root["precompute_dir"]  = "/data/precomputed"   (sibling, outside stage)
+      - root["main"]["trainer"]["zarr_path"]  = "${main.datamodule.zarr_path}"
+        (cross-tree ref — full-path form produced by _make_trainer's _dm() helper)
+      - root["main"]["datamodule"]["zarr_path"] = "${run_lock:${precompute_dir},…}"
+        (resolver call with nested simple root-ref in its args)
+
+    select_and_freeze_root_refs resolves the cross-tree ref "${main.datamodule.zarr_path}"
+    via _resolve_in_root, which encounters a resolver-call value and (before the fix)
+    returns it *as-is*, leaving ${precompute_dir} unresolved in the frozen stage.
+
+    After the fix, _resolve_in_root must freeze nested simple refs inside resolver-call
+    args (via _freeze_embedded_in_root) before returning, so the frozen stage is
+    self-contained and OmegaConf can resolve it without the root context.
+    """
+    cfg = OmegaConf.create({
+        "precompute_dir": "/data/precomputed",
+        "main": {
+            # Full-path cross-tree ref (the form _make_trainer("main") generates)
+            "trainer": {"zarr_path": "${main.datamodule.zarr_path}"},
+            "datamodule": {"zarr_path": "${run_lock:${precompute_dir},config.zarr_path}"},
+        },
+    })
+
+    sub = select_and_freeze_root_refs(cfg, "main")
+    raw = OmegaConf.to_container(sub, resolve=False)
+
+    # Both fields must have ${precompute_dir} frozen to the concrete path.
+    # datamodule.zarr_path already passes (direct freeze path); trainer.zarr_path
+    # is the regression: _resolve_in_root returned the resolver call verbatim.
+    assert raw["datamodule"]["zarr_path"] == "${run_lock:/data/precomputed,config.zarr_path}"
+    assert raw["trainer"]["zarr_path"] == "${run_lock:/data/precomputed,config.zarr_path}", (
+        "cross-tree ref through _resolve_in_root left ${precompute_dir} unresolved "
+        "in resolver-call args — will raise InterpolationKeyError at submit time"
+    )
+
+
+def test_submit_sweep_relative_save_dir_ref(tmp_path):
+    """Regression for the *actual* diags-pipeline scatter failure.
+
+    The isolated merge_task_into_cfg tests above pass, yet the pipeline still
+    raised ``InterpolationKeyError: variable not found (full_key: save_dir)``.
+    The failure is not in the per-item merge — it is in Project.submit's sweep
+    path: _submit_sweep calls _validate_sweep_save_dirs(base_config, ...), which
+    does::
+
+        if "save_dir" in base_config and base_config.save_dir is not None:
+
+    ``base_config`` is the *un-swept* frozen sub-config whose save_dir still
+    contains the relative ``${.variable}`` ref (variable is only injected per
+    sweep item). Accessing ``base_config.save_dir`` forces resolution of
+    ``${.variable}`` against the base config, where ``variable`` does not exist,
+    raising InterpolationKeyError before any sweep item runs.
+
+    This test drives the full Project.submit path (like the pipeline does) and
+    must not raise. After the fix, validation should tolerate an unresolvable
+    relative interpolation in the base save_dir (the sweep items supply it).
+    """
+    from flexlock.api import Project
+
+    cfg = OmegaConf.create({
+        "pipeline_dir": str(tmp_path / "diags_0046"),
+        "scatter": {
+            "_target_": "builtins.dict",
+            "save_dir": "${pipeline_dir}/scatter/${.variable}",
+            "pred_variable": "${.variable}",
+        },
+    })
+    proj = Project.__new__(Project)
+    sub = select_and_freeze_root_refs(cfg, "scatter")
+
+    # Mirrors diags_pipeline.py: proj.submit(scatter_cfg, sweep=variables,
+    # sweep_target='variable'). Must not raise InterpolationKeyError.
+    proj.submit(
+        sub,
+        sweep=["hs", "phs0", "t0m1"],
+        sweep_target="variable",
+        n_jobs=1,
+        wait=True,
+    )
