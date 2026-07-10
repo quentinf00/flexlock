@@ -315,3 +315,57 @@ def test_why_gcd_refs_no_raise(tmp_path):
         (d / "run.lock").write_text(yaml.dump(data))
     result = query.why(a, b)  # must not raise
     assert result["commits"]["main"]["error"] is not None
+
+
+# ── list_stage_nodes ──
+
+
+def test_list_stage_nodes_nested():
+    from omegaconf import OmegaConf
+
+    cfg = OmegaConf.create({
+        "pipeline_dir": "outputs/exp",
+        "extract": {"_target_": "proj.extract", "save_dir": "${pipeline_dir}/extract"},
+        "train": {
+            "_target_": "proj.train",
+            "save_dir": "${pipeline_dir}/train",
+            "_snapshot_": {"prevs": ["${extract.save_dir}"]},
+        },
+    })
+    stages = query.list_stage_nodes(cfg)
+    keys = {s["key"] for s in stages}
+    assert keys == {"extract", "train"}
+    train = next(s for s in stages if s["key"] == "train")
+    assert train["target"] == "proj.train"
+    assert train["save_dir"] == "${pipeline_dir}/train"
+
+
+def test_list_stage_nodes_no_dirs_created(tmp_path):
+    """Walking must not fire ${vinc:} and create directories."""
+    from omegaconf import OmegaConf
+    from flexlock.resolvers import vinc_resolver
+
+    OmegaConf.register_new_resolver("vinc", vinc_resolver, replace=True)
+    base = tmp_path / "outputs" / "run"
+    cfg = OmegaConf.create({
+        "train": {"_target_": "proj.train", "save_dir": "${vinc:" + str(base) + "}"},
+    })
+    stages = query.list_stage_nodes(cfg)
+    assert stages[0]["key"] == "train"
+    # The vinc resolver would have created the parent dir if it had fired.
+    assert not (tmp_path / "outputs").exists()
+
+
+def test_cmd_stages_keys(tmp_path, capsys):
+    defaults_file = tmp_path / "defs.py"
+    defaults_file.write_text(
+        'cfg = {"a": {"_target_": "m.a"}, "b": {"_target_": "m.b"}}\n'
+    )
+    from flexlock.cli import main
+    from unittest.mock import patch
+
+    with patch("sys.argv", ["flexlock", "stages", "-d", f"{defaults_file}:cfg",
+                            "--format", "keys"]):
+        main()
+    out = capsys.readouterr().out.split()
+    assert set(out) == {"a", "b"}

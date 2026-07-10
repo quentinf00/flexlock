@@ -642,6 +642,50 @@ def cmd_why(args):
         print(query.format_why_text(result))
 
 
+# ── stages subcommand ──────────────────────────────────────────
+
+def _load_defaults_cfg(defaults, config_path=None):
+    """Load a defaults tree (+ optional -c YAML merge) as a DictConfig.
+
+    Shared loader used by ``stages``; kept decoupled from argparse so callers
+    can pass plain strings.
+    """
+    from omegaconf import OmegaConf
+    from .utils import load_python_defaults
+
+    loaded = load_python_defaults(defaults)
+    cfg = loaded if OmegaConf.is_config(loaded) else OmegaConf.create(loaded)
+    if config_path:
+        cfg.merge_with(OmegaConf.load(config_path))
+    return cfg
+
+
+def cmd_stages(args):
+    """List runnable stages (mappings with _target_) in a defaults tree."""
+    from . import query
+
+    if not args.defaults:
+        print("Error: -d/--defaults is required", file=sys.stderr)
+        sys.exit(1)
+
+    cfg = _load_defaults_cfg(args.defaults, args.config)
+    stages = query.list_stage_nodes(cfg)
+
+    if args.format == "json":
+        print(json.dumps(stages, indent=2, default=str))
+    elif args.format == "keys":
+        for s in stages:
+            print(s["key"])
+    else:
+        if not stages:
+            print("No stages (mappings with _target_) found.")
+            return
+        for s in stages:
+            indent = "  " * max(s["depth"] - 1, 0)
+            save = f"  → {s['save_dir']}" if s.get("save_dir") else ""
+            print(f"{indent}{s['key']:30s} {s['target']}{save}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="flexlock",
@@ -740,6 +784,23 @@ def main():
     why_parser.add_argument("run_b", help="Second run directory")
     why_parser.add_argument("--format", choices=["text", "json"], default="text")
     why_parser.set_defaults(func=cmd_why)
+
+    # stages
+    stages_parser = subparsers.add_parser(
+        "stages", help="List runnable stages in a defaults tree"
+    )
+    stages_parser.add_argument(
+        "-d", "--defaults", required=True,
+        help="Python import path for the defaults (pkg.mod.var or file.py:var)",
+    )
+    stages_parser.add_argument(
+        "-c", "--config", metavar="FILE", help="Optional YAML to merge into defaults"
+    )
+    stages_parser.add_argument(
+        "--format", choices=["text", "keys", "json"], default="text",
+        help="text (default), keys (bare keys for fzf), or json",
+    )
+    stages_parser.set_defaults(func=cmd_stages)
 
     args = parser.parse_args()
 

@@ -406,6 +406,47 @@ def format_why_text(result: dict) -> str:
     return "\n".join(lines)
 
 
+def list_stage_nodes(root_cfg) -> list:
+    """Enumerate every stage (a mapping carrying ``_target_``) in a config tree.
+
+    The config is walked as a *plain* container with ``resolve=False`` — resolving
+    would fire resolvers like ``${vinc:}`` and create directories on disk. Each
+    stage is reported by its dot-path key, its ``_target_``, its declared
+    ``save_dir`` (unresolved), and its nesting depth. ``_snapshot_`` subtrees are
+    skipped (tracking declarations, not runnable stages).
+    """
+    from omegaconf import OmegaConf, DictConfig
+
+    if isinstance(root_cfg, DictConfig):
+        container = OmegaConf.to_container(root_cfg, resolve=False)
+    elif OmegaConf.is_config(root_cfg):
+        container = OmegaConf.to_container(root_cfg, resolve=False)
+    else:
+        container = root_cfg
+
+    stages = []
+
+    def _walk(node, path, depth):
+        if not isinstance(node, dict):
+            return
+        if "_target_" in node:
+            stages.append({
+                "key": path,
+                "target": node.get("_target_"),
+                "save_dir": node.get("save_dir"),
+                "depth": depth,
+            })
+        for key, value in node.items():
+            if key == "_snapshot_":
+                continue
+            if isinstance(value, dict):
+                child_path = f"{path}.{key}" if path else key
+                _walk(value, child_path, depth + 1)
+
+    _walk(container, "", 0)
+    return stages
+
+
 def _all_tags_by_path(scan_root) -> dict:
     """One-shot ``{resolved_path: tag_name}`` map for a whole tree."""
     from .cli import find_git_repo, get_flexlock_tags, get_tag_details
