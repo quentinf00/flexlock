@@ -299,6 +299,222 @@ def load_run_summary(run_dir, scan_root=None, downstream=True) -> dict:
     return summary
 
 
+def _all_tags_by_path(scan_root) -> dict:
+    """One-shot ``{resolved_path: tag_name}`` map for a whole tree."""
+    from .cli import find_git_repo, get_flexlock_tags, get_tag_details
+
+    out = {}
+    repo = find_git_repo(str(scan_root))
+    if not repo:
+        return out
+    try:
+        for tag_name, tag_commit in get_flexlock_tags(repo).items():
+            details = get_tag_details(repo, tag_commit)
+            for line in details["message"].splitlines():
+                if line.startswith("Path: "):
+                    out[str(Path(line[6:].strip()).resolve())] = tag_name
+    except Exception:
+        pass
+    return out
+
+
+def _numeric_metrics(results) -> dict:
+    """Top-level numeric keys of a results payload."""
+    if not isinstance(results, dict):
+        return {}
+    return {
+        k: v for k, v in results.items()
+        if isinstance(v, (int, float)) and not isinstance(v, bool)
+    }
+
+
+def build_graph(results_root, include_groups=False) -> dict:
+    """Build the experiment DAG JSON — backend for ``graph`` and the report.
+
+    Nodes come from every ``run.lock`` under ``results_root`` plus every sweep
+    task dir (identified by ``.flexlock_marker``, which has no run.lock). Edges
+    capture lineage and sweep-item containment; edges pointing outside the scan
+    materialise ``kind="external"`` stub nodes so the graph stays closed.
+    """
+    from datetime import datetime as _dt
+
+    from .cli import find_results_dirs
+
+    root = Path(results_root).resolve()
+    tag_map = _all_tags_by_path(root)
+
+    nodes: dict[str, dict] = {}
+    edges: list[dict] = []
+
+    def _node(node_id, **fields):
+        nodes[node_id] = fields
+
+    # 1. run.lock-backed nodes (runs + sweep masters).
+    for run in find_results_dirs(str(root)):
+        run_dir = Path(run["path"]).resolve()
+        node_id = str(run_dir)
+        lock = _load_lock(run_dir) or {}
+        st = run_status(run_dir)
+        config = lock.get("config", {}) or {}
+        repos = lock.get("repos") or {}
+        results = RunRecord(run_dir).load_results()
+        _node(
+            node_id,
+            id=node_id,
+            label=run_dir.name,
+            kind=st["kind"] if st["kind"] != "unknown" else "run",
+            status=st["status"],
+            timestamp=lock.get("timestamp"),
+            note=lock.get("note"),
+            target=config.get("_target_") if isinstance(config, dict) else None,
+            fingerprint=lock.get("fingerprint"),
+            tag=tag_map.get(node_id),
+            tree_hashes={n: (i or {}).get("tree") for n, i in repos.items()},
+            data_hashes=lock.get("data") or {},
+            metrics=_numeric_metrics(results),
+        )
+
+    # 2. sweep-task nodes (marker dirs, no run.lock).
+    for marker_file in root.rglob(MARKER_NAME):
+        task_dir = marker_file.parent.resolve()
+        node_id = str(task_dir)
+        if node_id in nodes:
+            continue
+        marker = _read_marker(task_dir) or {}
+        st = run_status(task_dir)
+        db_path = _resolve_marker_db(task_dir, marker)
+        results = RunRecord(task_dir).load_results()
+        _node(
+            node_id,
+            id=node_id,
+            label=task_dir.name,
+            kind="sweep_task",
+            status=st["status"],
+            timestamp=None,
+            note=None,
+            target=None,
+            fingerprint=None,
+            tag=tag_map.get(node_id),
+            tree_hashes={},
+            data_hashes={},
+            metrics=_numeric_metrics(results),
+        )
+        # sweep-item edge from the master (task DB's parent dir).
+        master_id = str(db_path.parent.resolve())
+        edges.append({"source": master_id, "target": node_id, "type": "sweep_item"})
+
+    # 3. lineage edges (materialise external stubs for out-of-scan sources).
+    def _ensure_external(node_id):
+        if node_id not in nodes:
+            _node(node_id, id=node_id, label=Path(node_id).name, kind="external",
+                  status="unknown", timestamp=None, note=None, target=None,
+                  fingerprint=None, tag=tag_map.get(node_id), tree_hashes={},
+                  data_hashes={}, metrics={})
+
+    for run in find_results_dirs(str(root)):
+        run_dir = Path(run["path"]).resolve()
+        lock = _load_lock(run_dir) or {}
+        for entry in _lineage_from_lock(lock).values():
+            if not isinstance(entry, dict):
+                continue
+            path = entry.get("path") or entry.get("config", {}).get("save_dir")
+            if not path:
+                continue
+            src = str(Path(path).resolve())
+            _ensure_external(src)
+            edges.append({"source": src, "target": str(run_dir), "type": "lineage"})
+
+    # Drop sweep_item edges whose master somehow isn't a node.
+    for e in edges:
+        if e["type"] == "sweep_item":
+            _ensure_external(e["source"])
+
+    graph = {
+        "schema_version": SCHEMA_VERSION,
+        "root": str(root),
+        "generated_at": _dt.now().isoformat(),
+        "nodes": list(nodes.values()),
+        "edges": edges,
+    }
+    if include_groups:
+        graph["groups"] = _compute_groups(nodes)
+    return graph
+
+
+def _compute_groups(nodes: dict) -> dict:
+    """Group node ids that share an identical tree-hash tuple / data dict."""
+    same_tree: dict = {}
+    same_data: dict = {}
+    for node_id, n in nodes.items():
+        trees = n.get("tree_hashes") or {}
+        if trees and all(v for v in trees.values()):
+            key = tuple(sorted(trees.items()))
+            same_tree.setdefault(key, []).append(node_id)
+        data = n.get("data_hashes") or {}
+        if data:
+            dkey = tuple(sorted(data.items()))
+            same_data.setdefault(dkey, []).append(node_id)
+    return {
+        "same_tree": [sorted(v) for v in same_tree.values() if len(v) >= 2],
+        "same_data": [sorted(v) for v in same_data.values() if len(v) >= 2],
+    }
+
+
+# Status → display colour, shared by mermaid/dot/HTML.
+STATUS_COLORS = {
+    "complete": "#4caf50",
+    "failed": "#e53935",
+    "interrupted": "#fb8c00",
+    "running": "#1e88e5",
+    "pending": "#9e9e9e",
+    "unknown": "#bdbdbd",
+    "external": "#e0e0e0",
+}
+
+
+def graph_to_mermaid(graph: dict) -> str:
+    """Render the graph JSON as a Mermaid ``graph TD`` diagram."""
+    lines = ["graph TD"]
+    id_map = {n["id"]: f"n{i}" for i, n in enumerate(graph["nodes"])}
+    statuses_seen = set()
+    for n in graph["nodes"]:
+        nid = id_map[n["id"]]
+        label = f"{n['label']}<br/>{n['status']}"
+        lines.append(f'    {nid}["{label}"]')
+        statuses_seen.add(n["status"])
+    for e in graph["edges"]:
+        s = id_map.get(e["source"])
+        t = id_map.get(e["target"])
+        if s and t:
+            arrow = "-.->" if e["type"] == "sweep_item" else "-->"
+            lines.append(f"    {s} {arrow} {t}")
+    # classDef per status + assignments.
+    for status in sorted(statuses_seen):
+        color = STATUS_COLORS.get(status, "#bdbdbd")
+        lines.append(f"    classDef {status} fill:{color},color:#fff;")
+    for n in graph["nodes"]:
+        lines.append(f"    class {id_map[n['id']]} {n['status']};")
+    return "\n".join(lines)
+
+
+def graph_to_dot(graph: dict) -> str:
+    """Render the graph JSON as Graphviz DOT."""
+    lines = ["digraph flexlock {", "    rankdir=TB;", '    node [style=filled, shape=box];']
+    id_map = {n["id"]: f"n{i}" for i, n in enumerate(graph["nodes"])}
+    for n in graph["nodes"]:
+        color = STATUS_COLORS.get(n["status"], "#bdbdbd")
+        label = f"{n['label']}\\n{n['status']}"
+        lines.append(f'    {id_map[n["id"]]} [label="{label}", fillcolor="{color}"];')
+    for e in graph["edges"]:
+        s = id_map.get(e["source"])
+        t = id_map.get(e["target"])
+        if s and t:
+            style = "dashed" if e["type"] == "sweep_item" else "solid"
+            lines.append(f'    {s} -> {t} [style={style}];')
+    lines.append("}")
+    return "\n".join(lines)
+
+
 def format_summary_md(summary: dict) -> str:
     """Render a human-readable Markdown view of a ``load_run_summary`` dict."""
     name = Path(summary["path"]).name

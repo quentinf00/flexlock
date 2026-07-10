@@ -178,3 +178,69 @@ def test_cmd_show_md(tmp_path, capsys):
     assert "FAILED" in out
     assert "## Error" in out
     assert "trying things" in out
+
+
+# ── build_graph ──
+
+
+def _chain(tmp_path):
+    root = tmp_path / "results"
+    a = _make_run(root, "extract", complete=True, timestamp="2026-01-01T00:00:00")
+    b = _make_run(root, "features", complete=True, timestamp="2026-01-02T00:00:00",
+                  lineage={"extract": {"path": str(a)}})
+    c = _make_run(root, "train", error="oops", timestamp="2026-01-03T00:00:00",
+                  results={"acc": 0.8}, lineage={"features": {"path": str(b)}})
+    return root, a, b, c
+
+
+def test_graph_nodes_and_edges(tmp_path):
+    root, a, b, c = _chain(tmp_path)
+    graph = query.build_graph(root)
+    ids = {n["id"] for n in graph["nodes"]}
+    assert str(a.resolve()) in ids
+    assert str(c.resolve()) in ids
+    # statuses reflected
+    by_id = {n["id"]: n for n in graph["nodes"]}
+    assert by_id[str(c.resolve())]["status"] == "failed"
+    assert by_id[str(c.resolve())]["metrics"] == {"acc": 0.8}
+    # two lineage edges
+    lin = [e for e in graph["edges"] if e["type"] == "lineage"]
+    assert len(lin) == 2
+    assert {"source": str(b.resolve()), "target": str(c.resolve()), "type": "lineage"} in lin
+
+
+def test_graph_external_stub(tmp_path):
+    root = tmp_path / "results"
+    _make_run(root, "downstream", complete=True,
+              lineage={"up": {"path": "/outside/scan/up"}})
+    graph = query.build_graph(root)
+    external = [n for n in graph["nodes"] if n["kind"] == "external"]
+    assert len(external) == 1
+    assert external[0]["id"] == str(Path("/outside/scan/up").resolve())
+
+
+def test_graph_mermaid_and_dot(tmp_path):
+    root, a, b, c = _chain(tmp_path)
+    graph = query.build_graph(root)
+    mermaid = query.graph_to_mermaid(graph)
+    assert mermaid.startswith("graph TD")
+    assert "classDef failed" in mermaid
+    dot = query.graph_to_dot(graph)
+    assert dot.startswith("digraph flexlock")
+    assert "->" in dot
+
+
+def test_graph_groups(tmp_path):
+    root = tmp_path / "results"
+    cfg1 = {"_target_": "m.f", "save_dir": str(root / "r1")}
+    cfg2 = {"_target_": "m.f", "save_dir": str(root / "r2")}
+    for name, cfg in [("r1", cfg1), ("r2", cfg2)]:
+        run_dir = root / name
+        run_dir.mkdir(parents=True)
+        (run_dir / "run.lock").write_text(yaml.dump({
+            "timestamp": "t", "config": cfg,
+            "repos": {"main": {"tree": "sametree", "commit": "x"}},
+        }))
+        RunRecord(run_dir).mark_complete()
+    graph = query.build_graph(root, include_groups=True)
+    assert any(len(g) == 2 for g in graph["groups"]["same_tree"])

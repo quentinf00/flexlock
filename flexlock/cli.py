@@ -607,6 +607,23 @@ def cmd_show(args):
         print(query.format_summary_md(summary))
 
 
+# ── graph subcommand ───────────────────────────────────────────
+
+def cmd_graph(args):
+    """Emit the experiment DAG as JSON, Mermaid, or DOT."""
+    from . import query
+
+    root = Path(args.path or ".")
+    graph = query.build_graph(root, include_groups=args.groups)
+
+    if args.format == "mermaid":
+        print(query.graph_to_mermaid(graph))
+    elif args.format == "dot":
+        print(query.graph_to_dot(graph))
+    else:
+        print(json.dumps(graph, indent=2, default=str))
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="flexlock",
@@ -682,6 +699,20 @@ def main():
         help="Skip the downstream lineage scan (faster)",
     )
     show_parser.set_defaults(func=cmd_show)
+
+    # graph
+    graph_parser = subparsers.add_parser(
+        "graph", help="Emit the experiment DAG (json/mermaid/dot)"
+    )
+    graph_parser.add_argument("path", nargs="?", help="Results root (default: .)")
+    graph_parser.add_argument(
+        "--format", choices=["json", "mermaid", "dot"], default="json"
+    )
+    graph_parser.add_argument(
+        "--groups", action="store_true",
+        help="Include same-tree / same-data groupings in JSON output",
+    )
+    graph_parser.set_defaults(func=cmd_graph)
 
     args = parser.parse_args()
 
