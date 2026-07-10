@@ -686,6 +686,22 @@ def cmd_stages(args):
             print(f"{indent}{s['key']:30s} {s['target']}{save}")
 
 
+# ── report subcommand ──────────────────────────────────────────
+
+def cmd_report(args):
+    """Generate a static, self-contained HTML report of a results tree."""
+    from . import report
+
+    out = report.generate_report(
+        args.path or ".",
+        args.output,
+        title=args.title,
+        include_groups=args.groups,
+        embed_configs=args.embed_configs,
+    )
+    print(f"Wrote report to {out}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="flexlock",
@@ -801,6 +817,24 @@ def main():
         help="text (default), keys (bare keys for fzf), or json",
     )
     stages_parser.set_defaults(func=cmd_stages)
+
+    # report
+    report_parser = subparsers.add_parser(
+        "report", help="Generate a static HTML report of a results tree"
+    )
+    report_parser.add_argument("path", nargs="?", help="Results root (default: .)")
+    report_parser.add_argument(
+        "-o", "--output", default="report.html", help="Output HTML file"
+    )
+    report_parser.add_argument("--title", help="Report title")
+    report_parser.add_argument(
+        "--groups", action="store_true", help="Include same-tree/same-data groups"
+    )
+    report_parser.add_argument(
+        "--embed-configs", action="store_true",
+        help="Embed each run's full config (larger file)",
+    )
+    report_parser.set_defaults(func=cmd_report)
 
     args = parser.parse_args()
 

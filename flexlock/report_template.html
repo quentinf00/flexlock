@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+  :root { --bg:#fafafa; --fg:#222; --line:#ddd; --panel:#fff; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+         background:var(--bg); color:var(--fg); }
+  header { padding:12px 20px; border-bottom:1px solid var(--line); background:var(--panel); }
+  h1 { font-size:18px; margin:0; }
+  .sub { color:#888; font-size:12px; margin-top:2px; }
+  .wrap { display:flex; gap:16px; padding:16px; align-items:flex-start; flex-wrap:wrap; }
+  .col { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:12px; }
+  .col.table { flex:2 1 520px; min-width:320px; }
+  .col.graph { flex:1 1 320px; min-width:280px; }
+  .col.detail { flex:1 1 320px; min-width:280px; }
+  .controls { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center; }
+  input[type=text], select { padding:4px 6px; border:1px solid var(--line); border-radius:4px; font-size:13px; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line); white-space:nowrap;
+           overflow:hidden; text-overflow:ellipsis; max-width:220px; }
+  th { cursor:pointer; user-select:none; }
+  tr.run { cursor:pointer; }
+  tr.run:hover { background:#f0f7ff; }
+  tr.sel { background:#e3f2fd; }
+  .badge { display:inline-block; padding:1px 7px; border-radius:10px; color:#fff; font-size:11px; }
+  .statusbox { display:inline-flex; align-items:center; gap:3px; font-size:12px; margin-right:6px; }
+  pre { background:#f5f5f5; padding:8px; border-radius:4px; overflow:auto; font-size:12px; max-height:340px; }
+  .err { color:#c62828; }
+  svg { width:100%; height:auto; border:1px solid var(--line); border-radius:4px; background:#fff; }
+  .nodeRect { cursor:pointer; }
+  .nodeLabel { font-size:10px; fill:#fff; pointer-events:none; }
+  .muted { color:#999; }
+</style>
+</head>
+<body>
+<header>
+  <h1>{{TITLE}}</h1>
+  <div class="sub" id="meta"></div>
+</header>
+<div class="wrap">
+  <div class="col table">
+    <div class="controls">
+      <input type="text" id="filter" placeholder="filter text…">
+      <select id="stageSel"><option value="">all stages</option></select>
+      <span id="statusFilters"></span>
+    </div>
+    <table>
+      <thead><tr id="head"></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="col graph">
+    <b>Lineage</b>
+    <div id="svgHost"></div>
+  </div>
+  <div class="col detail">
+    <b>Detail</b>
+    <div id="detail"><span class="muted">select a run…</span></div>
+  </div>
+</div>
+
+<script id="flexlock-data" type="application/json">{{DATA}}</script>
+<script>
+(function () {
+  const payload = JSON.parse(document.getElementById("flexlock-data").textContent);
+  const graph = payload.graph;
+  const nodes = graph.nodes;
+  const edges = graph.edges;
+  const byId = {};
+  nodes.forEach(n => byId[n.id] = n);
+
+  const COLORS = payload.colors || {};
+  function color(status){ return COLORS[status] || "#bdbdbd"; }
+
+  document.getElementById("meta").textContent =
+    graph.nodes.length + " runs · root " + graph.root + " · generated " + graph.generated_at;
+
+  // Most-frequent metric keys (up to 8) become table columns.
+  const freq = {};
+  nodes.forEach(n => Object.keys(n.metrics || {}).forEach(k => freq[k] = (freq[k]||0)+1));
+  const metricCols = Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0, 8);
+
+  const baseCols = [["label","Stage"],["status","Status"],["timestamp","Timestamp"],["note","Note"]];
+  const head = document.getElementById("head");
+  baseCols.concat(metricCols.map(m=>[m,m])).forEach(([key,lbl]) => {
+    const th = document.createElement("th");
+    th.textContent = lbl; th.dataset.key = key;
+    th.onclick = () => sortBy(key);
+    head.appendChild(th);
+  });
+
+  // Status filter checkboxes.
+  const statuses = Array.from(new Set(nodes.map(n=>n.status))).sort();
+  const sf = document.getElementById("statusFilters");
+  const active = new Set(statuses);
+  statuses.forEach(s => {
+    const span = document.createElement("label");
+    span.className = "statusbox";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = true;
+    cb.onchange = () => { cb.checked ? active.add(s) : active.delete(s); render(); };
+    span.appendChild(cb);
+    const b = document.createElement("span");
+    b.className = "badge"; b.style.background = color(s); b.textContent = s;
+    span.appendChild(b);
+    sf.appendChild(span);
+  });
+
+  // Stage dropdown.
+  const stageSel = document.getElementById("stageSel");
+  Array.from(new Set(nodes.map(n=>n.label))).sort().forEach(l => {
+    const o = document.createElement("option"); o.value=l; o.textContent=l; stageSel.appendChild(o);
+  });
+
+  let sortKey = "timestamp", sortDir = -1, selected = null;
+  function sortBy(k){ if(sortKey===k){sortDir*=-1;}else{sortKey=k;sortDir=1;} render(); }
+
+  function visibleNodes(){
+    const q = document.getElementById("filter").value.toLowerCase();
+    const stage = stageSel.value;
+    return nodes.filter(n => active.has(n.status)
+      && (!stage || n.label === stage)
+      && (!q || JSON.stringify(n).toLowerCase().includes(q)));
+  }
+
+  function fmtVal(n, key){
+    if (["label","status","timestamp","note"].includes(key)) return n[key] == null ? "" : n[key];
+    const m = n.metrics || {}; return (key in m) ? m[key] : "";
+  }
+
+  function render(){
+    const rows = document.getElementById("rows");
+    rows.innerHTML = "";
+    const list = visibleNodes().slice().sort((a,b)=>{
+      const va = fmtVal(a, sortKey), vb = fmtVal(b, sortKey);
+      return (va > vb ? 1 : va < vb ? -1 : 0) * sortDir;
+    });
+    list.forEach(n => {
+      const tr = document.createElement("tr");
+      tr.className = "run" + (selected === n.id ? " sel" : "");
+      tr.onclick = () => selectNode(n.id);
+      baseCols.forEach(([key]) => {
+        const td = document.createElement("td");
+        if (key === "status"){
+          const b = document.createElement("span");
+          b.className = "badge"; b.style.background = color(n.status); b.textContent = n.status;
+          td.appendChild(b);
+        } else { td.textContent = fmtVal(n, key); td.title = fmtVal(n, key); }
+        tr.appendChild(td);
+      });
+      metricCols.forEach(m => {
+        const td = document.createElement("td"); td.textContent = fmtVal(n, m); tr.appendChild(td);
+      });
+      rows.appendChild(tr);
+    });
+    drawGraph();
+  }
+
+  function selectNode(id){
+    selected = id;
+    const n = byId[id];
+    const d = document.getElementById("detail");
+    let html = "<h3>"+esc(n.label)+" — <span style='color:"+color(n.status)+"'>"+esc(n.status)+"</span></h3>";
+    html += "<div class='muted' style='font-size:11px'>"+esc(n.id)+"</div>";
+    if (n.note) html += "<p><b>note:</b> "+esc(n.note)+"</p>";
+    if (n.target) html += "<p><b>target:</b> <code>"+esc(n.target)+"</code></p>";
+    if (n.tag) html += "<p><b>tag:</b> "+esc(n.tag)+"</p>";
+    if (n.metrics && Object.keys(n.metrics).length){
+      html += "<p><b>metrics:</b></p><pre>"+esc(JSON.stringify(n.metrics, null, 2))+"</pre>";
+    }
+    if (n.error){
+      html += "<p class='err'><b>error:</b> "+esc(n.error.exc_type||"")+" "+esc(n.error.exc_message||"")+"</p>";
+      if (n.error.traceback) html += "<pre class='err'>"+esc(n.error.traceback)+"</pre>";
+    }
+    if (n.config){
+      html += "<p><b>config:</b></p><pre>"+esc(JSON.stringify(n.config, null, 2))+"</pre>";
+    }
+    d.innerHTML = html;
+    render();
+  }
+
+  // Kahn topological layering for the SVG lineage view.
+  function layers(){
+    const indeg = {}, adj = {};
+    nodes.forEach(n => { indeg[n.id]=0; adj[n.id]=[]; });
+    edges.forEach(e => { if (byId[e.source] && byId[e.target]){ adj[e.source].push(e.target); indeg[e.target]++; } });
+    let frontier = nodes.filter(n=>indeg[n.id]===0).map(n=>n.id);
+    const layer = {}; let depth = 0; const seen = new Set();
+    while (frontier.length){
+      const next = [];
+      frontier.forEach(id => { if (seen.has(id)) return; seen.add(id); layer[id]=depth;
+        adj[id].forEach(t => { indeg[t]--; if (indeg[t]<=0) next.push(t); }); });
+      frontier = next; depth++;
+      if (depth > nodes.length + 2) break;
+    }
+    nodes.forEach(n => { if (!(n.id in layer)) layer[n.id]=0; });
+    return layer;
+  }
+
+  function drawGraph(){
+    const host = document.getElementById("svgHost");
+    const vis = new Set(visibleNodes().map(n=>n.id));
+    const layer = layers();
+    const cols = {};
+    nodes.forEach(n => { if (!vis.has(n.id)) return; (cols[layer[n.id]] = cols[layer[n.id]]||[]).push(n); });
+    const colKeys = Object.keys(cols).map(Number).sort((a,b)=>a-b);
+    const W = 300, rowH = 34, boxW = 120, boxH = 22;
+    const maxRows = Math.max(1, ...colKeys.map(k=>cols[k].length));
+    const H = Math.max(60, maxRows * rowH + 20);
+    const pos = {};
+    let svg = "<svg viewBox='0 0 "+W+" "+H+"'>";
+    colKeys.forEach((k, ci) => {
+      const x = colKeys.length>1 ? 10 + ci*( (W-boxW-20)/(colKeys.length-1) ) : 10;
+      cols[k].forEach((n, ri) => { pos[n.id] = { x: x, y: 12 + ri*rowH }; });
+    });
+    edges.forEach(e => {
+      const a = pos[e.source], b = pos[e.target];
+      if (!a || !b) return;
+      const dash = e.type === "sweep_item" ? " stroke-dasharray='3,3'" : "";
+      svg += "<line x1='"+(a.x+boxW)+"' y1='"+(a.y+boxH/2)+"' x2='"+b.x+"' y2='"+(b.y+boxH/2)+"' stroke='#bbb'"+dash+"/>";
+    });
+    nodes.forEach(n => {
+      const p = pos[n.id]; if (!p) return;
+      const stroke = selected === n.id ? "#000" : "none";
+      svg += "<g class='nodeRect' onclick=\"__sel('"+n.id.replace(/'/g,"")+"')\">";
+      svg += "<rect x='"+p.x+"' y='"+p.y+"' width='"+boxW+"' height='"+boxH+"' rx='3' fill='"+color(n.status)+"' stroke='"+stroke+"'/>";
+      svg += "<text class='nodeLabel' x='"+(p.x+6)+"' y='"+(p.y+15)+"'>"+esc(n.label.slice(0,16))+"</text></g>";
+    });
+    svg += "</svg>";
+    host.innerHTML = svg;
+  }
+  window.__sel = selectNode;
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  document.getElementById("filter").oninput = render;
+  stageSel.onchange = render;
+  render();
+})();
+</script>
+</body>
+</html>
