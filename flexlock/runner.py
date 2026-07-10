@@ -172,6 +172,13 @@ class FlexLockRunner:
             action="store_true",
             help="Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks).",
         )
+        parser.add_argument(
+            "--note",
+            metavar="TEXT",
+            help="Free-text intent recorded as a top-level 'note:' key in run.lock "
+                 "(e.g. --note 'baseline before lr sweep'). Never affects caching. "
+                 "For sweeps the note lands on the master run.lock.",
+        )
 
         # HPC Backend Configuration
         backend_group = parser.add_argument_group("HPC Backend Configuration")
@@ -355,6 +362,7 @@ class FlexLockRunner:
                 debug=debug,
                 print_config=False,
                 dry_run=getattr(args, "dry_run", False),
+                note=getattr(args, "note", None),
             )
             results.append(outcome)
 
@@ -503,6 +511,7 @@ class FlexLockRunner:
             debug=debug,
             print_config=args.print_config,
             dry_run=getattr(args, "dry_run", False),
+            note=getattr(args, "note", None),
         )
 
         # Back-compat: the runner historically returned the user function's

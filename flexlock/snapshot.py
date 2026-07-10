@@ -27,10 +27,16 @@ def is_complete(run_dir: Path) -> bool:
 
 
 class RunTracker:
-    def __init__(self, save_dir, parent_lock=None):
+    def __init__(self, save_dir, parent_lock=None, note=None):
         self.save_dir = Path(save_dir)
         self.parent_lock = Path(parent_lock) if parent_lock else None
         self.data = {"timestamp": datetime.now().isoformat()}
+
+        # Free-text intent recorded alongside run metadata (sibling of
+        # timestamp/config). It never enters the fingerprint, so it can't
+        # perturb caching or diffs.
+        if note:
+            self.data["note"] = str(note)
 
         if self.parent_lock:
             # We record the link, effectively saying "See parent for Git/Env"
@@ -131,6 +137,7 @@ def snapshot(
     save_path=None,
     return_snapshot=False,
     fingerprint=None,
+    note=None,
 ):
     """
     Create a snapshot of the current run state.
@@ -154,7 +161,7 @@ def snapshot(
     # Use custom save_path if provided, otherwise use cfg.save_dir
     save_dir = Path(save_path) if save_path else Path(cfg.save_dir)
 
-    tracker = RunTracker(save_dir, parent_lock=parent_lock)
+    tracker = RunTracker(save_dir, parent_lock=parent_lock, note=note)
 
     # Store the precomputed fingerprint (index key) so run.lock/DB snapshots
     # carry it and `flexlock reindex` can rebuild the index from disk.

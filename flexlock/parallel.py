@@ -71,6 +71,7 @@ class ParallelExecutor:
         local_workers: int | None = None,
         isolated: bool = False,
         tag: str | None = None,
+        note: str | None = None,
     ):
         """Initializes the ParallelExecutor.
 
@@ -99,6 +100,7 @@ class ParallelExecutor:
         self.n_jobs = n_jobs
         self.local_workers = local_workers
         self.isolated = isolated
+        self.note = note
 
         self.save_dir = Path(cfg.save_dir)
         self.db_path = self.save_dir / "run.lock.tasks.db"
@@ -319,7 +321,7 @@ class ParallelExecutor:
         # We assume the Main Process has the correct context (repos, etc.)
         repos, data, _ = extract_tracking_info(self.cfg)
         # Set default repos if none specified
-        snapshot(self.cfg, repos=repos, data=data, save_path=root_dir)
+        snapshot(self.cfg, repos=repos, data=data, save_path=root_dir, note=self.note)
 
         # 3. Populate SQLite DB
         # Store 'root_dir' in the DB so workers know where the Master Lock is.

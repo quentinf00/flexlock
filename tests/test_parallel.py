@@ -189,6 +189,19 @@ def test_task_failure_writes_run_error_sidecar(base_cfg, tmp_path):
     assert any(r["task_id"] == expected_id and r["status"] == "failed" for r in rows)
 
 
+def test_sweep_master_lock_carries_note(base_cfg):
+    """A note passed to ParallelExecutor lands on the master run.lock."""
+    tasks = [{"task_id": i, "worker_id": "local"} for i in range(2)]
+    executor = ParallelExecutor(
+        func=dummy_task_func, tasks=tasks, task_target=".", cfg=base_cfg,
+        n_jobs=1, note="sweep intent",
+    )
+    executor.run()
+    master_lock = Path(base_cfg.save_dir) / "run.lock"
+    data = yaml.safe_load(master_lock.read_text())
+    assert data["note"] == "sweep intent"
+
+
 def test_wait_parameter_with_local_execution(base_cfg):
     """Tests that wait parameter works correctly with local execution."""
     tasks = [{"task_id": i, "worker_id": "local"} for i in range(4)]

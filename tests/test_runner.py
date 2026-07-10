@@ -253,3 +253,41 @@ def test_sweep_file_not_found_raises_error():
     
     with pytest.raises(FlexLockConfigError, match="Sweep file.*not found"):
         runner._load_sweep_tasks(args, cfg)
+
+
+# ── --note (Phase A2) ──
+
+
+def note_target(save_dir=None, lr=0.01):
+    """Trivial target used by the --note runner tests."""
+    return {"lr": lr}
+
+
+def test_note_flag_recorded_in_run_lock(tmp_path):
+    """`--note` writes a top-level note: key into run.lock."""
+    import yaml as _yaml
+
+    runner = FlexLockRunner()
+    out = tmp_path / "run"
+    runner.run([
+        "-o", "_target_=tests.test_runner.note_target",
+        "-o", f"save_dir={out}",
+        "--note", "baseline",
+    ])
+    lock = _yaml.safe_load((out / "run.lock").read_text())
+    assert lock["note"] == "baseline"
+
+
+def test_no_note_means_no_note_key(tmp_path):
+    """Without --note the run.lock carries no note key (readers get None)."""
+    import yaml as _yaml
+
+    runner = FlexLockRunner()
+    out = tmp_path / "run"
+    runner.run([
+        "-o", "_target_=tests.test_runner.note_target",
+        "-o", f"save_dir={out}",
+    ])
+    lock = _yaml.safe_load((out / "run.lock").read_text())
+    assert "note" not in lock
+    assert lock.get("note") is None

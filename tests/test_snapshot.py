@@ -33,6 +33,31 @@ def test_runtracker_initialization_with_parent():
     assert tracker.data["parent"] == str(parent_lock)
 
 
+def test_runtracker_note_recorded():
+    """A non-empty note lands as a top-level snapshot key."""
+    tracker = RunTracker(Path("test_run"), note="baseline before lr sweep")
+    assert tracker.data["note"] == "baseline before lr sweep"
+
+
+def test_runtracker_note_absent_when_none():
+    """No note → no 'note' key (old readers see None)."""
+    assert "note" not in RunTracker(Path("test_run")).data
+    assert "note" not in RunTracker(Path("test_run"), note="").data
+
+
+def test_snapshot_note_does_not_change_fingerprint(tmp_path):
+    """The note is metadata only — the stored fingerprint is identical."""
+    cfg = OmegaConf.create({"lr": 0.1, "save_dir": str(tmp_path / "run")})
+    from flexlock.fingerprint import fingerprint as fp
+
+    fp_val = fp(cfg)
+    snap_a = snapshot(cfg, fingerprint=fp_val, return_snapshot=True, note="hello")
+    snap_b = snapshot(cfg, fingerprint=fp_val, return_snapshot=True, note=None)
+    assert snap_a["fingerprint"] == snap_b["fingerprint"]
+    assert snap_a.get("note") == "hello"
+    assert "note" not in snap_b
+
+
 def test_runtracker_record_data():
     """Test RunTracker data recording."""
     save_dir = Path("test_run")

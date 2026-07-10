@@ -505,6 +505,7 @@ class Project:
         dry_run: bool = False,
         tag: "str | None" = None,
         timeout: "int | None" = None,
+        note: "str | None" = None,
     ) -> "ExecutionResult | List[ExecutionResult] | None":
         """Submit a configuration for execution.
 
@@ -549,6 +550,11 @@ class Project:
                 DB (e.g. ``"extract"`` or ``"collocate"``). Passed through to
                 ``ParallelExecutor`` so workers and the status CLI can scope to
                 it. When ``None`` a deterministic hash is auto-generated.
+            note: Free-text intent recorded as a top-level ``note:`` key in
+                ``run.lock`` (sibling of ``timestamp``/``config``). Never enters
+                the fingerprint, so it can't perturb caching. For sweeps the note
+                lands on the master ``run.lock`` only; sweep items inherit it for
+                display via their ``.flexlock_marker`` → master lookup.
 
         Returns:
             ``ExecutionResult`` (single), ``List[ExecutionResult]`` (sweep),
@@ -644,6 +650,7 @@ class Project:
                 tag=tag,
                 force=force,
                 timeout=timeout,
+                note=note,
             )
 
         # Single execution path
@@ -688,6 +695,7 @@ class Project:
                 slurm_config=slurm_config,
                 local_workers=None,
                 tag=tag,
+                note=note,
             )
 
             # Run with wait parameter (executor handles waiting)
@@ -736,6 +744,7 @@ class Project:
                     n_jobs=1,
                     isolated=True,
                     tag=tag,
+                    note=note,
                 )
                 executor.run(wait=True)
                 result_data = None
@@ -783,7 +792,8 @@ class Project:
             # Create snapshot before execution
             if "save_dir" in config:
                 snapshot(
-                    config, repos=repos, data=data, prevs=prevs, fingerprint=run_fp
+                    config, repos=repos, data=data, prevs=prevs,
+                    fingerprint=run_fp, note=note,
                 )
 
             # Execute the function
@@ -1105,6 +1115,7 @@ class Project:
         tag: "str | None" = None,
         force: bool = False,
         timeout: "int | None" = None,
+        note: "str | None" = None,
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -1229,6 +1240,7 @@ class Project:
                     slurm_config=slurm_config,
                     local_workers=n_jobs if not use_hpc else None,
                     tag=tag,
+                    note=note,
                 )
 
                 # Run the sweep (executor handles waiting based on wait parameter)

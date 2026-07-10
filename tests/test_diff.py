@@ -540,6 +540,20 @@ class TestRunDiffCorrectness:
         assert any("train" in m for m in diff.diffs["data"])
         assert not any("val" in m for m in diff.diffs["data"])
 
+    def test_note_only_difference_is_match(self):
+        """Snapshots differing only in the top-level note still match."""
+        current = {"note": "run A", "config": {"lr": 0.01}}
+        target = {"note": "run B", "config": {"lr": 0.01}}
+        diff = RunDiff(current, target)
+        assert diff.is_match() is True
+
+    def test_top_level_note_key_ignored_in_config(self):
+        """A ``note`` key at the config top level is ignored (defensive)."""
+        current = {"config": {"note": "x", "lr": 0.01}}
+        target = {"config": {"note": "y", "lr": 0.01}}
+        diff = RunDiff(current, target)
+        assert diff.compare_config() is True
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
