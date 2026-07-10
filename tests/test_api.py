@@ -385,3 +385,41 @@ def test_save_snapshot_creates_dirs():
     finally:
         Path(temp_file).unlink()
         shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+# ── run.error capture (Phase A1) ──
+
+
+def flaky_func(fail=True, save_dir=None):
+    """Raises when ``fail`` is truthy; succeeds otherwise."""
+    if fail:
+        raise ValueError("intentional failure for run.error test")
+    return {"ok": True}
+
+
+def test_serial_failure_writes_run_error_and_propagates():
+    from flexlock.run_record import RunRecord
+
+    temp_dir = tempfile.mkdtemp()
+    try:
+        config = OmegaConf.create(
+            {"_target_": "tests.test_api.flaky_func", "fail": True, "save_dir": temp_dir}
+        )
+        with pytest.raises(ValueError, match="intentional failure"):
+            Project().submit(config, smart_run=False)
+
+        rec = RunRecord(temp_dir)
+        err = rec.load_error()
+        assert err is not None
+        assert err["exc_type"] == "ValueError"
+        assert "intentional failure" in err["exc_message"]
+        assert not rec.complete_path.exists()
+
+        # Re-run with force=True after fixing → success clears run.error.
+        config.fail = False
+        result = Project().submit(config, smart_run=False, force=True)
+        assert result.status == "SUCCESS"
+        assert rec.complete_path.exists()
+        assert rec.load_error() is None
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)

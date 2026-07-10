@@ -793,7 +793,17 @@ class Project:
                 from .debug import debug_on_fail
 
                 run_func = debug_on_fail(run_func)
-            result = run_func(config)
+            try:
+                result = run_func(config)
+            except Exception as exc:
+                # Record a failure sidecar next to run.lock so triage doesn't
+                # need to re-run. The user's exception still propagates unwrapped
+                # (docs §12); write_error never raises. KeyboardInterrupt is
+                # deliberately not caught — a bare run.lock is the interrupted
+                # signature.
+                if "save_dir" in config:
+                    RunRecord(config.save_dir).write_error(exc)
+                raise
 
             # Save results if save_dir is specified
             save_dir = config.get("save_dir", ".")
