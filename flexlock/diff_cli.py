@@ -1,6 +1,11 @@
-"""CLI for comparing FlexLock snapshots from various sources."""
+"""CLI for comparing FlexLock snapshots from various sources.
+
+Exit codes: ``0`` match, ``1`` differ, ``2`` error (so the command is usable
+in scripts and CI — the old behaviour always exited 0).
+"""
 
 import argparse
+import json
 import sys
 import yaml
 from pathlib import Path
@@ -27,47 +32,33 @@ def load_snapshot_from_db(db_path: Path, task_id: str) -> dict:
     return snapshot
 
 
-def compare_snapshots(snap1: dict, snap2: dict, show_details: bool = False) -> bool:
-    """
-    Compare two snapshots and print results.
+def run_comparison(snap1: dict, snap2: dict) -> "tuple[bool, dict]":
+    """Compare two snapshots, returning ``(is_match, diffs)``.
 
-    Args:
-        snap1: First snapshot dictionary
-        snap2: Second snapshot dictionary
-        show_details: If True, show detailed differences
-
-    Returns:
-        bool: True if snapshots match, False otherwise
+    The single source of truth for both the text/JSON printers here and
+    ``flexlock why``. ``diffs`` is a JSON-serializable dict of lists keyed by
+    ``git``/``config``/``data`` (only the categories that differ appear).
     """
     diff = RunDiff(snap1, snap2)
+    # is_match() runs all three comparisons, populating diff.diffs as a side
+    # effect. Call it first so diffs is complete regardless of short-circuiting.
+    is_match = diff.is_match()
+    return is_match, dict(diff.diffs)
+
+
+def compare_snapshots(snap1: dict, snap2: dict, show_details: bool = False) -> bool:
+    """Compare two snapshots and print a human-readable report."""
+    is_match, diffs = run_comparison(snap1, snap2)
 
     print("\n=== Snapshot Comparison ===\n")
+    for label, key in (("Git", "git"), ("Config", "config"), ("Data", "data")):
+        section_match = key not in diffs
+        print(f"{label:6s}: {'✓ Match' if section_match else '✗ Differ'}")
+        if not section_match and show_details:
+            for d in diffs.get(key, []):
+                print(f"  - {d}")
 
-    # Git comparison
-    git_match = diff.compare_git()
-    print(f"Git:    {'✓ Match' if git_match else '✗ Differ'}")
-    if not git_match and show_details:
-        for d in diff.diffs.get("git", []):
-            print(f"  - {d}")
-
-    # Config comparison
-    config_match = diff.compare_config()
-    print(f"Config: {'✓ Match' if config_match else '✗ Differ'}")
-    if not config_match and show_details:
-        for d in diff.diffs.get("config", []):
-            print(f"  - {d}")
-
-    # Data comparison
-    data_match = diff.compare_data()
-    print(f"Data:   {'✓ Match' if data_match else '✗ Differ'}")
-    if not data_match and show_details:
-        for d in diff.diffs.get("data", []):
-            print(f"  - {d}")
-
-    # Overall
-    is_match = diff.is_match()
     print(f"\nOverall: {'✓ Snapshots Match' if is_match else '✗ Snapshots Differ'}\n")
-
     return is_match
 
 
@@ -77,83 +68,84 @@ def main():
         description="Compare FlexLock snapshots from various sources"
     )
 
-    # Create subcommands for different comparison modes
+    # Shared options for every subcommand.
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument(
+        "--details", action="store_true", help="Show detailed differences (text)"
+    )
+    common.add_argument(
+        "--format", choices=["text", "json"], default="text",
+        help="Output format (default: text)",
+    )
+
     subparsers = parser.add_subparsers(
         dest="mode", required=True, help="Comparison mode"
     )
 
     # Mode 1: Compare two directories (traditional)
     dir_parser = subparsers.add_parser(
-        "dirs", help="Compare two directory-based snapshots"
+        "dirs", parents=[common], help="Compare two directory-based snapshots"
     )
     dir_parser.add_argument("dir1", type=Path, help="First directory")
     dir_parser.add_argument("dir2", type=Path, help="Second directory")
-    dir_parser.add_argument(
-        "--details", action="store_true", help="Show detailed differences"
-    )
 
     # Mode 2: Compare two tasks in DB
-    db_parser = subparsers.add_parser("db", help="Compare two DB-based snapshots")
+    db_parser = subparsers.add_parser(
+        "db", parents=[common], help="Compare two DB-based snapshots"
+    )
     db_parser.add_argument("db_path", type=Path, help="Path to tasks database")
     db_parser.add_argument("task_id1", help="First task ID (hash)")
     db_parser.add_argument("task_id2", help="Second task ID (hash)")
-    db_parser.add_argument(
-        "--details", action="store_true", help="Show detailed differences"
-    )
 
     # Mode 3: Compare directory to DB task
     mixed_parser = subparsers.add_parser(
-        "mixed", help="Compare directory snapshot to DB snapshot"
+        "mixed", parents=[common], help="Compare directory snapshot to DB snapshot"
     )
     mixed_parser.add_argument("dir_path", type=Path, help="Directory path")
     mixed_parser.add_argument("db_path", type=Path, help="Database path")
     mixed_parser.add_argument("task_id", help="Task ID in database")
-    mixed_parser.add_argument(
-        "--details", action="store_true", help="Show detailed differences"
-    )
 
     args = parser.parse_args()
 
     try:
         if args.mode == "dirs":
-            # Validate directories exist
             if not args.dir1.exists():
                 logger.error(f"Directory not found: {args.dir1}")
-                sys.exit(1)
+                sys.exit(2)
             if not args.dir2.exists():
                 logger.error(f"Directory not found: {args.dir2}")
-                sys.exit(1)
-
+                sys.exit(2)
             snap1 = load_snapshot_from_dir(args.dir1)
             snap2 = load_snapshot_from_dir(args.dir2)
-            is_match = compare_snapshots(snap1, snap2, args.details)
 
         elif args.mode == "db":
-            # Validate database exists
             if not args.db_path.exists():
                 logger.error(f"Database not found: {args.db_path}")
-                sys.exit(1)
-
+                sys.exit(2)
             snap1 = load_snapshot_from_db(args.db_path, args.task_id1)
             snap2 = load_snapshot_from_db(args.db_path, args.task_id2)
-            is_match = compare_snapshots(snap1, snap2, args.details)
 
         elif args.mode == "mixed":
-            # Validate paths exist
             if not args.dir_path.exists():
                 logger.error(f"Directory not found: {args.dir_path}")
-                sys.exit(1)
+                sys.exit(2)
             if not args.db_path.exists():
                 logger.error(f"Database not found: {args.db_path}")
-                sys.exit(1)
-
+                sys.exit(2)
             snap1 = load_snapshot_from_dir(args.dir_path)
             snap2 = load_snapshot_from_db(args.db_path, args.task_id)
+
+        if args.format == "json":
+            is_match, diffs = run_comparison(snap1, snap2)
+            print(json.dumps({"match": is_match, "diffs": diffs}, indent=2, default=str))
+        else:
             is_match = compare_snapshots(snap1, snap2, args.details)
 
-        # Exit with appropriate code
-        sys.exit(0)
+        # 0 match / 1 differ.
+        sys.exit(0 if is_match else 1)
 
+    except SystemExit:
+        raise
     except Exception as e:
         logger.error(f"Comparison failed: {e}")
         sys.exit(2)

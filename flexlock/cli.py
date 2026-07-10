@@ -624,6 +624,24 @@ def cmd_graph(args):
         print(json.dumps(graph, indent=2, default=str))
 
 
+# ── why subcommand ─────────────────────────────────────────────
+
+def cmd_why(args):
+    """Explain the difference between two runs (config/git/data + commits)."""
+    from . import query
+
+    for p in (args.run_a, args.run_b):
+        if not Path(p).exists():
+            print(f"Error: no such directory: {p}", file=sys.stderr)
+            sys.exit(1)
+
+    result = query.why(args.run_a, args.run_b)
+    if args.format == "json":
+        print(json.dumps(result, indent=2, default=str))
+    else:
+        print(query.format_why_text(result))
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="flexlock",
@@ -713,6 +731,15 @@ def main():
         help="Include same-tree / same-data groupings in JSON output",
     )
     graph_parser.set_defaults(func=cmd_graph)
+
+    # why
+    why_parser = subparsers.add_parser(
+        "why", help="Explain the difference between two runs"
+    )
+    why_parser.add_argument("run_a", help="First run directory")
+    why_parser.add_argument("run_b", help="Second run directory")
+    why_parser.add_argument("--format", choices=["text", "json"], default="text")
+    why_parser.set_defaults(func=cmd_why)
 
     args = parser.parse_args()
 

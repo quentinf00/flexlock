@@ -244,3 +244,74 @@ def test_graph_groups(tmp_path):
         RunRecord(run_dir).mark_complete()
     graph = query.build_graph(root, include_groups=True)
     assert any(len(g) == 2 for g in graph["groups"]["same_tree"])
+
+
+# ── why (real shadow commits) ──
+
+
+@pytest.fixture
+def why_repo(tmp_path):
+    """A git repo with two commits and two run.lock dirs referencing them."""
+    from git import Repo
+
+    repo_dir = tmp_path / "repo"
+    repo_dir.mkdir()
+    repo = Repo.init(repo_dir)
+    repo.config_writer().set_value("user", "name", "T").release()
+    repo.config_writer().set_value("user", "email", "t@e.com").release()
+
+    (repo_dir / "model.py").write_text("lr = 0.1\n")
+    repo.index.add(["model.py"])
+    c1 = repo.index.commit("initial model")
+    tree1 = c1.tree.hexsha
+
+    (repo_dir / "model.py").write_text("lr = 0.2\n")
+    repo.index.add(["model.py"])
+    c2 = repo.index.commit("tweak lr schedule")
+    tree2 = c2.tree.hexsha
+
+    run_a = tmp_path / "results" / "run_a"
+    run_b = tmp_path / "results" / "run_b"
+    for d, commit, tree in ((run_a, c1.hexsha, tree1), (run_b, c2.hexsha, tree2)):
+        d.mkdir(parents=True)
+        (d / "run.lock").write_text(yaml.dump({
+            "timestamp": "t",
+            "config": {"save_dir": str(d), "lr": 0.1},
+            "repos": {"main": {"commit": commit, "tree": tree, "path": str(repo_dir)}},
+        }))
+    return run_a, run_b, repo_dir
+
+
+def test_why_shows_commit_subject(why_repo):
+    run_a, run_b, _ = why_repo
+    result = query.why(run_a, run_b)
+    entry = result["commits"]["main"]
+    assert entry["error"] is None
+    assert entry["trees_identical"] is False
+    subjects = [c["subject"] for c in entry["a_to_b"]]
+    assert "tweak lr schedule" in subjects
+
+
+def test_why_identical_trees(tmp_path):
+    a = _make_run(tmp_path, "run_a",
+                  config={"save_dir": str(tmp_path / "run_a")})
+    b = _make_run(tmp_path, "run_b",
+                  config={"save_dir": str(tmp_path / "run_b")})
+    # Same tree hash on both.
+    for d in (a, b):
+        data = yaml.safe_load((d / "run.lock").read_text())
+        data["repos"] = {"main": {"commit": "x", "tree": "sametree", "path": str(d)}}
+        (d / "run.lock").write_text(yaml.dump(data))
+    result = query.why(a, b)
+    assert result["commits"]["main"]["trees_identical"] is True
+
+
+def test_why_gcd_refs_no_raise(tmp_path):
+    a = _make_run(tmp_path, "run_a", config={"save_dir": str(tmp_path / "run_a")})
+    b = _make_run(tmp_path, "run_b", config={"save_dir": str(tmp_path / "run_b")})
+    for d, tree in ((a, "t1"), (b, "t2")):
+        data = yaml.safe_load((d / "run.lock").read_text())
+        data["repos"] = {"main": {"commit": "deadbeef", "tree": tree, "path": str(d)}}
+        (d / "run.lock").write_text(yaml.dump(data))
+    result = query.why(a, b)  # must not raise
+    assert result["commits"]["main"]["error"] is not None

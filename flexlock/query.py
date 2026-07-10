@@ -299,6 +299,113 @@ def load_run_summary(run_dir, scan_root=None, downstream=True) -> dict:
     return summary
 
 
+def _git_log_between(repo_path, a_commit, b_commit) -> list:
+    """``git log a..b`` between two shadow commits → list of commit dicts.
+
+    Raises on git errors (caller records them per repo and continues).
+    """
+    from git.repo import Repo as GitRepo
+
+    repo = GitRepo(repo_path, search_parent_directories=True)
+    fmt = "%H%x00%an%x00%aI%x00%s"
+    out = repo.git.log(f"--format={fmt}", f"{a_commit}..{b_commit}")
+    commits = []
+    for line in out.splitlines():
+        if not line.strip():
+            continue
+        sha, author, date, subject = line.split("\x00")
+        commits.append({"sha": sha, "author": author, "date": date, "subject": subject})
+    return commits
+
+
+def why(run_a, run_b) -> dict:
+    """Explain the difference between two runs — config/git/data + real commits.
+
+    For each repo present in both locks with differing tree hashes, walk the
+    recorded shadow commits (``git log a..b`` / ``b..a``). Git failures (e.g.
+    gc'd refs) are captured per-repo so the command always succeeds (exit 0).
+    """
+    from .diff_cli import run_comparison
+
+    run_a = Path(run_a).resolve()
+    run_b = Path(run_b).resolve()
+    lock_a = _load_lock(run_a) or {}
+    lock_b = _load_lock(run_b) or {}
+
+    is_match, diffs = run_comparison(lock_a, lock_b)
+
+    repos_a = lock_a.get("repos") or {}
+    repos_b = lock_b.get("repos") or {}
+    commits = {}
+    for name in sorted(set(repos_a) & set(repos_b)):
+        info_a = repos_a[name] or {}
+        info_b = repos_b[name] or {}
+        entry = {"trees_identical": False, "a_to_b": [], "b_to_a": [], "error": None}
+        if info_a.get("tree") and info_a.get("tree") == info_b.get("tree"):
+            entry["trees_identical"] = True
+            commits[name] = entry
+            continue
+        ca = info_a.get("commit")
+        cb = info_b.get("commit")
+        repo_path = info_a.get("path") or info_b.get("path")
+        if not (ca and cb and repo_path):
+            entry["error"] = "missing shadow commit or repo path in run.lock"
+            commits[name] = entry
+            continue
+        try:
+            entry["a_to_b"] = _git_log_between(repo_path, ca, cb)
+            entry["b_to_a"] = _git_log_between(repo_path, cb, ca)
+        except Exception as exc:
+            entry["error"] = f"{exc} — shadow commits may have been gc'd"
+        commits[name] = entry
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "run_a": str(run_a),
+        "run_b": str(run_b),
+        "match": is_match,
+        "diffs": diffs,
+        "commits": commits,
+    }
+
+
+def format_why_text(result: dict) -> str:
+    """Human-readable rendering of a ``why`` result."""
+    lines = []
+    mark = "✓ match" if result["match"] else "✗ differ"
+    lines.append(f"{mark}: {Path(result['run_a']).name} vs {Path(result['run_b']).name}")
+    lines.append("")
+
+    for name, entry in result.get("commits", {}).items():
+        lines.append(f"## repo: {name}")
+        if entry.get("error"):
+            lines.append(f"  (git unavailable: {entry['error']})")
+        elif entry.get("trees_identical"):
+            lines.append("  trees identical")
+        else:
+            if entry["a_to_b"]:
+                lines.append(f"  commits in {Path(result['run_b']).name} not in "
+                             f"{Path(result['run_a']).name}:")
+                for c in entry["a_to_b"]:
+                    lines.append(f"    + {c['sha'][:10]}  {c['subject']}")
+            if entry["b_to_a"]:
+                lines.append(f"  commits in {Path(result['run_a']).name} not in "
+                             f"{Path(result['run_b']).name}:")
+                for c in entry["b_to_a"]:
+                    lines.append(f"    - {c['sha'][:10]}  {c['subject']}")
+        lines.append("")
+
+    for key in ("config", "data", "git"):
+        vals = result.get("diffs", {}).get(key)
+        if vals:
+            lines.append(f"## {key} diffs")
+            for d in vals:
+                lines.append(f"  - {d}")
+            lines.append("")
+
+    return "\n".join(lines)
+
+
 def _all_tags_by_path(scan_root) -> dict:
     """One-shot ``{resolved_path: tag_name}`` map for a whole tree."""
     from .cli import find_git_repo, get_flexlock_tags, get_tag_details
