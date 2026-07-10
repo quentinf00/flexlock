@@ -584,6 +584,29 @@ def cmd_reindex(args):
     print(f"Reindexed {n} run(s) under {root}")
 
 
+# ── show subcommand ────────────────────────────────────────────
+
+def cmd_show(args):
+    """Show a single run's status, metadata, lineage, and config."""
+    from . import query
+
+    run_dir = Path(args.run_dir)
+    if not run_dir.exists():
+        print(f"Error: no such directory: {run_dir}", file=sys.stderr)
+        sys.exit(1)
+
+    summary = query.load_run_summary(
+        run_dir,
+        scan_root=args.root,
+        downstream=not args.no_downstream,
+    )
+
+    if args.format == "json":
+        print(json.dumps(summary, indent=2, default=str))
+    else:
+        print(query.format_summary_md(summary))
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="flexlock",
@@ -640,6 +663,25 @@ def main():
         "path", nargs="?", help="Root directory to walk (default: .)"
     )
     reindex_parser.set_defaults(func=cmd_reindex)
+
+    # show
+    show_parser = subparsers.add_parser(
+        "show", help="Show a single run's status, metadata, lineage, and config"
+    )
+    show_parser.add_argument("run_dir", help="Path to the run directory")
+    show_parser.add_argument(
+        "--format", choices=["md", "json"], default="md",
+        help="Output format (default: md; agents use json)",
+    )
+    show_parser.add_argument(
+        "--root", metavar="DIR",
+        help="Root to scan for downstream runs and tags (default: run's parent)",
+    )
+    show_parser.add_argument(
+        "--no-downstream", action="store_true",
+        help="Skip the downstream lineage scan (faster)",
+    )
+    show_parser.set_defaults(func=cmd_show)
 
     args = parser.parse_args()
 
