@@ -3,7 +3,6 @@
 from enum import Enum
 from pathlib import Path
 from omegaconf import OmegaConf, DictConfig, open_dict
-from omegaconf.errors import InterpolationKeyError
 from loguru import logger
 from typing import List, Dict, Any, Optional
 import yaml
@@ -14,6 +13,7 @@ from .utils import (
     extract_tracking_info,
     select_and_freeze_root_refs,
 )
+from .freeze import freeze_deferred
 from .snapshot import snapshot, RunTracker
 from .run_record import RunRecord
 from .fingerprint import fingerprint as compute_fingerprint
@@ -21,6 +21,22 @@ from . import index
 from .diff import RunDiff
 from . import config as flexlock_config
 from .exceptions import FlexLockExecutionError
+
+
+def _leaf_paths(container, prefix=""):
+    """Yield ``(dotpath, value)`` for every leaf in a plain dict/list container.
+
+    Dotpaths use OmegaConf's ``a.b.0`` selector form so they can be fed back to
+    ``OmegaConf.select`` — used by :meth:`Project.check` to probe each leaf.
+    """
+    if isinstance(container, dict):
+        for k, v in container.items():
+            yield from _leaf_paths(v, f"{prefix}.{k}" if prefix else str(k))
+    elif isinstance(container, list):
+        for i, v in enumerate(container):
+            yield from _leaf_paths(v, f"{prefix}.{i}" if prefix else str(i))
+    else:
+        yield prefix, container
 
 
 def _print_compiled_config(cfg):
@@ -507,6 +523,7 @@ class Project:
         tag: "str | None" = None,
         timeout: "int | None" = None,
         note: "str | None" = None,
+        save_dir_policy: "str | None" = None,
     ) -> "ExecutionResult | List[ExecutionResult] | None":
         """Submit a configuration for execution.
 
@@ -556,6 +573,14 @@ class Project:
                 the fingerprint, so it can't perturb caching. For sweeps the note
                 lands on the master ``run.lock`` only; sweep items inherit it for
                 display via their ``.flexlock_marker`` → master lookup.
+            save_dir_policy: How to derive the concrete run directory from
+                ``config.save_dir`` (applied once, at submit time):
+                ``None`` uses the configured value as-is; ``"increment"``
+                versions it (``run`` → ``run_0000``) and claims the directory
+                atomically; ``"timestamp"`` appends
+                ``config.TIMESTAMP_FORMAT``. Replaces the ``${vinc:}`` /
+                ``${now:}`` resolvers. For sweeps the policy applies once to
+                the sweep root; items nest beneath it.
 
         Returns:
             ``ExecutionResult`` (single), ``List[ExecutionResult]`` (sweep),
@@ -580,20 +605,14 @@ class Project:
                 overrides = [f"{k}={v}" for k, v in overrides.items()]
             config.merge_with(OmegaConf.from_dotlist(overrides))
 
-        # Resolve save_dir exactly once. Resolvers like ${vinc:} look at the
-        # filesystem and would otherwise advance the counter every time
-        # cfg.save_dir is read (snapshot phase vs. complete-marker phase),
-        # splitting run.lock and run.complete across different dirs.
-        if "save_dir" in config:
-            try:
-                if config.save_dir is not None:
-                    with open_dict(config):
-                        config.save_dir = str(config.save_dir)
-            except Exception:
-                # save_dir contains an interpolation that can't resolve in this
-                # config's scope (e.g. a sub-config passed in isolation with
-                # save_dir: ${save_dir}/features). Leave it unresolved.
-                pass
+        # Resolve save_dir to a concrete string exactly once, applying the
+        # requested naming policy. Done here (not lazily during config reads)
+        # so run.lock and run.complete always land in the same directory. For
+        # sweeps this fixes the sweep root; per-item dirs nest beneath it and
+        # never re-apply the policy.
+        from .save_dir import apply_save_dir_policy
+
+        apply_save_dir_policy(config, save_dir_policy)
 
         if print_config:
             # When a sweep is given, preview each item's merged config so
@@ -603,7 +622,10 @@ class Project:
                 from .utils import merge_task_into_cfg
 
                 for i, override in enumerate(sweep):
+                    # Mirror _submit_sweep exactly (merge → freeze) so the
+                    # preview matches what will actually execute.
                     item_cfg = merge_task_into_cfg(config, override, sweep_target)
+                    item_cfg = freeze_deferred(item_cfg)
                     print(f"# --- sweep item {i} ---")
                     _print_compiled_config(item_cfg)
             else:
@@ -764,20 +786,15 @@ class Project:
             # Extract tracking info
             repos, data, prevs = extract_tracking_info(config)
 
-            # Eagerly freeze all resolver interpolations in one pass.
-            #
-            # select_and_freeze_root_refs preserves ${vinc:} resolver calls
-            # verbatim when freezing cross-tree refs (e.g. ${main.save_dir}
-            # pointing to ${vinc:results/exp} becomes a new ${vinc:} node).
-            # The save_dir freeze above already fired vinc: and cached the result
-            # in this OmegaConf instance.  A full to_container(resolve=True) drains
-            # that cache for every other ${vinc:} occurrence so they all get the same
-            # value.  Re-wrapping as a plain config prevents instantiate()'s internal
-            # config.copy() — which creates a new instance with an empty cache — from
-            # firing the resolver again after snapshot() has created save_dir on disk.
+            # Single deferred-resolution point (local single-run path): fire
+            # the deferred resolvers (run_lock/latest) once and detach into a
+            # plain config. Re-wrapping prevents instantiate()'s internal
+            # config.copy() — a fresh instance with an empty resolver cache —
+            # from re-firing anything after snapshot() has run.
             try:
-                _c = OmegaConf.to_container(config, resolve=True, throw_on_missing=False)
-                config = OmegaConf.create(_c)
+                from .resolvers import resolve_deferred
+
+                config = resolve_deferred(config)
             except Exception as exc:
                 logger.warning(f"Could not fully resolve config before execution: {exc}")
 
@@ -834,6 +851,81 @@ class Project:
             return ExecutionResult(
                 save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config
             )
+
+    def check(
+        self,
+        config=None,
+        *,
+        sweep: "List[Dict] | None" = None,
+        sweep_target: "str | None" = None,
+        overrides: "dict | List[str] | None" = None,
+        merge: "str | Path | dict | None" = None,
+    ) -> "List[dict]":
+        """Preflight: fully resolve the config (and every sweep item) without
+        touching the filesystem or executing anything.
+
+        Mirrors submit's merge → freeze pipeline, but runs under the freeze
+        stubs so no resolver fires (``vinc``/``now`` take no ``mkdir``,
+        ``run_lock``/``latest`` read nothing). Every unresolvable interpolation
+        is reported — not just the first — as a dict with ``item`` (sweep index
+        or ``None``), ``full_key``, and ``error``.
+
+        Returns an empty list when everything resolves.
+        """
+        from .utils import merge_task_into_cfg
+        from .resolvers import frozen_resolvers
+        from omegaconf.errors import OmegaConfBaseException
+
+        # Normalize config exactly like submit (but never mutate the caller's).
+        if config is None:
+            config = self.defaults
+        elif isinstance(config, str):
+            config = self.get(config)
+        if not isinstance(config, DictConfig):
+            config = OmegaConf.create(config)
+        config = config.copy()
+        if merge is not None:
+            if isinstance(merge, (str, Path)):
+                config.merge_with(OmegaConf.load(str(merge)))
+            else:
+                config.merge_with(OmegaConf.create(merge))
+        if overrides is not None:
+            if isinstance(overrides, dict):
+                overrides = [f"{k}={v}" for k, v in overrides.items()]
+            config.merge_with(OmegaConf.from_dotlist(overrides))
+
+        if sweep:
+            items = [
+                (i, merge_task_into_cfg(config, ov, sweep_target))
+                for i, ov in enumerate(sweep)
+            ]
+        else:
+            items = [(None, config)]
+
+        errors: List[dict] = []
+        with frozen_resolvers():
+            for idx, item in items:
+                detached = OmegaConf.create(
+                    OmegaConf.to_container(item, resolve=False, throw_on_missing=False)
+                )
+                # Resolve leaf-by-leaf so every failure is reported, not only
+                # the first one OmegaConf.resolve would raise on.
+                for path, val in _leaf_paths(
+                    OmegaConf.to_container(detached, resolve=False, throw_on_missing=False)
+                ):
+                    if not (isinstance(val, str) and "${" in val):
+                        continue
+                    try:
+                        OmegaConf.select(detached, path, throw_on_missing=True)
+                    except OmegaConfBaseException as e:
+                        errors.append(
+                            {
+                                "item": idx,
+                                "full_key": getattr(e, "full_key", None) or path,
+                                "error": str(e),
+                            }
+                        )
+        return errors
 
     @staticmethod
     def _preview_hpc_script(config, slurm_config, pbs_config):
@@ -894,10 +986,12 @@ class Project:
     def _validate_sweep_save_dirs(base_config, merged_items, sweep_root=None):
         """Ensure every sweep item's save_dir nests under the sweep root.
 
-        The sweep root is taken from ``sweep_root`` when provided, then from
-        ``base_config.save_dir``, otherwise from the parent of the first item's
-        save_dir. The tasks DB and per-item lineage markers all assume
-        containment; violating it produces an opaque crash in the worker.
+        The sweep root is taken from ``sweep_root`` when provided, otherwise
+        from the parent of the first (already merged and frozen) item's
+        save_dir — the same directory the tasks DB lives in. Validation only
+        ever touches the merged items, never ``base_config.save_dir`` (which
+        may still carry a per-item ``${.variable}`` that is unresolvable until
+        an item supplies it).
         """
         from .exceptions import FlexLockValidationError
 
@@ -909,24 +1003,11 @@ class Project:
         if sweep_root is not None:
             return
 
-        # Determine sweep root.
-        base_save_dir = None
-        if "save_dir" in base_config:
-            try:
-                base_save_dir = base_config.save_dir
-            except InterpolationKeyError:
-                # The base save_dir carries a relative interpolation (e.g.
-                # ${.variable}) that is only supplied per sweep item. Fall
-                # back to deriving the root from the merged items below.
-                base_save_dir = None
-
-        if base_save_dir is not None:
-            effective_root = Path(base_save_dir).resolve()
-        else:
-            first_save = merged_items[0][1].get("save_dir")
-            if first_save is None:
-                return  # nothing to validate against
-            effective_root = Path(first_save).resolve().parent
+        # Derive the sweep root from the merged items (concrete save_dirs).
+        first_save = merged_items[0][1].get("save_dir")
+        if first_save is None:
+            return  # nothing to validate against
+        effective_root = Path(first_save).resolve().parent
 
         offenders = []
         for i, sweep_cfg in merged_items:
@@ -1157,11 +1238,13 @@ class Project:
         # in one place, before any execution.
         merged_items = []
         for i, override in enumerate(sweep):
+            # Merge the sweep item into the base FIRST, so item-injected keys
+            # (e.g. `variable`) exist before any resolution — then freeze.
             sweep_cfg = merge_task_into_cfg(base_config, override, sweep_target)
-            # Make self-contained for DB serialization.
-            sweep_cfg = OmegaConf.create(
-                OmegaConf.to_container(sweep_cfg, resolve=True)
-            )
+            # Eager-resolve everything self-contained for DB serialization,
+            # while preserving deferred resolvers (run_lock/latest) as call
+            # strings so they fire once, on the worker, at stage start.
+            sweep_cfg = freeze_deferred(sweep_cfg)
             if dir_suffix and "save_dir" in sweep_cfg:
                 # Nest each item under the base save_dir (the sweep root) so
                 # tasks DB and lineage markers stay inside the same tree.

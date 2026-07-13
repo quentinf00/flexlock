@@ -411,8 +411,8 @@ def _load_one_sweep_file(fpath: Path) -> list:
     line as one task value.
 
     Interpolation strings (``${...}``) are intentionally preserved as raw
-    strings so that resolvers like ``${vinc:}`` fire at execution time rather
-    than at sweep-loading time.
+    strings so that deferred resolvers (``${run_lock:}``/``${latest:}``) fire at
+    execution time on the worker rather than at sweep-loading time.
     """
     import json as _json
     import yaml as _yaml

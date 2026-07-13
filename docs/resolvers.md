@@ -2,9 +2,52 @@
 
 FlexLock registers custom OmegaConf resolvers for dynamic configuration values.
 
+## Binding times
+
+Config values are produced at four distinct moments. Match the mechanism to the
+moment:
+
+| Binding time      | Mechanism                                    |
+|-------------------|----------------------------------------------|
+| submit-time       | plain interpolation (`${a.b}`), resolved eagerly when a stage is selected/submitted |
+| `save_dir` naming | `save_dir_policy=` on `submit()`/`run` (see below) |
+| stage-start       | deferred resolvers `${run_lock:}` / `${latest:}`, fired once on the worker |
+| per-sweep-item    | the sweep item is merged **before** resolution, so `${variable}` sees it |
+
+## `save_dir_policy` (replaces `${vinc:}` / `${now:}`)
+
+To name a run directory, pass a policy instead of embedding a directory-creating
+resolver in `save_dir`:
+
+```python
+proj.submit(cfg, save_dir_policy="increment")   # save_dir -> save_dir_0000, _0001, ...
+proj.submit(cfg, save_dir_policy="timestamp")   # save_dir -> save_dir/<timestamp>
+proj.submit(cfg, save_dir_policy=None)          # use save_dir as-is (default)
+```
+
+```bash
+flexlock run ... --save-dir-policy increment
+```
+
+`"increment"` also **claims the directory atomically** (`mkdir(exist_ok=False)`
+with retry), so two concurrent submits on the same base never collide — a race
+the old `${vinc:}` resolver could not fix.
+
+### Migration
+
+| Old (deprecated)                         | New                                   |
+|------------------------------------------|---------------------------------------|
+| `save_dir: ${vinc:outputs/run}`          | `save_dir: outputs/run` + `save_dir_policy="increment"` |
+| `save_dir: outputs/run/${now:%Y%m%d}`    | `save_dir: outputs/run` + `save_dir_policy="timestamp"` |
+
+`${vinc:}` and `${now:}` still work for one deprecation cycle but emit a
+`DeprecationWarning`.
+
 ## Available Resolvers
 
 ### `${now:format}` - Current Timestamp
+
+> **Deprecated.** Prefer `save_dir_policy="timestamp"`. See migration above.
 
 Get current timestamp in specified format.
 
@@ -78,6 +121,9 @@ data_file: ${latest:data/processed_*.csv}
 ---
 
 ### `${vinc:path}` - Version Increment
+
+> **Deprecated.** Prefer `save_dir_policy="increment"`, which also claims the
+> directory atomically. See migration above.
 
 Generate next version number for a directory path.
 
@@ -336,11 +382,12 @@ OmegaConf.register_new_resolver(
 
 ## Best Practices
 
-### 1. Use `${vinc:...}` for Sequential Runs
+### 1. Use `save_dir_policy="increment"` for Sequential Runs
 
 ```python
-# Good: Auto-versioning
-cfg = py2cfg(train, save_dir='${vinc:outputs/exp/run}')
+# Good: Auto-versioning, atomic claim, no resolver side effects
+cfg = py2cfg(train, save_dir='outputs/exp/run')
+proj.submit(cfg, save_dir_policy="increment")
 
 # Bad: Manual versioning (error-prone)
 cfg = py2cfg(train, save_dir='outputs/exp/run_0042')
