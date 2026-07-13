@@ -4,10 +4,17 @@ from omegaconf import OmegaConf, DictConfig
 from .data_hash import hash_data
 from .load_stage import load_stage_from_path
 from datetime import datetime
+from contextlib import contextmanager
 import re
 from pathlib import Path
 from functools import wraps
 from . import config
+
+# Resolvers whose evaluation is *deferred* to stage start (they read live
+# filesystem/upstream-run state that only exists on the worker, not at submit
+# time). During the submit-time freeze these are stubbed to re-emit their own
+# call string (see ``deferred_stubbed``); everything else resolves eagerly.
+DEFERRED_RESOLVERS = ("run_lock", "latest")
 
 # Distinct "no default supplied" sentinel so that an explicit ``null`` default
 # (e.g. ``${run_lock:${dir},key,null}``) is honoured rather than treated as
@@ -19,9 +26,21 @@ def now_resolver(fmt: str = None) -> str:
     """
     OmegaConf resolver that returns the current time as a formatted string.
 
+    Deprecated: prefer ``submit(..., save_dir_policy="timestamp")`` over
+    embedding ``${now:}`` in ``save_dir``. See
+    ``docs/resolution_simplification_plan.md``.
+
     Args:
         fmt: Format string for strftime (defaults to config.TIMESTAMP_FORMAT)
     """
+    import warnings
+
+    warnings.warn(
+        "${now:} is deprecated; use save_dir_policy='timestamp' on submit()/run "
+        "instead of embedding ${now:} in save_dir.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     if fmt is None:
         fmt = config.TIMESTAMP_FORMAT
     return datetime.now().strftime(fmt)
@@ -70,34 +89,24 @@ def vinc_resolver(path: str, fmt: str = "_{i:04d}") -> str:
     disk.
 
     Concurrency note: because the claim is not taken here, two submits racing
-    from separate processes can compute the same next version and collide. The
-    atomic claim belongs at the point the run directory is committed (the run
-    creates its dir with ``exist_ok=False`` and retries), not in this resolver,
-    so that within-submit idempotency is preserved. Until that lands, serialise
-    concurrent submits that share a ``${vinc:}`` base or give them distinct bases.
+    from separate processes can compute the same next version and collide.
+
+    Deprecated: prefer ``submit(..., save_dir_policy="increment")``, which takes
+    the atomic ``mkdir(exist_ok=False)`` claim at the right layer and so fixes
+    the race this resolver could not. See ``docs/resolution_simplification_plan.md``.
     """
-    # Compute the result (original logic)
-    p = Path(path)
-    parent_dir = p.parent
-    base_name = p.name
+    import warnings
 
-    regex_pattern = re.sub(r"\{i.*\}", r"(\\d+)", fmt)
-    regex = re.compile(f"^{re.escape(base_name)}{regex_pattern}")
+    warnings.warn(
+        "${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run "
+        "instead of embedding ${vinc:} in save_dir. The policy also claims the "
+        "directory atomically, fixing the concurrent-submit race.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    from .save_dir import next_versioned_path
 
-    highest_version = -1
-    if not parent_dir.exists():
-        parent_dir.mkdir(parents=True, exist_ok=True)
-    for item in parent_dir.glob(f"{base_name}*"):
-        match = regex.match(item.name)
-        if match:
-            version = int(match.group(1))
-            if version > highest_version:
-                highest_version = version
-
-    next_version = highest_version + 1
-    version_str = fmt.format(i=next_version)
-
-    return str(parent_dir / f"{base_name}{version_str}")
+    return next_versioned_path(path, fmt)
 
 
 def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
@@ -150,5 +159,90 @@ def register_resolvers():
     """
     OmegaConf.register_new_resolver("now", now_resolver)
     OmegaConf.register_new_resolver("vinc", vinc_resolver)
-    OmegaConf.register_new_resolver("latest", latest_resolver)
+    OmegaConf.register_new_resolver("latest", latest_resolver, use_cache=False)
     OmegaConf.register_new_resolver("run_lock", run_lock_resolver, use_cache=False)
+
+
+# The real resolver implementations plus their registration options, so a stub
+# context can faithfully restore them on exit.
+def _real_resolvers():
+    return {
+        "now": (now_resolver, {}),
+        "vinc": (vinc_resolver, {}),
+        "latest": (latest_resolver, {"use_cache": False}),
+        "run_lock": (run_lock_resolver, {"use_cache": False}),
+    }
+
+
+def _emit_stub_arg(value) -> str:
+    """Render a (pre-resolved) resolver argument back into interpolation text.
+
+    ``None`` becomes ``null`` so a real ``${run_lock:${dir},key,null}`` default
+    survives the freeze; everything else is stringified as-is.
+    """
+    if value is None:
+        return "null"
+    return str(value)
+
+
+@contextmanager
+def _stubbed(names):
+    """Temporarily replace the named resolvers with stubs that re-emit their own
+    call string, with arguments already resolved by OmegaConf.
+
+    OmegaConf resolves nested interpolations in a resolver's arguments *before*
+    invoking the resolver. So under this context, resolving
+    ``${run_lock:${precompute_dir},key}`` yields the frozen string
+    ``${run_lock:/data/precomputed,key}`` — every non-stubbed interpolation
+    (simple refs, cross-tree, multi-hop, mixed strings, relative refs) is
+    resolved by OmegaConf itself, while the stubbed call collapses back to a
+    self-contained call string with zero hand-rolled grammar parsing.
+
+    Restores the real resolvers (with their original options) on exit.
+    """
+    def _make_stub(name):
+        def _stub(*args):
+            return "${" + name + ":" + ",".join(_emit_stub_arg(a) for a in args) + "}"
+        return _stub
+
+    reals = _real_resolvers()
+    for name in names:
+        OmegaConf.register_new_resolver(
+            name, _make_stub(name), replace=True, use_cache=False
+        )
+    try:
+        yield
+    finally:
+        for name in names:
+            func, opts = reals[name]
+            OmegaConf.register_new_resolver(name, func, replace=True, **opts)
+
+
+def deferred_stubbed():
+    """Stub only the deferred resolvers (``run_lock``/``latest``).
+
+    Used by the merge-before-resolve sweep freeze, where ``vinc``/``now`` should
+    still fire (they are being retired via ``save_dir_policy``).
+    """
+    return _stubbed(DEFERRED_RESOLVERS)
+
+
+def frozen_resolvers():
+    """Stub every flexlock resolver, so all ``${name:args}`` calls are preserved
+    as frozen call strings during the submit-time node freeze.
+    """
+    return _stubbed(tuple(_real_resolvers().keys()))
+
+
+def resolve_deferred(cfg: DictConfig) -> DictConfig:
+    """Fire the deferred resolvers once, at stage start, and return a detached
+    config of concrete values.
+
+    This is the single point where ``run_lock``/``latest`` (and any other
+    interpolations left after the submit-time freeze) are evaluated with the
+    real resolvers. Called on the worker right after the task override is merged
+    (and on the local single-run path). Re-wrapping as a plain config detaches
+    it from any parent so downstream ``config.copy()`` cannot re-fire anything.
+    """
+    resolved = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=False)
+    return OmegaConf.create(resolved)

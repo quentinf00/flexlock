@@ -60,6 +60,13 @@ class FlexLockRunner:
             help="Print the compiled configuration and target function docstring, then exit.",
         )
         parser.add_argument(
+            "--check",
+            action="store_true",
+            help="Preflight: fully resolve the config (and every sweep item) "
+            "without touching the filesystem or executing. Reports every "
+            "unresolved interpolation with its key, then exits.",
+        )
+        parser.add_argument(
             "--dump",
             action="store_true",
             help="Print the compiled configuration as clean YAML and exit (no headers). "
@@ -178,6 +185,15 @@ class FlexLockRunner:
             help="Free-text intent recorded as a top-level 'note:' key in run.lock "
                  "(e.g. --note 'baseline before lr sweep'). Never affects caching. "
                  "For sweeps the note lands on the master run.lock.",
+        )
+        parser.add_argument(
+            "--save-dir-policy",
+            choices=["increment", "timestamp"],
+            default=None,
+            help="Derive the concrete run directory from save_dir at submit "
+            "time: 'increment' versions it (run -> run_0000, claimed "
+            "atomically); 'timestamp' appends the timestamp format. Replaces "
+            "the ${vinc:}/${now:} resolvers.",
         )
 
         # HPC Backend Configuration
@@ -363,6 +379,7 @@ class FlexLockRunner:
                 print_config=False,
                 dry_run=getattr(args, "dry_run", False),
                 note=getattr(args, "note", None),
+                save_dir_policy=getattr(args, "save_dir_policy", None),
             )
             results.append(outcome)
 
@@ -497,6 +514,24 @@ class FlexLockRunner:
 
         # Hand off to the single execution kernel.
         proj = Project(root_cfg)
+
+        # --check: side-effect-free preflight resolution, then exit.
+        if args.check:
+            errors = proj.check(
+                node_cfg,
+                sweep=sweep_tasks or None,
+                sweep_target=args.sweep_target,
+                overrides=args.overrides_after_select or None,
+                merge=args.merge_after_select,
+            )
+            if not errors:
+                print("[flexlock] check OK — all interpolations resolve.")
+                return None
+            print(f"[flexlock] check FAILED — {len(errors)} unresolved interpolation(s):")
+            for e in errors:
+                where = "" if e["item"] is None else f"sweep item {e['item']}, "
+                print(f"  - {where}{e['full_key']}: {e['error']}")
+            raise SystemExit(1)
         outcome = proj.submit(
             node_cfg,
             sweep=sweep_tasks or None,
@@ -512,6 +547,7 @@ class FlexLockRunner:
             print_config=args.print_config,
             dry_run=getattr(args, "dry_run", False),
             note=getattr(args, "note", None),
+            save_dir_policy=getattr(args, "save_dir_policy", None),
         )
 
         # Back-compat: the runner historically returned the user function's

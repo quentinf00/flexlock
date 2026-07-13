@@ -252,6 +252,46 @@ def test_cross_tree_ref_frozen_at_selection_then_static(tmp_path):
     assert raw["log_dir"] == f"{tmp_path}/main/logs"
 
 
+# --- Sweep item injects a key referenced by a normal ${key} ref (Phase 3) ---
+
+def test_sweep_item_key_referenced_by_normal_ref(tmp_path):
+    """Merge-before-resolve lets a sweep-injected key be read by a *normal*
+    ``${variable}`` ref — the migration target for the old ``${.variable}``
+    relative-ref placeholder trick.
+
+    The item is merged into the base first, so ``variable`` exists before any
+    resolution and ``${variable}`` resolves cleanly per item.
+    """
+    proj = Project()
+    scatter_root = tmp_path / "scatter"
+    base = OmegaConf.create({
+        "save_dir": scatter_root / "${variable}",
+        "pred_variable": "${variable}",
+    })
+
+    captured = []
+
+    def fake_instantiate(c):
+        captured.append(OmegaConf.to_container(c, resolve=True))
+        return {}
+
+    with patch("flexlock.api.snapshot"), patch(
+        "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
+    ), patch("flexlock.api.instantiate", side_effect=fake_instantiate):
+        proj.submit(
+            base,
+            sweep=["hs", "phs0"],
+            sweep_target="variable",
+            smart_run=False,
+            n_jobs=1,
+        )
+
+    assert captured[0]["pred_variable"] == "hs"
+    assert captured[0]["save_dir"] == str(scatter_root / "hs")
+    assert captured[1]["pred_variable"] == "phs0"
+    assert captured[1]["save_dir"] == str(scatter_root / "phs0")
+
+
 # --- print_config previews sweep items ---
 
 def test_print_config_with_sweep_previews_each_item(tmp_path, capsys):

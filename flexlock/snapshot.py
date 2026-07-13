@@ -102,8 +102,9 @@ class RunTracker:
         """
         snapshot_data = self.finalize(config)
 
-        # Resolve save_dir in case it's a resolver (like ${vinc:})
-        # We do this by accessing it from the finalized config in the snapshot
+        # Read the concrete save_dir from the finalized snapshot. save_dir is
+        # baked to a string once at submit time (apply_save_dir_policy), so this
+        # is just a lookup — no resolver fires here.
         resolved_save_dir = Path(
             snapshot_data["config"].get("save_dir", str(self.save_dir))
         )

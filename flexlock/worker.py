@@ -20,6 +20,7 @@ from loguru import logger
 
 from .taskdb import claim_next_task, finish_task, pending_count
 from flexlock.utils import merge_task_into_cfg, instantiate, extract_tracking_info
+from flexlock.resolvers import resolve_deferred
 from flexlock.snapshot import snapshot
 from flexlock.run_record import RunRecord
 from flexlock.fingerprint import fingerprint as compute_fingerprint
@@ -121,6 +122,12 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
         task_save_dir = None
         try:
             task_cfg = merge_task_into_cfg(cfg, task, task_to)
+
+            # Single deferred-resolution point: run_lock/latest fire exactly
+            # once, here at stage start on the worker, now that the per-item
+            # override has been merged in. Everything else was already frozen
+            # to concrete values at submit time.
+            task_cfg = resolve_deferred(task_cfg)
 
             repos, data, prevs = extract_tracking_info(task_cfg)
 

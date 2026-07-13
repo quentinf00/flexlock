@@ -9,23 +9,50 @@ OmegaConf resolves interpolations lazily against the config's root at access
 time, so a detached node loses every ``${...}`` that pointed to the root. But
 plain ``to_container(resolve=True)`` is too blunt: it would also fire resolver
 calls (``${vinc:}``, ``${latest:}``, ``${run_lock:}``) that must run *later*,
-on the worker, at submit time. There is no OmegaConf primitive for "resolve
-these interpolations but not those", so this module implements a selective
-freeze over the ``${...}`` grammar:
+on the worker, at submit time. So this module walks the ``${...}`` grammar and
+decides, per interpolation, whether to freeze or preserve it:
 
 - **Simple refs outside the sub-tree** (``${root_anchor}``, ``${a.b}``) are
-  resolved against the root and baked to concrete values, following multi-hop
-  chains (including through mixed strings like ``${pipeline_dir}/split``).
-- **Resolver calls** (``${name:args}``) are preserved; their argument lists are
-  processed so nested simple refs inside them still freeze.
+  resolved against the root by OmegaConf itself — following multi-hop chains,
+  mixed strings (``${pipeline_dir}/split``), and nested resolver-arg refs — and
+  baked to concrete values. Delegating to OmegaConf (rather than hand-rolling a
+  chain-follower) is what makes the historical ``_resolve_in_root`` class of
+  bugs structurally impossible.
+- **Resolver calls** (``${name:args}``) are preserved as frozen call strings
+  (their arguments are pre-resolved by OmegaConf under the freeze stubs), so
+  they fire later at submit/stage time.
 - **Relative refs** (``${.foo}``) and **refs inside the sub-tree** are preserved
   verbatim.
 
-The only public entry point is :func:`select_and_freeze_root_refs`; everything
-else is a private helper for the string-level scan.
+The only public entry points are :func:`select_and_freeze_root_refs` and
+:func:`freeze_deferred`; everything else is a private helper for the scan.
 """
 
 from omegaconf import OmegaConf, DictConfig, ListConfig
+
+# Sentinel: an external ref that OmegaConf could not resolve from the root.
+_UNRESOLVED = object()
+
+
+def freeze_deferred(cfg: "DictConfig | ListConfig") -> "DictConfig | ListConfig":
+    """Eager-resolve every interpolation except the deferred resolvers.
+
+    Deep-copies ``cfg`` (detaching it from any parent), then resolves it under
+    :func:`flexlock.resolvers.deferred_stubbed`. OmegaConf resolves all simple
+    refs, cross-tree refs, multi-hop chains, mixed strings, and relative refs
+    itself; the deferred resolvers (``run_lock``/``latest``) collapse to
+    self-contained call strings that fire later at stage start. The result is
+    a plain config of concrete values plus frozen deferred call strings, safe
+    to serialize with ``resolve=False``.
+    """
+    from .resolvers import deferred_stubbed
+
+    detached = OmegaConf.create(
+        OmegaConf.to_container(cfg, resolve=False, throw_on_missing=False)
+    )
+    with deferred_stubbed():
+        OmegaConf.resolve(detached)
+    return detached
 
 
 def select_and_freeze_root_refs(root_cfg: DictConfig, key: str | None) -> DictConfig:
@@ -38,14 +65,14 @@ def select_and_freeze_root_refs(root_cfg: DictConfig, key: str | None) -> DictCo
     Three kinds of interpolations are handled distinctly:
 
     - **Simple refs to keys outside the sub-tree** (e.g. ``${root_anchor}``)
-      are resolved against ``root_cfg`` and substituted as concrete values.
-      If the target value is itself an interpolation (e.g. another
-      ``${...}`` string), the unresolved string is substituted verbatim so
-      resolvers like ``${vinc:}`` still fire at submit time.
-    - **Resolver calls** (``${name:args}``) are preserved unchanged. Their
-      argument lists are recursively processed so nested simple refs inside
-      them are still frozen.
-    - **Refs to keys inside the sub-tree** are preserved unchanged.
+      are resolved against ``root_cfg`` (by OmegaConf) and substituted as
+      concrete values. If the target is itself a resolver call
+      (``${vinc:}``/``${run_lock:}``), the frozen call string is substituted so
+      the resolver still fires later.
+    - **Resolver calls** (``${name:args}``) are preserved as frozen call
+      strings, with any nested simple refs in their args resolved.
+    - **Relative refs** (``${.foo}``) and **refs to keys inside the sub-tree**
+      are preserved verbatim.
 
     Args:
         root_cfg: The full root configuration.
@@ -70,31 +97,38 @@ def select_and_freeze_root_refs(root_cfg: DictConfig, key: str | None) -> DictCo
     if not isinstance(sub_node, (DictConfig, ListConfig)):
         return sub_node
 
-    sub_raw = OmegaConf.to_container(sub_node, resolve=False, throw_on_missing=False)
-    root_raw = OmegaConf.to_container(root_cfg, resolve=False, throw_on_missing=False)
+    from .resolvers import frozen_resolvers
 
-    transformed = _freeze_walk(sub_raw, sub_raw, root_raw)
+    sub_raw = OmegaConf.to_container(sub_node, resolve=False, throw_on_missing=False)
+    # A detached working copy of the whole root. External refs are resolved
+    # against it by OmegaConf; the sub-tree stays attached for context. Stub
+    # every resolver so ${name:args} calls freeze to call strings instead of
+    # firing at selection time.
+    work = OmegaConf.create(
+        OmegaConf.to_container(root_cfg, resolve=False, throw_on_missing=False)
+    )
+    with frozen_resolvers():
+        transformed = _freeze_walk(sub_raw, sub_raw, work)
     return OmegaConf.create(transformed)
 
 
-def _freeze_walk(value, sub_raw, root_raw):
+def _freeze_walk(value, sub_raw, work):
     if isinstance(value, dict):
-        return {k: _freeze_walk(v, sub_raw, root_raw) for k, v in value.items()}
+        return {k: _freeze_walk(v, sub_raw, work) for k, v in value.items()}
     if isinstance(value, list):
-        return [_freeze_walk(v, sub_raw, root_raw) for v in value]
+        return [_freeze_walk(v, sub_raw, work) for v in value]
     if isinstance(value, str) and "${" in value:
         whole = _whole_string_interp(value)
-        if whole is not None and _find_top_level_colon(whole) is None:
-            # OmegaConf relative refs (.foo, ..foo, ...foo) navigate from the
-            # interpolation site and can't be statically frozen — pass through.
-            if whole.startswith("."):
-                return value
-            return _freeze_simple_ref(whole, sub_raw, root_raw, fallback_str=value)
-        return _process_interps_in_string(value, sub_raw, root_raw)
+        if whole is not None:
+            return _freeze_whole_string(whole, sub_raw, work, fallback_str=value)
+        return _freeze_embedded(value, sub_raw, work)
     return value
 
 
-def _whole_string_interp(s: str) -> str | None:
+# --- string-level scan helpers ------------------------------------------------
+
+
+def _whole_string_interp(s: str) -> "str | None":
     """If ``s`` is exactly ``${...}`` (one balanced block, nothing else), return
     the inner expression. Otherwise return None."""
     if not s.startswith("${"):
@@ -108,7 +142,7 @@ def _whole_string_interp(s: str) -> str | None:
     return None
 
 
-def _find_balanced_interp(s: str, start: int) -> tuple[int, int] | None:
+def _find_balanced_interp(s: str, start: int) -> "tuple[int, int] | None":
     """Find the next ``${...}`` block in ``s`` starting at ``start``. Returns
     ``(open_idx, close_idx_exclusive)`` or ``None``. Handles nested ``${...}``."""
     i = s.find("${", start)
@@ -130,7 +164,7 @@ def _find_balanced_interp(s: str, start: int) -> tuple[int, int] | None:
     return None
 
 
-def _find_top_level_colon(inner: str) -> int | None:
+def _find_top_level_colon(inner: str) -> "int | None":
     """In the content between ``${`` and ``}``, find the first ``:`` not nested
     inside a ``${...}`` block. Returns the index, or ``None`` if no colon."""
     depth = 0
@@ -164,142 +198,94 @@ def _get_raw(d, dotted: str):
     return cur
 
 
-def _resolve_in_root(ref: str, root_raw: dict, _visited: frozenset = frozenset()):
-    """Follow a chain of simple refs in root_raw to a concrete value.
+# --- freezing --------------------------------------------------------------
 
-    Stops at resolver calls (``${name:args}``), relative refs, or concrete
-    values, so that resolver calls are preserved for runtime resolution while
-    simple-ref chains (e.g. ``pipeline_dir = ${save_dir}``) are fully expanded.
-    Returns ``None`` if ``ref`` is not found in ``root_raw``.
+
+def _resolve_external(ref: str, work):
+    """Resolve a simple ref against the root via OmegaConf.
+
+    OmegaConf follows the full chain (multi-hop, mixed strings, nested
+    resolver-arg refs). Under the freeze stubs, a target that is itself a
+    resolver call comes back as a frozen call string. Returns ``_UNRESOLVED``
+    when the ref is absent from the root.
     """
-    if ref in _visited or not _path_exists(root_raw, ref):
-        return None
-    val = _get_raw(root_raw, ref)
-    if not isinstance(val, str) or "${" not in val:
-        return val  # Concrete value
-    whole = _whole_string_interp(val)
-    if whole is None:
-        # Mixed string (embedded interps), e.g. split.save_dir =
-        # "${pipeline_dir}/split". The embedded refs are themselves root-scoped,
-        # so freeze them too — otherwise a multi-hop chain like
-        # prepare.listing_path = "${split.save_dir}/train.txt" leaves a dangling
-        # ${pipeline_dir} in the detached sub-config (InterpolationKeyError).
-        return _freeze_embedded_in_root(val, root_raw, _visited | {ref})
-    if whole.startswith("."):
-        return val  # Relative ref — preserve as-is
-    if _find_top_level_colon(whole) is not None:
-        # Resolver call — preserve the call itself but freeze nested simple
-        # root refs in its args, so the detached sub-config stays
-        # self-contained (e.g. ${run_lock:${precompute_dir},...}).
-        return _freeze_embedded_in_root(val, root_raw, _visited | {ref})
-    return _resolve_in_root(whole, root_raw, _visited | {ref})
+    val = OmegaConf.select(work, ref, throw_on_missing=False, default=_UNRESOLVED)
+    if isinstance(val, (DictConfig, ListConfig)):
+        return OmegaConf.to_container(val, resolve=False)
+    return val
 
 
-def _freeze_embedded_in_root(s: str, root_raw: dict, _visited: frozenset) -> str:
-    """Freeze embedded ``${...}`` refs of a root-sourced mixed string.
-
-    Mirrors :func:`_process_one_interp` but with root-only scope (no sub-tree):
-    used when a simple root ref resolves to another mixed string, so multi-hop
-    chains collapse to concrete values. Resolver calls (``${name:args}``) and
-    relative refs (``${.foo}``) are preserved; refs absent from root are left
-    verbatim (they fail later at resolve time, as before).
-    """
-    out = []
-    pos = 0
-    while pos < len(s):
-        found = _find_balanced_interp(s, pos)
-        if found is None:
-            out.append(s[pos:])
-            break
-        start, end = found
-        out.append(s[pos:start])
-        inner = s[start + 2 : end - 1]
-        colon = _find_top_level_colon(inner)
-        if colon is not None:
-            name = inner[:colon]
-            args = _freeze_embedded_in_root(inner[colon + 1 :], root_raw, _visited)
-            out.append("${" + name + ":" + args + "}")
-        elif inner.startswith("."):
-            out.append("${" + inner + "}")
-        else:
-            resolved = _resolve_in_root(inner, root_raw, _visited)
-            if resolved is None:
-                out.append("${" + inner + "}")  # not in root — preserve verbatim
-            else:
-                out.append(str(resolved))
-        pos = end
-    return "".join(out)
+def _is_internal(ref: str, sub_raw) -> bool:
+    """A simple ref is *internal* (preserve verbatim) when it resolves within
+    the sub-tree and isn't self-shadowing (its own value isn't ``${ref}``)."""
+    if not _path_exists(sub_raw, ref):
+        return False
+    sub_val = _get_raw(sub_raw, ref)
+    return not (isinstance(sub_val, str) and f"${{{ref}}}" in sub_val)
 
 
-def _freeze_simple_ref(ref: str, sub_raw, root_raw, fallback_str: str):
-    """Process a simple ref (``${name}`` or ``${a.b}``). Used for whole-string
-    interpolations where we want to preserve the target's native type."""
-    if _path_exists(sub_raw, ref):
-        sub_val = _get_raw(sub_raw, ref)
-        if not (isinstance(sub_val, str) and f"${{{ref}}}" in sub_val):
-            return fallback_str
-    if not _path_exists(root_raw, ref):
-        from .exceptions import UnresolvedInterpolationError
+def _unresolved_error(ref: str):
+    from .exceptions import UnresolvedInterpolationError
 
-        first = ref.split(".")[0]
-        raise UnresolvedInterpolationError(
-            f"Interpolation ${{{ref}}} could not be resolved: '{first}' not "
-            f"found in the sub-tree or root config. Set it via overrides= or "
-            f"OmegaConf.update(proj.defaults, '{first}', ...)."
-        )
-    return _resolve_in_root(ref, root_raw)
+    first = ref.split(".")[0]
+    raise UnresolvedInterpolationError(
+        f"Interpolation ${{{ref}}} could not be resolved: '{first}' not "
+        f"found in the sub-tree or root config. Set it via overrides= or "
+        f"OmegaConf.update(proj.defaults, '{first}', ...)."
+    )
 
 
-def _process_interps_in_string(s: str, sub_raw, root_raw) -> str:
-    """Process all ``${...}`` blocks in a string. Used for embedded
-    interpolations (mixed literal + interp) and resolver-call arguments."""
-    out = []
-    pos = 0
-    while pos < len(s):
-        found = _find_balanced_interp(s, pos)
-        if found is None:
-            out.append(s[pos:])
-            break
-        start, end = found
-        out.append(s[pos:start])
-        inner = s[start + 2 : end - 1]
-        out.append(_process_one_interp(inner, sub_raw, root_raw))
-        pos = end
-    return "".join(out)
-
-
-def _process_one_interp(inner: str, sub_raw, root_raw) -> str:
-    """Process the content inside a single ``${...}``. Returns the
-    (possibly modified) ``${...}`` form as a string suitable for embedding
-    back into the source string."""
-    colon_idx = _find_top_level_colon(inner)
-    if colon_idx is not None:
-        # Resolver call — recurse into args, preserve outer call
-        resolver_name = inner[:colon_idx]
-        args = inner[colon_idx + 1 :]
-        processed_args = _process_interps_in_string(args, sub_raw, root_raw)
-        return "${" + resolver_name + ":" + processed_args + "}"
-
-    # Relative refs (.foo, ..foo) — resolved by OmegaConf at access time.
+def _freeze_whole_string(inner: str, sub_raw, work, fallback_str: str):
+    """Freeze a whole-string interpolation ``${inner}``. Preserves the target's
+    native type for simple external refs (e.g. ``${batch_size}`` → int)."""
+    if _find_top_level_colon(inner) is not None:
+        # Resolver call — preserve as a frozen call string.
+        return "${" + _freeze_resolver_args(inner, sub_raw, work) + "}"
     if inner.startswith("."):
-        return "${" + inner + "}"
+        return fallback_str  # relative ref — resolved later at access site
+    if _is_internal(inner, sub_raw):
+        return fallback_str  # intra-sub-tree ref — resolves after detachment
+    val = _resolve_external(inner, work)
+    if val is _UNRESOLVED:
+        _unresolved_error(inner)
+    return val
 
-    # Simple ref
-    ref = inner
-    if _path_exists(sub_raw, ref):
-        sub_val = _get_raw(sub_raw, ref)
-        if not (isinstance(sub_val, str) and f"${{{ref}}}" in sub_val):
-            return "${" + ref + "}"
-    if not _path_exists(root_raw, ref):
-        from .exceptions import UnresolvedInterpolationError
 
-        first = ref.split(".")[0]
-        raise UnresolvedInterpolationError(
-            f"Interpolation ${{{ref}}} could not be resolved: '{first}' not "
-            f"found in the sub-tree or root config. Set it via overrides= or "
-            f"OmegaConf.update(proj.defaults, '{first}', ...)."
-        )
-    val = _resolve_in_root(ref, root_raw)
-    if isinstance(val, str):
-        return val
+def _freeze_embedded(s: str, sub_raw, work) -> str:
+    """Freeze every ``${...}`` block embedded in a larger string."""
+    out = []
+    pos = 0
+    while pos < len(s):
+        found = _find_balanced_interp(s, pos)
+        if found is None:
+            out.append(s[pos:])
+            break
+        start, end = found
+        out.append(s[pos:start])
+        inner = s[start + 2 : end - 1]
+        out.append(_freeze_one_block(inner, sub_raw, work))
+        pos = end
+    return "".join(out)
+
+
+def _freeze_one_block(inner: str, sub_raw, work) -> str:
+    """Freeze one ``${inner}`` block, returning the ``${...}`` text to embed."""
+    if _find_top_level_colon(inner) is not None:
+        return "${" + _freeze_resolver_args(inner, sub_raw, work) + "}"
+    if inner.startswith("."):
+        return "${" + inner + "}"  # relative ref — preserved
+    if _is_internal(inner, sub_raw):
+        return "${" + inner + "}"  # intra-sub-tree ref — preserved
+    val = _resolve_external(inner, work)
+    if val is _UNRESOLVED:
+        _unresolved_error(inner)
     return str(val) if val is not None else "null"
+
+
+def _freeze_resolver_args(inner: str, sub_raw, work) -> str:
+    """Freeze the ``name:args`` body of a resolver call — the call is preserved,
+    nested simple refs in the args are frozen."""
+    colon = _find_top_level_colon(inner)
+    name = inner[:colon]
+    args = inner[colon + 1 :]
+    return name + ":" + _freeze_embedded(args, sub_raw, work)
