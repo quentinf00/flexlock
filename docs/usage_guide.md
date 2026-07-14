@@ -442,11 +442,19 @@ cfg = py2cfg(
                 'exclude': ['tests/**'],
             },
         },
-        data={'train': '${.input_path}'},
-        prevs=['${.upstream_run_dir}'],             # link to upstream runs
+        data={'train': '${...input_path}'},
+        prevs=['${...upstream_run_dir}'],           # link to upstream runs
     ),
 )
 ```
+
+**Relative refs inside `_snapshot_` need three dots.** They resolve from
+their own position in the tree, and `data` values and `prevs` items both
+sit two levels below the stage node (`stage._snapshot_.data.train`), so
+climbing back to a sibling of `_snapshot_` takes `${...key}`:
+`data.train` → `data` → `_snapshot_` → stage. A single-dot `${.input_path}`
+would look for `input_path` *inside* the `data` mapping and raise
+`InterpolationKeyError`.
 
 When a config has `_target_`, FlexLock auto-tracks the git repo of the
 target's source file — you don't need to spell `repos` for the main

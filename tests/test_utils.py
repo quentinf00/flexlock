@@ -708,6 +708,56 @@ def test_extract_tracking_info_with_prevs():
     assert 'data/train.csv' not in prevs
 
 
+def test_extract_tracking_info_relative_refs_three_dots():
+    """Relative refs inside _snapshot_ resolve with three dots (usage guide §7).
+
+    data values and prevs items sit two levels below the stage node
+    (stage._snapshot_.data.key / stage._snapshot_.prevs[i]), so reaching a
+    sibling of _snapshot_ takes ${...key}. The stage node must stay attached
+    to its root for the refs to resolve, as it is during submit.
+    """
+    from flexlock.utils import extract_tracking_info
+
+    root = OmegaConf.create({
+        'stage': {
+            'input_path': 'data/train.csv',
+            'data_dir': 'outputs/exp1/preprocess',
+            '_snapshot_': {
+                'data': {'input': '${...input_path}'},
+                'prevs': ['${...data_dir}'],
+            },
+        }
+    })
+
+    repos, data, prevs = extract_tracking_info(root.stage)
+
+    assert data == {'input': 'data/train.csv'}
+    assert prevs == ['outputs/exp1/preprocess']
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="single-dot refs in _snapshot_ resolve against the enclosing "
+    "data/prevs node, not the stage node; docs used to show this form — "
+    "if _snapshot_ refs are ever rebased onto the stage node, update "
+    "usage_guide.md §7 accordingly",
+    raises=Exception,
+)
+def test_extract_tracking_info_relative_refs_single_dot_prevs():
+    """${.key} in prevs does NOT reach the stage node's keys."""
+    from flexlock.utils import extract_tracking_info
+
+    root = OmegaConf.create({
+        'stage': {
+            'data_dir': 'outputs/exp1/preprocess',
+            '_snapshot_': {'prevs': ['${.data_dir}']},
+        }
+    })
+
+    _, _, prevs = extract_tracking_info(root.stage)
+    assert prevs == ['outputs/exp1/preprocess']
+
+
 def test_extract_tracking_info_singular_repo_raises_error():
     """Test that using 'repo' (singular) raises FlexLockConfigError."""
     from flexlock.utils import extract_tracking_info
