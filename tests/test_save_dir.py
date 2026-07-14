@@ -1,4 +1,4 @@
-"""Tests for flexlock.save_dir — explicit save_dir naming policies (Phase 1)."""
+"""Tests for flexlock.save_dir — naming policies + collision guard."""
 
 import multiprocessing as mp
 from pathlib import Path
@@ -6,7 +6,13 @@ from pathlib import Path
 import pytest
 from omegaconf import OmegaConf
 
-from flexlock.save_dir import apply_save_dir_policy, next_versioned_path
+from flexlock.run_record import COMPLETE_MARKER, LOCK_NAME
+from flexlock.save_dir import (
+    RUN,
+    SKIP,
+    apply_save_dir_policy,
+    next_versioned_path,
+)
 
 
 def test_next_versioned_path_basic(tmp_path):
@@ -97,6 +103,85 @@ def test_policy_unknown_raises(tmp_path):
     cfg = OmegaConf.create({"save_dir": str(tmp_path / "out")})
     with pytest.raises(FlexLockValidationError):
         apply_save_dir_policy(cfg, "bogus")
+
+
+# --- collision guard ---
+
+
+def _occupied(tmp_path, complete=False):
+    d = tmp_path / "out"
+    d.mkdir()
+    (d / LOCK_NAME).write_text("config: {}\n")
+    if complete:
+        (d / COMPLETE_MARKER).write_text("version: 1\n")
+    return d
+
+
+def _cfg(d):
+    return OmegaConf.create({"save_dir": str(d)})
+
+
+def test_guard_default_raises_on_occupied(tmp_path):
+    from flexlock.exceptions import FlexLockValidationError
+
+    d = _occupied(tmp_path)
+    with pytest.raises(FlexLockValidationError, match="already contains"):
+        apply_save_dir_policy(_cfg(d), None)
+    with pytest.raises(FlexLockValidationError, match="already contains"):
+        apply_save_dir_policy(_cfg(d), "raise")
+
+
+def test_guard_default_runs_on_fresh_dir(tmp_path):
+    assert apply_save_dir_policy(_cfg(tmp_path / "new"), None) == RUN
+
+
+def test_guard_ignores_dir_without_run_lock(tmp_path):
+    """A dir with files but no run.lock is not occupied — no policy touches it."""
+    d = tmp_path / "out"
+    d.mkdir()
+    (d / "data.txt").write_text("precious")
+    assert apply_save_dir_policy(_cfg(d), None) == RUN
+    assert apply_save_dir_policy(_cfg(d), "overwrite") == RUN
+    assert (d / "data.txt").read_text() == "precious"
+
+
+def test_guard_force_bypasses_raise(tmp_path):
+    d = _occupied(tmp_path, complete=True)
+    assert apply_save_dir_policy(_cfg(d), None, force=True) == RUN
+    # In-place rerun: outputs and run.lock are preserved.
+    assert (d / LOCK_NAME).exists()
+
+
+def test_guard_unsafe_never_checks(tmp_path):
+    d = _occupied(tmp_path)
+    assert apply_save_dir_policy(_cfg(d), "unsafe") == RUN
+    assert (d / LOCK_NAME).exists()
+
+
+def test_guard_overwrite_cleans_occupied_dir(tmp_path):
+    d = _occupied(tmp_path, complete=True)
+    (d / "stale.txt").write_text("old output")
+    (d / "sub").mkdir()
+    (d / "sub" / "x.nc").write_text("x")
+    assert apply_save_dir_policy(_cfg(d), "overwrite") == RUN
+    assert d.exists() and list(d.iterdir()) == []
+
+
+def test_guard_skip_returns_skip_on_complete(tmp_path):
+    d = _occupied(tmp_path, complete=True)
+    assert apply_save_dir_policy(_cfg(d), "skip") == SKIP
+
+
+def test_guard_skip_raises_on_incomplete(tmp_path):
+    from flexlock.exceptions import FlexLockValidationError
+
+    d = _occupied(tmp_path, complete=False)
+    with pytest.raises(FlexLockValidationError, match="incomplete"):
+        apply_save_dir_policy(_cfg(d), "skip")
+
+
+def test_guard_skip_on_fresh_dir_runs(tmp_path):
+    assert apply_save_dir_policy(_cfg(tmp_path / "new"), "skip") == RUN
 
 
 def _claim_worker(base, q):

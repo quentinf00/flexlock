@@ -428,7 +428,10 @@ class Project:
         if match_dir is None:
             raise ValueError("No matching run found. Use exists() to check first.")
 
-        # Try to load results from various possible locations
+        return self._load_cached_result(match_dir, cfg)
+
+    def _load_cached_result(self, match_dir: Path, cfg: DictConfig) -> ExecutionResult:
+        """Build a CACHED ExecutionResult from an existing run directory."""
         result_data = None
 
         # Try results.json
@@ -573,14 +576,21 @@ class Project:
                 the fingerprint, so it can't perturb caching. For sweeps the note
                 lands on the master ``run.lock`` only; sweep items inherit it for
                 display via their ``.flexlock_marker`` → master lookup.
-            save_dir_policy: How to derive the concrete run directory from
-                ``config.save_dir`` (applied once, at submit time):
-                ``None`` uses the configured value as-is; ``"increment"``
-                versions it (``run`` → ``run_0000``) and claims the directory
-                atomically; ``"timestamp"`` appends
-                ``config.TIMESTAMP_FORMAT``. Replaces the ``${vinc:}`` /
-                ``${now:}`` resolvers. For sweeps the policy applies once to
-                the sweep root; items nest beneath it.
+            save_dir_policy: What to do when ``config.save_dir`` is already
+                occupied by a previous run (contains ``run.lock``), applied
+                once at submit time, after the ``smart_run`` cache check:
+                ``None``/``"raise"`` (default) refuses and raises;
+                ``"increment"`` versions the dir (``run`` → ``run_0000``,
+                claimed atomically); ``"overwrite"`` deletes the occupied
+                dir's contents first (never touches a dir without
+                ``run.lock``); ``"skip"`` returns the existing complete
+                run's result without executing; ``"unsafe"`` runs in place
+                with no check; ``"timestamp"`` appends
+                ``config.TIMESTAMP_FORMAT``. ``force=True`` bypasses the
+                default guard (explicit in-place rerun). Replaces the
+                ``${vinc:}`` / ``${now:}`` resolvers. For sweeps the policy
+                applies once to the sweep root; items nest beneath it, and
+                ``"skip"`` means resume (reuse complete items, run the rest).
 
         Returns:
             ``ExecutionResult`` (single), ``List[ExecutionResult]`` (sweep),
@@ -605,14 +615,14 @@ class Project:
                 overrides = [f"{k}={v}" for k, v in overrides.items()]
             config.merge_with(OmegaConf.from_dotlist(overrides))
 
-        # Resolve save_dir to a concrete string exactly once, applying the
-        # requested naming policy. Done here (not lazily during config reads)
-        # so run.lock and run.complete always land in the same directory. For
-        # sweeps this fixes the sweep root; per-item dirs nest beneath it and
-        # never re-apply the policy.
-        from .save_dir import apply_save_dir_policy
+        # Bake save_dir to a concrete string exactly once. Done here (not
+        # lazily during config reads) so run.lock and run.complete always land
+        # in the same directory. The policy itself (naming / collision guard)
+        # is applied later, after the smart_run cache check and the
+        # side-effect-free previews (print_config / dry_run).
+        from .save_dir import SKIP, apply_save_dir_policy, resolve_save_dir
 
-        apply_save_dir_policy(config, save_dir_policy)
+        resolve_save_dir(config)
 
         if print_config:
             # When a sweep is given, preview each item's merged config so
@@ -655,6 +665,20 @@ class Project:
                     "isolated=True is not supported with sweep=... — sweep items "
                     "already execute in separate worker processes."
                 )
+            # A naming policy fixes the sweep root before items are built;
+            # guard policies are enforced per item inside _submit_sweep, after
+            # the per-item cache check ('skip' there means resume: reuse
+            # complete items, rerun crashed ones).
+            from .save_dir import NAMING_POLICIES, validate_policy
+
+            validate_policy(save_dir_policy)
+            if save_dir_policy in NAMING_POLICIES:
+                apply_save_dir_policy(config, save_dir_policy, force=force)
+                # Items are fresh under the freshly named root; keep the
+                # default guard as a backstop.
+                item_policy = "raise"
+            else:
+                item_policy = save_dir_policy or "raise"
             return self._submit_sweep(
                 config,
                 sweep,
@@ -674,6 +698,7 @@ class Project:
                 force=force,
                 timeout=timeout,
                 note=note,
+                item_policy=item_policy,
             )
 
         # Single execution path
@@ -695,6 +720,13 @@ class Project:
                 return None
             self._preview_hpc_script(config, slurm_config, pbs_config)
             return None
+
+        # Naming / collision-guard policy — after the cache check (a hit never
+        # claims or cleans anything) and after the previews (no side effects).
+        if apply_save_dir_policy(config, save_dir_policy, force=force) == SKIP:
+            match_dir = Path(str(config.save_dir))
+            logger.info(f"save_dir_policy='skip': reusing result from {match_dir}")
+            return self._load_cached_result(match_dir, config)
 
         if use_hpc:
             # Execute via HPC backend
@@ -1208,6 +1240,7 @@ class Project:
         force: bool = False,
         timeout: "int | None" = None,
         note: "str | None" = None,
+        item_policy: str = "raise",
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -1282,6 +1315,38 @@ class Project:
 
             configs_to_run.append((i, sweep_cfg))
 
+        # Collision guard, per item, after the cache check (a cache hit never
+        # trips the guard). Applied here — before anything is queued — so a
+        # refusal aborts the whole sweep up front. Items whose save_dir is
+        # occupied by a previous run are handled per `item_policy`; items of
+        # *this* sweep sharing one save_dir don't trip it (nothing is occupied
+        # until execution starts).
+        if item_policy != "unsafe":
+            from .save_dir import clean_run_dir, is_complete, is_occupied, occupied_error
+
+            still_to_run = []
+            for i, sweep_cfg in configs_to_run:
+                item_dir = sweep_cfg.get("save_dir")
+                if item_dir is None or not is_occupied(item_dir):
+                    still_to_run.append((i, sweep_cfg))
+                elif item_policy == "overwrite":
+                    clean_run_dir(item_dir)
+                    still_to_run.append((i, sweep_cfg))
+                elif item_policy == "skip":
+                    # Resume: reuse complete items, rerun crashed ones in place.
+                    if is_complete(item_dir):
+                        logger.info(f"Sweep {i}: skip — reusing {item_dir}")
+                        cached_results.append(
+                            (i, self._load_cached_result(Path(item_dir), sweep_cfg))
+                        )
+                    else:
+                        still_to_run.append((i, sweep_cfg))
+                elif force:
+                    still_to_run.append((i, sweep_cfg))
+                else:
+                    raise occupied_error(str(item_dir), sweep_item=i)
+            configs_to_run = still_to_run
+
         # Execute remaining configs
         if configs_to_run:
             # Decide whether to use HPC backend or local execution
@@ -1350,8 +1415,16 @@ class Project:
                 # Sequential execution (no backend, n_jobs=1)
                 for i, cfg in configs_to_run:
                     logger.info(f"Executing sweep {i}/{len(sweep)}")
+                    # Guard already applied above — run items unguarded so
+                    # same-save_dir items of one sweep behave as before.
                     result = self.submit(
-                        cfg, sweep=None, smart_run=False, wait=True, debug=debug
+                        cfg,
+                        sweep=None,
+                        smart_run=False,
+                        wait=True,
+                        debug=debug,
+                        force=force,
+                        save_dir_policy="unsafe",
                     )
                     results.append((i, result))
 

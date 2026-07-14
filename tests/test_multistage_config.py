@@ -26,6 +26,16 @@ def temp_yaml():
     if path.exists():
         path.unlink()
 
+
+@pytest.fixture(autouse=True)
+def _clean_shared_save_dir():
+    """These tests reuse hardcoded /tmp/flexlock_test save_dirs; wipe them so
+    the collision guard doesn't trip on a previous session's run.lock."""
+    import shutil
+
+    shutil.rmtree("/tmp/flexlock_test", ignore_errors=True)
+    yield
+
 def mock_argv(args):
     """Context manager to patch sys.argv."""
     return patch.object(sys, "argv", ["script.py"] + args)
@@ -143,12 +153,15 @@ nested:
         assert p == 99, "Outer override failed to update interpolated value."
 
     # Case 2: Override Selected Value (Inner)
-    # We select 'nested', then override 'other'. 
+    # We select 'nested', then override 'other'.
     # (global_val stays 10 from file)
+    # No save_dir in the config → both cases fall back to the same
+    # outputs/<name>/<timestamp> dir within one second; bypass the guard.
     with mock_argv([
         "-c", str(config_path),
         "-s", "nested",
-        "-O", "other=5" # Inner override
+        "-O", "other=5", # Inner override
+        "--save-dir-policy", "unsafe",
     ]):
         p, o = main2()
         assert p == 10  # Original file value
@@ -173,8 +186,10 @@ def test_py2cfg_defaults_and_overrides():
         assert res["lr"] == 0.01
         assert res["epochs"] == 10
 
-    # Case B: Override via CLI (Inner overrides implicit root)
-    with mock_argv(["-O", "lr=0.05", "epochs=50"]):
+    # Case B: Override via CLI (Inner overrides implicit root). Case A already
+    # ran into the same save_dir, so an explicit policy is required to rerun
+    # in place (the default guard would refuse).
+    with mock_argv(["-O", "lr=0.05", "epochs=50", "--save-dir-policy", "unsafe"]):
         res = train()
         assert res["lr"] == 0.05
         assert res["epochs"] == 50
