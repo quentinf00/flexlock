@@ -10,34 +10,55 @@ moment:
 | Binding time      | Mechanism                                    |
 |-------------------|----------------------------------------------|
 | submit-time       | plain interpolation (`${a.b}`), resolved eagerly when a stage is selected/submitted |
-| `save_dir` naming | `save_dir_policy=` on `submit()`/`run` (see below) |
+| `save_dir` collision / naming | `save_dir_policy=` on `submit()`/`run` (see below) |
 | stage-start       | deferred resolvers `${run_lock:}` / `${latest:}`, fired once on the worker |
 | per-sweep-item    | the sweep item is merged **before** resolution, so `${variable}` sees it |
 
 ## `save_dir_policy` (replaces `${vinc:}` / `${now:}`)
 
-To name a run directory, pass a policy instead of embedding a directory-creating
-resolver in `save_dir`:
+Configs keep a **stable** `save_dir`. The policy decides what happens when that
+directory is already *occupied* — i.e. contains a `run.lock` from a previous
+run (`run.complete` marks it finished; `run.lock` alone means crashed or
+in-flight):
+
+| policy | behaviour when `save_dir` is occupied |
+|--------|----------------------------------------|
+| `"raise"` (default, `None`) | refuse: raise `FlexLockValidationError` |
+| `"increment"` | version the base (`run` → `run_0000`, `_0001`, …), **claimed atomically** — never collides |
+| `"overwrite"` | delete the dir's contents, then run (never touches a dir *without* `run.lock`) |
+| `"skip"` | don't execute; return the existing **complete** run's result (raises if the occupant is incomplete) |
+| `"unsafe"` | run in place, no check (pre-0.8 behaviour) |
+| `"timestamp"` | `save_dir/<timestamp>` — never collides |
 
 ```python
-proj.submit(cfg, save_dir_policy="increment")   # save_dir -> save_dir_0000, _0001, ...
-proj.submit(cfg, save_dir_policy="timestamp")   # save_dir -> save_dir/<timestamp>
-proj.submit(cfg, save_dir_policy=None)          # use save_dir as-is (default)
+proj.submit(cfg)                                 # raises if save_dir holds a run
+proj.submit(cfg, force=True)                     # explicit in-place rerun
+proj.submit(cfg, save_dir_policy="increment")    # fresh versioned dir every run
 ```
 
 ```bash
-flexlock run ... --save-dir-policy increment
+flexlock-run ... --save-dir-policy increment
+flexlock-run ... --force        # rerun a crashed/stale run in place
 ```
 
-`"increment"` also **claims the directory atomically** (`mkdir(exist_ok=False)`
-with retry), so two concurrent submits on the same base never collide — a race
-the old `${vinc:}` resolver could not fix.
+Interaction rules:
+
+- **`smart_run` wins first**: a matching complete run is returned from cache
+  before the guard fires — the guard only sees genuine conflicts (crashed
+  runs, changed configs, `smart_run=False`).
+- **`force=True` bypasses the default guard** (it invalidates `run.complete`
+  and reruns in place).
+- **Sweeps**: a naming policy applies once to the sweep root; the guard is
+  enforced *per item* after the per-item cache check. `"skip"` on a sweep
+  means **resume**: complete items are reused, crashed items rerun in place.
+- The policy is applied after `print_config` / `--check` / `dry_run`, which
+  therefore never create or delete anything.
 
 ### Migration
 
 | Old (deprecated)                         | New                                   |
 |------------------------------------------|---------------------------------------|
-| `save_dir: ${vinc:outputs/run}`          | `save_dir: outputs/run` + `save_dir_policy="increment"` |
+| `save_dir: ${vinc:outputs/run}`          | `save_dir: outputs/run` — keep it stable; rely on the default guard + `--force`, or pass `save_dir_policy="increment"` where accumulating versions is wanted |
 | `save_dir: outputs/run/${now:%Y%m%d}`    | `save_dir: outputs/run` + `save_dir_policy="timestamp"` |
 
 `${vinc:}` and `${now:}` still work for one deprecation cycle but emit a
@@ -222,7 +243,7 @@ defaults = dict(
     eval=py2cfg(evaluate,
         data_dir="${run_lock:${cnf_run_dir},config.data_dir}",
         model_dir="${run_lock:${cnf_run_dir},config.save_dir}",
-        save_dir="${vinc:outputs/eval/run}",
+        save_dir="outputs/eval/run",   # + --save-dir-policy increment
     ),
 )
 ```
@@ -310,14 +331,17 @@ data_path: ${oc.select:custom_data_path,${latest:data/default_*.csv}}
 # Stage 1: Preprocess
 preprocess:
   _target_: myproject.preprocess
-  save_dir: ${vinc:outputs/preprocess/run}
+  save_dir: outputs/preprocess/run
 
 # Stage 2: Train (depends on Stage 1)
 train:
   _target_: myproject.train
   preprocess_dir: ${latest:outputs/preprocess/run_*/}
-  save_dir: ${vinc:outputs/train/run}
+  save_dir: outputs/train/run
 ```
+
+Run each stage with `--save-dir-policy increment` (or rely on the default
+guard when a stage should run exactly once per directory).
 
 **Execution:**
 ```python
@@ -409,9 +433,6 @@ train_cfg = py2cfg(train, preprocess_dir='outputs/preprocess/run_0001')
 ### 3. Combine Resolvers for Powerful Patterns
 
 ```yaml
-# Auto-versioned run with timestamp in name
-save_dir: ${vinc:outputs/train_${now:%Y%m%d}/run}
-
 # Latest data file reference
 input_data: ${latest:data/processed_*.csv}
 

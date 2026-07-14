@@ -188,12 +188,21 @@ class FlexLockRunner:
         )
         parser.add_argument(
             "--save-dir-policy",
-            choices=["increment", "timestamp"],
+            choices=["raise", "increment", "overwrite", "skip", "unsafe", "timestamp"],
             default=None,
-            help="Derive the concrete run directory from save_dir at submit "
-            "time: 'increment' versions it (run -> run_0000, claimed "
-            "atomically); 'timestamp' appends the timestamp format. Replaces "
-            "the ${vinc:}/${now:} resolvers.",
+            help="What to do when save_dir already holds a run (run.lock "
+            "present). 'raise' (default): refuse; 'increment': version the "
+            "dir (run -> run_0000, claimed atomically); 'overwrite': clean "
+            "the dir then run; 'skip': reuse the existing complete run's "
+            "result; 'unsafe': run in place, no check; 'timestamp': append "
+            "the timestamp format. Replaces the ${vinc:}/${now:} resolvers.",
+        )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help="Invalidate run.complete and re-execute in place (bypasses "
+            "the default save-dir guard). Use to rerun a crashed or stale run "
+            "in its existing save_dir.",
         )
 
         # HPC Backend Configuration
@@ -380,6 +389,7 @@ class FlexLockRunner:
                 dry_run=getattr(args, "dry_run", False),
                 note=getattr(args, "note", None),
                 save_dir_policy=getattr(args, "save_dir_policy", None),
+                force=getattr(args, "force", False),
             )
             results.append(outcome)
 
@@ -548,6 +558,7 @@ class FlexLockRunner:
             dry_run=getattr(args, "dry_run", False),
             note=getattr(args, "note", None),
             save_dir_policy=getattr(args, "save_dir_policy", None),
+            force=getattr(args, "force", False),
         )
 
         # Back-compat: the runner historically returned the user function's
