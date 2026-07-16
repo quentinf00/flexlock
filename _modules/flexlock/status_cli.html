@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.status_cli &mdash; FlexLock 0.3.2 documentation</title>
+  <title>flexlock.status_cli &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/status_cli.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,7 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -80,6 +81,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../flexlock.html">flexlock</a></li>
       <li class="breadcrumb-item active">flexlock.status_cli</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -97,47 +99,57 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_status_counts</span><span class="p">,</span> <span class="n">get_failed_tasks</span><span class="p">,</span> <span class="n">get_all_tasks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_status_counts</span><span class="p">,</span>
+    <span class="n">get_status_counts_by_tag</span><span class="p">,</span>
+    <span class="n">get_failed_tasks</span><span class="p">,</span>
+    <span class="n">get_all_tasks</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="print_status_summary">
 <a class="viewcode-back" href="../../api.html#flexlock.status_cli.print_status_summary">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">print_status_summary</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print summary of task statuses.&quot;&quot;&quot;</span>
-    <span class="n">status_counts</span> <span class="o">=</span> <span class="n">get_status_counts</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_status_summary</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print summary of task statuses, optionally scoped to ``tags``.&quot;&quot;&quot;</span>
+    <span class="n">status_counts</span> <span class="o">=</span> <span class="n">get_status_counts</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span><span class="p">)</span>
 
-    <span class="c1"># Get totals</span>
     <span class="n">pending</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pending&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">running</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">done</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;done&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">failed</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">total</span> <span class="o">=</span> <span class="n">pending</span> <span class="o">+</span> <span class="n">running</span> <span class="o">+</span> <span class="n">done</span> <span class="o">+</span> <span class="n">failed</span>
+    <span class="n">interrupted</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;interrupted&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">pending</span> <span class="o">+</span> <span class="n">running</span> <span class="o">+</span> <span class="n">done</span> <span class="o">+</span> <span class="n">failed</span> <span class="o">+</span> <span class="n">interrupted</span>
 
-    <span class="c1"># Print header</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Task Status Summary</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Task Status Summary&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
-
-    <span class="c1"># Print counts</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pending:    </span><span class="si">{</span><span class="n">pending</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running:    </span><span class="si">{</span><span class="n">running</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Done:       </span><span class="si">{</span><span class="n">done</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed:     </span><span class="si">{</span><span class="n">failed</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pending:      </span><span class="si">{</span><span class="n">pending</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running:      </span><span class="si">{</span><span class="n">running</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Done:         </span><span class="si">{</span><span class="n">done</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed:       </span><span class="si">{</span><span class="n">failed</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Interrupted:  </span><span class="si">{</span><span class="n">interrupted</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total:      </span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total:        </span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Print progress</span>
     <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">completed</span> <span class="o">=</span> <span class="n">done</span> <span class="o">+</span> <span class="n">failed</span>
-        <span class="n">progress</span> <span class="o">=</span> <span class="n">completed</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Progress:   </span><span class="si">{</span><span class="n">progress</span><span class="si">:</span><span class="s2">&gt;5.1f</span><span class="si">}</span><span class="s2">% (</span><span class="si">{</span><span class="n">completed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> completed)&quot;</span><span class="p">)</span>
+        <span class="n">terminal</span> <span class="o">=</span> <span class="n">done</span> <span class="o">+</span> <span class="n">failed</span> <span class="o">+</span> <span class="n">interrupted</span>
+        <span class="n">progress</span> <span class="o">=</span> <span class="n">terminal</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Progress:     </span><span class="si">{</span><span class="n">progress</span><span class="si">:</span><span class="s2">&gt;5.1f</span><span class="si">}</span><span class="s2">% (</span><span class="si">{</span><span class="n">terminal</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> completed)&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Show status</span>
         <span class="k">if</span> <span class="n">pending</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">running</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">failed</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Status:     ⚠️  Completed with </span><span class="si">{</span><span class="n">failed</span><span class="si">}</span><span class="s2"> failures&quot;</span><span class="p">)</span>
+            <span class="n">issues</span> <span class="o">=</span> <span class="n">failed</span> <span class="o">+</span> <span class="n">interrupted</span>
+            <span class="k">if</span> <span class="n">issues</span><span class="p">:</span>
+                <span class="n">label_parts</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
+                    <span class="n">label_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">failed</span><span class="si">}</span><span class="s2"> failed&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">interrupted</span><span class="p">:</span>
+                    <span class="n">label_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">interrupted</span><span class="si">}</span><span class="s2"> interrupted&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Status:     ⚠️  Finished with issues (</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">label_parts</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Status:     ✓  All tasks completed successfully&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">pending</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">running</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Status:     ⚠️  </span><span class="si">{</span><span class="n">running</span><span class="si">}</span><span class="s2"> task(s) running with no pending — possible zombie(s)&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Status:     ⏳ In progress&quot;</span><span class="p">)</span>
 
@@ -145,35 +157,65 @@
 
 
 
-<div class="viewcode-block" id="print_failed_tasks">
-<a class="viewcode-back" href="../../api.html#flexlock.status_cli.print_failed_tasks">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">print_failed_tasks</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print details of failed tasks.&quot;&quot;&quot;</span>
-    <span class="n">failed_tasks</span> <span class="o">=</span> <span class="n">get_failed_tasks</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">failed_tasks</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No failed tasks found.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="print_tags_breakdown">
+<a class="viewcode-back" href="../../api.html#flexlock.status_cli.print_tags_breakdown">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_tags_breakdown</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print a per-tag status breakdown table.&quot;&quot;&quot;</span>
+    <span class="n">by_tag</span> <span class="o">=</span> <span class="n">get_status_counts_by_tag</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">by_tag</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No tasks found in DB.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Failed Tasks (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failed_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Per-Tag Status Breakdown&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">counts</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">by_tag</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+        <span class="n">tag_label</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="k">if</span> <span class="n">tag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;(untagged)&quot;</span>
+        <span class="n">pending</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pending&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">running</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;done&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">failed</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">interrupted</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;interrupted&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">pending</span> <span class="o">+</span> <span class="n">running</span> <span class="o">+</span> <span class="n">done</span> <span class="o">+</span> <span class="n">failed</span> <span class="o">+</span> <span class="n">interrupted</span>
+        <span class="n">terminal</span> <span class="o">=</span> <span class="n">done</span> <span class="o">+</span> <span class="n">failed</span> <span class="o">+</span> <span class="n">interrupted</span>
+        <span class="n">pct</span> <span class="o">=</span> <span class="n">terminal</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span> <span class="k">if</span> <span class="n">total</span> <span class="k">else</span> <span class="mi">0</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Tag: </span><span class="si">{</span><span class="n">tag_label</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> total, </span><span class="si">{</span><span class="n">pct</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% done)&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  pending=</span><span class="si">{</span><span class="n">pending</span><span class="si">}</span><span class="s2">  running=</span><span class="si">{</span><span class="n">running</span><span class="si">}</span><span class="s2">  done=</span><span class="si">{</span><span class="n">done</span><span class="si">}</span><span class="s2">  &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;failed=</span><span class="si">{</span><span class="n">failed</span><span class="si">}</span><span class="s2">  interrupted=</span><span class="si">{</span><span class="n">interrupted</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="print_failed_tasks">
+<a class="viewcode-back" href="../../api.html#flexlock.status_cli.print_failed_tasks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_failed_tasks</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print details of failed and interrupted tasks.&quot;&quot;&quot;</span>
+    <span class="n">failed_tasks</span> <span class="o">=</span> <span class="n">get_failed_tasks</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">failed_tasks</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No failed or interrupted tasks found.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Failed / Interrupted Tasks (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failed_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">task_info</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">failed_tasks</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Task #</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">task_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;failed&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Task #</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">status</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
 
-        <span class="c1"># Print task configuration</span>
         <span class="n">task</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;task&quot;</span><span class="p">]</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Config:&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">task</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Print error</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Error:&quot;</span><span class="p">)</span>
-            <span class="c1"># Truncate very long errors</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">error</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">500</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">verbose</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">error</span><span class="p">[:</span><span class="mi">500</span><span class="p">]</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  (Use --verbose to see full error)&quot;</span><span class="p">)</span>
@@ -181,7 +223,6 @@
                 <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">error</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">):</span>
                     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Print metadata</span>
         <span class="k">if</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;node&quot;</span><span class="p">]:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Node: </span><span class="si">{</span><span class="n">task_info</span><span class="p">[</span><span class="s1">&#39;node&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;ts_start&quot;</span><span class="p">]:</span>
@@ -195,9 +236,9 @@
 
 <div class="viewcode-block" id="print_all_tasks">
 <a class="viewcode-back" href="../../api.html#flexlock.status_cli.print_all_tasks">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">print_all_tasks</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">status_filter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print all tasks, optionally filtered by status.&quot;&quot;&quot;</span>
-    <span class="n">tasks</span> <span class="o">=</span> <span class="n">get_all_tasks</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">status_filter</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_all_tasks</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">status_filter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Print all tasks, optionally filtered by status and/or tag.&quot;&quot;&quot;</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="n">get_all_tasks</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">status_filter</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span><span class="p">)</span>
 
     <span class="n">filter_desc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{</span><span class="n">status_filter</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">if</span> <span class="n">status_filter</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">All Tasks</span><span class="si">{</span><span class="n">filter_desc</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
@@ -207,22 +248,19 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No tasks found.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="c1"># Print table header</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;Status&#39;</span><span class="si">:</span><span class="s2">&lt;10</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Task ID&#39;</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Node&#39;</span><span class="si">:</span><span class="s2">&lt;15</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Timestamp&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;Status&#39;</span><span class="si">:</span><span class="s2">&lt;13</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Task ID&#39;</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Node&#39;</span><span class="si">:</span><span class="s2">&lt;15</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;Timestamp&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">task_info</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
         <span class="n">status</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
-        <span class="n">task_id</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;task_id&quot;</span><span class="p">][:</span><span class="mi">10</span><span class="p">]</span>  <span class="c1"># Truncate hash</span>
+        <span class="n">task_id</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;task_id&quot;</span><span class="p">][:</span><span class="mi">10</span><span class="p">]</span>
         <span class="n">node</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;node&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;N/A&quot;</span>
         <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[:</span><span class="mi">13</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">13</span> <span class="k">else</span> <span class="n">node</span>
         <span class="n">timestamp</span> <span class="o">=</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;ts_end&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">task_info</span><span class="p">[</span><span class="s2">&quot;ts_start&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;N/A&quot;</span>
-
-        <span class="c1"># Format timestamp</span>
         <span class="k">if</span> <span class="n">timestamp</span> <span class="o">!=</span> <span class="s2">&quot;N/A&quot;</span><span class="p">:</span>
-            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">[:</span><span class="mi">19</span><span class="p">]</span>  <span class="c1"># Just YYYY-MM-DD HH:MM:SS</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">[:</span><span class="mi">19</span><span class="p">]</span>
 
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">status</span><span class="si">:</span><span class="s2">&lt;10</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">task_id</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">node</span><span class="si">:</span><span class="s2">&lt;15</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">status</span><span class="si">:</span><span class="s2">&lt;13</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">task_id</span><span class="si">:</span><span class="s2">&lt;12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">node</span><span class="si">:</span><span class="s2">&lt;15</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
@@ -230,33 +268,27 @@
 
 <div class="viewcode-block" id="watch_status">
 <a class="viewcode-back" href="../../api.html#flexlock.status_cli.watch_status">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">watch_status</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Watch task status in real-time.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">watch_status</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Watch task status in real-time, optionally scoped to ``tags``.&quot;&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Watching task status (Ctrl+C to stop)...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="c1"># Clear screen (works on Unix and Windows)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\033</span><span class="s2">[2J</span><span class="se">\033</span><span class="s2">[H&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
 
-            <span class="c1"># Print timestamp</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
-
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Last updated: </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-            <span class="c1"># Print status</span>
-            <span class="n">print_status_summary</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+            <span class="n">print_status_summary</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span><span class="p">)</span>
 
-            <span class="c1"># Check if completed</span>
-            <span class="n">status_counts</span> <span class="o">=</span> <span class="n">get_status_counts</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+            <span class="n">status_counts</span> <span class="o">=</span> <span class="n">get_status_counts</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span><span class="p">)</span>
             <span class="n">pending</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pending&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
             <span class="n">running</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">pending</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">running</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;All tasks completed. Exiting watch mode.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;All tasks reached a terminal state. Exiting watch mode.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">break</span>
 
-            <span class="c1"># Wait before next update</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Refreshing in </span><span class="si">{</span><span class="n">interval</span><span class="si">}</span><span class="s2">s... (Ctrl+C to stop)&quot;</span><span class="p">)</span>
             <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
 
@@ -277,83 +309,99 @@
 <span class="s2">  # Show status summary</span>
 <span class="s2">  flexlock-status outputs/sweep/run.lock.tasks.db</span>
 
-<span class="s2">  # Show failed tasks</span>
+<span class="s2">  # Per-tag breakdown (useful when multiple sweeps share a DB)</span>
+<span class="s2">  flexlock-status outputs/sweep/run.lock.tasks.db --tags</span>
+
+<span class="s2">  # Scope the entire view to one tag</span>
+<span class="s2">  flexlock-status outputs/sweep/run.lock.tasks.db --tag extract</span>
+
+<span class="s2">  # Show failed / interrupted tasks</span>
 <span class="s2">  flexlock-status outputs/sweep/run.lock.tasks.db --failed</span>
 
 <span class="s2">  # Show all tasks</span>
 <span class="s2">  flexlock-status outputs/sweep/run.lock.tasks.db --all</span>
 
-<span class="s2">  # Watch status in real-time</span>
-<span class="s2">  flexlock-status outputs/sweep/run.lock.tasks.db --watch</span>
+<span class="s2">  # Filter by status</span>
+<span class="s2">  flexlock-status outputs/sweep/run.lock.tasks.db --all --status interrupted</span>
 
-<span class="s2">  # Show verbose error messages</span>
-<span class="s2">  flexlock-status outputs/sweep/run.lock.tasks.db --failed --verbose</span>
+<span class="s2">  # Watch status in real-time (scoped to a tag)</span>
+<span class="s2">  flexlock-status outputs/sweep/run.lock.tasks.db --watch --tag collocate</span>
 <span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;db_path&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to task database (run.lock.tasks.db)&quot;</span>
     <span class="p">)</span>
-
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--failed&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Show details of failed tasks&quot;</span>
+        <span class="s2">&quot;--failed&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Show details of failed / interrupted tasks&quot;</span>
     <span class="p">)</span>
-
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--all&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Show all tasks&quot;</span><span class="p">)</span>
-
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--status&quot;</span><span class="p">,</span>
-        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;pending&quot;</span><span class="p">,</span> <span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="s2">&quot;done&quot;</span><span class="p">,</span> <span class="s2">&quot;failed&quot;</span><span class="p">],</span>
+        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;pending&quot;</span><span class="p">,</span> <span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="s2">&quot;done&quot;</span><span class="p">,</span> <span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="s2">&quot;interrupted&quot;</span><span class="p">],</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Filter tasks by status (use with --all)&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--watch&quot;</span><span class="p">,</span>
         <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Watch status in real-time (updates every 10s)&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--interval&quot;</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Update interval for watch mode in seconds (default: 10)&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--verbose&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;-v&quot;</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;--verbose&quot;</span><span class="p">,</span> <span class="s2">&quot;-v&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Show verbose output (full error messages)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--tag&quot;</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;NAME&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Scope the entire view (summary, --failed, --all, --watch) to a &quot;</span>
+             <span class="s2">&quot;single tag. Useful to monitor one sweep inside a shared DB.&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--tags&quot;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;show_tags&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Print a per-tag status breakdown before the global summary. &quot;</span>
+             <span class="s2">&quot;Useful to discover which tags exist and what to pass to &quot;</span>
+             <span class="s2">&quot;flexlock-worker --tags.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
 
-    <span class="c1"># Validate database exists</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Database not found: </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
+    <span class="c1"># --tag NAME scopes everything; convert to a list for the taskdb API.</span>
+    <span class="n">scope_tags</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">tag</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">tag_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; [tag=</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">tag</span><span class="si">!r}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">tag</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">watch</span><span class="p">:</span>
-            <span class="c1"># Watch mode</span>
-            <span class="n">watch_status</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">interval</span><span class="p">)</span>
+            <span class="n">watch_status</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">interval</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">scope_tags</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">failed</span><span class="p">:</span>
-            <span class="c1"># Show failed tasks</span>
-            <span class="n">print_status_summary</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
-            <span class="n">print_failed_tasks</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">show_tags</span><span class="p">:</span>
+                <span class="n">print_tags_breakdown</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+            <span class="n">print_status_summary</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">scope_tags</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">tag_label</span><span class="p">)</span>
+            <span class="n">print_failed_tasks</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">scope_tags</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
-            <span class="c1"># Show all tasks</span>
-            <span class="n">print_status_summary</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
-            <span class="n">print_all_tasks</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">status_filter</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">show_tags</span><span class="p">:</span>
+                <span class="n">print_tags_breakdown</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+            <span class="n">print_status_summary</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">scope_tags</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">tag_label</span><span class="p">)</span>
+            <span class="n">print_all_tasks</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">status_filter</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">scope_tags</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Default: just show summary</span>
-            <span class="n">print_status_summary</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">show_tags</span><span class="p">:</span>
+                <span class="n">print_tags_breakdown</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+            <span class="n">print_status_summary</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">scope_tags</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">tag_label</span><span class="p">)</span>
 
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error reading database: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
-
         <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
 

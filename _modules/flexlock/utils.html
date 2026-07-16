@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.utils &mdash; FlexLock 0.5.0 documentation</title>
+  <title>flexlock.utils &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/utils.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=70f82a29"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,8 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -106,6 +106,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">fields</span>
+
+<span class="c1"># select_and_freeze_root_refs moved to flexlock.freeze; re-exported here for the</span>
+<span class="c1"># existing import sites (api.py, runner.py, tests) that import it from utils.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.freeze</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_and_freeze_root_refs</span>  <span class="c1"># noqa: F401</span>
 
 
 <div class="viewcode-block" id="collect_target_include_patterns">
@@ -478,216 +482,6 @@
 
 
 
-<div class="viewcode-block" id="select_and_freeze_root_refs">
-<a class="viewcode-back" href="../../api.html#flexlock.select_and_freeze_root_refs">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">select_and_freeze_root_refs</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DictConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select a sub-node from `root_cfg` and freeze its root-scope references.</span>
-
-<span class="sd">    The returned config is self-contained: it can be pickled, round-tripped</span>
-<span class="sd">    through ``OmegaConf.to_container``/``OmegaConf.create``, and merged with</span>
-<span class="sd">    other configs without losing context.</span>
-
-<span class="sd">    Three kinds of interpolations are handled distinctly:</span>
-
-<span class="sd">    - **Simple refs to keys outside the sub-tree** (e.g. ``${root_anchor}``)</span>
-<span class="sd">      are resolved against ``root_cfg`` and substituted as concrete values.</span>
-<span class="sd">      If the target value is itself an interpolation (e.g. another</span>
-<span class="sd">      ``${...}`` string), the unresolved string is substituted verbatim so</span>
-<span class="sd">      resolvers like ``${vinc:}`` still fire at submit time.</span>
-<span class="sd">    - **Resolver calls** (``${name:args}``) are preserved unchanged. Their</span>
-<span class="sd">      argument lists are recursively processed so nested simple refs inside</span>
-<span class="sd">      them are still frozen.</span>
-<span class="sd">    - **Refs to keys inside the sub-tree** are preserved unchanged.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        root_cfg: The full root configuration.</span>
-<span class="sd">        key: Dot-path to the sub-node. If ``None``, returns ``root_cfg``</span>
-<span class="sd">            unchanged.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        A new ``DictConfig`` (or the same root if ``key is None``).</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        KeyError: If ``key`` is not found in ``root_cfg``.</span>
-<span class="sd">        UnresolvedInterpolationError: If the sub-node references a key that</span>
-<span class="sd">            exists in neither the sub-tree nor the root.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">root_cfg</span>
-
-    <span class="n">sub_node</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">sub_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; not found in config&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sub_node</span><span class="p">,</span> <span class="p">(</span><span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
-        <span class="k">return</span> <span class="n">sub_node</span>
-
-    <span class="n">sub_raw</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">sub_node</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">root_raw</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-    <span class="n">transformed</span> <span class="o">=</span> <span class="n">_freeze_walk</span><span class="p">(</span><span class="n">sub_raw</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">transformed</span><span class="p">)</span></div>
-
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_freeze_walk</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">):</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">_freeze_walk</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">_freeze_walk</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;${&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
-        <span class="n">whole</span> <span class="o">=</span> <span class="n">_whole_string_interp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">whole</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_find_top_level_colon</span><span class="p">(</span><span class="n">whole</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># OmegaConf relative refs (.foo, ..foo, ...foo) navigate from the</span>
-            <span class="c1"># interpolation site and can&#39;t be statically frozen — pass through.</span>
-            <span class="k">if</span> <span class="n">whole</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">value</span>
-            <span class="k">return</span> <span class="n">_freeze_simple_ref</span><span class="p">(</span><span class="n">whole</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">,</span> <span class="n">fallback_str</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">_process_interps_in_string</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">value</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_whole_string_interp</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;If ``s`` is exactly ``${...}`` (one balanced block, nothing else), return</span>
-<span class="sd">    the inner expression. Otherwise return None.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;${&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">found</span> <span class="o">=</span> <span class="n">_find_balanced_interp</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">found</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">found</span>
-    <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">end</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">return</span> <span class="kc">None</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_find_balanced_interp</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find the next ``${...}`` block in ``s`` starting at ``start``. Returns</span>
-<span class="sd">    ``(open_idx, close_idx_exclusive)`` or ``None``. Handles nested ``${...}``.&quot;&quot;&quot;</span>
-    <span class="n">i</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;${&quot;</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="n">depth</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">j</span> <span class="o">=</span> <span class="n">i</span>
-    <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="n">j</span> <span class="p">:</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;${&quot;</span><span class="p">:</span>
-            <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">j</span> <span class="o">+=</span> <span class="mi">2</span>
-        <span class="k">elif</span> <span class="n">s</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;}&quot;</span><span class="p">:</span>
-            <span class="n">depth</span> <span class="o">-=</span> <span class="mi">1</span>
-            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">return</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="k">return</span> <span class="kc">None</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_find_top_level_colon</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;In the content between ``${`` and ``}``, find the first ``:`` not nested</span>
-<span class="sd">    inside a ``${...}`` block. Returns the index, or ``None`` if no colon.&quot;&quot;&quot;</span>
-    <span class="n">depth</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">inner</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;${&quot;</span><span class="p">:</span>
-            <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;}&quot;</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">depth</span> <span class="o">-=</span> <span class="mi">1</span>
-        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;:&quot;</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">i</span>
-    <span class="k">return</span> <span class="kc">None</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_path_exists</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dotted</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="n">cur</span> <span class="o">=</span> <span class="n">d</span>
-    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">dotted</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
-            <span class="n">cur</span> <span class="o">=</span> <span class="n">cur</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">return</span> <span class="kc">True</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_get_raw</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dotted</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="n">cur</span> <span class="o">=</span> <span class="n">d</span>
-    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">dotted</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
-            <span class="n">cur</span> <span class="o">=</span> <span class="n">cur</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">return</span> <span class="n">cur</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_freeze_simple_ref</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">,</span> <span class="n">fallback_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process a simple ref (``${name}`` or ``${a.b}``). Used for whole-string</span>
-<span class="sd">    interpolations where we want to preserve the target&#39;s native type.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">_path_exists</span><span class="p">(</span><span class="n">sub_raw</span><span class="p">,</span> <span class="n">ref</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">fallback_str</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">_path_exists</span><span class="p">(</span><span class="n">root_raw</span><span class="p">,</span> <span class="n">ref</span><span class="p">):</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnresolvedInterpolationError</span>
-
-        <span class="n">first</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">raise</span> <span class="n">UnresolvedInterpolationError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Interpolation $</span><span class="se">{{</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="se">}}</span><span class="s2"> could not be resolved: &#39;</span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2">&#39; not &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;found in the sub-tree or root config. Set it via overrides= or &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;OmegaConf.update(proj.defaults, &#39;</span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2">&#39;, ...).&quot;</span>
-        <span class="p">)</span>
-    <span class="k">return</span> <span class="n">_get_raw</span><span class="p">(</span><span class="n">root_raw</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_process_interps_in_string</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process all ``${...}`` blocks in a string. Used for embedded</span>
-<span class="sd">    interpolations (mixed literal + interp) and resolver-call arguments.&quot;&quot;&quot;</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">pos</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
-        <span class="n">found</span> <span class="o">=</span> <span class="n">_find_balanced_interp</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">found</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">pos</span><span class="p">:])</span>
-            <span class="k">break</span>
-        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">found</span>
-        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">pos</span><span class="p">:</span><span class="n">start</span><span class="p">])</span>
-        <span class="n">inner</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">start</span> <span class="o">+</span> <span class="mi">2</span> <span class="p">:</span> <span class="n">end</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_process_one_interp</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">))</span>
-        <span class="n">pos</span> <span class="o">=</span> <span class="n">end</span>
-    <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_process_one_interp</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process the content inside a single ``${...}``. Returns the</span>
-<span class="sd">    (possibly modified) ``${...}`` form as a string suitable for embedding</span>
-<span class="sd">    back into the source string.&quot;&quot;&quot;</span>
-    <span class="n">colon_idx</span> <span class="o">=</span> <span class="n">_find_top_level_colon</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">colon_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Resolver call — recurse into args, preserve outer call</span>
-        <span class="n">resolver_name</span> <span class="o">=</span> <span class="n">inner</span><span class="p">[:</span><span class="n">colon_idx</span><span class="p">]</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="n">inner</span><span class="p">[</span><span class="n">colon_idx</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
-        <span class="n">processed_args</span> <span class="o">=</span> <span class="n">_process_interps_in_string</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">root_raw</span><span class="p">)</span>
-        <span class="k">return</span> <span class="s2">&quot;${&quot;</span> <span class="o">+</span> <span class="n">resolver_name</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="n">processed_args</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>
-
-    <span class="c1"># Relative refs (.foo, ..foo) — resolved by OmegaConf at access time.</span>
-    <span class="k">if</span> <span class="n">inner</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;${&quot;</span> <span class="o">+</span> <span class="n">inner</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>
-
-    <span class="c1"># Simple ref</span>
-    <span class="n">ref</span> <span class="o">=</span> <span class="n">inner</span>
-    <span class="k">if</span> <span class="n">_path_exists</span><span class="p">(</span><span class="n">sub_raw</span><span class="p">,</span> <span class="n">ref</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;${&quot;</span> <span class="o">+</span> <span class="n">ref</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">_path_exists</span><span class="p">(</span><span class="n">root_raw</span><span class="p">,</span> <span class="n">ref</span><span class="p">):</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnresolvedInterpolationError</span>
-
-        <span class="n">first</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">raise</span> <span class="n">UnresolvedInterpolationError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Interpolation $</span><span class="se">{{</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="se">}}</span><span class="s2"> could not be resolved: &#39;</span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2">&#39; not &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;found in the sub-tree or root config. Set it via overrides= or &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;OmegaConf.update(proj.defaults, &#39;</span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2">&#39;, ...).&quot;</span>
-        <span class="p">)</span>
-    <span class="n">val</span> <span class="o">=</span> <span class="n">_get_raw</span><span class="p">(</span><span class="n">root_raw</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="c1"># Preserve any nested interpolations in the value (e.g. ${vinc:...})</span>
-        <span class="k">return</span> <span class="n">val</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;null&quot;</span>
-
-
 <div class="viewcode-block" id="parse_sweep_string">
 <a class="viewcode-back" href="../../api.html#flexlock.parse_sweep_string">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_sweep_string</span><span class="p">(</span><span class="n">sweep_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
@@ -729,8 +523,8 @@
 <span class="sd">    line as one task value.</span>
 
 <span class="sd">    Interpolation strings (``${...}``) are intentionally preserved as raw</span>
-<span class="sd">    strings so that resolvers like ``${vinc:}`` fire at execution time rather</span>
-<span class="sd">    than at sweep-loading time.</span>
+<span class="sd">    strings so that deferred resolvers (``${run_lock:}``/``${latest:}``) fire at</span>
+<span class="sd">    execution time on the worker rather than at sweep-loading time.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_json</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_yaml</span>
@@ -925,7 +719,7 @@
 <div class="viewcode-block" id="instantiate">
 <a class="viewcode-back" href="../../api.html#flexlock.instantiate">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Recursively instantiate objects defined in dictionaries with a &quot;_target_&quot; key.</span>
 
 <span class="sd">    Args:</span>
@@ -941,9 +735,15 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">instantiate</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">config</span><span class="p">]</span>
 
-    <span class="c1"># config is a dict</span>
+    <span class="c1"># config is a dict — never mutate the caller&#39;s object. Copy before</span>
+    <span class="c1"># stripping the tracking-only &quot;_snapshot_&quot; key so the original keeps it.</span>
     <span class="k">if</span> <span class="s2">&quot;_snapshot_&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">open_dict</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">with</span> <span class="n">open_dict</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+                <span class="k">del</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;_snapshot_&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
             <span class="k">del</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;_snapshot_&quot;</span><span class="p">]</span>
 
     <span class="c1"># 2. Check if this dict represents a target object</span>

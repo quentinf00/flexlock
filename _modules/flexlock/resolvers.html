@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.resolvers &mdash; FlexLock 0.4.1 documentation</title>
+  <title>flexlock.resolvers &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/resolvers.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,7 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -80,6 +81,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../flexlock.html">flexlock</a></li>
       <li class="breadcrumb-item active">flexlock.resolvers</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -96,10 +98,22 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data_hash</span><span class="w"> </span><span class="kn">import</span> <span class="n">hash_data</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.load_stage</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_stage_from_path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
+
+<span class="c1"># Resolvers whose evaluation is *deferred* to stage start (they read live</span>
+<span class="c1"># filesystem/upstream-run state that only exists on the worker, not at submit</span>
+<span class="c1"># time). During the submit-time freeze these are stubbed to re-emit their own</span>
+<span class="c1"># call string (see ``deferred_stubbed``); everything else resolves eagerly.</span>
+<span class="n">DEFERRED_RESOLVERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;run_lock&quot;</span><span class="p">,</span> <span class="s2">&quot;latest&quot;</span><span class="p">)</span>
+
+<span class="c1"># Distinct &quot;no default supplied&quot; sentinel so that an explicit ``null`` default</span>
+<span class="c1"># (e.g. ``${run_lock:${dir},key,null}``) is honoured rather than treated as</span>
+<span class="c1"># &quot;raise&quot;. ``None`` cannot serve as this marker because it is a valid default.</span>
+<span class="n">_MISSING</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="now_resolver">
@@ -108,9 +122,21 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    OmegaConf resolver that returns the current time as a formatted string.</span>
 
+<span class="sd">    Deprecated: prefer ``submit(..., save_dir_policy=&quot;timestamp&quot;)`` over</span>
+<span class="sd">    embedding ``${now:}`` in ``save_dir``. See</span>
+<span class="sd">    ``docs/resolution_simplification_plan.md``.</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        fmt: Format string for strftime (defaults to config.TIMESTAMP_FORMAT)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="s2">&quot;$</span><span class="si">{now:}</span><span class="s2"> is deprecated; use save_dir_policy=&#39;timestamp&#39; on submit()/run &quot;</span>
+        <span class="s2">&quot;instead of embedding $</span><span class="si">{now:}</span><span class="s2"> in save_dir.&quot;</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="k">if</span> <span class="n">fmt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fmt</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">TIMESTAMP_FORMAT</span>
     <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span></div>
@@ -119,14 +145,17 @@
 
 <div class="viewcode-block" id="latest_resolver">
 <a class="viewcode-back" href="../../api.html#flexlock.resolvers.latest_resolver">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">latest_resolver</span><span class="p">(</span><span class="n">path_glob</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">latest_resolver</span><span class="p">(</span><span class="n">path_glob</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">_MISSING</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    OmegaConf resolver that returns the latest path matching the given pattern</span>
+<span class="sd">    OmegaConf resolver that returns the latest path matching the given pattern.</span>
+
+<span class="sd">    Raises ``FileNotFoundError`` when nothing matches, unless a ``default`` is</span>
+<span class="sd">    supplied (``${latest:pattern,fallback}``), in which case the default is</span>
+<span class="sd">    returned. Returning the unmatched pattern silently — the old behaviour —</span>
+<span class="sd">    produced a bogus path that failed far downstream.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">glob</span><span class="w"> </span><span class="kn">import</span> <span class="n">glob</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 
     <span class="c1"># Expand user (~) and resolve the path</span>
     <span class="n">path_glob</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">path_glob</span><span class="p">)</span>
@@ -135,9 +164,11 @@
     <span class="n">matching_paths</span> <span class="o">=</span> <span class="n">glob</span><span class="p">(</span><span class="n">path_glob</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">matching_paths</span><span class="p">:</span>
-        <span class="c1"># If no matches are found, warn and return the original pattern</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No paths found matching pattern: </span><span class="si">{</span><span class="n">path_glob</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">path_glob</span>
+        <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_MISSING</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">default</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;latest resolver: no paths match pattern </span><span class="si">{</span><span class="n">path_glob</span><span class="si">!r}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
 
     <span class="c1"># Find the latest path by modification time</span>
     <span class="n">latest_path</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">matching_paths</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">)</span>
@@ -151,37 +182,39 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">vinc_resolver</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_</span><span class="si">{i:04d}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    OmegaConf resolver that finds the highest existing version of a folder/file</span>
-<span class="sd">    and returns the next versioned path as a string. Results are cached to ensure</span>
-<span class="sd">    consistent values within a single execution.</span>
+<span class="sd">    and returns the next versioned path as a string.</span>
+
+<span class="sd">    The value is a pure function of the current filesystem state (highest</span>
+<span class="sd">    existing version + 1) so that multiple references to the same ``${vinc:}``</span>
+<span class="sd">    within one ``submit()`` resolve idempotently to the *same* directory — the</span>
+<span class="sd">    counter only advances once the previous run&#39;s directory actually exists on</span>
+<span class="sd">    disk.</span>
+
+<span class="sd">    Concurrency note: because the claim is not taken here, two submits racing</span>
+<span class="sd">    from separate processes can compute the same next version and collide.</span>
+
+<span class="sd">    Deprecated: prefer ``submit(..., save_dir_policy=&quot;increment&quot;)``, which takes</span>
+<span class="sd">    the atomic ``mkdir(exist_ok=False)`` claim at the right layer and so fixes</span>
+<span class="sd">    the race this resolver could not. See ``docs/resolution_simplification_plan.md``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Compute the result (original logic)</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">parent_dir</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parent</span>
-    <span class="n">base_name</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-    <span class="n">regex_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\{i.*\}&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;(</span><span class="se">\\</span><span class="s2">d+)&quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
-    <span class="n">regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;^</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">base_name</span><span class="p">)</span><span class="si">}{</span><span class="n">regex_pattern</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="s2">&quot;$</span><span class="si">{vinc:}</span><span class="s2"> is deprecated; use save_dir_policy=&#39;increment&#39; on submit()/run &quot;</span>
+        <span class="s2">&quot;instead of embedding $</span><span class="si">{vinc:}</span><span class="s2"> in save_dir. The policy also claims the &quot;</span>
+        <span class="s2">&quot;directory atomically, fixing the concurrent-submit race.&quot;</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.save_dir</span><span class="w"> </span><span class="kn">import</span> <span class="n">next_versioned_path</span>
 
-    <span class="n">highest_version</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">parent_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="n">parent_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">parent_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_name</span><span class="si">}</span><span class="s2">*&quot;</span><span class="p">):</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
-            <span class="n">version</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-            <span class="k">if</span> <span class="n">version</span> <span class="o">&gt;</span> <span class="n">highest_version</span><span class="p">:</span>
-                <span class="n">highest_version</span> <span class="o">=</span> <span class="n">version</span>
-
-    <span class="n">next_version</span> <span class="o">=</span> <span class="n">highest_version</span> <span class="o">+</span> <span class="mi">1</span>
-    <span class="n">version_str</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="n">next_version</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">parent_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_name</span><span class="si">}{</span><span class="n">version_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">next_versioned_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="run_lock_resolver">
 <a class="viewcode-back" href="../../api.html#flexlock.resolvers.run_lock_resolver">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">run_lock_resolver</span><span class="p">(</span><span class="n">run_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_lock_resolver</span><span class="p">(</span><span class="n">run_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">_MISSING</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    OmegaConf resolver that reads a field from an upstream run.lock.</span>
 
@@ -197,7 +230,7 @@
 
     <span class="n">lock_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">run_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">lock_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_MISSING</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;run_lock resolver: no run.lock at </span><span class="si">{</span><span class="n">run_dir</span><span class="si">}</span><span class="s2">, using default&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">default</span>
         <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;run_lock resolver: no run.lock found in </span><span class="si">{</span><span class="n">run_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -211,7 +244,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">part</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_MISSING</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">default</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;run_lock resolver: key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; not found in </span><span class="si">{</span><span class="n">lock_path</span><span class="si">}</span><span class="s2"> &quot;</span>
@@ -219,7 +252,9 @@
             <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">default</span>
+        <span class="c1"># A legitimately null value is returned as-is when no default was</span>
+        <span class="c1"># supplied; only substitute an explicitly provided default.</span>
+        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="n">_MISSING</span> <span class="k">else</span> <span class="n">default</span>
     <span class="k">return</span> <span class="n">value</span></div>
 
 
@@ -232,8 +267,102 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;now&quot;</span><span class="p">,</span> <span class="n">now_resolver</span><span class="p">)</span>
     <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;vinc&quot;</span><span class="p">,</span> <span class="n">vinc_resolver</span><span class="p">)</span>
-    <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;latest&quot;</span><span class="p">,</span> <span class="n">latest_resolver</span><span class="p">)</span>
+    <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;latest&quot;</span><span class="p">,</span> <span class="n">latest_resolver</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="s2">&quot;run_lock&quot;</span><span class="p">,</span> <span class="n">run_lock_resolver</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># The real resolver implementations plus their registration options, so a stub</span>
+<span class="c1"># context can faithfully restore them on exit.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_real_resolvers</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;now&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">now_resolver</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="s2">&quot;vinc&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">vinc_resolver</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="s2">&quot;latest&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">latest_resolver</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;use_cache&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}),</span>
+        <span class="s2">&quot;run_lock&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">run_lock_resolver</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;use_cache&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}),</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_emit_stub_arg</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a (pre-resolved) resolver argument back into interpolation text.</span>
+
+<span class="sd">    ``None`` becomes ``null`` so a real ``${run_lock:${dir},key,null}`` default</span>
+<span class="sd">    survives the freeze; everything else is stringified as-is.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;null&quot;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_stubbed</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Temporarily replace the named resolvers with stubs that re-emit their own</span>
+<span class="sd">    call string, with arguments already resolved by OmegaConf.</span>
+
+<span class="sd">    OmegaConf resolves nested interpolations in a resolver&#39;s arguments *before*</span>
+<span class="sd">    invoking the resolver. So under this context, resolving</span>
+<span class="sd">    ``${run_lock:${precompute_dir},key}`` yields the frozen string</span>
+<span class="sd">    ``${run_lock:/data/precomputed,key}`` — every non-stubbed interpolation</span>
+<span class="sd">    (simple refs, cross-tree, multi-hop, mixed strings, relative refs) is</span>
+<span class="sd">    resolved by OmegaConf itself, while the stubbed call collapses back to a</span>
+<span class="sd">    self-contained call string with zero hand-rolled grammar parsing.</span>
+
+<span class="sd">    Restores the real resolvers (with their original options) on exit.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_stub</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_stub</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;${&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_emit_stub_arg</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>
+        <span class="k">return</span> <span class="n">_stub</span>
+
+    <span class="n">reals</span> <span class="o">=</span> <span class="n">_real_resolvers</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">_make_stub</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_cache</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">func</span><span class="p">,</span> <span class="n">opts</span> <span class="o">=</span> <span class="n">reals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">OmegaConf</span><span class="o">.</span><span class="n">register_new_resolver</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="deferred_stubbed">
+<a class="viewcode-back" href="../../api.html#flexlock.resolvers.deferred_stubbed">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">deferred_stubbed</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stub only the deferred resolvers (``run_lock``/``latest``).</span>
+
+<span class="sd">    Used by the merge-before-resolve sweep freeze, where ``vinc``/``now`` should</span>
+<span class="sd">    still fire (they are being retired via ``save_dir_policy``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_stubbed</span><span class="p">(</span><span class="n">DEFERRED_RESOLVERS</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="frozen_resolvers">
+<a class="viewcode-back" href="../../api.html#flexlock.resolvers.frozen_resolvers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">frozen_resolvers</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stub every flexlock resolver, so all ``${name:args}`` calls are preserved</span>
+<span class="sd">    as frozen call strings during the submit-time node freeze.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_stubbed</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">_real_resolvers</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_deferred">
+<a class="viewcode-back" href="../../api.html#flexlock.resolvers.resolve_deferred">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_deferred</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DictConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fire the deferred resolvers once, at stage start, and return a detached</span>
+<span class="sd">    config of concrete values.</span>
+
+<span class="sd">    This is the single point where ``run_lock``/``latest`` (and any other</span>
+<span class="sd">    interpolations left after the submit-time freeze) are evaluated with the</span>
+<span class="sd">    real resolvers. Called on the worker right after the task override is merged</span>
+<span class="sd">    (and on the local single-run path). Re-wrapping as a plain config detaches</span>
+<span class="sd">    it from any parent so downstream ``config.copy()`` cannot re-fire anything.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">resolved</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">resolved</span><span class="p">)</span></div>
 
 </pre></div>
 

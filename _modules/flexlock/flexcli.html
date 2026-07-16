@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.flexcli &mdash; FlexLock 0.3.2 documentation</title>
+  <title>flexlock.flexcli &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/flexcli.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,7 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -80,6 +81,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../flexlock.html">flexlock</a></li>
       <li class="breadcrumb-item active">flexlock.flexcli</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -102,6 +104,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">py2cfg</span><span class="p">,</span> <span class="n">instantiate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.debug</span><span class="w"> </span><span class="kn">import</span> <span class="n">debug_on_fail</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_jupyter_or_interactive</span><span class="p">():</span>
@@ -214,7 +217,7 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="c1"># Direct call with arguments - execute immediately</span>
                 <span class="c1"># Apply debug wrapper if enabled</span>
-                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">get_env_bool</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">debug_on_fail</span><span class="p">(</span><span class="n">fn</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -240,7 +243,7 @@
                 <span class="p">)</span>
 
                 <span class="c1"># Execute with debug wrapper if enabled</span>
-                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">get_env_bool</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">debug_on_fail</span><span class="p">(</span><span class="n">fn</span><span class="p">)(</span><span class="o">**</span><span class="n">defaults</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="o">**</span><span class="n">defaults</span><span class="p">)</span>

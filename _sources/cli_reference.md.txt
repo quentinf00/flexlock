@@ -83,7 +83,113 @@ flexlock gc results/ -f --refs
 - Lineage dependencies of tagged runs are protected (recursive)
 - Only runs with no tag and no tagged descendant are eligible for deletion
 
+`flexlock gc --incomplete` prunes only run dirs that have `run.lock` but no
+`run.complete` (interrupted attempts), with no tag-protection logic.
+
 ---
+
+### `flexlock show` — Inspect One Run
+
+Machine-readable status, metadata, lineage, and config for a single run. The
+default `md` output is for humans; agents use `--format json` (a stable contract,
+see [Agentic Workflows](agentic_workflows.md)).
+
+```bash
+flexlock show results/train                    # markdown
+flexlock show results/train --format json      # JSON contract
+flexlock show results/train --root results/    # scan a specific root for downstream/tags
+flexlock show results/train --no-downstream    # skip the downstream scan (faster)
+```
+
+`status` is one of `complete | failed | interrupted | running | pending | unknown`.
+A failed run attaches its `run.error` payload; a `sweep_master` attaches per-task
+`tasks` counts.
+
+### `flexlock graph` — Experiment DAG
+
+Emit the whole results tree as a graph (JSON is the backend for the skills and the
+HTML report).
+
+```bash
+flexlock graph results/ --format json          # nodes + edges + (with --groups) groups
+flexlock graph results/ --format mermaid       # paste into a Mermaid renderer
+flexlock graph results/ --format dot           # pipe to graphviz: | dot -Tpng -o dag.png
+flexlock graph results/ --format json --groups # add same-tree / same-data groupings
+```
+
+Edges are `lineage` or `sweep_item`; lineage sources outside the scanned tree
+appear as `kind: external` stub nodes so the graph is closed.
+
+### `flexlock why` — Explain a Difference
+
+Compare two runs: config/data/git diffs plus the real commits between their
+recorded shadow commits.
+
+```bash
+flexlock why results/run_a results/run_b               # text
+flexlock why results/run_a results/run_b --format json # JSON contract
+```
+
+Per common repo it reports `trees_identical`, or `a_to_b`/`b_to_a` commit lists.
+If the shadow commits were gc'd, a per-repo `error` is set and the command still
+exits 0.
+
+### `flexlock stages` — List Runnable Stages
+
+Enumerate every stage (a mapping with `_target_`) in a defaults tree, **without
+resolving** the config (so `${vinc:}` never fires or creates directories).
+
+```bash
+flexlock stages -d myproject.pipeline.cfg                 # text
+flexlock stages -d myproject.pipeline.cfg --format keys   # bare keys (for fzf)
+flexlock stages -d myproject.pipeline.cfg --format json   # {key,target,save_dir,depth}
+flexlock stages -d myproject.pipeline.cfg -c overrides.yaml
+```
+
+fzf recipe:
+
+```bash
+DEF=myproject.pipeline.cfg
+flexlock-run -d "$DEF" -s "$(flexlock stages -d "$DEF" --format keys | fzf)"
+```
+
+### `flexlock report` — Static HTML Report
+
+Render a self-contained, offline-openable HTML report (no CDN) of a results tree.
+
+```bash
+flexlock report results/ -o report.html --title "My experiment"
+flexlock report results/ -o report.html --embed-configs   # include per-run configs
+flexlock report results/ -o report.html --groups          # surface same code/data runs
+```
+
+### `flexlock skills` — Manage Shipped Skills
+
+FlexLock ships four Claude Code skills encoding common workflows.
+
+```bash
+flexlock skills list                                 # names + descriptions
+flexlock skills install                              # install all into .claude/skills
+flexlock skills install flexlock-survey --dest .claude/skills
+flexlock skills install --force                      # overwrite (= upgrade)
+```
+
+---
+
+## `flexlock-diff` — Compare Snapshots
+
+Compare two run snapshots from directories, the task DB, or a mix.
+
+```bash
+flexlock-diff dirs results/run_a results/run_b           # human-readable
+flexlock-diff dirs results/run_a results/run_b --details # per-key differences
+flexlock-diff dirs results/run_a results/run_b --format json
+flexlock-diff db tasks.db <task_id1> <task_id2>
+flexlock-diff mixed results/run_a tasks.db <task_id>
+```
+
+**Exit codes:** `0` match, `1` differ, `2` error — usable directly in scripts
+and CI (older versions always exited 0).
 
 ---
 
@@ -396,6 +502,22 @@ flexlock-run -d defaults --debug
 - On exception: Drops into PDB debugger
 - In notebooks: Injects local variables into global scope
 - Useful for development and troubleshooting
+
+---
+
+### `--note`
+Record a free-text intent as a top-level `note:` key in `run.lock` (sibling of
+`timestamp`/`config`). The note **never enters the fingerprint**, so it can't
+perturb caching or diffs. It surfaces in `flexlock show`/`graph`/`report`.
+
+**Usage:**
+```bash
+flexlock-run -d defaults -s train --note "baseline before lr sweep"
+```
+
+For sweeps the note lands on the **master** `run.lock` only; sweep items inherit
+it for display via their `.flexlock_marker` → master lookup. For a multi-stage
+`-s a b` run, the same note is applied to each stage.
 
 ---
 

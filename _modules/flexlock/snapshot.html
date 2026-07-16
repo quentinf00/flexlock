@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.snapshot &mdash; FlexLock 0.4.1 documentation</title>
+  <title>flexlock.snapshot &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/snapshot.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,8 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -94,20 +94,15 @@
   <h1>Source code for flexlock.snapshot</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Snapshotting utilities for FlexLock.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.git_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_shadow_snapshot</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data_hash</span><span class="w"> </span><span class="kn">import</span> <span class="n">hash_data</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.load_stage</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_stage_from_path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.run_record</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunRecord</span><span class="p">,</span> <span class="n">COMPLETE_MARKER</span><span class="p">,</span> <span class="n">COMPLETE_VERSION</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
-
-<span class="n">COMPLETE_MARKER</span> <span class="o">=</span> <span class="s2">&quot;run.complete&quot;</span>
-<span class="n">COMPLETE_VERSION</span> <span class="o">=</span> <span class="mi">1</span>
 
 
 <div class="viewcode-block" id="write_complete_marker">
@@ -115,19 +110,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">write_complete_marker</span><span class="p">(</span><span class="n">save_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write run.complete atomically into ``save_dir``.</span>
 
-<span class="sd">    Marks a run as successfully finished. ``_find_matching_run`` requires</span>
-<span class="sd">    both ``run.lock`` and ``run.complete`` for a cache hit.</span>
+<span class="sd">    Thin wrapper over :meth:`RunRecord.mark_complete` kept for backward</span>
+<span class="sd">    compatibility. ``_find_matching_run`` requires both ``run.lock`` and</span>
+<span class="sd">    ``run.complete`` for a cache hit.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span>
-    <span class="n">save_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ts&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">COMPLETE_VERSION</span><span class="p">}</span>
-    <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;has_result&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">tf</span><span class="p">:</span>
-        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">tf</span><span class="p">)</span>
-        <span class="n">tmp_name</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">name</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp_name</span><span class="p">,</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="n">COMPLETE_MARKER</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="n">COMPLETE_MARKER</span></div>
+    <span class="k">return</span> <span class="n">RunRecord</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span><span class="o">.</span><span class="n">mark_complete</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span></div>
 
 
 
@@ -135,18 +122,23 @@
 <a class="viewcode-back" href="../../api.html#flexlock.is_complete">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">is_complete</span><span class="p">(</span><span class="n">run_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if ``run_dir`` has both ``run.lock`` and ``run.complete``.&quot;&quot;&quot;</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">run_dir</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="n">COMPLETE_MARKER</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span></div>
+    <span class="k">return</span> <span class="n">RunRecord</span><span class="p">(</span><span class="n">run_dir</span><span class="p">)</span><span class="o">.</span><span class="n">is_complete</span></div>
 
 
 
 <div class="viewcode-block" id="RunTracker">
 <a class="viewcode-back" href="../../api.html#flexlock.RunTracker">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RunTracker</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">,</span> <span class="n">parent_lock</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">,</span> <span class="n">parent_lock</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parent_lock</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">parent_lock</span><span class="p">)</span> <span class="k">if</span> <span class="n">parent_lock</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()}</span>
+
+        <span class="c1"># Free-text intent recorded alongside run metadata (sibling of</span>
+        <span class="c1"># timestamp/config). It never enters the fingerprint, so it can&#39;t</span>
+        <span class="c1"># perturb caching or diffs.</span>
+        <span class="k">if</span> <span class="n">note</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;note&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_lock</span><span class="p">:</span>
             <span class="c1"># We record the link, effectively saying &quot;See parent for Git/Env&quot;</span>
@@ -226,20 +218,15 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">snapshot_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
-        <span class="c1"># Resolve save_dir in case it&#39;s a resolver (like ${vinc:})</span>
-        <span class="c1"># We do this by accessing it from the finalized config in the snapshot</span>
+        <span class="c1"># Read the concrete save_dir from the finalized snapshot. save_dir is</span>
+        <span class="c1"># baked to a string once at submit time (apply_save_dir_policy), so this</span>
+        <span class="c1"># is just a lookup — no resolver fires here.</span>
         <span class="n">resolved_save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span>
             <span class="n">snapshot_data</span><span class="p">[</span><span class="s2">&quot;config&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span><span class="p">))</span>
         <span class="p">)</span>
 
-        <span class="c1"># Atomic Write</span>
-        <span class="n">resolved_save_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
-            <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="n">resolved_save_dir</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span>
-        <span class="p">)</span> <span class="k">as</span> <span class="n">tf</span><span class="p">:</span>
-            <span class="n">tf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_yaml</span><span class="p">(</span><span class="n">snapshot_data</span><span class="p">))</span>
-            <span class="n">tmp_name</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">name</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp_name</span><span class="p">,</span> <span class="n">resolved_save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span><span class="p">)</span>
+        <span class="c1"># Single on-disk-contract owner performs the atomic write.</span>
+        <span class="n">RunRecord</span><span class="p">(</span><span class="n">resolved_save_dir</span><span class="p">)</span><span class="o">.</span><span class="n">write_lock</span><span class="p">(</span><span class="n">snapshot_data</span><span class="p">)</span>
 
         <span class="c1"># Remember the resolved dir so mark_complete can write next to run.lock</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolved_save_dir</span> <span class="o">=</span> <span class="n">resolved_save_dir</span>
@@ -258,7 +245,7 @@
 <span class="sd">        correctly skipped instead of being treated as a stale cache hit.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">target</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_resolved_save_dir&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">write_complete_marker</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">RunRecord</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">mark_complete</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span></div>
 </div>
 
 
@@ -273,6 +260,8 @@
     <span class="n">parent_lock</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">return_snapshot</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">fingerprint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a snapshot of the current run state.</span>
@@ -291,12 +280,17 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No save_dir specified in config; skipping snapshot.&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">return_snapshot</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="c1"># Use custom save_path if provided, otherwise use cfg.save_dir</span>
     <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">save_path</span> <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
 
-    <span class="n">tracker</span> <span class="o">=</span> <span class="n">RunTracker</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">parent_lock</span><span class="o">=</span><span class="n">parent_lock</span><span class="p">)</span>
+    <span class="n">tracker</span> <span class="o">=</span> <span class="n">RunTracker</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">parent_lock</span><span class="o">=</span><span class="n">parent_lock</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">)</span>
+
+    <span class="c1"># Store the precomputed fingerprint (index key) so run.lock/DB snapshots</span>
+    <span class="c1"># carry it and `flexlock reindex` can rebuild the index from disk.</span>
+    <span class="k">if</span> <span class="n">fingerprint</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tracker</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;fingerprint&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fingerprint</span>
 
     <span class="c1"># 1. Record Git &amp; Data (Hashing)</span>
     <span class="k">if</span> <span class="n">repos</span><span class="p">:</span>

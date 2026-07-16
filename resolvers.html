@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OmegaConf Resolvers &mdash; FlexLock 0.5.0 documentation</title>
+  <title>OmegaConf Resolvers &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/resolvers.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=70f82a29"></script>
+      <script src="_static/documentation_options.js?v=cce5339e"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -50,8 +50,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -60,6 +60,11 @@
 <li class="toctree-l1"><a class="reference internal" href="python_api.html">Python API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">OmegaConf Resolvers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#binding-times">Binding times</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#save-dir-policy-replaces-vinc-now"><code class="docutils literal notranslate"><span class="pre">save_dir_policy</span></code> (replaces <code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code> / <code class="docutils literal notranslate"><span class="pre">${now:}</span></code>)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#migration">Migration</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#available-resolvers">Available Resolvers</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#now-format-current-timestamp"><code class="docutils literal notranslate"><span class="pre">${now:format}</span></code> - Current Timestamp</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#latest-glob-find-latest-path"><code class="docutils literal notranslate"><span class="pre">${latest:glob}</span></code> - Find Latest Path</a></li>
@@ -82,7 +87,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#custom-resolvers">Custom Resolvers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#best-practices">Best Practices</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#use-vinc-for-sequential-runs">1. Use <code class="docutils literal notranslate"><span class="pre">${vinc:...}</span></code> for Sequential Runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#use-save-dir-policy-increment-for-sequential-runs">1. Use <code class="docutils literal notranslate"><span class="pre">save_dir_policy=&quot;increment&quot;</span></code> for Sequential Runs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#use-latest-for-pipeline-stages">2. Use <code class="docutils literal notranslate"><span class="pre">${latest:...}</span></code> for Pipeline Stages</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#combine-resolvers-for-powerful-patterns">3. Combine Resolvers for Powerful Patterns</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#track-data-with-snapshot-config">4. Track Data with Snapshot Config</a></li>
@@ -127,10 +132,115 @@
   <section id="omegaconf-resolvers">
 <h1>OmegaConf Resolvers<a class="headerlink" href="#omegaconf-resolvers" title="Link to this heading"></a></h1>
 <p>FlexLock registers custom OmegaConf resolvers for dynamic configuration values.</p>
+<section id="binding-times">
+<h2>Binding times<a class="headerlink" href="#binding-times" title="Link to this heading"></a></h2>
+<p>Config values are produced at four distinct moments. Match the mechanism to the
+moment:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Binding time</p></th>
+<th class="head"><p>Mechanism</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>submit-time</p></td>
+<td><p>plain interpolation (<code class="docutils literal notranslate"><span class="pre">${a.b}</span></code>), resolved eagerly when a stage is selected/submitted</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">save_dir</span></code> collision / naming</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">save_dir_policy=</span></code> on <code class="docutils literal notranslate"><span class="pre">submit()</span></code>/<code class="docutils literal notranslate"><span class="pre">run</span></code> (see below)</p></td>
+</tr>
+<tr class="row-even"><td><p>stage-start</p></td>
+<td><p>deferred resolvers <code class="docutils literal notranslate"><span class="pre">${run_lock:}</span></code> / <code class="docutils literal notranslate"><span class="pre">${latest:}</span></code>, fired once on the worker</p></td>
+</tr>
+<tr class="row-odd"><td><p>per-sweep-item</p></td>
+<td><p>the sweep item is merged <strong>before</strong> resolution, so <code class="docutils literal notranslate"><span class="pre">${variable}</span></code> sees it</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="save-dir-policy-replaces-vinc-now">
+<h2><code class="docutils literal notranslate"><span class="pre">save_dir_policy</span></code> (replaces <code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code> / <code class="docutils literal notranslate"><span class="pre">${now:}</span></code>)<a class="headerlink" href="#save-dir-policy-replaces-vinc-now" title="Link to this heading"></a></h2>
+<p>Configs keep a <strong>stable</strong> <code class="docutils literal notranslate"><span class="pre">save_dir</span></code>. The policy decides what happens when that
+directory is already <em>occupied</em> — i.e. contains a <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> from a previous
+run (<code class="docutils literal notranslate"><span class="pre">run.complete</span></code> marks it finished; <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> alone means crashed or
+in-flight):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>policy</p></th>
+<th class="head"><p>behaviour when <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> is occupied</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;raise&quot;</span></code> (default, <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></td>
+<td><p>refuse: raise <code class="docutils literal notranslate"><span class="pre">FlexLockValidationError</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;increment&quot;</span></code></p></td>
+<td><p>version the base (<code class="docutils literal notranslate"><span class="pre">run</span></code> → <code class="docutils literal notranslate"><span class="pre">run_0000</span></code>, <code class="docutils literal notranslate"><span class="pre">_0001</span></code>, …), <strong>claimed atomically</strong> — never collides</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;overwrite&quot;</span></code></p></td>
+<td><p>delete the dir’s contents, then run (never touches a dir <em>without</em> <code class="docutils literal notranslate"><span class="pre">run.lock</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;skip&quot;</span></code></p></td>
+<td><p>don’t execute; return the existing <strong>complete</strong> run’s result (raises if the occupant is incomplete)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;unsafe&quot;</span></code></p></td>
+<td><p>run in place, no check (pre-0.8 behaviour)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&quot;timestamp&quot;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">save_dir/&lt;timestamp&gt;</span></code> — never collides</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>                                 <span class="c1"># raises if save_dir holds a run</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>                     <span class="c1"># explicit in-place rerun</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">save_dir_policy</span><span class="o">=</span><span class="s2">&quot;increment&quot;</span><span class="p">)</span>    <span class="c1"># fresh versioned dir every run</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>...<span class="w"> </span>--save-dir-policy<span class="w"> </span>increment
+flexlock-run<span class="w"> </span>...<span class="w"> </span>--force<span class="w">        </span><span class="c1"># rerun a crashed/stale run in place</span>
+</pre></div>
+</div>
+<p>Interaction rules:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">smart_run</span></code> wins first</strong>: a matching complete run is returned from cache
+before the guard fires — the guard only sees genuine conflicts (crashed
+runs, changed configs, <code class="docutils literal notranslate"><span class="pre">smart_run=False</span></code>).</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">force=True</span></code> bypasses the default guard</strong> (it invalidates <code class="docutils literal notranslate"><span class="pre">run.complete</span></code>
+and reruns in place).</p></li>
+<li><p><strong>Sweeps</strong>: a naming policy applies once to the sweep root; the guard is
+enforced <em>per item</em> after the per-item cache check. <code class="docutils literal notranslate"><span class="pre">&quot;skip&quot;</span></code> on a sweep
+means <strong>resume</strong>: complete items are reused, crashed items rerun in place.</p></li>
+<li><p>The policy is applied after <code class="docutils literal notranslate"><span class="pre">print_config</span></code> / <code class="docutils literal notranslate"><span class="pre">--check</span></code> / <code class="docutils literal notranslate"><span class="pre">dry_run</span></code>, which
+therefore never create or delete anything.</p></li>
+</ul>
+<section id="migration">
+<h3>Migration<a class="headerlink" href="#migration" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Old (deprecated)</p></th>
+<th class="head"><p>New</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">save_dir:</span> <span class="pre">${vinc:outputs/run}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">save_dir:</span> <span class="pre">outputs/run</span></code> — keep it stable; rely on the default guard + <code class="docutils literal notranslate"><span class="pre">--force</span></code>, or pass <code class="docutils literal notranslate"><span class="pre">save_dir_policy=&quot;increment&quot;</span></code> where accumulating versions is wanted</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">save_dir:</span> <span class="pre">outputs/run/${now:%Y%m%d}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">save_dir:</span> <span class="pre">outputs/run</span></code> + <code class="docutils literal notranslate"><span class="pre">save_dir_policy=&quot;timestamp&quot;</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p><code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code> and <code class="docutils literal notranslate"><span class="pre">${now:}</span></code> still work for one deprecation cycle but emit a
+<code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code>.</p>
+</section>
+</section>
 <section id="available-resolvers">
 <h2>Available Resolvers<a class="headerlink" href="#available-resolvers" title="Link to this heading"></a></h2>
 <section id="now-format-current-timestamp">
 <h3><code class="docutils literal notranslate"><span class="pre">${now:format}</span></code> - Current Timestamp<a class="headerlink" href="#now-format-current-timestamp" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p><strong>Deprecated.</strong> Prefer <code class="docutils literal notranslate"><span class="pre">save_dir_policy=&quot;timestamp&quot;</span></code>. See migration above.</p>
+</div></blockquote>
 <p>Get current timestamp in specified format.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.train</span>
@@ -198,6 +308,10 @@
 <hr class="docutils" />
 <section id="vinc-path-version-increment">
 <h3><code class="docutils literal notranslate"><span class="pre">${vinc:path}</span></code> - Version Increment<a class="headerlink" href="#vinc-path-version-increment" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p><strong>Deprecated.</strong> Prefer <code class="docutils literal notranslate"><span class="pre">save_dir_policy=&quot;increment&quot;</span></code>, which also claims the
+directory atomically. See migration above.</p>
+</div></blockquote>
 <p>Generate next version number for a directory path.</p>
 <p><strong>Usage:</strong></p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.train</span>
@@ -285,7 +399,7 @@ templates derive their input paths from it via <code class="docutils literal not
     <span class="nb">eval</span><span class="o">=</span><span class="n">py2cfg</span><span class="p">(</span><span class="n">evaluate</span><span class="p">,</span>
         <span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;${run_lock:$</span><span class="si">{cnf_run_dir}</span><span class="s2">,config.data_dir}&quot;</span><span class="p">,</span>
         <span class="n">model_dir</span><span class="o">=</span><span class="s2">&quot;${run_lock:$</span><span class="si">{cnf_run_dir}</span><span class="s2">,config.save_dir}&quot;</span><span class="p">,</span>
-        <span class="n">save_dir</span><span class="o">=</span><span class="s2">&quot;${vinc:outputs/eval/run}&quot;</span><span class="p">,</span>
+        <span class="n">save_dir</span><span class="o">=</span><span class="s2">&quot;outputs/eval/run&quot;</span><span class="p">,</span>   <span class="c1"># + --save-dir-policy increment</span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -372,15 +486,17 @@ Override from API:  <code class="docutils literal notranslate"><span class="pre"
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Stage 1: Preprocess</span>
 <span class="nt">preprocess</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.preprocess</span>
-<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${vinc:outputs/preprocess/run}</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outputs/preprocess/run</span>
 
 <span class="c1"># Stage 2: Train (depends on Stage 1)</span>
 <span class="nt">train</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.train</span>
 <span class="w">  </span><span class="nt">preprocess_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:outputs/preprocess/run_*/}</span>
-<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${vinc:outputs/train/run}</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outputs/train/run</span>
 </pre></div>
 </div>
+<p>Run each stage with <code class="docutils literal notranslate"><span class="pre">--save-dir-policy</span> <span class="pre">increment</span></code> (or rely on the default
+guard when a stage should run exactly once per directory).</p>
 <p><strong>Execution:</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">defaults</span><span class="o">=</span><span class="s1">&#39;pipeline.defaults&#39;</span><span class="p">)</span>
 
@@ -440,10 +556,11 @@ Override from API:  <code class="docutils literal notranslate"><span class="pre"
 <hr class="docutils" />
 <section id="best-practices">
 <h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
-<section id="use-vinc-for-sequential-runs">
-<h3>1. Use <code class="docutils literal notranslate"><span class="pre">${vinc:...}</span></code> for Sequential Runs<a class="headerlink" href="#use-vinc-for-sequential-runs" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good: Auto-versioning</span>
-<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;${vinc:outputs/exp/run}&#39;</span><span class="p">)</span>
+<section id="use-save-dir-policy-increment-for-sequential-runs">
+<h3>1. Use <code class="docutils literal notranslate"><span class="pre">save_dir_policy=&quot;increment&quot;</span></code> for Sequential Runs<a class="headerlink" href="#use-save-dir-policy-increment-for-sequential-runs" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Good: Auto-versioning, atomic claim, no resolver side effects</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/exp/run&#39;</span><span class="p">)</span>
+<span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">save_dir_policy</span><span class="o">=</span><span class="s2">&quot;increment&quot;</span><span class="p">)</span>
 
 <span class="c1"># Bad: Manual versioning (error-prone)</span>
 <span class="n">cfg</span> <span class="o">=</span> <span class="n">py2cfg</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s1">&#39;outputs/exp/run_0042&#39;</span><span class="p">)</span>
@@ -465,10 +582,7 @@ Override from API:  <code class="docutils literal notranslate"><span class="pre"
 </section>
 <section id="combine-resolvers-for-powerful-patterns">
 <h3>3. Combine Resolvers for Powerful Patterns<a class="headerlink" href="#combine-resolvers-for-powerful-patterns" title="Link to this heading"></a></h3>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Auto-versioned run with timestamp in name</span>
-<span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${vinc:outputs/train_${now:%Y%m%d}/run}</span>
-
-<span class="c1"># Latest data file reference</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Latest data file reference</span>
 <span class="nt">input_data</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${latest:data/processed_*.csv}</span>
 
 <span class="c1"># Pipeline stage with dependency</span>

@@ -1,818 +1,1083 @@
-# Usage Guide
+# FlexLock Usage Guide
 
-A guide to FlexLock's features and common patterns. Start with the [Quickstart](./quickstart.md) if you haven't yet.
+A practical, end-to-end tour of the library. Each section answers one
+question: *what does this give me, and how do I get it?*
 
 ## Table of Contents
 
-1. [Configuration Methods](#configuration-methods)
-2. [Execution Modes](#execution-modes)
-3. [Reproducibility](#reproducibility)
-4. [Parameter Sweeps](#parameter-sweeps)
-5. [HPC Integration](#hpc-integration)
-6. [Pipelines](#pipelines)
-7. [Smart Caching](#smart-caching)
-8. [Common Patterns](#common-patterns)
-9. [Tips & Best Practices](#tips--best-practices)
+1. [Overview](#1-overview)
+2. [Installation & first run](#2-installation--first-run)
+3. [Configuration model](#3-configuration-model)
+4. [Submitting work — three flavors](#4-submitting-work--three-flavors)
+5. [`py2cfg` — build configs from Python](#5-py2cfg--build-configs-from-python)
+6. [Sweeps](#6-sweeps)
+7. [Snapshots & reproducibility](#7-snapshots--reproducibility)
+8. [Smart run / caching](#8-smart-run--caching)
+9. [HPC backends](#9-hpc-backends)
+10. [MLflow integration](#10-mlflow-integration)
+11. [Debugging](#11-debugging)
+12. [Exceptions](#12-exceptions)
+13. [Environment variables](#13-environment-variables)
+14. [Common recipes](#14-common-recipes)
+15. [FAQ / gotchas](#15-faq--gotchas)
 
 ---
 
-## Configuration Methods
+## 1. Overview
 
-FlexLock supports three configuration methods:
+FlexLock is a thin orchestration layer around OmegaConf and Python's
+`multiprocessing` / Slurm / PBS. It runs the same function you'd write
+anyway, and gives you three things in return:
 
-### 1. Function Defaults (`@flexcli`)
+1. **A reproducible `save_dir`.** Every submission resolves `save_dir`
+   eagerly (so resolvers like `${vinc:}` advance exactly once) and writes
+   `run.lock` before the function runs.
+2. **A snapshot of the environment.** Git tree hash for tracked repos,
+   xxh64 of tracked data files, the resolved config — all in `run.lock`.
+3. **A cache.** When you submit the same fingerprint again, FlexLock
+   returns the cached result instead of re-executing.
 
-Best for: Simple scripts, quick prototypes
+It sits between Hydra (config composition) and a job scheduler (Slurm,
+PBS, local multiprocessing): you write the function, FlexLock handles
+config merging, save-dir lifecycle, snapshotting, parallel dispatch, and
+cache lookup.
+
+---
+
+## 2. Installation & first run
+
+```bash
+pip install flexlock
+# or
+conda install -c quentinf00 flexlock
+```
+
+Minimal "hello world":
 
 ```python
+# train.py
 from flexlock import flexcli
 
 @flexcli
-def run(param1=10, param2="default"):
-    print(f"{param1}, {param2}")
+def train(lr: float = 0.01, epochs: int = 10, save_dir: str = 'outputs/train'):
+    """Train a model."""
+    print(f"lr={lr}, epochs={epochs}, save_dir={save_dir}")
+    return {"accuracy": 0.95}
 
 if __name__ == "__main__":
-    run()
+    train()
 ```
 
-**CLI:**
 ```bash
-python script.py -o param1=20 param2=custom
+python train.py -o lr=0.1
 ```
+
+After the run, `outputs/train/` contains:
+
+```
+outputs/train/
+├── run.lock         # config + git tree hash + data hashes, written before exec
+├── run.complete     # written after the function returns; cache-hit marker
+├── results.json     # the function's return value (if dict-shaped)
+└── snapshot/        # filtered git tree if you snapshot repos / data
+```
+
+`run.lock` is the canonical record. `run.complete` is what
+`smart_run` looks for to decide a run is a real cache hit (a run with
+only `run.lock` was interrupted).
 
 ---
 
-### 2. Python Configs (`py2cfg`)
+## 3. Configuration model
 
-Best for: Complex configurations, nested objects, type safety
-
-```python
-# config.py
-from flexlock import py2cfg
-
-class Model:
-    def __init__(self, layers=6, dropout=0.1):
-        pass
-
-def train(model, lr=0.01, save_dir=None):
-    pass
-
-# Create configs
-defaults = dict(
-    base_dir='outputs/',
-    train=py2cfg(
-        train,
-        model=py2cfg(Model, layers=12, dropout=0.2),
-        lr=0.001,
-        save_dir='${base_dir}/train'
-    )
-)
-```
-
-**CLI:**
-```bash
-flexlock-run -d config.defaults -s train
-flexlock-run -d config.defaults -s train -O lr=0.01
-```
-
-**Python:**
-```python
-from flexlock import Project
-
-proj = Project(defaults='config.defaults')
-result = proj.submit(proj.get('train'))
-```
-
----
-
-### 3. YAML Configs
-
-Best for: Declarative configs, sharing with non-Python users
+FlexLock configs are OmegaConf `DictConfig`s. A config that should *run*
+something carries a `_target_` key whose value is a dotted import path:
 
 ```yaml
 # config.yaml
 _target_: myproject.train.train
-
-model:
-  _target_: myproject.models.Transformer
-  layers: 12
-  dropout: 0.2
-
-lr: 0.001
+lr: 0.01
 epochs: 100
 save_dir: outputs/train
 ```
 
-**CLI:**
+At submit time, FlexLock recursively instantiates any nested dict that
+has `_target_`, then calls the top-level target with the remaining keys
+as keyword arguments.
+
+### Defaults files
+
+A "defaults" file exports a dict (or `DictConfig`) under a named
+variable. Three forms are accepted by `-d` and `Project(defaults=...)`:
+
 ```bash
-flexlock-run -c config.yaml
-flexlock-run -c config.yaml -o lr=0.01
+# Dotted module path — variable is the last segment
+flexlock-run -d myproject.config.defaults
+
+# File path with explicit variable
+flexlock-run -d configs/defaults.py:defaults
+
+# Bare file path — defaults to the `defaults` variable
+flexlock-run -d configs/defaults.py
 ```
+
+The file-based forms register the loaded file in `sys.modules` under
+its file stem, so any `_target_` strings captured by `py2cfg` inside the
+file remain importable when workers re-import them later. `flexlock-run`
+also inserts the current working directory into `sys.path`, so dotted
+imports of project-root packages work without `PYTHONPATH=.`.
+
+### Overrides and selection
+
+The merge order for `flexlock-run` is:
+
+```
+defaults  +  -c yaml  +  -m merge_file  +  -o root.overrides
+           → -s select_node
+           +  -M post-select merge  +  -O post-select overrides
+           → execute / sweep
+```
+
+`-O` and `-M` apply *after* selection, so you can override the selected
+node without disturbing the root.
+
+### Relative interpolations
+
+Within a node, prefer relative refs over root-scope refs. They're the
+only kind of cross-key reference that survives `proj.get()` *and*
+follows per-item sweep overrides:
+
+```python
+# myproject/configs.py
+from flexlock import py2cfg
+from myproject.train import train
+
+defaults = dict(
+    train=py2cfg(
+        train,
+        save_dir='outputs/train',
+        log_dir='${.save_dir}/logs',         # sibling key — relative
+        ckpt_dir='${.save_dir}/checkpoints', # sibling key — relative
+    ),
+)
+```
+
+`${.x}` resolves against the current node, `${..x}` against its parent,
+`${...x}` against its grandparent. These are preserved by `proj.get()`
+and by sweep merging, so per-item `save_dir` overrides correctly
+propagate into `log_dir` and `ckpt_dir`. Root-scope refs (`${root_anchor}`,
+`${main.save_dir}`) are *frozen to their concrete value* at `proj.get()`
+time, which keeps the returned sub-tree pickleable for HPC dispatch.
+
+### `save_dir_policy` — collision guard (replaces `${vinc:}` / `${now:}`)
+
+Keep `save_dir` a **stable** path in configs; `save_dir_policy` decides what
+happens when it's already occupied (default `"raise"`; `"increment"` versions
+it the way `${vinc:}` used to, `"timestamp"` replaces `${now:}`). See
+[`resolvers.md`](resolvers.md#save_dir_policy-replaces-vinc--now) for the full
+policy table and migration guide. `${vinc:}`/`${now:}` still work for one
+deprecation cycle but emit a `DeprecationWarning`.
+
+```python
+save_dir='outputs/train/run'
+proj.submit(cfg, save_dir_policy="increment")
+# → outputs/train/run_0000, run_0001, ...
+```
+
+Other resolvers: `${latest:glob_pattern}` (newest match),
+`${run_lock:<run_dir>,<dotted.key>}` (read a value from an upstream
+`run.lock`).
 
 ---
 
-## Execution Modes
+## 4. Submitting work — three flavors
 
-### 1. Direct Python Execution
+### 4a. CLI via `@flexcli` + `flexlock-run`
+
+For scripts you'll mostly run from the shell:
 
 ```python
+# train.py
 from flexlock import flexcli
 
 @flexcli
-def train(lr=0.01):
+def train(lr: float = 0.01, save_dir: str = 'outputs/train'):
+    """Train a model."""
     return {"accuracy": 0.95}
 
-# Direct call (Python API)
-result = train(lr=0.1)  # Returns dict
-
-# CLI mode
 if __name__ == "__main__":
-    train()  # Parses sys.argv
+    train()
 ```
-
----
-
-### 2. CLI with `flexlock-run`
 
 ```bash
-# From Python config
-flexlock-run -d myproject.config -s train
-
-# From YAML config
-flexlock-run -c config.yaml
-
-# With overrides
-flexlock-run -d config -s train -O lr=0.1
+python train.py -o lr=0.1
+flexlock-run -d train.train -O lr=0.1     # equivalent
+flexlock-run -d train.train --note "baseline before lr sweep"   # record intent
+flexlock-run --help                        # prints argparse help + compiled config
 ```
 
----
+You get an `ExecutionResult.result` back (the dict), `run.lock`,
+`run.complete`, and `results.json` on disk.
 
-### 3. Python Project API
+Pass `--note` (CLI) or `note="…"` (`proj.submit(cfg, note=…)`) to record a
+free-text intent in `run.lock`. It never affects caching and shows up in
+`flexlock show`/`graph`/`report`.
+
+### 4b. Python `Project().submit(cfg)`
+
+For multi-stage scripts and notebooks where you want pipeline plumbing
+(`proj.get`, `proj.defaults`, `proj.run_stage`, ...):
 
 ```python
 from flexlock import Project
 
-proj = Project(defaults='myproject.config')
+proj = Project(defaults='myproject.configs.defaults')
 
-# Get and execute
 cfg = proj.get('train')
+cfg.lr = 0.1
 result = proj.submit(cfg)
 
-# Access results
-print(result.save_dir)
-print(result['accuracy'])
+print(result.save_dir)         # 'outputs/train'
+print(result.status)           # 'SUCCESS' or 'CACHED'
+print(result['accuracy'])      # dict-like access to result.result
 ```
+
+`proj.get(key)` returns a self-contained sub-tree: root-scope refs are
+frozen, resolver calls and intra-node refs are preserved.
+
+### 4c. `from flexlock import submit` — one-shot
+
+For when you already have a `DictConfig` and don't need a Project:
+
+```python
+from flexlock import submit, py2cfg
+from myproject.train import train
+
+cfg = py2cfg(train, lr=0.01, save_dir='outputs/train')
+result = submit(cfg, slurm_config='configs/slurm_gpu.yaml')
+```
+
+`submit` is `Project().submit` with all the same kwargs (`sweep`,
+`smart_run`, `overrides`, `force`, `isolated`, ...). Use it for ad-hoc
+one-offs and library code that takes a config and runs it.
 
 ---
 
-## Reproducibility
+## 5. `py2cfg` — build configs from Python
 
-FlexLock tracks code, data, and configuration for every run.
+`py2cfg` reads a function/class signature and produces a config dict
+keyed by `_target_`:
 
-### Enable Tracking
-
-**With decorator:**
 ```python
-@flexcli(
-    snapshot_config=dict(
-        repos={'main': '.'},           # Track git repo
-        data={'input': '${...input_path}'}  # Track data files
-    )
+from flexlock import py2cfg
+from myproject.train import train
+from myproject.models import Transformer
+
+cfg = py2cfg(
+    train,
+    lr=0.01,
+    model=py2cfg(Transformer, layers=12, heads=16),
+    save_dir='outputs/train',
 )
-def train(input_path, save_dir=None):
-    pass
+# {
+#   '_target_': 'myproject.train.train',
+#   'lr': 0.01,
+#   'epochs': 10,                       # captured from signature default
+#   'model': {'_target_': 'myproject.models.Transformer', 'layers': 12, 'heads': 16},
+#   'save_dir': 'outputs/train',
+# }
 ```
 
-# Complete Usage Guide
-...
-(after line 230)
-**With py2cfg:**
+Use it when:
+- you want to refactor a function and have its config follow (signature
+  changes propagate automatically),
+- you want nested instantiation (`model=py2cfg(...)`),
+- you want IDE autocomplete and type-checking on the keyword names.
+
+Prefer YAML when configs are written by non-Python users, or when you
+want a declarative record that lives outside the codebase.
+
+**Gotchas:**
+- The target must be re-importable on workers. `py2cfg(train)` inside a
+  notebook produces `_target_: __main__.train`, which won't import in a
+  spawned subprocess. Move definitions to a module.
+- Every default in the signature ends up in the config, including
+  `None` defaults. Drop them via overrides if you don't want them in
+  `run.lock`.
+- Decorated functions are unwrapped automatically (`py2cfg` looks at
+  `_original_fn`).
+
+---
+
+## 6. Sweeps
+
+A sweep is a list of override dicts merged into the base config one at
+a time. Sources:
+
 ```python
+proj.submit(cfg, sweep=[{'lr': 0.001}, {'lr': 0.01}])              # inline
+proj.submit(cfg, sweep_file='configs/grid.yaml')                    # not directly — see below
+flexlock-run -d ... --sweep-file configs/grid.yaml
+flexlock-run -d ... --sweep "0.001,0.01,0.1" --sweep-target lr
+flexlock-run -d ... --sweep-key param_grid                          # list lives in defaults
+```
+
+From Python, use `load_sweep` to read a file:
+
+```python
+from flexlock import load_sweep, Project
+
+proj = Project(defaults='myproject.configs.defaults')
+sweep = load_sweep(sweep_file='configs/grid.yaml')
+
+if __name__ == "__main__":
+    results = proj.submit('train', sweep=sweep, n_jobs=4)
+    for r in results:
+        print(r.save_dir, r['accuracy'])
+```
+
+### `sweep_target`
+
+Without `sweep_target`, each item is merged at the root of the base
+config. With `sweep_target='optimizer.lr'`, scalar items are placed at
+that dotted path.
+
+### `sweep_dir_suffix`
+
+When `True`, each item's `save_dir` becomes
+`<base.save_dir>/sweep_{i:04d}/` — items are **nested under** the
+sweep root, not siblings to it. This keeps the tasks DB and lineage
+markers inside the same tree:
+
+```python
+proj.submit(cfg, sweep=sweep, sweep_dir_suffix=True)
+# outputs/train/sweep_0000/
+# outputs/train/sweep_0001/
+# outputs/train/run.lock.tasks.db
+```
+
+Containment is validated up-front: if a sweep item's `save_dir` falls
+outside the sweep root, you get a `FlexLockValidationError` listing the
+offenders before any work is queued.
+
+### Per-item interpolations
+
+Because relative refs (`${.x}`, `${..x}`) survive node selection and
+sweep merging, a sweep that overrides `save_dir` automatically updates
+sibling keys that point to it:
+
+```python
+from flexlock import py2cfg, Project
+from myproject.train import train
+
+cfg = py2cfg(
+    train,
+    save_dir='outputs/train',
+    log_dir='${.save_dir}/logs',          # follows per-item save_dir
+    ckpt_dir='${.save_dir}/ckpts',
+)
+
+if __name__ == "__main__":
+    proj = Project()
+    proj.submit(cfg, sweep=[
+        {'save_dir': 'outputs/sweep/a'},  # log_dir → outputs/sweep/a/logs
+        {'save_dir': 'outputs/sweep/b'},  # log_dir → outputs/sweep/b/logs
+    ], n_jobs=2)
+```
+
+### `n_jobs`, `isolated`, and the `__main__` guard
+
+- `n_jobs=1` (default, no `isolated`): runs in-process. No guard needed.
+- `n_jobs > 1` or `isolated=True`: uses `multiprocessing` with the
+  `spawn` start method (avoids CUDA fork hazards). Spawn re-imports the
+  launching script in each child, so **any module-scope
+  `proj.submit(...)` call must sit under `if __name__ == "__main__":`**
+  or the children will recursively re-launch.
+- Notebooks and REPL contexts are fine.
+
+After a parallel or `isolated=True` run, workers write
+`results.json` into each per-task `save_dir`. The driver loads them
+back and populates `ExecutionResult.result`, so the return value is
+available downstream just like in serial execution.
+
+---
+
+## 7. Snapshots & reproducibility
+
+Every submit with a `save_dir` writes `run.lock` with three sections:
+
+```yaml
+# outputs/train/run.lock
+timestamp: "2026-06-01T14:30:00"
+repos:
+  myproject:
+    commit: "abc123…"
+    tree: "def456…"               # this is what smart_run compares
+    is_dirty: false
+    path: "/abs/path/to/repo"
+data:
+  train_data: "xxh64_789xyz…"
+config:
+  _target_: myproject.train.train
+  lr: 0.01
+  save_dir: outputs/train
+```
+
+### Declaring what to track
+
+```python
+from flexlock import py2cfg
+from myproject.train import train
+
 cfg = py2cfg(
     train,
     input_path='data/train.csv',
     save_dir='outputs/train',
     _snapshot_=dict(
-        repos={'main': '.', 'submodule': 'libs/mylib'},
-        data={'train_data': '${...input_path}'}
-    )
+        repos={
+            'myproject': '.',                       # string shorthand → {'path': '.'}
+            'mylib': {'path': 'libs/mylib'},        # explicit
+            'pkg':   {'module': 'pkg'},             # resolved via importlib
+            'filtered': {                           # filtered comparison
+                'path': '.',
+                'include': ['src/model/**'],
+                'exclude': ['tests/**'],
+            },
+        },
+        data={'train': '${...input_path}'},
+        prevs=['${...upstream_run_dir}'],           # link to upstream runs
+    ),
 )
 ```
-...
 
-> **Auto-detection:** When the config specifies a `_target_` (e.g. with YAML configs or `py2cfg`), FlexLock automatically detects and tracks the git repository of the target function. No explicit `repos` entry is needed.
+**Relative refs inside `_snapshot_` need three dots.** They resolve from
+their own position in the tree, and `data` values and `prevs` items both
+sit two levels below the stage node (`stage._snapshot_.data.train`), so
+climbing back to a sibling of `_snapshot_` takes `${...key}`:
+`data.train` → `data` → `_snapshot_` → stage. A single-dot `${.input_path}`
+would look for `input_path` *inside* the `data` mapping and raise
+`InterpolationKeyError`.
 
-### Repo Configuration Format
+When a config has `_target_`, FlexLock auto-tracks the git repo of the
+target's source file — you don't need to spell `repos` for the main
+codebase. Add explicit entries for sibling libraries, vendored
+dependencies, or filtered comparisons.
 
-`repos` values can be a plain path string or a dict with additional options:
+### `snapshot()` directly
+
+You can also write a snapshot outside the `submit` flow:
 
 ```python
-_snapshot_=dict(
-    repos={
-        # Simple: string path
-        'main': '.',
+from flexlock import snapshot
 
-        # Explicit dict
-        'mylib': {'path': 'libs/mylib'},
-
-        # Resolved from module name (auto-finds git root via importlib)
-        'external': {'module': 'some_package'},
-
-        # With include/exclude for filtered smart_run comparison
-        'filtered': {
-            'path': '.',
-            'include': ['src/mymodule/**'],  # only these paths are compared
-            'exclude': ['tests/**', 'docs/**'],
-        },
-    }
-)
+snapshot(cfg, repos={'main': '.'}, data={'train': 'data/train.csv'})
 ```
 
-When `include`/`exclude` patterns are specified, `smart_run` will consider two runs a match even if other files in the repo differ — only the filtered paths are compared.
+### Re-running from a snapshot
+
+`run.lock` is YAML — pull the `config` block out and resubmit it:
+
+```python
+from omegaconf import OmegaConf
+from flexlock import submit
+
+cfg = OmegaConf.load('outputs/train/run.lock').config
+submit(cfg, force=True)   # re-execute, overwriting in place
+```
+
+`force=True` invalidates `run.complete` (so `smart_run` doesn't short-
+circuit), preserves outputs and `run.lock`, and re-runs the function.
 
 ---
 
-### Snapshot Contents
+## 8. Smart run / caching
 
-Every run creates `run.lock`:
+```python
+proj.submit(cfg, smart_run=True, search_dirs=['outputs/train/'])
+```
+
+Mechanism:
+
+1. Compute a stable **fingerprint** from `cfg` (per-repo git *tree* hashes
+   restricted to include/exclude, data hashes, and the resolved config with
+   `save_dir` prefix-normalized so output location doesn't affect it). This
+   uses `git write-tree` only — no commits or refs are created.
+2. Look the fingerprint up in the project-wide index (one indexed `SELECT`).
+   The index maps a fingerprint to where a completed run lives — a `run.lock`
+   directory **or** a sweep task `(task_db, task_id)`, so sweep items are
+   first-class cache entries.
+3. On a hit, verify the pointed-to run still exists and is complete
+   (`run.complete`, or the task's `results.json`). A stale pointer self-prunes
+   and is treated as a miss. Only `status='done'` runs are ever served.
+4. On an index miss, fall back to the legacy `**/run.lock` glob scan +
+   `RunDiff` (controlled by `FLEXLOCK_INDEX_FALLBACK`, default on) and backfill
+   the index on a hit, so the slow path self-eliminates.
+
+Rebuild the index at any time with `flexlock reindex <results_root>`; deleting
+it is always safe.
+
+### When caches miss
+
+- The git tree hash changed (any tracked file modified, including
+  untracked-but-not-ignored files).
+- A tracked data path's xxh64 changed.
+- The config changed (after resolution, ignoring `_snapshot_`).
+- The candidate run never wrote `run.complete`.
+
+To debug a miss:
+
+```bash
+flexlock-diff dirs outputs/train/run_0001 outputs/train/run_0002
+# exit code: 0 = match, 1 = differ, 2 = error; add --format json for scripting
+flexlock why outputs/train/run_0001 outputs/train/run_0002   # + the commits between them
+```
+
+### Failure records (`run.error`)
+
+When a run's user function raises, FlexLock writes a `run.error` JSON sidecar next
+to `run.lock` (`exc_type`, `exc_message`, full `traceback`, timestamp; plus
+`task_id`/`node` for sweep tasks). The original exception still propagates
+unwrapped — capture never masks it. Triage without opening sqlite:
+
+```bash
+flexlock show outputs/train/run_0001 --format json    # .status == "failed", .error.*
+```
+
+A successful re-run (`force=True` / `--force`) clears the stale `run.error`. See
+[Agentic Workflows](agentic_workflows.md) for the full schema and triage guidance.
+
+### Knobs
+
+| Knob                                | Effect                                     |
+|-------------------------------------|--------------------------------------------|
+| `smart_run=False`                   | Always execute                             |
+| `force=True`                        | Invalidate `run.complete` (and, for sweeps, per-item markers + the task DB), then execute |
+| `FLEXLOCK_NO_CACHE=1`               | Disable the on-disk data-hash cache        |
+| `FLEXLOCK_INDEX=/path/index.db`     | Explicit fingerprint-index location        |
+| `FLEXLOCK_INDEX_FALLBACK=0`         | Skip the legacy glob scan on an index miss |
+| `match_include` / `match_exclude`   | Override git path filters at compare time  |
+| `search_dirs=[...]`                 | Where to look for cached runs              |
+
+Combine with sweeps: re-running a 32-job sweep with `smart_run=True`
+re-executes only the ones whose fingerprints don't match an existing
+completed run.
+
+---
+
+## 9. HPC backends
+
+Slurm and PBS are supported via YAML config files. The same path works
+for `submit` (single job) and `submit(..., sweep=..., n_jobs=N)` (array
+job).
 
 ```yaml
-# outputs/train/run_0001/run.lock
-timestamp: "2024-01-15T14:30:00.123456"
-
-repos:
-  main:
-    commit: "abc123..."     # Git commit hash
-    tree: "def456..."       # Git tree hash (key for equality)
-    is_dirty: false
-    path: "/abs/path/to/repo"
-    include: null           # include patterns (if set, used for filtered comparison)
-    exclude: null           # exclude patterns
-
-data:
-  train_data: "xxh64_789xyz..."  # Data file hash
-
-config:
-  lr: 0.01
-  epochs: 100
-  input_path: "data/train.csv"
-  save_dir: "outputs/train/run_0001"
+# configs/slurm_gpu.yaml
+startup_lines:
+  - "#SBATCH --job-name=flexlock"
+  - "#SBATCH --gres=gpu:1"
+  - "#SBATCH --cpus-per-task=8"
+  - "#SBATCH --mem=32G"
+  - "#SBATCH --time=04:00:00"
+  - "#SBATCH --array=0-31"
+  - "module load cuda/11.8"
+  - "source activate myenv"
+python_exe: "python"
 ```
-
----
-
-### Compare Runs
-
-```bash
-flexlock-diff outputs/train/run_0001 outputs/train/run_0002
-```
-
-**Output:**
-```
-Differences:
-  config.lr: 0.01 → 0.1
-  data.train_data: hash_abc → hash_xyz
-```
-
----
-
-## Parameter Sweeps
-
-Run multiple experiments with different parameters.
-
-### CLI Sweeps
-
-**Comma-separated values:**
-```bash
-flexlock-run -d config -s train \
-  --sweep "0.001,0.01,0.1" \
-  --sweep-target lr \
-  --n_jobs 3
-```
-
-**From file:**
-```bash
-# sweep.yaml
-- {lr: 0.001, batch_size: 32}
-- {lr: 0.01, batch_size: 64}
-- {lr: 0.1, batch_size: 128}
-```
-
-```bash
-flexlock-run -d config -s train \
-  --sweep-file sweep.yaml \
-  --n_jobs 3
-```
-
-**From config:**
-```python
-# config.py
-defaults = dict(
-    train=py2cfg(train),
-    param_grid=[
-        dict(lr=0.001, batch_size=32),
-        dict(lr=0.01, batch_size=64),
-    ]
-)
-```
-
-```bash
-flexlock-run -d config --sweep-key param_grid --n_jobs 2
-```
-
----
-
-### Python API Sweeps
 
 ```python
-proj = Project(defaults='config.defaults')
-
-# Define sweep
-sweep = [
-    dict(lr=0.001, batch_size=32),
-    dict(lr=0.01, batch_size=64),
-    dict(lr=0.1, batch_size=128),
-]
-
-if __name__ == "__main__":
-    # n_jobs > 1 uses multiprocessing (spawn) — module-scope calls must be
-    # guarded by `if __name__ == "__main__":` or the children will re-import
-    # and re-launch the sweep recursively.
-    results = proj.submit(
-        proj.get('train'),
-        sweep=sweep,
-        n_jobs=3
-    )
-
-    # Process results
-    for i, result in enumerate(results):
-        print(f"Run {i}: accuracy={result['accuracy']:.3f}")
-
-    best = max(results, key=lambda r: r['accuracy'])
-    print(f"Best LR: {best.cfg.lr}")
+proj.submit(cfg, sweep=sweep, slurm_config='configs/slurm_gpu.yaml')
 ```
 
----
+```yaml
+# configs/pbs_gpu.yaml — container example
+startup_lines:
+  - "#PBS -l select=1:ncpus=8:mem=32gb"
+  - "#PBS -l walltime=04:00:00"
+  - "#PBS -J 0-31"
+  - "cd $PBS_O_WORKDIR"
+python_exe: |
+  singularity run --nv
+  --bind $(pwd):/workspace --pwd /workspace
+  env.sif python
+```
 
-## HPC Integration
+`wait=False` submits and returns immediately. `wait=True` blocks until
+the array finishes; the default timeout comes from
+`FLEXLOCK_DEFAULT_TIMEOUT` (seconds).
 
-FlexLock supports Slurm and PBS via `--slurm-config` / `--pbs-config` (CLI) or `slurm_config=` / `pbs_config=` (`proj.submit()`). Singularity and Docker are supported through the `python_exe` field. See the **[HPC Integration guide](./hpc_integration.md)** for full configuration examples.
-
----
-
-## Pipelines
-
-Chain multiple stages with dependency tracking.
-
-### Basic Pipeline
+Preview the rendered submission script without submitting:
 
 ```python
-from flexlock import Project, py2cfg
+proj.submit(cfg, slurm_config='configs/slurm_gpu.yaml', dry_run=True)
+# Prints the generated Slurm script plus any validation warnings.
+```
 
-# Define stages
-def preprocess(input_dir, save_dir):
-    # ... processing ...
-    return {"output_path": f"{save_dir}/processed.csv"}
+Anything that goes wrong on the backend side — bad YAML, queue
+rejection, task-DB lock contention — is raised as
+`FlexLockBackendError`.
 
-def train(data_path, lr, save_dir):
-    # ... training ...
+---
+
+## 10. MLflow integration
+
+`mlflow_context` wraps an MLflow run that's bound to a physical
+`save_dir`. It implements an "always new + deprecate old" strategy so
+re-runs into the same directory don't pollute the previous MLflow run:
+
+```python
+from flexlock import flexcli, mlflow_context
+import mlflow
+
+@flexcli
+def train(lr: float = 0.01, save_dir: str = 'outputs/train'):
+    with mlflow_context(save_dir, experiment_name='my-exp') as run:
+        mlflow.log_metric('train_loss', 0.32)
+        mlflow.log_metric('val_accuracy', 0.95)
     return {"accuracy": 0.95}
 
-def evaluate(model_dir, save_dir):
-    # ... evaluation ...
-    return {"final_accuracy": 0.96}
+if __name__ == "__main__":
+    train()
+```
 
-# Create project
-proj = Project(defaults='pipeline.defaults')
+The context inherits user tags from the previously active run for the
+same directory, so pipeline tags like `pipeline_run=run_001` persist
+across stages without manual plumbing. MLflow not installed? The
+context is a no-op and yields `None`.
 
-# Execute pipeline
-prep_result = proj.submit(proj.get('preprocess'))
+---
 
-train_cfg = proj.get('train')
-train_cfg.data_path = prep_result['output_path']
-train_result = proj.submit(train_cfg)
+## 11. Debugging
 
-eval_cfg = proj.get('evaluate')
-eval_cfg.model_dir = train_result.save_dir
-eval_result = proj.submit(eval_cfg)
+### `@debug_on_fail`
 
-print(f"Final: {eval_result['final_accuracy']}")
+```python
+from flexlock import debug_on_fail
+
+@debug_on_fail
+def train(...):
+    ...
+```
+
+On exception, the decorator either drops you into PDB (script context)
+or injects the function's locals into the caller's scope (notebook
+context). Strategy is chosen by `FLEXLOCK_DEBUG_STRATEGY`:
+
+| Value        | Behavior                                           |
+|--------------|----------------------------------------------------|
+| `auto` (default) | PDB for scripts, locals injection for notebooks |
+| `pdb`        | Always PDB post-mortem                             |
+| `inject`     | Always inject locals                               |
+
+### Activation
+
+Two control surfaces, two semantics:
+
+- **`@flexcli` / `flexlock-run --debug`:** opt *in* to wrapping the user
+  function with `debug_on_fail`. `FLEXLOCK_DEBUG=1` (or `--debug`)
+  enables it.
+- **Manually applied `@debug_on_fail`:** active by default. To turn it
+  off (e.g. in production), set `FLEXLOCK_NODEBUG=1` — the decorator
+  returns the original function unchanged. Note: `FLEXLOCK_DEBUG=0` does
+  *not* disable a manually applied decorator.
+
+The decorator accepts (and warns about) legacy kwargs like
+`stack_depth=`, so old snippets won't blow up — they're just ignored.
+
+### `print_config`
+
+```bash
+flexlock-run -d configs/defaults.py -s train -O lr=0.1 --print-config
+```
+
+Prints the fully-merged config plus the target function's docstring,
+then exits. From Python:
+
+```python
+proj.submit('train', overrides={'lr': 0.1}, print_config=True)
+# When sweep is also passed, prints one config per sweep item.
+```
+
+`flexlock-run --help` prints argparse help followed by the same
+compiled config view.
+
+### Logging to file
+
+```python
+from pathlib import Path
+from flexlock import flexcli, log_to_file
+from loguru import logger
+
+@flexcli
+def train(lr: float = 0.01, save_dir: str = 'outputs/train'):
+    with log_to_file(Path(save_dir) / 'debug.log'):
+        logger.debug(f"starting with lr={lr}")
+        ...
+```
+
+`log_to_file` is a context manager that adds a Loguru sink for its
+lifetime and removes it on exit. Importable from the package root.
+
+---
+
+## 12. Exceptions
+
+All FlexLock exceptions inherit from `FlexLockError`.
+
+| Exception                  | Wraps                                                                 |
+|----------------------------|-----------------------------------------------------------------------|
+| `FlexLockConfigError`      | Invalid config structure, bad `_target_`, malformed `_snapshot_`     |
+| `FlexLockValidationError`  | Sweep `save_dir` containment, ambiguous sweep source, missing select |
+| `FlexLockSnapshotError`    | Can't write `run.lock`, git/data hash failures                       |
+| `FlexLockCacheError`       | Cache read / fingerprint comparison failures                          |
+| `FlexLockExecutionError`   | FlexLock-side dispatch failures (NOT user exceptions — see below)    |
+| `FlexLockBackendError`     | Slurm/PBS submission failures, queue errors, task DB lock issues     |
+
+**Important:** exceptions raised *inside the user's target function*
+are **not** wrapped. They propagate as the original type
+(`ValueError`, `RuntimeError`, ...). Catch them directly:
+
+```python
+from flexlock import FlexLockBackendError
+
+try:
+    result = proj.submit(cfg, slurm_config='configs/slurm_gpu.yaml')
+except FlexLockBackendError as e:
+    print(f"HPC failed: {e}")
+except ValueError as e:
+    print(f"User function raised: {e}")
 ```
 
 ---
 
-### Pipeline with Config Links
+## 13. Environment variables
+
+| Variable                       | Default                  | Effect                                                  |
+|--------------------------------|--------------------------|---------------------------------------------------------|
+| `FLEXLOCK_DEBUG`               | `false`                  | Opt into debug wrapping via `@flexcli` / `flexlock-run` |
+| `FLEXLOCK_NODEBUG`             | `false`                  | Disable a manually applied `@debug_on_fail`             |
+| `FLEXLOCK_DEBUG_STRATEGY`      | `auto`                   | `auto` / `pdb` / `inject`                               |
+| `FLEXLOCK_NO_CACHE`            | `false`                  | Disable on-disk data-hash cache                         |
+| `FLEXLOCK_CACHE`               | `~/.cache`               | Cache base dir                                          |
+| `FLEXLOCK_DEFAULT_N_JOBS`      | `1`                      | Default `--n_jobs` if not given                         |
+| `FLEXLOCK_DEFAULT_TIMEOUT`     | `3600`                   | HPC wait timeout (seconds)                              |
+| `FLEXLOCK_POLL_INTERVAL`       | `10`                     | HPC poll interval (seconds)                             |
+| `FLEXLOCK_WARN_SMART_RUN`      | `true`                   | Warn when `smart_run=True` and `search_dirs=None`       |
+| `FLEXLOCK_TIMESTAMP_FORMAT`    | `%Y-%m-%dT%H-%M-%S`      | Directory timestamp format                              |
+| `FLEXLOCK_CONFIGURE_LOGGING`   | `true`                   | Configure Loguru on import                              |
+
+Boolean values accept `1`/`true`/`yes`/`on` and `0`/`false`/`no`/`off`.
+See [reference.md](./reference.md) for the full list.
+
+---
+
+## 14. Common recipes
+
+### 14a. 16-job hyperparameter sweep on Slurm
 
 ```python
-# pipeline.py
-from flexlock import py2cfg
+# scripts/sweep.py
+from flexlock import Project, load_sweep
 
-defaults = dict(
-    base_dir='outputs/pipeline',
+if __name__ == "__main__":
+    proj = Project(defaults='myproject.configs.defaults')
+    sweep = [{'lr': lr, 'batch_size': bs}
+             for lr in [0.001, 0.01, 0.1, 1.0]
+             for bs in [16, 32, 64, 128]]   # 16 items
 
-    preprocess=py2cfg(
-        preprocess,
-        input_dir='data/raw',
-        save_dir='${base_dir}/preprocess'
-    ),
-
-    train=py2cfg(
-        train,
-        data_path='${latest:${base_dir}/preprocess/*/processed.csv}',
-        lr=0.01,
-        save_dir='${base_dir}/train'
-    ),
-
-    evaluate=py2cfg(
-        evaluate,
-        model_dir='${latest:${base_dir}/train/*/}',
-        save_dir='${base_dir}/evaluate'
+    results = proj.submit(
+        'train',
+        sweep=sweep,
+        sweep_dir_suffix=True,
+        slurm_config='configs/slurm_gpu.yaml',  # set #SBATCH --array=0-15
+        smart_run=True,
     )
-)
+
+    best = max(results, key=lambda r: r.get('val_accuracy', 0))
+    print(f"best: {best.save_dir} → {best['val_accuracy']}")
 ```
 
-**Execute:**
-```python
-proj = Project(defaults='pipeline.defaults')
+### 14b. Resume a partially-finished sweep
 
-# All dependencies resolved automatically
-for stage in ['preprocess', 'train', 'evaluate']:
-    result = proj.submit(proj.get(stage))
-    print(f"{stage}: {result.status}")
-```
+Re-run the same script. `smart_run=True` skips every completed item
+(has both `run.lock` and `run.complete`); only interrupted items
+re-execute. No special command needed.
 
----
-
-### Pipeline with Smart Run
+### 14c. Re-run only the runs that failed
 
 ```python
-# First execution
-proj = Project(defaults='pipeline.defaults')
+from pathlib import Path
+from flexlock import Project
 
-prep_result = proj.submit(proj.get('preprocess'))     # Runs
-train_result = proj.submit(proj.get('train'))         # Runs
-eval_result = proj.submit(proj.get('evaluate'))       # Runs
+proj = Project(defaults='myproject.configs.defaults')
 
-# Rerun (no changes)
-prep_result = proj.submit(proj.get('preprocess'))     # ⚡ Cached
-train_result = proj.submit(proj.get('train'))         # ⚡ Cached
-eval_result = proj.submit(proj.get('evaluate'))       # ⚡ Cached
+# Items that started but didn't complete
+incomplete = [d for d in Path('outputs/sweep').glob('sweep_*/')
+              if (d / 'run.lock').exists() and not (d / 'run.complete').exists()]
 
-# Modify preprocess, rerun
-prep_cfg = proj.get('preprocess')
-prep_cfg.some_param = 'new_value'
-
-prep_result = proj.submit(prep_cfg, smart_run=False)  # Runs (forced)
-train_result = proj.submit(proj.get('train'))         # Runs (deps changed)
-eval_result = proj.submit(proj.get('evaluate'))       # Runs (deps changed)
+if __name__ == "__main__":
+    for d in incomplete:
+        cfg = proj.get('train')
+        cfg.save_dir = str(d)
+        proj.submit(cfg, force=True)   # re-exec into same dir
 ```
 
----
-
-## Smart Caching
-
-FlexLock automatically caches and reuses results.
-
-### How It Works
-
-1. **Fingerprint Generation:** Combines code (git tree hash) + data (file hashes) + config
-2. **Search:** Looks for matching `run.lock` files in `search_dirs`
-3. **Match:** Compares fingerprints using `RunDiff`
-4. **Cache Hit:** Returns existing result without rerunning
-
----
-
-### Enable Smart Run
-
-**Default (enabled):**
-```python
-result = proj.submit(cfg)  # smart_run=True by default
-```
-
-**Explicit:**
-```python
-result = proj.submit(cfg, smart_run=True, search_dirs=['outputs/train/'])
-```
-
-**Disable:**
-```python
-result = proj.submit(cfg, smart_run=False)  # Always runs
-```
-
----
-
-### Custom Search Directories
+### 14d. Pull sweep results back as a DataFrame
 
 ```python
-result = proj.submit(
-    cfg,
-    smart_run=True,
-    search_dirs=[
-        'outputs/train/',
-        'archive/previous_runs/',
-        '/shared/team_results/'
-    ]
-)
+import pandas as pd
+
+rows = []
+for r in results:        # list[ExecutionResult] from proj.submit(..., sweep=...)
+    rows.append({
+        'save_dir': r.save_dir,
+        'lr': r.cfg.lr,
+        'batch_size': r.cfg.batch_size,
+        'accuracy': r.get('accuracy'),
+    })
+df = pd.DataFrame(rows)
 ```
 
-### Filtered Comparison with `match_include` / `match_exclude`
+### 14e. Single isolated GPU run
 
-Override the git path patterns used during `smart_run` matching without changing the snapshot config:
+When you want the child's CUDA context to die at exit (so a later
+sweep can fork without the parent holding a stale CUDA handle):
 
 ```python
-result = proj.submit(
-    cfg,
-    smart_run=True,
-    match_include=['src/model/**'],   # only compare these paths
-    match_exclude=['tests/**'],        # ignore these paths
-)
+from flexlock import submit, py2cfg
+from myproject.train import train
+
+cfg = py2cfg(train, lr=0.01, save_dir='outputs/train')
+
+if __name__ == "__main__":
+    result = submit(cfg, isolated=True)
+    print(result['accuracy'])
 ```
 
-These take priority over any `include`/`exclude` stored in the repo's `run.lock`.
+### 14e-bis. Pick a stage to run with `fzf`
 
----
+`flexlock stages` lists a defaults tree's runnable stages without resolving the
+config (so `${vinc:}` never fires):
 
-### Check Before Running
-
-```python
-cfg = proj.get('train')
-
-if proj.exists(cfg, search_dirs=['outputs/train/']):
-    print("Using cached result")
-    result = proj.get_result(cfg)
-else:
-    print("Running new experiment")
-    result = proj.submit(cfg)
+```bash
+DEF=myproject.pipeline.cfg
+flexlock-run -d "$DEF" -s "$(flexlock stages -d "$DEF" --format keys | fzf)"
 ```
 
----
-
-## Common Patterns
-
-### Pattern 1: Hyperparameter Search
+### 14f. Multi-stage pipeline with auto-discovery
 
 ```python
 from flexlock import Project
 
-proj = Project(defaults='config.defaults')
+proj = Project(defaults='myproject.configs.defaults')
 
-# Grid search
-lr_values = [0.0001, 0.001, 0.01, 0.1]
-bs_values = [16, 32, 64, 128]
-
-sweep = [
-    dict(lr=lr, batch_size=bs)
-    for lr in lr_values
-    for bs in bs_values
-]
-
-results = proj.submit(
-    proj.get('train'),
-    sweep=sweep,
-    n_jobs=8,
-    smart_run=True  # Skip already-run configs
-)
-
-# Find best
-best = max(results, key=lambda r: r.get('accuracy', 0))
-print(f"Best config: lr={best.cfg.lr}, bs={best.cfg.batch_size}")
-print(f"Best accuracy: {best.accuracy:.4f}")
-```
-
----
-
-### Pattern 2: Iterative Refinement
-
-```python
-# Start with baseline
-cfg = proj.get('train')
-cfg.lr = 0.01
-baseline = proj.submit(cfg)
-
-print(f"Baseline: {baseline.accuracy:.4f}")
-
-# Try improvements
-for lr in [0.005, 0.001, 0.0005]:
-    cfg.lr = lr
-    result = proj.submit(cfg)
-
-    print(f"LR={lr}: {result.accuracy:.4f}")
-
-    if result.accuracy > baseline.accuracy + 0.01:
-        print(f"Improvement found! New baseline.")
-        baseline = result
-```
-
----
-
-### Pattern 3: Multi-Stage with Sweeps
-
-```python
-# Stage 1: Preprocess (once)
 prep_cfg = proj.get('preprocess')
-prep_result = proj.submit(prep_cfg)
+prep_cfg.save_dir = 'outputs/exp_001/preprocess'
+proj.run_stage(prep_cfg)
 
-# Stage 2: Train (sweep)
 train_cfg = proj.get('train')
-train_cfg.data_path = prep_result['output_path']
+train_cfg.data_dir = prep_cfg.save_dir         # propagated by run_stage
+train_cfg.save_dir = 'outputs/exp_001/train'
+proj.run_stage(train_cfg, isolated=True)
 
-train_sweep = [dict(lr=lr) for lr in [0.001, 0.01, 0.1]]
-train_results = proj.submit(train_cfg, sweep=train_sweep, n_jobs=3)
-
-# Stage 3: Evaluate best model
-best_train = max(train_results, key=lambda r: r['val_accuracy'])
-
-eval_cfg = proj.get('evaluate')
-eval_cfg.model_path = best_train.save_dir + '/model.pth'
-eval_result = proj.submit(eval_cfg)
-
-print(f"Test accuracy: {eval_result['test_accuracy']:.4f}")
+proj.save_snapshot('outputs/exp_001')          # writes pipeline.yaml
 ```
+
+`run_stage` auto-discovers `search_dirs` by scanning sibling experiment
+directories with the same stage name, so re-running with different
+hyperparameters cache-hits where it can.
 
 ---
 
-### Pattern 4: Resume Failed Sweep
+### 14g. Experiment-directory pattern (`pipeline_dir` anchor)
 
-```bash
-# Initial sweep (some jobs fail)
-flexlock-run -d config --sweep-file sweep.yaml --n_jobs 10
-
-# Check status
-flexlock-status outputs/sweep/run.lock.tasks.db
-
-# Rerun (only failed tasks execute)
-flexlock-run -d config --sweep-file sweep.yaml --n_jobs 10
-```
-
----
-
-### Pattern 5: Cross-Validation Pipeline
+A single config declares every stage of a project and nests them all under one
+**experiment root** interpolation anchor. Each stage's `save_dir` — and every
+cross-stage reference (an upstream checkpoint, a stats file) — is written
+relative to that anchor:
 
 ```python
-from flexlock import Project, py2cfg
+# project/pipeline.py
+from flexlock import py2cfg
 
-proj = Project(defaults='cv.defaults')
+def make_pipeline_cfg():
+    return dict(
+        pipeline_dir="???",                       # required: the experiment root
 
-folds = 5
-results = []
+        params=dict(lr=1e-4, encoder_size="small", img_size=128),
 
-for fold in range(folds):
-    # Train on fold
-    train_cfg = proj.get('train')
-    train_cfg.fold = fold
-    train_cfg.save_dir = f'outputs/cv/fold_{fold}'
-
-    train_result = proj.submit(train_cfg, smart_run=True)
-
-    # Evaluate
-    eval_cfg = proj.get('evaluate')
-    eval_cfg.model_dir = train_result.save_dir
-    eval_cfg.fold = fold
-
-    eval_result = proj.submit(eval_cfg, smart_run=True)
-    results.append(eval_result['accuracy'])
-
-import statistics
-print(f"CV Accuracy: {sum(results)/len(results):.4f} ± {statistics.stdev(results):.4f}")
-```
-
----
-
-## Tips & Best Practices
-
-### 1. Always Specify `save_dir`
-
-```python
-# Good
-cfg = py2cfg(train, save_dir='outputs/train_baseline')
-
-# Bad (will use default, may conflict)
-cfg = py2cfg(train)
-```
-
----
-
-### 2. Use Resolvers for Dynamic Values
-
-```python
-# Auto-versioning
-cfg = py2cfg(train, save_dir='${vinc:outputs/train/run}')
-
-# Timestamps
-cfg = py2cfg(train, save_dir='outputs/train_${now:%Y%m%d_%H%M%S}')
-
-# Latest dependency
-cfg = py2cfg(train, data_path='${latest:outputs/preprocess/*/data.csv}')
-```
-
----
-
-### 3. Track Data Dependencies
-
-```python
-cfg = py2cfg(
-    train,
-    input_data='data/train.csv',
-    _snapshot_=dict(
-        repos={'main': '.'},              # or omit if using _target_ (auto-detected)
-        data={'train': '${...input_data}'}
+        train=py2cfg(
+            train_stage,
+            save_dir="${pipeline_dir}/train",
+            lr="${params.lr}",
+            encoder=py2cfg(Encoder, size="${params.encoder_size}",
+                           img_size="${params.img_size}"),
+        ),
+        linear_probe=py2cfg(
+            probe_stage,
+            save_dir="${pipeline_dir}/linear_probe",
+            checkpoint="${pipeline_dir}/train/checkpoints/best.ckpt",   # upstream artifact
+            encoder=py2cfg(Encoder, size="${params.encoder_size}",
+                           img_size="${params.img_size}"),
+        ),
     )
-)
+
+pipeline_cfg = make_pipeline_cfg()
 ```
 
----
+Run one stage into an experiment; the anchor decides where it lands:
 
-### 4. Use `smart_run` by Default
-
-```python
-# Let FlexLock skip redundant work
-result = proj.submit(cfg, smart_run=True)
-
-# Only disable for debugging
-result = proj.submit(cfg, smart_run=False)
-```
-
----
-
-### 5. Structure Configs Hierarchically
-
-```python
-defaults = dict(
-    base_dir='outputs/',
-    shared_params=dict(lr=0.01, batch_size=32),
-
-    train=py2cfg(
-        train,
-        **shared_params,
-        save_dir='${base_dir}/train'
-    ),
-
-    finetune=py2cfg(
-        finetune,
-        **shared_params,
-        lr=0.001,  # Override
-        save_dir='${base_dir}/finetune'
-    )
-)
-```
-
----
-
-## Troubleshooting
-
-### Issue: "Task DB locked"
-
-**Cause:** Multiple processes accessing DB simultaneously
-
-**Solution:**
-- Use HPC backend (handles concurrency)
-- Reduce `n_jobs` for local execution
-- Check for stale DB locks
-
----
-
-### Issue: Smart run not finding cached results
-
-**Cause:** Config/code/data changed slightly
-
-**Solution:**
 ```bash
-# Check diff
-flexlock-diff current_config existing_run/
+# train lands in results/myxp/train
+flexlock-run -d project.pipeline.pipeline_cfg -s train -o pipeline_dir=results/myxp
 
-# Common causes:
-# - save_dir changed (use normalization)
-# - Code changed (git tree hash different)
-# - Data changed (file hash different)
+# add a stage later against the SAME experiment -> results/myxp/linear_probe,
+# sitting next to the training run and reading its checkpoint
+flexlock-run -d project.pipeline.pipeline_cfg -s linear_probe -o pipeline_dir=results/myxp
+
+# run one stage across several experiments at once
+flexlock-run -d project.pipeline.pipeline_cfg -s linear_probe \
+    --sweep pipeline_dir=results/myxp1,results/myxp2
+
+# run several stages of ONE experiment in order (space- or comma-separated)
+flexlock-run -d project.pipeline.pipeline_cfg -s train linear_probe \
+    -o pipeline_dir=results/myxp
 ```
 
+Passing several stages to `-s` runs them **sequentially and locally**, each as
+its own blocking `submit`, so a downstream stage sees the upstream stage's
+artifacts already on disk (that's the whole ordering contract — stages compose
+through `${pipeline_dir}/<stage>/...` paths, not in-memory wiring). With
+`--check-exists`, stages already completed for this `pipeline_dir` are skipped,
+so re-running the sequence resumes where it stopped.
+
+Multi-stage selection is deliberately restricted to the simple case: it is
+incompatible with `-O`/`-M` (they target *the* selected node — ambiguous across
+a sequence), with `--sweep*`, and with `--slurm-config`/`--pbs-config`. Pass
+shared values as root-level overrides (`-o pipeline_dir=...`, `-m`, `-c`), and
+run stages one at a time when you need a sweep, a per-stage after-select
+override, or an HPC backend.
+
+**Why it's convenient**
+
+- One anchor (`pipeline_dir`) namespaces a whole experiment; stages compose
+  purely through interpolation, no manual `save_dir`/path plumbing between calls.
+- Stages are *append-only*: add a new stage to the config and run it later
+  against an existing `pipeline_dir` — it lands beside the earlier stages and
+  can read their artifacts via `${pipeline_dir}/<stage>/...`.
+- Sweeping over `pipeline_dir` fans one stage out across experiments; sweeping
+  over `params.*` fans one experiment across hyperparameters.
+- The result tree *is* the index: `results/<xp>/<stage>/` is browsable, and
+  each stage dir carries its own `run.lock` / `run.complete` / `results.json`.
+
+**Scope — use this when**
+
+- Stages form a DAG rooted at one directory and mostly share a `params` block.
+- You want past experiments to stay browsable and re-runnable stage-by-stage.
+- Downstream stages consume upstream *artifacts* (checkpoints, stats files) by
+  path rather than needing the upstream *config* rebuilt.
+
+**Limitations & mitigations**
+
+1. **Config drift (the main sharp edge).** A downstream stage rebuilds its
+   config from the *current* `pipeline.py`. If you changed an architecture knob
+   (`encoder_size`, `img_size`, channel count) since a past experiment trained,
+   running e.g. `linear_probe -o pipeline_dir=<old xp>` builds an encoder that
+   no longer matches the frozen checkpoint → load failure. The `pipeline_dir`
+   anchor only pins *where* files go, not *what* the upstream config was.
+   Mitigations, in order of robustness:
+   - **Pull frozen values from the upstream `run.lock`** instead of rebuilding
+     them, using the `${run_lock:}` resolver:
+     ```python
+     encoder=py2cfg(
+         Encoder,
+         size="${run_lock:${pipeline_dir}/train,config.train.encoder.size}",
+         img_size="${run_lock:${pipeline_dir}/train,config.train.encoder.img_size}",
+     )
+     ```
+     Now the probe's encoder is defined by whatever trained, not by today's
+     defaults. Keep architecture-defining knobs in `params` so there's a single
+     dotted key to read back.
+   - **Run from the frozen pipeline snapshot.** `proj.save_snapshot(pipeline_dir)`
+     writes `pipeline.yaml`; re-run a later stage against the *frozen* config
+     with `flexlock-run -c results/myxp/pipeline.yaml -s linear_probe` instead of
+     `-d ...pipeline_cfg`. This ignores current `pipeline.py` entirely.
+   - Treat architecture-changing edits as a *new* experiment root rather than
+     reusing an old `pipeline_dir`.
+
+2. **`smart_run` and code changes.** Caching is safe here: the fingerprint
+   includes the git tree hash, so "same config text, different code" is a cache
+   *miss*, not a wrong reuse. But that also means a downstream stage won't
+   cache-hit a past run whose code has since changed — expected, and the reason
+   config drift (above) must be handled explicitly, not via the cache.
+
+3. **Anchor vs `search_dirs` for cross-experiment cache hits.** The sweep form
+   runs the *same* stage into *different* `pipeline_dir`s. If you also want a
+   fingerprint-index cache hit across experiments, the index root and
+   `search_dirs` must span all of them (see §8 / `FLEXLOCK_INDEX`). Within a
+   single `pipeline_dir` this is automatic.
+
+4. **`pipeline_dir="???"` is mandatory.** OmegaConf raises if it's left
+   unresolved, which is the intended guard — every run must name its experiment.
+
 ---
 
-### Issue: Sweep not using all workers
+## 15. FAQ / gotchas
 
-**Cause:** Fewer tasks than workers
+**Why must I use `if __name__ == "__main__":` for sweeps?**
+`n_jobs > 1` and `isolated=True` use `multiprocessing.spawn` (chosen to
+avoid CUDA-fork hazards). Spawn re-imports your launching script in
+every worker — without the guard, the worker re-runs `proj.submit(...)`
+recursively. Notebooks/REPL are fine.
 
-**Solution:**
-```bash
-# 100 tasks, 10 workers = efficient
-flexlock-run --sweep-file 100tasks.yaml --n_jobs 10
+**Why is `save_dir` resolved eagerly?**
+Resolvers like `${vinc:}` inspect the filesystem. If `cfg.save_dir`
+were re-resolved at each access, the snapshot phase and the
+complete-marker phase would land in different dirs (each call would
+advance the version counter). FlexLock resolves it once at submit time
+and freezes the string.
 
-# 5 tasks, 10 workers = 5 workers idle
-flexlock-run --sweep-file 5tasks.yaml --n_jobs 10
-```
+**`results.json` is empty after my sweep — what happened?**
+The user function returned `None` or a non-dict value. `results.json`
+gets `{"result": <value>}` when the return value isn't already a dict.
+The driver still loads it back into `ExecutionResult.result`.
+
+**`_target_` fails to import on workers — why?**
+Workers re-import the target's module from scratch. If the target lives
+in `__main__` (e.g. defined in a notebook or in a script run as
+`python script.py`), the worker can't find it. Move the function to a
+module and re-run.
+
+**My relative ref `${.x}` got frozen to a literal string — why?**
+That happens if you pull the node through `OmegaConf.to_container(...,
+resolve=True)` and rebuild it. `proj.get()` is designed to preserve
+relative refs; manual round-trips are not.
+
+**`smart_run` keeps missing my cache — why?**
+Most common causes: (1) a tracked file in the repo is dirty or
+untracked-but-not-ignored, bumping the git tree hash. (2) A data path
+changed. (3) The candidate run never wrote `run.complete` (interrupted).
+Run `flexlock-diff cur_dir cached_dir` to see exactly what differs.
+
+**I used `${main.save_dir}` and sweep overrides don't propagate.**
+Cross-tree refs (`${main.save_dir}`, `${root_anchor}`) are frozen to
+their concrete value at `proj.get()` time. Use intra-node refs
+(`${.save_dir}`, `${..save_dir}`) for anything that should follow
+per-item sweep overrides.
+
+**`flexlock-run -d myproject/defaults.py` works, but
+`-d myproject.defaults` says it can't find `defaults`.**
+For dotted form, the *last* segment is the variable name, not the
+file. `myproject.defaults` means `from myproject import defaults`. If
+your layout is `myproject/defaults.py` with `defaults = {...}` inside,
+use `myproject.defaults.defaults` or `myproject/defaults.py`.
 
 ---
 
-## Next Steps
+## See also
 
-- [CLI Reference](./cli_reference.md) - Complete CLI documentation
-- [Python API](./python_api.md) - Programmatic usage
-- [HPC Integration](./hpc_integration.md) - Slurm/PBS setup
-- [Resolvers](./resolvers.md) - Dynamic configuration values
-- [Debugging](./debugging.md) - Interactive debugging features
-
----
-
-For more help:
-- [GitHub Issues](https://github.com/quentinf00/flexlock/issues)
-- [Documentation](https://quentinf00.github.io/flexlock/)
+- [CLI Reference](./cli_reference.md)
+- [Python API](./python_api.md)
+- [HPC Integration](./hpc_integration.md)
+- [Resolvers](./resolvers.md)
+- [Debugging](./debugging.md)
+- [Reference (env vars + exceptions)](./reference.md)

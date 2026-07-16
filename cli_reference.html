@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CLI Reference &mdash; FlexLock 0.5.0 documentation</title>
+  <title>CLI Reference &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/cli_reference.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=70f82a29"></script>
+      <script src="_static/documentation_options.js?v=cce5339e"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -50,8 +50,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -63,8 +63,15 @@
 <li class="toctree-l3"><a class="reference internal" href="#flexlock-ls-list-runs"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">ls</span></code> — List Runs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#flexlock-tag-tag-runs"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">tag</span></code> — Tag Runs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#flexlock-gc-garbage-collect"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">gc</span></code> — Garbage Collect</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flexlock-show-inspect-one-run"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">show</span></code> — Inspect One Run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flexlock-graph-experiment-dag"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">graph</span></code> — Experiment DAG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flexlock-why-explain-a-difference"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">why</span></code> — Explain a Difference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flexlock-stages-list-runnable-stages"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">stages</span></code> — List Runnable Stages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flexlock-report-static-html-report"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">report</span></code> — Static HTML Report</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flexlock-skills-manage-shipped-skills"><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">skills</span></code> — Manage Shipped Skills</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#flexlock-diff-compare-snapshots"><code class="docutils literal notranslate"><span class="pre">flexlock-diff</span></code> — Compare Snapshots</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#flexlock-run-run-experiments"><code class="docutils literal notranslate"><span class="pre">flexlock-run</span></code> — Run Experiments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuration-loading">Configuration Loading</a><ul>
@@ -98,6 +105,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#n-jobs"><code class="docutils literal notranslate"><span class="pre">--n_jobs</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#check-exists"><code class="docutils literal notranslate"><span class="pre">--check-exists</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#debug"><code class="docutils literal notranslate"><span class="pre">--debug</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#note"><code class="docutils literal notranslate"><span class="pre">--note</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#dump"><code class="docutils literal notranslate"><span class="pre">--dump</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#enqueue"><code class="docutils literal notranslate"><span class="pre">--enqueue</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#print-config"><code class="docutils literal notranslate"><span class="pre">--print-config</span></code></a></li>
@@ -238,8 +246,99 @@ flexlock<span class="w"> </span>gc<span class="w"> </span>results/<span class="w
 <li><p>Lineage dependencies of tagged runs are protected (recursive)</p></li>
 <li><p>Only runs with no tag and no tagged descendant are eligible for deletion</p></li>
 </ul>
-<hr class="docutils" />
+<p><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">gc</span> <span class="pre">--incomplete</span></code> prunes only run dirs that have <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> but no
+<code class="docutils literal notranslate"><span class="pre">run.complete</span></code> (interrupted attempts), with no tag-protection logic.</p>
 </section>
+<hr class="docutils" />
+<section id="flexlock-show-inspect-one-run">
+<h3><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">show</span></code> — Inspect One Run<a class="headerlink" href="#flexlock-show-inspect-one-run" title="Link to this heading"></a></h3>
+<p>Machine-readable status, metadata, lineage, and config for a single run. The
+default <code class="docutils literal notranslate"><span class="pre">md</span></code> output is for humans; agents use <code class="docutils literal notranslate"><span class="pre">--format</span> <span class="pre">json</span></code> (a stable contract,
+see <a class="reference internal" href="agentic_workflows.html"><span class="std std-doc">Agentic Workflows</span></a>).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock<span class="w"> </span>show<span class="w"> </span>results/train<span class="w">                    </span><span class="c1"># markdown</span>
+flexlock<span class="w"> </span>show<span class="w"> </span>results/train<span class="w"> </span>--format<span class="w"> </span>json<span class="w">      </span><span class="c1"># JSON contract</span>
+flexlock<span class="w"> </span>show<span class="w"> </span>results/train<span class="w"> </span>--root<span class="w"> </span>results/<span class="w">    </span><span class="c1"># scan a specific root for downstream/tags</span>
+flexlock<span class="w"> </span>show<span class="w"> </span>results/train<span class="w"> </span>--no-downstream<span class="w">    </span><span class="c1"># skip the downstream scan (faster)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">status</span></code> is one of <code class="docutils literal notranslate"><span class="pre">complete</span> <span class="pre">|</span> <span class="pre">failed</span> <span class="pre">|</span> <span class="pre">interrupted</span> <span class="pre">|</span> <span class="pre">running</span> <span class="pre">|</span> <span class="pre">pending</span> <span class="pre">|</span> <span class="pre">unknown</span></code>.
+A failed run attaches its <code class="docutils literal notranslate"><span class="pre">run.error</span></code> payload; a <code class="docutils literal notranslate"><span class="pre">sweep_master</span></code> attaches per-task
+<code class="docutils literal notranslate"><span class="pre">tasks</span></code> counts.</p>
+</section>
+<section id="flexlock-graph-experiment-dag">
+<h3><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">graph</span></code> — Experiment DAG<a class="headerlink" href="#flexlock-graph-experiment-dag" title="Link to this heading"></a></h3>
+<p>Emit the whole results tree as a graph (JSON is the backend for the skills and the
+HTML report).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock<span class="w"> </span>graph<span class="w"> </span>results/<span class="w"> </span>--format<span class="w"> </span>json<span class="w">          </span><span class="c1"># nodes + edges + (with --groups) groups</span>
+flexlock<span class="w"> </span>graph<span class="w"> </span>results/<span class="w"> </span>--format<span class="w"> </span>mermaid<span class="w">       </span><span class="c1"># paste into a Mermaid renderer</span>
+flexlock<span class="w"> </span>graph<span class="w"> </span>results/<span class="w"> </span>--format<span class="w"> </span>dot<span class="w">           </span><span class="c1"># pipe to graphviz: | dot -Tpng -o dag.png</span>
+flexlock<span class="w"> </span>graph<span class="w"> </span>results/<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span>--groups<span class="w"> </span><span class="c1"># add same-tree / same-data groupings</span>
+</pre></div>
+</div>
+<p>Edges are <code class="docutils literal notranslate"><span class="pre">lineage</span></code> or <code class="docutils literal notranslate"><span class="pre">sweep_item</span></code>; lineage sources outside the scanned tree
+appear as <code class="docutils literal notranslate"><span class="pre">kind:</span> <span class="pre">external</span></code> stub nodes so the graph is closed.</p>
+</section>
+<section id="flexlock-why-explain-a-difference">
+<h3><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">why</span></code> — Explain a Difference<a class="headerlink" href="#flexlock-why-explain-a-difference" title="Link to this heading"></a></h3>
+<p>Compare two runs: config/data/git diffs plus the real commits between their
+recorded shadow commits.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock<span class="w"> </span>why<span class="w"> </span>results/run_a<span class="w"> </span>results/run_b<span class="w">               </span><span class="c1"># text</span>
+flexlock<span class="w"> </span>why<span class="w"> </span>results/run_a<span class="w"> </span>results/run_b<span class="w"> </span>--format<span class="w"> </span>json<span class="w"> </span><span class="c1"># JSON contract</span>
+</pre></div>
+</div>
+<p>Per common repo it reports <code class="docutils literal notranslate"><span class="pre">trees_identical</span></code>, or <code class="docutils literal notranslate"><span class="pre">a_to_b</span></code>/<code class="docutils literal notranslate"><span class="pre">b_to_a</span></code> commit lists.
+If the shadow commits were gc’d, a per-repo <code class="docutils literal notranslate"><span class="pre">error</span></code> is set and the command still
+exits 0.</p>
+</section>
+<section id="flexlock-stages-list-runnable-stages">
+<h3><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">stages</span></code> — List Runnable Stages<a class="headerlink" href="#flexlock-stages-list-runnable-stages" title="Link to this heading"></a></h3>
+<p>Enumerate every stage (a mapping with <code class="docutils literal notranslate"><span class="pre">_target_</span></code>) in a defaults tree, <strong>without
+resolving</strong> the config (so <code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code> never fires or creates directories).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock<span class="w"> </span>stages<span class="w"> </span>-d<span class="w"> </span>myproject.pipeline.cfg<span class="w">                 </span><span class="c1"># text</span>
+flexlock<span class="w"> </span>stages<span class="w"> </span>-d<span class="w"> </span>myproject.pipeline.cfg<span class="w"> </span>--format<span class="w"> </span>keys<span class="w">   </span><span class="c1"># bare keys (for fzf)</span>
+flexlock<span class="w"> </span>stages<span class="w"> </span>-d<span class="w"> </span>myproject.pipeline.cfg<span class="w"> </span>--format<span class="w"> </span>json<span class="w">   </span><span class="c1"># {key,target,save_dir,depth}</span>
+flexlock<span class="w"> </span>stages<span class="w"> </span>-d<span class="w"> </span>myproject.pipeline.cfg<span class="w"> </span>-c<span class="w"> </span>overrides.yaml
+</pre></div>
+</div>
+<p>fzf recipe:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">DEF</span><span class="o">=</span>myproject.pipeline.cfg
+flexlock-run<span class="w"> </span>-d<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$DEF</span><span class="s2">&quot;</span><span class="w"> </span>-s<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>flexlock<span class="w"> </span>stages<span class="w"> </span>-d<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$DEF</span><span class="s2">&quot;</span><span class="w"> </span>--format<span class="w"> </span>keys<span class="w"> </span><span class="p">|</span><span class="w"> </span>fzf<span class="k">)</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="flexlock-report-static-html-report">
+<h3><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">report</span></code> — Static HTML Report<a class="headerlink" href="#flexlock-report-static-html-report" title="Link to this heading"></a></h3>
+<p>Render a self-contained, offline-openable HTML report (no CDN) of a results tree.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock<span class="w"> </span>report<span class="w"> </span>results/<span class="w"> </span>-o<span class="w"> </span>report.html<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;My experiment&quot;</span>
+flexlock<span class="w"> </span>report<span class="w"> </span>results/<span class="w"> </span>-o<span class="w"> </span>report.html<span class="w"> </span>--embed-configs<span class="w">   </span><span class="c1"># include per-run configs</span>
+flexlock<span class="w"> </span>report<span class="w"> </span>results/<span class="w"> </span>-o<span class="w"> </span>report.html<span class="w"> </span>--groups<span class="w">          </span><span class="c1"># surface same code/data runs</span>
+</pre></div>
+</div>
+</section>
+<section id="flexlock-skills-manage-shipped-skills">
+<h3><code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">skills</span></code> — Manage Shipped Skills<a class="headerlink" href="#flexlock-skills-manage-shipped-skills" title="Link to this heading"></a></h3>
+<p>FlexLock ships four Claude Code skills encoding common workflows.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock<span class="w"> </span>skills<span class="w"> </span>list<span class="w">                                 </span><span class="c1"># names + descriptions</span>
+flexlock<span class="w"> </span>skills<span class="w"> </span>install<span class="w">                              </span><span class="c1"># install all into .claude/skills</span>
+flexlock<span class="w"> </span>skills<span class="w"> </span>install<span class="w"> </span>flexlock-survey<span class="w"> </span>--dest<span class="w"> </span>.claude/skills
+flexlock<span class="w"> </span>skills<span class="w"> </span>install<span class="w"> </span>--force<span class="w">                      </span><span class="c1"># overwrite (= upgrade)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="flexlock-diff-compare-snapshots">
+<h2><code class="docutils literal notranslate"><span class="pre">flexlock-diff</span></code> — Compare Snapshots<a class="headerlink" href="#flexlock-diff-compare-snapshots" title="Link to this heading"></a></h2>
+<p>Compare two run snapshots from directories, the task DB, or a mix.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-diff<span class="w"> </span><span class="nb">dirs</span><span class="w"> </span>results/run_a<span class="w"> </span>results/run_b<span class="w">           </span><span class="c1"># human-readable</span>
+flexlock-diff<span class="w"> </span><span class="nb">dirs</span><span class="w"> </span>results/run_a<span class="w"> </span>results/run_b<span class="w"> </span>--details<span class="w"> </span><span class="c1"># per-key differences</span>
+flexlock-diff<span class="w"> </span><span class="nb">dirs</span><span class="w"> </span>results/run_a<span class="w"> </span>results/run_b<span class="w"> </span>--format<span class="w"> </span>json
+flexlock-diff<span class="w"> </span>db<span class="w"> </span>tasks.db<span class="w"> </span>&lt;task_id1&gt;<span class="w"> </span>&lt;task_id2&gt;
+flexlock-diff<span class="w"> </span>mixed<span class="w"> </span>results/run_a<span class="w"> </span>tasks.db<span class="w"> </span>&lt;task_id&gt;
+</pre></div>
+</div>
+<p><strong>Exit codes:</strong> <code class="docutils literal notranslate"><span class="pre">0</span></code> match, <code class="docutils literal notranslate"><span class="pre">1</span></code> differ, <code class="docutils literal notranslate"><span class="pre">2</span></code> error — usable directly in scripts
+and CI (older versions always exited 0).</p>
 </section>
 <hr class="docutils" />
 <section id="flexlock-run-run-experiments">
@@ -552,6 +651,20 @@ flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span clas
 <li><p>In notebooks: Injects local variables into global scope</p></li>
 <li><p>Useful for development and troubleshooting</p></li>
 </ul>
+</section>
+<hr class="docutils" />
+<section id="note">
+<h3><code class="docutils literal notranslate"><span class="pre">--note</span></code><a class="headerlink" href="#note" title="Link to this heading"></a></h3>
+<p>Record a free-text intent as a top-level <code class="docutils literal notranslate"><span class="pre">note:</span></code> key in <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> (sibling of
+<code class="docutils literal notranslate"><span class="pre">timestamp</span></code>/<code class="docutils literal notranslate"><span class="pre">config</span></code>). The note <strong>never enters the fingerprint</strong>, so it can’t
+perturb caching or diffs. It surfaces in <code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">show</span></code>/<code class="docutils literal notranslate"><span class="pre">graph</span></code>/<code class="docutils literal notranslate"><span class="pre">report</span></code>.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>flexlock-run<span class="w"> </span>-d<span class="w"> </span>defaults<span class="w"> </span>-s<span class="w"> </span>train<span class="w"> </span>--note<span class="w"> </span><span class="s2">&quot;baseline before lr sweep&quot;</span>
+</pre></div>
+</div>
+<p>For sweeps the note lands on the <strong>master</strong> <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> only; sweep items inherit
+it for display via their <code class="docutils literal notranslate"><span class="pre">.flexlock_marker</span></code> → master lookup. For a multi-stage
+<code class="docutils literal notranslate"><span class="pre">-s</span> <span class="pre">a</span> <span class="pre">b</span></code> run, the same note is applied to each stage.</p>
 </section>
 <hr class="docutils" />
 <section id="dump">

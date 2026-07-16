@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.backends.slurm &mdash; FlexLock 0.5.0 documentation</title>
+  <title>flexlock.backends.slurm &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/backends/slurm.html" />
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=70f82a29"></script>
+      <script src="../../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
@@ -47,8 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage_guide.html">Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -267,10 +267,13 @@
 
         <span class="n">python_script</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s2">&quot;import cloudpickle, sys, os&quot;</span><span class="p">,</span>
-            <span class="c1"># Ensure the submission directory is importable so that _target_</span>
-            <span class="c1"># strings like &#39;train.main&#39; resolve in the worker just as they</span>
-            <span class="c1"># would on the submitting machine.</span>
-            <span class="sa">f</span><span class="s2">&quot;sys.path.insert(0, </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span><span class="si">!r}</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="c1"># Make the submission directory importable so that _target_ strings</span>
+            <span class="c1"># like &#39;train.main&#39; resolve in the worker as they do on the</span>
+            <span class="c1"># submitting machine. Append (not insert-at-0): cwd is a fallback</span>
+            <span class="c1"># only — it must never shadow installed packages, or a local file</span>
+            <span class="c1"># colliding with a dependency torch/lightning imports lazily during</span>
+            <span class="c1"># CUDA init can break the GPU stack in confusing ways.</span>
+            <span class="sa">f</span><span class="s2">&quot;sys.path.append(</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span><span class="si">!r}</span><span class="s2">)&quot;</span><span class="p">,</span>
             <span class="sa">f</span><span class="s2">&quot;with open(&#39;</span><span class="si">{</span><span class="n">pickled_path</span><span class="si">}</span><span class="s2">&#39;, &#39;rb&#39;) as f:&quot;</span><span class="p">,</span>
             <span class="s2">&quot;    data = cloudpickle.load(f)&quot;</span><span class="p">,</span>
             <span class="s2">&quot;    fn, a, kw = data&quot;</span><span class="p">,</span>
@@ -342,6 +345,34 @@
 
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not determine status for Slurm job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="s2">&quot;unknown&quot;</span></div>
+
+
+    <span class="c1"># States that mean the job has definitively ended. Anything else —</span>
+    <span class="c1"># active (PENDING/RUNNING/...) OR ambiguous (&quot;unknown&quot;) — is NOT terminal.</span>
+    <span class="n">TERMINAL_STATES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span>
+        <span class="s2">&quot;COMPLETED&quot;</span><span class="p">,</span> <span class="s2">&quot;FAILED&quot;</span><span class="p">,</span> <span class="s2">&quot;TIMEOUT&quot;</span><span class="p">,</span> <span class="s2">&quot;CANCELLED&quot;</span><span class="p">,</span> <span class="s2">&quot;NODE_FAIL&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;PREEMPTED&quot;</span><span class="p">,</span> <span class="s2">&quot;OUT_OF_MEMORY&quot;</span><span class="p">,</span> <span class="s2">&quot;BOOT_FAIL&quot;</span><span class="p">,</span> <span class="s2">&quot;DEADLINE&quot;</span><span class="p">,</span> <span class="s2">&quot;REVOKED&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;SPECIAL_EXIT&quot;</span><span class="p">,</span>
+    <span class="p">})</span>
+
+<div class="viewcode-block" id="SlurmBackend.is_terminal">
+<a class="viewcode-back" href="../../../api.html#flexlock.backends.slurm.SlurmBackend.is_terminal">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_terminal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True only when the scheduler confirms the job has ended.</span>
+
+<span class="sd">        Used by the controller to decide whether tasks still marked</span>
+<span class="sd">        ``running``/``pending`` have been orphaned by a dead job. This is</span>
+<span class="sd">        deliberately conservative: ``unknown`` (e.g. ``squeue`` doesn&#39;t list a</span>
+<span class="sd">        just-submitted job yet and ``sacct`` hasn&#39;t recorded it) and all</span>
+<span class="sd">        active states return ``False``, so a transient/racy status read never</span>
+<span class="sd">        causes a healthy job to be reconciled away.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_status</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="c1"># Normalize forms like &quot;CANCELLED by 12345&quot; / &quot;CANCELLED+&quot;.</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;+&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">token</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">TERMINAL_STATES</span></div>
 
 
 <div class="viewcode-block" id="SlurmBackend.wait_for_job">

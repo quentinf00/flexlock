@@ -1,0 +1,409 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Implementation plan: simplify config resolution / interpolation &mdash; FlexLock 0.8.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/resolution_simplification_plan.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=cce5339e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="agentic_workflows.html">Agentic Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Implementation plan: simplify config resolution / interpolation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/resolution_simplification_plan.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="implementation-plan-simplify-config-resolution-interpolation">
+<h1>Implementation plan: simplify config resolution / interpolation<a class="headerlink" href="#implementation-plan-simplify-config-resolution-interpolation" title="Link to this heading"></a></h1>
+<p>Goal: replace the “three binding times hidden in one <code class="docutils literal notranslate"><span class="pre">${...}</span></code> syntax” design with
+explicit, single-purpose mechanisms, so the InterpolationKeyError bug class and
+the freeze.py grammar parser largely disappear.</p>
+<p>Target semantics after this plan:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Binding time</p></th>
+<th class="head"><p>Mechanism</p></th>
+<th class="head"><p>Replaces</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>submit-time</p></td>
+<td><p>eager OmegaConf resolution (everything by default)</p></td>
+<td><p>freeze.py simple-ref chain following</p></td>
+</tr>
+<tr class="row-odd"><td><p>save_dir creation</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">save_dir_policy=</span></code> flag on runner/submit</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code>, <code class="docutils literal notranslate"><span class="pre">${now:}</span></code> in configs</p></td>
+</tr>
+<tr class="row-even"><td><p>stage-start</p></td>
+<td><p>deferred resolvers: <code class="docutils literal notranslate"><span class="pre">run_lock</span></code> (and <code class="docutils literal notranslate"><span class="pre">latest</span></code>)</p></td>
+<td><p>same resolvers, but ONE resolution point</p></td>
+</tr>
+<tr class="row-odd"><td><p>per-sweep-item</p></td>
+<td><p>merge override BEFORE resolution</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">${.variable}</span></code> placeholder tricks</p></td>
+</tr>
+</tbody>
+</table>
+<hr class="docutils" />
+<section id="phase-1-save-dir-policy-on-the-runner-kills-vinc-now-in-configs">
+<h2>Phase 1 — <code class="docutils literal notranslate"><span class="pre">save_dir_policy</span></code> on the runner (kills <code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code>/<code class="docutils literal notranslate"><span class="pre">${now:}</span></code> in configs)<a class="headerlink" href="#phase-1-save-dir-policy-on-the-runner-kills-vinc-now-in-configs" title="Link to this heading"></a></h2>
+<p><strong>New API</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">save_dir_policy</span><span class="o">=</span><span class="kc">None</span> <span class="o">|</span> <span class="s2">&quot;increment&quot;</span> <span class="o">|</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">)</span>
+<span class="c1"># CLI: flexlock run ... --save-dir-policy increment</span>
+</pre></div>
+</div>
+<p><strong>Implementation</strong></p>
+<ol class="arabic simple">
+<li><p>New module <code class="docutils literal notranslate"><span class="pre">flexlock/save_dir.py</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">next_versioned_path(path,</span> <span class="pre">fmt=&quot;_{i:04d}&quot;)</span> <span class="pre">-&gt;</span> <span class="pre">str</span></code> — move the body of
+<code class="docutils literal notranslate"><span class="pre">vinc_resolver</span></code> (resolvers.py:61) here as a plain function; the resolver
+becomes a thin deprecated wrapper around it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">apply_save_dir_policy(cfg,</span> <span class="pre">policy)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code> — resolves <code class="docutils literal notranslate"><span class="pre">cfg.save_dir</span></code>
+to a concrete string exactly once:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;increment&quot;</span></code>: <code class="docutils literal notranslate"><span class="pre">next_versioned_path(base)</span></code>, then <strong>claim atomically</strong>
+with <code class="docutils literal notranslate"><span class="pre">mkdir(exist_ok=False)</span></code> + retry on collision. This fixes the
+documented vinc race (resolvers.py:73-77) at the right layer.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;timestamp&quot;</span></code>: <code class="docutils literal notranslate"><span class="pre">base</span> <span class="pre">/</span> <span class="pre">now.strftime(config.TIMESTAMP_FORMAT)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code>: resolve as-is (current behaviour).</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Call sites:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">api.py:577-590</span></code> — replace the “resolve save_dir exactly once” try/except
+with <code class="docutils literal notranslate"><span class="pre">apply_save_dir_policy(config,</span> <span class="pre">save_dir_policy)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">runner.py</span></code> <code class="docutils literal notranslate"><span class="pre">_prepare_node</span></code> (runner.py:365) and <code class="docutils literal notranslate"><span class="pre">_build_node_cfg</span></code>
+(runner.py:298) — thread the CLI flag through; keep the timestamp
+fallback but route it through the same function.</p></li>
+</ul>
+</li>
+<li><p>Sweep interaction: the policy applies once to the sweep root; items keep
+getting <code class="docutils literal notranslate"><span class="pre">sweep_root/sweep_{i:04d}</span></code> via the existing <code class="docutils literal notranslate"><span class="pre">dir_suffix</span></code> path
+(api.py:1144-1150). Assert policy is not applied per-item.</p></li>
+<li><p>Deprecation: <code class="docutils literal notranslate"><span class="pre">vinc_resolver</span></code>/<code class="docutils literal notranslate"><span class="pre">now_resolver</span></code> emit a <code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code>
+pointing at <code class="docutils literal notranslate"><span class="pre">save_dir_policy</span></code> when fired. Keep them registered and working
+for one minor version.</p></li>
+</ol>
+<p><strong>Deletions unlocked (end of phase or Phase 5)</strong></p>
+<ul class="simple">
+<li><p>The vinc cache-draining hack <code class="docutils literal notranslate"><span class="pre">api.py:758-773</span></code> (re-wrap after
+<code class="docutils literal notranslate"><span class="pre">to_container(resolve=True)</span></code>).</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code> special-casing comment/path in <code class="docutils literal notranslate"><span class="pre">snapshot.py:99</span></code>.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">load_sweep</span></code> quoting hack (utils.py:414) that string-protects resolver
+calls so vinc fires late.</p></li>
+</ul>
+<p><strong>Tests</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">apply_save_dir_policy</span></code> unit tests: increment idempotency within one submit,
+atomic-claim collision retry, timestamp format.</p></li>
+<li><p>Regression: two concurrent submits with <code class="docutils literal notranslate"><span class="pre">&quot;increment&quot;</span></code> on the same base get
+distinct dirs (the race vinc could not fix).</p></li>
+<li><p>Existing vinc tests stay green (deprecated path still works).</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="phase-2-one-deferred-resolution-point-rebuild-freeze-py-on-omegaconf">
+<h2>Phase 2 — one deferred-resolution point + rebuild freeze.py on OmegaConf<a class="headerlink" href="#phase-2-one-deferred-resolution-point-rebuild-freeze-py-on-omegaconf" title="Link to this heading"></a></h2>
+<p><strong>2a. Deferred stub context manager</strong></p>
+<p>New helper in <code class="docutils literal notranslate"><span class="pre">resolvers.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">deferred_stubbed</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Re-register run_lock/latest so they re-emit their own call string</span>
+<span class="sd">    with args already resolved by OmegaConf.&quot;&quot;&quot;</span>
+    <span class="c1"># run_lock stub: lambda *args: &quot;${run_lock:&quot; + &quot;,&quot;.join(map(str, args)) + &quot;}&quot;</span>
+</pre></div>
+</div>
+<p>Key fact this exploits: OmegaConf resolves nested interpolations in resolver
+args <em>before</em> invoking the resolver. So resolving
+<code class="docutils literal notranslate"><span class="pre">${run_lock:${precompute_dir},key}</span></code> under the stub yields the frozen string
+<code class="docutils literal notranslate"><span class="pre">${run_lock:/data/precomputed,key}</span></code> — with zero string parsing on our side.
+(Today’s <code class="docutils literal notranslate"><span class="pre">_resolve_in_root</span></code> bug would have been structurally impossible.)</p>
+<p>Verify this arg-pre-resolution behaviour against the pinned omegaconf version
+in a dedicated test before building on it.</p>
+<p><strong>2b. Reimplement <code class="docutils literal notranslate"><span class="pre">select_and_freeze_root_refs</span></code></strong></p>
+<p>New implementation (same signature, freeze.py):</p>
+<ol class="arabic simple">
+<li><p>Deep-copy the root config; enter <code class="docutils literal notranslate"><span class="pre">deferred_stubbed()</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OmegaConf.resolve(root_copy)</span></code> — OmegaConf itself does all simple-ref,
+cross-tree, multi-hop, mixed-string, and relative-ref resolution, with
+correct grammar, while deferred calls collapse to frozen call strings.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">OmegaConf.select(root_copy,</span> <span class="pre">key)</span></code> and return a detached copy.</p></li>
+<li><p>Error mapping: catch <code class="docutils literal notranslate"><span class="pre">InterpolationKeyError</span></code>/<code class="docutils literal notranslate"><span class="pre">InterpolationResolutionError</span></code>
+and re-raise as <code class="docutils literal notranslate"><span class="pre">UnresolvedInterpolationError</span></code> with the existing
+“set it via overrides=…” hint (freeze.py:240-244).</p></li>
+</ol>
+<p>Delete: <code class="docutils literal notranslate"><span class="pre">_freeze_walk</span></code>, <code class="docutils literal notranslate"><span class="pre">_resolve_in_root</span></code>, <code class="docutils literal notranslate"><span class="pre">_freeze_embedded_in_root</span></code>,
+<code class="docutils literal notranslate"><span class="pre">_process_interps_in_string</span></code>, <code class="docutils literal notranslate"><span class="pre">_process_one_interp</span></code>, <code class="docutils literal notranslate"><span class="pre">_freeze_simple_ref</span></code>,
+and the balanced-brace scanner — the whole hand-rolled grammar.</p>
+<p>Known behaviour changes to handle explicitly:</p>
+<ul class="simple">
+<li><p><strong>Relative refs <code class="docutils literal notranslate"><span class="pre">${.foo}</span></code></strong>: OmegaConf resolves them (correctly, since the
+tree is still attached). Today they are preserved verbatim. The only
+consumer of “preserve verbatim” is the sweep <code class="docutils literal notranslate"><span class="pre">${.variable}</span></code> placeholder —
+removed in Phase 3, so land 2b together with or after Phase 3. Any other
+intra-stage relative ref resolves to the same value either way.</p></li>
+<li><p><strong>Type preservation</strong>: stub output is a string; real <code class="docutils literal notranslate"><span class="pre">run_lock</span></code> returns
+native types at stage start, unchanged.</p></li>
+<li><p><strong>Missing keys inside deferred args</strong> resolve-fail early now (good —
+surface at submit, not on the worker).</p></li>
+</ul>
+<p><strong>2c. Single deferred-resolution point</strong></p>
+<p>New function <code class="docutils literal notranslate"><span class="pre">resolve_deferred(cfg)</span> <span class="pre">-&gt;</span> <span class="pre">DictConfig</span></code> (freeze.py or resolvers.py):
+<code class="docutils literal notranslate"><span class="pre">to_container(resolve=True)</span></code> with real resolvers + re-wrap. Called at exactly
+two places:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">worker.py:worker_loop</span></code> right after <code class="docutils literal notranslate"><span class="pre">merge_task_into_cfg</span></code> (worker.py:122).</p></li>
+<li><p>api.py local single-run path, replacing the existing eager
+<code class="docutils literal notranslate"><span class="pre">to_container(resolve=True)</span></code> at api.py:770.</p></li>
+</ul>
+<p>Document: “<code class="docutils literal notranslate"><span class="pre">run_lock</span></code>/<code class="docutils literal notranslate"><span class="pre">latest</span></code> fire once, at stage start, on the worker.”</p>
+<p><strong>Tests</strong></p>
+<ul class="simple">
+<li><p>Port <code class="docutils literal notranslate"><span class="pre">tests/test_node_selection.py</span></code> — assertions on frozen output stay
+identical (they describe the same contract); delete tests that pin
+internals of the old scanner.</p></li>
+<li><p>Keep all regression tests (cross-tree resolver args, multi-hop mixed
+strings, <code class="docutils literal notranslate"><span class="pre">${latest:}</span></code> preservation, etc.) as black-box contract tests.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="phase-3-sweeps-merge-before-resolution-serialize-plain-dicts">
+<h2>Phase 3 — sweeps: merge before resolution, serialize plain dicts<a class="headerlink" href="#phase-3-sweeps-merge-before-resolution-serialize-plain-dicts" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_submit_sweep</span></code> (api.py:1137-1151): for each override, merge into the
+<strong>base config first</strong>, then run the Phase-2 freeze (eager resolve +
+deferred preserved) on the merged item. Item-injected keys (e.g.
+<code class="docutils literal notranslate"><span class="pre">variable</span></code>) exist before any resolution, so <code class="docutils literal notranslate"><span class="pre">${.variable}</span></code>-style
+placeholders and their <code class="docutils literal notranslate"><span class="pre">InterpolationKeyError</span></code>s disappear.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_validate_sweep_save_dirs</span></code>: operate only on merged, resolved items —
+never touch <code class="docutils literal notranslate"><span class="pre">base_config.save_dir</span></code> (the exact bug in
+<code class="docutils literal notranslate"><span class="pre">test_submit_sweep_relative_save_dir_ref</span></code>). The unresolved-base guard
+becomes dead code; remove it.</p></li>
+<li><p>Task DB payloads: store <code class="docutils literal notranslate"><span class="pre">to_container(resolve=False)</span></code> of the merged item —
+now a plain dict of concrete values plus deferred call strings. Worker
+side: <code class="docutils literal notranslate"><span class="pre">merge_task_into_cfg</span></code> keeps working unchanged; <code class="docutils literal notranslate"><span class="pre">resolve_deferred</span></code>
+(Phase 2c) completes the config.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">print_config</span></code> sweep preview (api.py:596-602) uses the same merged items,
+so preview == execution.</p></li>
+</ol>
+<p><strong>Tests</strong></p>
+<ul class="simple">
+<li><p>Existing sweep regression tests must pass unchanged (they test observable
+behaviour).</p></li>
+<li><p>New: sweep item referencing an injected key via a <em>normal</em> ref
+(<code class="docutils literal notranslate"><span class="pre">${variable}</span></code>) — the pattern that replaces <code class="docutils literal notranslate"><span class="pre">${.variable}</span></code>; document the
+migration in the changelog.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="phase-4-preflight-check-side-effect-free-full-resolution">
+<h2>Phase 4 — preflight check (side-effect-free full resolution)<a class="headerlink" href="#phase-4-preflight-check-side-effect-free-full-resolution" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Project.check(config=None,</span> <span class="pre">sweep=None,</span> <span class="pre">...)</span></code> + <code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">run</span> <span class="pre">--check</span></code>:
+run the full Phase-2/3 pipeline under <code class="docutils literal notranslate"><span class="pre">deferred_stubbed()</span></code>, including
+per-sweep-item merges, and report every resolution error with its
+<code class="docutils literal notranslate"><span class="pre">full_key</span></code> — without touching the filesystem (possible because vinc’s
+<code class="docutils literal notranslate"><span class="pre">mkdir</span></code> side effect is gone from resolution).</p></li>
+<li><p>Wire <code class="docutils literal notranslate"><span class="pre">print_config=True</span></code> through the same code path so preview can never
+diverge from submit.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="phase-5-deprecation-cleanup">
+<h2>Phase 5 — deprecation &amp; cleanup<a class="headerlink" href="#phase-5-deprecation-cleanup" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Remove (after one deprecation minor):</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code> / <code class="docutils literal notranslate"><span class="pre">${now:}</span></code> resolvers (keep <code class="docutils literal notranslate"><span class="pre">next_versioned_path</span></code> helper).</p></li>
+<li><p>api.py:577-590 resolve-once block, api.py:758-773 cache-drain block.</p></li>
+<li><p>snapshot.py vinc special case; utils.py <code class="docutils literal notranslate"><span class="pre">load_sweep</span></code> quoting hack.</p></li>
+</ul>
+</li>
+<li><p>Docs: rewrite the interpolation section around the binding-times table at
+the top of this file; add a migration guide
+(<code class="docutils literal notranslate"><span class="pre">${vinc:...}</span></code> → <code class="docutils literal notranslate"><span class="pre">save_dir_policy=&quot;increment&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">${.variable}</span></code> → <code class="docutils literal notranslate"><span class="pre">${variable}</span></code>).</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="sequencing-effort">
+<h2>Sequencing &amp; effort<a class="headerlink" href="#sequencing-effort" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Phase</p></th>
+<th class="head"><p>Depends on</p></th>
+<th class="head"><p>Risk</p></th>
+<th class="head"><p>Est.</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>—</p></td>
+<td><p>low</p></td>
+<td><p>0.5–1 day</p></td>
+</tr>
+<tr class="row-odd"><td><p>2a</p></td>
+<td><p>—</p></td>
+<td><p>low (one omegaconf-behaviour test gates it)</p></td>
+<td><p>0.5 day</p></td>
+</tr>
+<tr class="row-even"><td><p>2b</p></td>
+<td><p>2a, 3 (relative-ref removal)</p></td>
+<td><p>medium</p></td>
+<td><p>1–2 days</p></td>
+</tr>
+<tr class="row-odd"><td><p>2c</p></td>
+<td><p>2a</p></td>
+<td><p>low</p></td>
+<td><p>0.5 day</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>—</p></td>
+<td><p>medium</p></td>
+<td><p>1 day</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>2, 3</p></td>
+<td><p>low</p></td>
+<td><p>0.5 day</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>all</p></td>
+<td><p>low</p></td>
+<td><p>0.5 day</p></td>
+</tr>
+</tbody>
+</table>
+<p>Recommended landing order: <strong>1 → 2a → 2c → 3 → 2b → 4 → 5</strong>. Each step keeps
+the full suite green; 2b (the freeze.py rewrite) goes last among the
+functional phases because it needs the sweep-placeholder pattern gone first.</p>
+</section>
+<section id="risks-open-questions">
+<h2>Risks / open questions<a class="headerlink" href="#risks-open-questions" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>OmegaConf arg pre-resolution</strong> (2a’s foundation): verified by a pinned
+test; if a future omegaconf changes this, the test fails loudly.</p></li>
+<li><p><strong>Fingerprint stability</strong>: configs frozen by the new path may differ
+textually from the old path (e.g. relative refs now resolved), changing
+<code class="docutils literal notranslate"><span class="pre">smart_run</span></code> fingerprints once → one-time cache miss for existing runs.
+Call this out in the changelog.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">${latest:}</span></code></strong>: kept as a deferred read-only resolver alongside
+<code class="docutils literal notranslate"><span class="pre">run_lock</span></code>. If it turns out unused in practice, fold it into Phase 5
+removals instead.</p></li>
+<li><p><strong>Backward compat window</strong>: old configs with <code class="docutils literal notranslate"><span class="pre">${vinc:}</span></code> keep working
+until Phase 5; CI should run the example projects under both styles
+during the window.</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

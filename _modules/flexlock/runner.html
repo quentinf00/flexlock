@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.runner &mdash; FlexLock 0.5.0 documentation</title>
+  <title>flexlock.runner &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/runner.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=70f82a29"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,8 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -109,7 +109,6 @@
     <span class="n">load_sweep</span><span class="p">,</span>
     <span class="n">enqueue_to_file</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.diff</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunDiff</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
@@ -157,6 +156,13 @@
             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Print the compiled configuration and target function docstring, then exit.&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--check&quot;</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Preflight: fully resolve the config (and every sweep item) &quot;</span>
+            <span class="s2">&quot;without touching the filesystem or executing. Reports every &quot;</span>
+            <span class="s2">&quot;unresolved interpolation with its key, then exits.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
             <span class="s2">&quot;--dump&quot;</span><span class="p">,</span>
             <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Print the compiled configuration as clean YAML and exit (no headers). &quot;</span>
@@ -182,7 +188,14 @@
         <span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Path to base YAML config file&quot;</span><span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-            <span class="s2">&quot;--select&quot;</span><span class="p">,</span> <span class="s2">&quot;-s&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key to select the node to run&quot;</span>
+            <span class="s2">&quot;--select&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;-s&quot;</span><span class="p">,</span>
+            <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-separated key selecting the node to run. Pass several &quot;</span>
+            <span class="s2">&quot;(space- or comma-separated, e.g. &#39;-s train linear_probe&#39; or &quot;</span>
+            <span class="s2">&quot;&#39;-s train,linear_probe&#39;) to run stages in order. Multi-stage is &quot;</span>
+            <span class="s2">&quot;incompatible with -O/-M, sweeps, and HPC backends (run those &quot;</span>
+            <span class="s2">&quot;stages one at a time).&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Existing Override args</span>
@@ -190,9 +203,10 @@
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
             <span class="s2">&quot;--overrides&quot;</span><span class="p">,</span>
             <span class="s2">&quot;-o&quot;</span><span class="p">,</span>
-            <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+            <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="s2">&quot;append&quot;</span><span class="p">,</span>
             <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-list overrides for Root config&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-list overrides for Root config (repeatable: -o a=1 b=2  or  -o a=1 -o b=2)&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
             <span class="s2">&quot;--merge-after-select&quot;</span><span class="p">,</span> <span class="s2">&quot;-M&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Merge file into Selected config&quot;</span>
@@ -200,9 +214,10 @@
         <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
             <span class="s2">&quot;--overrides-after-select&quot;</span><span class="p">,</span>
             <span class="s2">&quot;-O&quot;</span><span class="p">,</span>
-            <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+            <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;+&quot;</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="s2">&quot;append&quot;</span><span class="p">,</span>
             <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
-            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-list overrides for Selected config&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dot-list overrides for Selected config (repeatable)&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># NEW SWEEP ARGUMENTS</span>
@@ -260,6 +275,31 @@
             <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
             <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks).&quot;</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--note&quot;</span><span class="p">,</span>
+            <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;TEXT&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Free-text intent recorded as a top-level &#39;note:&#39; key in run.lock &quot;</span>
+                 <span class="s2">&quot;(e.g. --note &#39;baseline before lr sweep&#39;). Never affects caching. &quot;</span>
+                 <span class="s2">&quot;For sweeps the note lands on the master run.lock.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--save-dir-policy&quot;</span><span class="p">,</span>
+            <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;raise&quot;</span><span class="p">,</span> <span class="s2">&quot;increment&quot;</span><span class="p">,</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">,</span> <span class="s2">&quot;skip&quot;</span><span class="p">,</span> <span class="s2">&quot;unsafe&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">],</span>
+            <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;What to do when save_dir already holds a run (run.lock &quot;</span>
+            <span class="s2">&quot;present). &#39;raise&#39; (default): refuse; &#39;increment&#39;: version the &quot;</span>
+            <span class="s2">&quot;dir (run -&gt; run_0000, claimed atomically); &#39;overwrite&#39;: clean &quot;</span>
+            <span class="s2">&quot;the dir then run; &#39;skip&#39;: reuse the existing complete run&#39;s &quot;</span>
+            <span class="s2">&quot;result; &#39;unsafe&#39;: run in place, no check; &#39;timestamp&#39;: append &quot;</span>
+            <span class="s2">&quot;the timestamp format. Replaces the $</span><span class="si">{vinc:}</span><span class="s2">/$</span><span class="si">{now:}</span><span class="s2"> resolvers.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s2">&quot;--force&quot;</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Invalidate run.complete and re-execute in place (bypasses &quot;</span>
+            <span class="s2">&quot;the default save-dir guard). Use to rerun a crashed or stale run &quot;</span>
+            <span class="s2">&quot;in its existing save_dir.&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># HPC Backend Configuration</span>
         <span class="n">backend_group</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s2">&quot;HPC Backend Configuration&quot;</span><span class="p">)</span>
@@ -280,6 +320,25 @@
 
         <span class="k">return</span> <span class="n">parser</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_flatten_overrides</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize ``--overrides``/``-o`` into a flat list of ``key=value``.</span>
+
+<span class="sd">        Because the argument uses ``nargs=&quot;+&quot;`` plus ``action=&quot;append&quot;`` to be</span>
+<span class="sd">        repeatable (``-o a=1 b=2`` and ``-o a=1 -o b=2``), argparse yields a</span>
+<span class="sd">        list of lists. This collapses it to the flat list OmegaConf expects.</span>
+<span class="sd">        Idempotent: an already-flat list of strings passes through unchanged.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">flat</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">flat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># a group produced by action=&quot;append&quot;</span>
+                <span class="n">flat</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">flat</span>
+
 <div class="viewcode-block" id="FlexLockRunner.load_config">
 <a class="viewcode-back" href="../../api.html#flexlock.FlexLockRunner.load_config">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
@@ -297,8 +356,9 @@
             <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">merge</span><span class="p">:</span>
             <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">merge</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">overrides</span><span class="p">:</span>
-            <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">overrides</span><span class="p">))</span>
+        <span class="n">overrides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flatten_overrides</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">overrides</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">overrides</span><span class="p">:</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">(</span><span class="n">overrides</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final Root Config: </span><span class="si">{</span><span class="n">cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -318,6 +378,124 @@
             <span class="n">root_cfg</span><span class="o">=</span><span class="n">root_cfg</span><span class="p">,</span>
         <span class="p">)</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_selects</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize ``--select``/``-s`` into a flat list of stage keys.</span>
+
+<span class="sd">        ``--select`` uses ``nargs=&quot;+&quot;`` so space-separated stages arrive as a</span>
+<span class="sd">        list; each entry may also be comma-separated. Returns ``[None]`` when</span>
+<span class="sd">        no selection was given (the whole root config is the node).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
+                <span class="n">part</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">part</span><span class="p">:</span>
+                    <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">keys</span> <span class="ow">or</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_multiselect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reject flags whose meaning is ambiguous with a stage *sequence*.</span>
+
+<span class="sd">        Phase 1 keeps multi-stage strictly local + sequential. After-select</span>
+<span class="sd">        overrides target *the* selected node (undefined with many), sweeps and</span>
+<span class="sd">        HPC backends need a defined cross-stage semantic that isn&#39;t wired yet.</span>
+<span class="sd">        Root-level ``-o``/``-m``/``-c`` remain valid — that&#39;s how you pass a</span>
+<span class="sd">        shared anchor like ``pipeline_dir``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">offending</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">overrides_after_select</span><span class="p">:</span>
+            <span class="n">offending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-O/--overrides-after-select&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">merge_after_select</span><span class="p">:</span>
+            <span class="n">offending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-M/--merge-after-select&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep</span> <span class="ow">or</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep_file</span> <span class="ow">or</span> <span class="n">args</span><span class="o">.</span><span class="n">sweep_key</span><span class="p">:</span>
+            <span class="n">offending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;--sweep/--sweep-file/--sweep-key&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;slurm_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;pbs_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">offending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;--slurm-config/--pbs-config&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">enqueue</span><span class="p">:</span>
+            <span class="n">offending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;--enqueue&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">edit_config</span><span class="p">:</span>
+            <span class="n">offending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-e/--edit-config&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">offending</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FlexLockValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Multi-stage selection (-s with &gt;1 stage) is incompatible with: &quot;</span>
+                <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">offending</span><span class="p">)</span>
+                <span class="o">+</span> <span class="s2">&quot;. Run these stages one at a time, or pass shared values as &quot;</span>
+                <span class="s2">&quot;root-level overrides (-o pipeline_dir=..., -m, -c).&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_node_cfg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">root_cfg</span><span class="p">,</span> <span class="n">base_cfg</span><span class="p">,</span> <span class="n">select</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Select a node from ``root_cfg`` and prepare it for submission.</span>
+
+<span class="sd">        Mirrors the single-stage path (selection → base_cfg mutual-merge →</span>
+<span class="sd">        save_dir default) so each stage in a sequence is built identically.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">select</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">node_cfg</span> <span class="o">=</span> <span class="n">select_and_freeze_root_refs</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">,</span> <span class="n">select</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">FlexLockValidationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Selection &#39;</span><span class="si">{</span><span class="n">select</span><span class="si">}</span><span class="s2">&#39; returned None.&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">node_cfg</span> <span class="o">=</span> <span class="n">root_cfg</span>
+
+        <span class="k">if</span> <span class="n">base_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_b</span> <span class="o">=</span> <span class="n">base_cfg</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">_b</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span>
+            <span class="n">node_cfg</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">_b</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_node</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="ow">or</span> <span class="n">select</span> <span class="ow">or</span> <span class="s2">&quot;exp&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_multi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">root_cfg</span><span class="p">,</span> <span class="n">base_cfg</span><span class="p">,</span> <span class="n">selects</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run a sequence of selected stages in order, locally and blocking.</span>
+
+<span class="sd">        Each stage is an independent :meth:`Project.submit` with ``wait=True``,</span>
+<span class="sd">        so downstream stages see upstream artifacts on disk (the ``pipeline_dir``</span>
+<span class="sd">        anchor pattern). Returns the list of raw stage return values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_multiselect</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">debug</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span> <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">get_env_bool</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">)</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">sel</span> <span class="ow">in</span> <span class="n">selects</span><span class="p">:</span>
+            <span class="n">node_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_node_cfg</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">root_cfg</span><span class="p">,</span> <span class="n">base_cfg</span><span class="p">,</span> <span class="n">sel</span><span class="p">)</span>
+
+            <span class="c1"># Preview flags iterate over the whole sequence rather than submit.</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">print_config</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;# --- stage: </span><span class="si">{</span><span class="n">sel</span><span class="si">}</span><span class="s2"> ---&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_print_config_and_docstring</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">dump</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;# --- stage: </span><span class="si">{</span><span class="n">sel</span><span class="si">}</span><span class="s2"> ---&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_yaml</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;[multi-select] stage &#39;</span><span class="si">{</span><span class="n">sel</span><span class="si">}</span><span class="s2">&#39; → </span><span class="si">{</span><span class="n">node_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;save_dir&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">outcome</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+                <span class="n">node_cfg</span><span class="p">,</span>
+                <span class="n">n_jobs</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">n_jobs</span><span class="p">,</span>
+                <span class="n">smart_run</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">check_exists</span><span class="p">),</span>
+                <span class="n">debug</span><span class="o">=</span><span class="n">debug</span><span class="p">,</span>
+                <span class="n">print_config</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">dry_run</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;dry_run&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+                <span class="n">note</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;note&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="n">save_dir_policy</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;save_dir_policy&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="n">force</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;force&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outcome</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">print_config</span> <span class="ow">or</span> <span class="n">args</span><span class="o">.</span><span class="n">dump</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">result</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s2">&quot;result&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;exp&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure ``cfg`` has a ``save_dir`` — fall back to ``outputs/&lt;name&gt;/&lt;timestamp&gt;``.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cfg</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -327,25 +505,6 @@
         <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span>  <span class="c1"># Force interpolation resolution</span>
         <span class="k">return</span> <span class="n">cfg</span>
 
-<div class="viewcode-block" id="FlexLockRunner.check_if_exists">
-<a class="viewcode-back" href="../../api.html#flexlock.FlexLockRunner.check_if_exists">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">check_if_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if a run with the same configuration already exists.&quot;&quot;&quot;</span>
-        <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">))</span>
-        <span class="n">lock_file</span> <span class="o">=</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">lock_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="c1"># Load existing run data</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">lock_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">existing_data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-
-        <span class="c1"># Compare with current configuration</span>
-        <span class="n">diff</span> <span class="o">=</span> <span class="n">RunDiff</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">existing_data</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">diff</span><span class="o">.</span><span class="n">is_match</span><span class="p">()</span></div>
-
-
 <div class="viewcode-block" id="FlexLockRunner.run">
 <a class="viewcode-back" href="../../api.html#flexlock.FlexLockRunner.run">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cli_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base_cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -353,6 +512,8 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Project</span>
 
         <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">cli_args</span><span class="p">)</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">overrides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flatten_overrides</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">overrides</span><span class="p">)</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">overrides_after_select</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flatten_overrides</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">overrides_after_select</span><span class="p">)</span>
 
         <span class="c1"># `--help` / `-h` is registered with action=&#39;store_true&#39; (we own</span>
         <span class="c1"># help formatting), so argparse parses but doesn&#39;t auto-exit. We</span>
@@ -365,13 +526,20 @@
         <span class="n">root_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_config</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded root config: </span><span class="si">{</span><span class="n">root_cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
+        <span class="c1"># Normalize -s into a list of stage keys. Several stages run in order</span>
+        <span class="c1"># via the multi-stage path; a single stage keeps the original flow.</span>
+        <span class="n">selects</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_selects</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">select</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">selects</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_multi</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">root_cfg</span><span class="p">,</span> <span class="n">base_cfg</span><span class="p">,</span> <span class="n">selects</span><span class="p">)</span>
+        <span class="n">select</span> <span class="o">=</span> <span class="n">selects</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
         <span class="c1"># Selection happens at the node level — freezes root-scope refs.</span>
-        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">select</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">select</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">node_cfg</span> <span class="o">=</span> <span class="n">select_and_freeze_root_refs</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">select</span><span class="p">)</span>
+                <span class="n">node_cfg</span> <span class="o">=</span> <span class="n">select_and_freeze_root_refs</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">,</span> <span class="n">select</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">FlexLockValidationError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Selection &#39;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">select</span><span class="si">}</span><span class="s2">&#39; returned None.&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Selection &#39;</span><span class="si">{</span><span class="n">select</span><span class="si">}</span><span class="s2">&#39; returned None.&quot;</span>
                 <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
             <span class="c1"># Warn when a -o key also exists in the selected subtree — the</span>
             <span class="c1"># override landed on the root, not the stage. Root-only anchors</span>
@@ -383,7 +551,7 @@
                     <span class="k">if</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">node_cfg</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">_missing</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">_missing</span><span class="p">:</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                             <span class="sa">f</span><span class="s2">&quot;&#39;-o </span><span class="si">{</span><span class="n">kv</span><span class="si">}</span><span class="s2">&#39; was applied to the root config, but key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
-                            <span class="sa">f</span><span class="s2">&quot;also exists in the selected node &#39;</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">select</span><span class="si">}</span><span class="s2">&#39; — &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;also exists in the selected node &#39;</span><span class="si">{</span><span class="n">select</span><span class="si">}</span><span class="s2">&#39; — &quot;</span>
                             <span class="sa">f</span><span class="s2">&quot;your override did NOT reach the stage. &quot;</span>
                             <span class="sa">f</span><span class="s2">&quot;Use &#39;-O </span><span class="si">{</span><span class="n">kv</span><span class="si">}</span><span class="s2">&#39; to override the stage directly. &quot;</span>
                             <span class="sa">f</span><span class="s2">&quot;See docs/cli_reference.md § Configuration Overrides.&quot;</span>
@@ -453,13 +621,28 @@
         <span class="p">)</span>
 
         <span class="c1"># Honour FLEXLOCK_DEBUG env var as a CLI-side debug toggle.</span>
-        <span class="n">debug</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="s2">&quot;false&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="s2">&quot;1&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;true&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">debug</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">debug</span> <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">get_env_bool</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_DEBUG&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># Hand off to the single execution kernel.</span>
         <span class="n">proj</span> <span class="o">=</span> <span class="n">Project</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">)</span>
+
+        <span class="c1"># --check: side-effect-free preflight resolution, then exit.</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">check</span><span class="p">:</span>
+            <span class="n">errors</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+                <span class="n">node_cfg</span><span class="p">,</span>
+                <span class="n">sweep</span><span class="o">=</span><span class="n">sweep_tasks</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">sweep_target</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sweep_target</span><span class="p">,</span>
+                <span class="n">overrides</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">overrides_after_select</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">merge</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">merge_after_select</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[flexlock] check OK — all interpolations resolve.&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[flexlock] check FAILED — </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span><span class="si">}</span><span class="s2"> unresolved interpolation(s):&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
+                <span class="n">where</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="s2">&quot;item&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;sweep item </span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">where</span><span class="si">}{</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;full_key&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">outcome</span> <span class="o">=</span> <span class="n">proj</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
             <span class="n">node_cfg</span><span class="p">,</span>
             <span class="n">sweep</span><span class="o">=</span><span class="n">sweep_tasks</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
@@ -474,6 +657,9 @@
             <span class="n">debug</span><span class="o">=</span><span class="n">debug</span><span class="p">,</span>
             <span class="n">print_config</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">print_config</span><span class="p">,</span>
             <span class="n">dry_run</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;dry_run&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="n">note</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;note&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">save_dir_policy</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;save_dir_policy&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">force</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">&quot;force&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
         <span class="p">)</span>
 
         <span class="c1"># Back-compat: the runner historically returned the user function&#39;s</span>

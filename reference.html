@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reference &mdash; FlexLock 0.5.0 documentation</title>
+  <title>Reference &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/reference.html" />
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=70f82a29"></script>
+      <script src="_static/documentation_options.js?v=cce5339e"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -50,8 +50,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -69,8 +69,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#timestamp-format">Timestamp Format</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#logging">Logging</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#debug-mode">Debug Mode</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#display">Display</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#validation">Validation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#boolean-values">Boolean Values</a></li>
 </ul>
 </li>
@@ -87,6 +85,13 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#catching-multiple-exceptions">Catching Multiple Exceptions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#on-disk-run-files">On-Disk Run Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#run-lock-yaml"><code class="docutils literal notranslate"><span class="pre">run.lock</span></code> (YAML)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-complete-json"><code class="docutils literal notranslate"><span class="pre">run.complete</span></code> (JSON)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-error-json-schema-v1"><code class="docutils literal notranslate"><span class="pre">run.error</span></code> (JSON, schema v1)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#results-json-json"><code class="docutils literal notranslate"><span class="pre">results.json</span></code> (JSON)</a></li>
 </ul>
 </li>
 </ul>
@@ -177,8 +182,32 @@
 <td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
 <td><p>Warn when <code class="docutils literal notranslate"><span class="pre">smart_run=True</span></code> but <code class="docutils literal notranslate"><span class="pre">search_dirs=None</span></code></p></td>
 </tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_INDEX</span></code></p></td>
+<td><p>path</p></td>
+<td><p><em>(auto)</em></p></td>
+<td><p>Explicit path to the project-wide fingerprint index DB. Overrides auto-discovery.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_INDEX_FALLBACK</span></code></p></td>
+<td><p>bool</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
+<td><p>On an index miss, fall back to the legacy <code class="docutils literal notranslate"><span class="pre">**/run.lock</span></code> glob scan and backfill the index on a hit.</p></td>
+</tr>
 </tbody>
 </table>
+<p><strong>Project-wide fingerprint index.</strong> <code class="docutils literal notranslate"><span class="pre">smart_run</span></code> cache hits are served from a
+derived SQLite index that maps a run <em>fingerprint</em> (config + code tree hashes +
+data hashes) to where a completed run lives — a <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> directory <strong>or</strong> a
+sweep task <code class="docutils literal notranslate"><span class="pre">(task_db,</span> <span class="pre">task_id)</span></code>. This makes sweep items first-class: a config
+first run as a sweep task is a cache hit when re-run serially, and vice-versa.
+Only successful (<code class="docutils literal notranslate"><span class="pre">status='done'</span></code>) runs are ever served.</p>
+<p>The index is a <em>derived cache</em> — <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> stays authoritative and the index
+can always be deleted and rebuilt with <code class="docutils literal notranslate"><span class="pre">flexlock</span> <span class="pre">reindex</span> <span class="pre">&lt;dir&gt;</span></code>. Its location is
+resolved as: <code class="docutils literal notranslate"><span class="pre">$FLEXLOCK_INDEX</span></code> → the nearest <code class="docutils literal notranslate"><span class="pre">.flexlock/index.db</span></code> walking up
+from each <code class="docutils literal notranslate"><span class="pre">search_dir</span></code> (skipping <code class="docutils literal notranslate"><span class="pre">$HOME</span></code>/tmp/filesystem-root) →
+<code class="docutils literal notranslate"><span class="pre">&lt;results_root&gt;/.flexlock/index.db</span></code>. For hits to land, the read and write paths
+must resolve to the same file — a project wrapper should set <code class="docutils literal notranslate"><span class="pre">search_dirs</span></code> (and,
+if needed, <code class="docutils literal notranslate"><span class="pre">$FLEXLOCK_INDEX</span></code>) so they agree. Auto-indexing is skipped when a run
+has no project context (its index would sit directly in <code class="docutils literal notranslate"><span class="pre">$HOME</span></code>/tmp/root).</p>
 </section>
 <section id="data-hashing">
 <h3>Data Hashing<a class="headerlink" href="#data-hashing" title="Link to this heading"></a></h3>
@@ -194,12 +223,12 @@
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_CACHE</span></code></p></td>
 <td><p>path</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">~/.cache</span></code></p></td>
-<td><p>Base directory for FlexLock cache</p></td>
+<td><p>Base dir for the data-hash cache (stored under <code class="docutils literal notranslate"><span class="pre">&lt;FLEXLOCK_CACHE&gt;/flexlock/hashes_v&lt;N&gt;.db</span></code>)</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_NO_CACHE</span></code></p></td>
 <td><p>bool</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
-<td><p>Disable hash caching</p></td>
+<td><p>Force-disable hash caching (overrides a <code class="docutils literal notranslate"><span class="pre">use_cache=True</span></code> argument; never re-enables <code class="docutils literal notranslate"><span class="pre">use_cache=False</span></code>)</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_DIR_FILE_LIMIT</span></code></p></td>
 <td><p>int</p></td>
@@ -286,44 +315,6 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">pdb</span></code>: Always use PDB post-mortem debugger</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">inject</span></code>: Always inject locals into caller’s namespace (for notebooks)</p></li>
 </ul>
-</section>
-<section id="display">
-<h3>Display<a class="headerlink" href="#display" title="Link to this heading"></a></h3>
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>Variable</p></th>
-<th class="head"><p>Type</p></th>
-<th class="head"><p>Default</p></th>
-<th class="head"><p>Description</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_MAX_DISPLAY_ITEMS</span></code></p></td>
-<td><p>int</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">10</span></code></p></td>
-<td><p>Maximum items to show in summaries</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="validation">
-<h3>Validation<a class="headerlink" href="#validation" title="Link to this heading"></a></h3>
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>Variable</p></th>
-<th class="head"><p>Type</p></th>
-<th class="head"><p>Default</p></th>
-<th class="head"><p>Description</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FLEXLOCK_STRICT_VALIDATION</span></code></p></td>
-<td><p>bool</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">true</span></code></p></td>
-<td><p>Enable strict configuration validation</p></td>
-</tr>
-</tbody>
-</table>
 </section>
 <section id="boolean-values">
 <h3>Boolean Values<a class="headerlink" href="#boolean-values" title="Link to this heading"></a></h3>
@@ -500,6 +491,59 @@ that example would simply behave like <code class="docutils literal notranslate"
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Other FlexLock error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+</section>
+</section>
+<section id="on-disk-run-files">
+<h2>On-Disk Run Files<a class="headerlink" href="#on-disk-run-files" title="Link to this heading"></a></h2>
+<p>A run directory is owned by <code class="docutils literal notranslate"><span class="pre">RunRecord</span></code> (<code class="docutils literal notranslate"><span class="pre">flexlock/run_record.py</span></code>). Every file is
+written atomically (temp file + <code class="docutils literal notranslate"><span class="pre">os.replace</span></code>).</p>
+<section id="run-lock-yaml">
+<h3><code class="docutils literal notranslate"><span class="pre">run.lock</span></code> (YAML)<a class="headerlink" href="#run-lock-yaml" title="Link to this heading"></a></h3>
+<p>The snapshot written <em>before</em> execution — the human-editable record. Top-level
+keys: <code class="docutils literal notranslate"><span class="pre">timestamp</span></code>, <code class="docutils literal notranslate"><span class="pre">config</span></code> (resolved), and optionally <code class="docutils literal notranslate"><span class="pre">note</span></code>, <code class="docutils literal notranslate"><span class="pre">repos</span></code> (git
+tree/commit per tracked repo), <code class="docutils literal notranslate"><span class="pre">data</span></code> (data hashes), <code class="docutils literal notranslate"><span class="pre">lineage</span></code> (upstream runs),
+<code class="docutils literal notranslate"><span class="pre">fingerprint</span></code>, <code class="docutils literal notranslate"><span class="pre">parent</span></code>.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">timestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2026-07-10T10:00:00&quot;</span>
+<span class="nt">note</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;baseline</span><span class="nv"> </span><span class="s">before</span><span class="nv"> </span><span class="s">lr</span><span class="nv"> </span><span class="s">sweep&quot;</span><span class="w">     </span><span class="c1"># only present when --note / note= was passed</span>
+<span class="nt">config</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">_target_</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myproject.train.train</span>
+<span class="w">  </span><span class="nt">save_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">outputs/exp/train</span>
+<span class="w">  </span><span class="nt">lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="nt">repos</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">main</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">commit</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;abc…&quot;</span><span class="p p-Indicator">,</span><span class="nt"> tree</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;def…&quot;</span><span class="p p-Indicator">,</span><span class="nt"> path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/repo&quot;</span><span class="p p-Indicator">,</span><span class="nt"> is_dirty</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">}</span>
+<span class="nt">data</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">train_csv</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;xxh64:…&quot;</span><span class="p p-Indicator">}</span>
+<span class="nt">lineage</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">extract</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/abs/outputs/exp/extract&quot;</span><span class="p p-Indicator">,</span><span class="nt"> info</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nv">...</span><span class="p p-Indicator">}}</span>
+<span class="nt">fingerprint</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sha256:…&quot;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">note</span></code> is metadata only — it is excluded from the fingerprint (which hashes
+<code class="docutils literal notranslate"><span class="pre">{config,</span> <span class="pre">repos,</span> <span class="pre">data}</span></code>) and ignored by <code class="docutils literal notranslate"><span class="pre">RunDiff</span></code>, so it never affects caching.</p>
+</section>
+<section id="run-complete-json">
+<h3><code class="docutils literal notranslate"><span class="pre">run.complete</span></code> (JSON)<a class="headerlink" href="#run-complete-json" title="Link to this heading"></a></h3>
+<p>Success marker written after the user function returns. A cache hit requires
+<em>both</em> <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> and <code class="docutils literal notranslate"><span class="pre">run.complete</span></code>. Writing it also clears any stale
+<code class="docutils literal notranslate"><span class="pre">run.error</span></code>.</p>
+</section>
+<section id="run-error-json-schema-v1">
+<h3><code class="docutils literal notranslate"><span class="pre">run.error</span></code> (JSON, schema v1)<a class="headerlink" href="#run-error-json-schema-v1" title="Link to this heading"></a></h3>
+<p>Failure sidecar written next to <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> when the user function raises. Mirrors
+the traceback the task DB also stores, so triage needs no sqlite. Capturing it
+never masks the original exception (which still propagates unwrapped).</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;exc_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ValueError&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;exc_message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">&quot;traceback&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;full formatted chain&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ISO-8601&quot;</span><span class="p">,</span>
+<span class="w"> </span><span class="nt">&quot;task_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;optional (sweep)&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;node&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;optional (sweep)&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">KeyboardInterrupt</span></code> is deliberately not captured — a bare <code class="docutils literal notranslate"><span class="pre">run.lock</span></code> with no
+<code class="docutils literal notranslate"><span class="pre">run.complete</span></code>/<code class="docutils literal notranslate"><span class="pre">run.error</span></code> is the interrupted signature.</p>
+</section>
+<section id="results-json-json">
+<h3><code class="docutils literal notranslate"><span class="pre">results.json</span></code> (JSON)<a class="headerlink" href="#results-json-json" title="Link to this heading"></a></h3>
+<p>The user function’s return payload (<code class="docutils literal notranslate"><span class="pre">{&quot;result&quot;:</span> <span class="pre">value}</span></code> when it isn’t a dict).</p>
+<p>For the JSON contracts of the query commands (<code class="docutils literal notranslate"><span class="pre">show</span></code>, <code class="docutils literal notranslate"><span class="pre">graph</span></code>, <code class="docutils literal notranslate"><span class="pre">why</span></code>), see
+<a class="reference internal" href="agentic_workflows.html"><span class="std std-doc">Agentic Workflows</span></a>.</p>
 </section>
 </section>
 </section>

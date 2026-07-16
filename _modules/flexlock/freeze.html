@@ -1,0 +1,418 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flexlock.freeze &mdash; FlexLock 0.8.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+    <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/freeze.html" />
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            FlexLock
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../philosophy.html">Philosophy &amp; Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../python_api.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../resolvers.html">OmegaConf Resolvers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mlflow_integration.html">MLflow Integration Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">FlexLock Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">FlexLock</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../flexlock.html">flexlock</a></li>
+      <li class="breadcrumb-item active">flexlock.freeze</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for flexlock.freeze</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Partial-freeze of OmegaConf interpolations when detaching a sub-node.</span>
+
+<span class="sd">``select_and_freeze_root_refs`` selects a sub-node out of a root config and</span>
+<span class="sd">makes it *self-contained* — pickle-able, mergeable, and safe to hand to a</span>
+<span class="sd">worker — by resolving the references that point *outside* the sub-tree while</span>
+<span class="sd">preserving the ones that must stay live.</span>
+
+<span class="sd">OmegaConf resolves interpolations lazily against the config&#39;s root at access</span>
+<span class="sd">time, so a detached node loses every ``${...}`` that pointed to the root. But</span>
+<span class="sd">plain ``to_container(resolve=True)`` is too blunt: it would also fire resolver</span>
+<span class="sd">calls (``${vinc:}``, ``${latest:}``, ``${run_lock:}``) that must run *later*,</span>
+<span class="sd">on the worker, at submit time. So this module walks the ``${...}`` grammar and</span>
+<span class="sd">decides, per interpolation, whether to freeze or preserve it:</span>
+
+<span class="sd">- **Simple refs outside the sub-tree** (``${root_anchor}``, ``${a.b}``) are</span>
+<span class="sd">  resolved against the root by OmegaConf itself — following multi-hop chains,</span>
+<span class="sd">  mixed strings (``${pipeline_dir}/split``), and nested resolver-arg refs — and</span>
+<span class="sd">  baked to concrete values. Delegating to OmegaConf (rather than hand-rolling a</span>
+<span class="sd">  chain-follower) is what makes the historical ``_resolve_in_root`` class of</span>
+<span class="sd">  bugs structurally impossible.</span>
+<span class="sd">- **Resolver calls** (``${name:args}``) are preserved as frozen call strings</span>
+<span class="sd">  (their arguments are pre-resolved by OmegaConf under the freeze stubs), so</span>
+<span class="sd">  they fire later at submit/stage time.</span>
+<span class="sd">- **Relative refs** (``${.foo}``) and **refs inside the sub-tree** are preserved</span>
+<span class="sd">  verbatim.</span>
+
+<span class="sd">The only public entry points are :func:`select_and_freeze_root_refs` and</span>
+<span class="sd">:func:`freeze_deferred`; everything else is a private helper for the scan.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span>
+
+<span class="c1"># Sentinel: an external ref that OmegaConf could not resolve from the root.</span>
+<span class="n">_UNRESOLVED</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">freeze_deferred</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="s2">&quot;DictConfig | ListConfig&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DictConfig | ListConfig&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Eager-resolve every interpolation except the deferred resolvers.</span>
+
+<span class="sd">    Deep-copies ``cfg`` (detaching it from any parent), then resolves it under</span>
+<span class="sd">    :func:`flexlock.resolvers.deferred_stubbed`. OmegaConf resolves all simple</span>
+<span class="sd">    refs, cross-tree refs, multi-hop chains, mixed strings, and relative refs</span>
+<span class="sd">    itself; the deferred resolvers (``run_lock``/``latest``) collapse to</span>
+<span class="sd">    self-contained call strings that fire later at stage start. The result is</span>
+<span class="sd">    a plain config of concrete values plus frozen deferred call strings, safe</span>
+<span class="sd">    to serialize with ``resolve=False``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.resolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">deferred_stubbed</span>
+
+    <span class="n">detached</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">deferred_stubbed</span><span class="p">():</span>
+        <span class="n">OmegaConf</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">detached</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">detached</span>
+
+
+<div class="viewcode-block" id="select_and_freeze_root_refs">
+<a class="viewcode-back" href="../../api.html#flexlock.select_and_freeze_root_refs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">select_and_freeze_root_refs</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DictConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select a sub-node from `root_cfg` and freeze its root-scope references.</span>
+
+<span class="sd">    The returned config is self-contained: it can be pickled, round-tripped</span>
+<span class="sd">    through ``OmegaConf.to_container``/``OmegaConf.create``, and merged with</span>
+<span class="sd">    other configs without losing context.</span>
+
+<span class="sd">    Three kinds of interpolations are handled distinctly:</span>
+
+<span class="sd">    - **Simple refs to keys outside the sub-tree** (e.g. ``${root_anchor}``)</span>
+<span class="sd">      are resolved against ``root_cfg`` (by OmegaConf) and substituted as</span>
+<span class="sd">      concrete values. If the target is itself a resolver call</span>
+<span class="sd">      (``${vinc:}``/``${run_lock:}``), the frozen call string is substituted so</span>
+<span class="sd">      the resolver still fires later.</span>
+<span class="sd">    - **Resolver calls** (``${name:args}``) are preserved as frozen call</span>
+<span class="sd">      strings, with any nested simple refs in their args resolved.</span>
+<span class="sd">    - **Relative refs** (``${.foo}``) and **refs to keys inside the sub-tree**</span>
+<span class="sd">      are preserved verbatim.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        root_cfg: The full root configuration.</span>
+<span class="sd">        key: Dot-path to the sub-node. If ``None``, returns ``root_cfg``</span>
+<span class="sd">            unchanged.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A new ``DictConfig`` (or the same root if ``key is None``).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        KeyError: If ``key`` is not found in ``root_cfg``.</span>
+<span class="sd">        UnresolvedInterpolationError: If the sub-node references a key that</span>
+<span class="sd">            exists in neither the sub-tree nor the root.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">root_cfg</span>
+
+    <span class="n">sub_node</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sub_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; not found in config&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sub_node</span><span class="p">,</span> <span class="p">(</span><span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">sub_node</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.resolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">frozen_resolvers</span>
+
+    <span class="n">sub_raw</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">sub_node</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># A detached working copy of the whole root. External refs are resolved</span>
+    <span class="c1"># against it by OmegaConf; the sub-tree stays attached for context. Stub</span>
+    <span class="c1"># every resolver so ${name:args} calls freeze to call strings instead of</span>
+    <span class="c1"># firing at selection time.</span>
+    <span class="n">work</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">root_cfg</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">frozen_resolvers</span><span class="p">():</span>
+        <span class="n">transformed</span> <span class="o">=</span> <span class="n">_freeze_walk</span><span class="p">(</span><span class="n">sub_raw</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">transformed</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_freeze_walk</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">_freeze_walk</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_freeze_walk</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;${&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+        <span class="n">whole</span> <span class="o">=</span> <span class="n">_whole_string_interp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">whole</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_freeze_whole_string</span><span class="p">(</span><span class="n">whole</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">,</span> <span class="n">fallback_str</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_freeze_embedded</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="c1"># --- string-level scan helpers ------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_whole_string_interp</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str | None&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If ``s`` is exactly ``${...}`` (one balanced block, nothing else), return</span>
+<span class="sd">    the inner expression. Otherwise return None.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;${&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">found</span> <span class="o">=</span> <span class="n">_find_balanced_interp</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">found</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">found</span>
+    <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">end</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">s</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_balanced_interp</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;tuple[int, int] | None&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find the next ``${...}`` block in ``s`` starting at ``start``. Returns</span>
+<span class="sd">    ``(open_idx, close_idx_exclusive)`` or ``None``. Handles nested ``${...}``.&quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;${&quot;</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="n">i</span>
+    <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="n">j</span> <span class="p">:</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;${&quot;</span><span class="p">:</span>
+            <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">j</span> <span class="o">+=</span> <span class="mi">2</span>
+        <span class="k">elif</span> <span class="n">s</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;}&quot;</span><span class="p">:</span>
+            <span class="n">depth</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_top_level_colon</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;int | None&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;In the content between ``${`` and ``}``, find the first ``:`` not nested</span>
+<span class="sd">    inside a ``${...}`` block. Returns the index, or ``None`` if no colon.&quot;&quot;&quot;</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">inner</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;${&quot;</span><span class="p">:</span>
+            <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;}&quot;</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">depth</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;:&quot;</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">i</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_path_exists</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dotted</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">d</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">dotted</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">cur</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_raw</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dotted</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">d</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">dotted</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">cur</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">cur</span>
+
+
+<span class="c1"># --- freezing --------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_external</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">work</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve a simple ref against the root via OmegaConf.</span>
+
+<span class="sd">    OmegaConf follows the full chain (multi-hop, mixed strings, nested</span>
+<span class="sd">    resolver-arg refs). Under the freeze stubs, a target that is itself a</span>
+<span class="sd">    resolver call comes back as a frozen call string. Returns ``_UNRESOLVED``</span>
+<span class="sd">    when the ref is absent from the root.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">work</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">_UNRESOLVED</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">val</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_internal</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A simple ref is *internal* (preserve verbatim) when it resolves within</span>
+<span class="sd">    the sub-tree and isn&#39;t self-shadowing (its own value isn&#39;t ``${ref}``).&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_path_exists</span><span class="p">(</span><span class="n">sub_raw</span><span class="p">,</span> <span class="n">ref</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">sub_val</span> <span class="o">=</span> <span class="n">_get_raw</span><span class="p">(</span><span class="n">sub_raw</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">sub_val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="sa">f</span><span class="s2">&quot;$</span><span class="se">{{</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="se">}}</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">sub_val</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_unresolved_error</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnresolvedInterpolationError</span>
+
+    <span class="n">first</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">raise</span> <span class="n">UnresolvedInterpolationError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Interpolation $</span><span class="se">{{</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="se">}}</span><span class="s2"> could not be resolved: &#39;</span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2">&#39; not &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;found in the sub-tree or root config. Set it via overrides= or &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;OmegaConf.update(proj.defaults, &#39;</span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2">&#39;, ...).&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_freeze_whole_string</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">,</span> <span class="n">fallback_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Freeze a whole-string interpolation ``${inner}``. Preserves the target&#39;s</span>
+<span class="sd">    native type for simple external refs (e.g. ``${batch_size}`` → int).&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">_find_top_level_colon</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Resolver call — preserve as a frozen call string.</span>
+        <span class="k">return</span> <span class="s2">&quot;${&quot;</span> <span class="o">+</span> <span class="n">_freeze_resolver_args</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>
+    <span class="k">if</span> <span class="n">inner</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fallback_str</span>  <span class="c1"># relative ref — resolved later at access site</span>
+    <span class="k">if</span> <span class="n">_is_internal</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fallback_str</span>  <span class="c1"># intra-sub-tree ref — resolves after detachment</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">_resolve_external</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="n">_UNRESOLVED</span><span class="p">:</span>
+        <span class="n">_unresolved_error</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">val</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_freeze_embedded</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Freeze every ``${...}`` block embedded in a larger string.&quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="n">_find_balanced_interp</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">found</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">pos</span><span class="p">:])</span>
+            <span class="k">break</span>
+        <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">found</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">pos</span><span class="p">:</span><span class="n">start</span><span class="p">])</span>
+        <span class="n">inner</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">start</span> <span class="o">+</span> <span class="mi">2</span> <span class="p">:</span> <span class="n">end</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_freeze_one_block</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">))</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">end</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_freeze_one_block</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Freeze one ``${inner}`` block, returning the ``${...}`` text to embed.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">_find_top_level_colon</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;${&quot;</span> <span class="o">+</span> <span class="n">_freeze_resolver_args</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>
+    <span class="k">if</span> <span class="n">inner</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;${&quot;</span> <span class="o">+</span> <span class="n">inner</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>  <span class="c1"># relative ref — preserved</span>
+    <span class="k">if</span> <span class="n">_is_internal</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;${&quot;</span> <span class="o">+</span> <span class="n">inner</span> <span class="o">+</span> <span class="s2">&quot;}&quot;</span>  <span class="c1"># intra-sub-tree ref — preserved</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">_resolve_external</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="n">_UNRESOLVED</span><span class="p">:</span>
+        <span class="n">_unresolved_error</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;null&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_freeze_resolver_args</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Freeze the ``name:args`` body of a resolver call — the call is preserved,</span>
+<span class="sd">    nested simple refs in the args are frozen.&quot;&quot;&quot;</span>
+    <span class="n">colon</span> <span class="o">=</span> <span class="n">_find_top_level_colon</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">inner</span><span class="p">[:</span><span class="n">colon</span><span class="p">]</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">inner</span><span class="p">[</span><span class="n">colon</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
+    <span class="k">return</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;:&quot;</span> <span class="o">+</span> <span class="n">_freeze_embedded</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">sub_raw</span><span class="p">,</span> <span class="n">work</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, FlexLock Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

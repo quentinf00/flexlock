@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.parallel &mdash; FlexLock 0.4.0 documentation</title>
+  <title>flexlock.parallel &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/parallel.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=1437fa6d"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,7 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -80,6 +81,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../flexlock.html">flexlock</a></li>
       <li class="breadcrumb-item active">flexlock.parallel</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -95,7 +97,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">queue_tasks</span><span class="p">,</span> <span class="n">pending_count</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">queue_tasks</span><span class="p">,</span> <span class="n">pending_count</span><span class="p">,</span> <span class="n">get_status_counts_by_tag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">_hash_task</span> <span class="k">as</span> <span class="n">_taskdb_hash_task</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.worker</span><span class="w"> </span><span class="kn">import</span> <span class="n">worker_loop</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.backends.slurm</span><span class="w"> </span><span class="kn">import</span> <span class="n">SlurmBackend</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.backends.pbs</span><span class="w"> </span><span class="kn">import</span> <span class="n">PBSBackend</span>
@@ -134,6 +138,16 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_default_tag</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deterministic 12-hex-char tag for a sweep.</span>
+
+<span class="sd">    Stable across re-runs of the same (tasks, save_dir) pair, so resume-aware</span>
+<span class="sd">    INSERT OR IGNORE dedup works correctly when a sweep is restarted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">task_ids</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_taskdb_hash_task</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task_ids</span><span class="si">}{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">12</span><span class="p">]</span>
+
+
 <div class="viewcode-block" id="ParallelExecutor">
 <a class="viewcode-back" href="../../api.html#flexlock.parallel.ParallelExecutor">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ParallelExecutor</span><span class="p">:</span>
@@ -155,6 +169,8 @@
         <span class="n">pbs_config</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">local_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">isolated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes the ParallelExecutor.</span>
 
@@ -170,6 +186,11 @@
 <span class="sd">            isolated: If True, always run in a spawned subprocess even when n_jobs=1.</span>
 <span class="sd">                Use this for stages that initialise GPU/CUDA so that the CUDA context</span>
 <span class="sd">                is confined to the child and never leaks into the parent process.</span>
+<span class="sd">            tag: Tag scoping this sweep&#39;s rows in the shared task DB.  When ``None``</span>
+<span class="sd">                a deterministic hash of the task list + save_dir is used so that</span>
+<span class="sd">                re-runs reuse the same tag (resume-safe).  Pass an explicit human-</span>
+<span class="sd">                readable string (e.g. ``&quot;extract&quot;``) to target this sweep from the</span>
+<span class="sd">                ``flexlock-worker --tags`` CLI.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="n">tasks</span>
@@ -178,26 +199,41 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">n_jobs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">local_workers</span> <span class="o">=</span> <span class="n">local_workers</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">isolated</span> <span class="o">=</span> <span class="n">isolated</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">note</span> <span class="o">=</span> <span class="n">note</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock.tasks.db&quot;</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_status_counts</span>
-            <span class="n">existing</span> <span class="o">=</span> <span class="n">get_status_counts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Task DB already exists: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;  Existing tasks: </span><span class="si">{</span><span class="nb">dict</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;  New sweep has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks — tasks with matching hashes &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;will be silently skipped (INSERT OR IGNORE).</span><span class="se">\n</span><span class="s2">&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;  If this is a different sweep reusing the same save_dir, &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;consider using a per-sweep subdirectory to avoid DB collisions.&quot;</span>
-            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tag</span> <span class="o">=</span> <span class="n">tag</span> <span class="k">if</span> <span class="n">tag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_default_tag</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
 
-        <span class="n">queue_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tasks</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Queued </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">existing_by_tag</span> <span class="o">=</span> <span class="n">get_status_counts_by_tag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+            <span class="n">existing_tags</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">existing_by_tag</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">existing_tags</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing_tags</span><span class="p">:</span>
+                <span class="c1"># Different sweeps coexisting in one DB — expected, log at INFO.</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Task DB already exists with tag(s) </span><span class="si">{</span><span class="n">existing_tags</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;  New sweep (tag=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="si">!r}</span><span class="s2">) will add </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows alongside them.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag</span> <span class="ow">in</span> <span class="n">existing_tags</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Resuming sweep (tag=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="si">!r}</span><span class="s2">) in existing DB: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;  Tasks with matching hashes will be skipped (INSERT OR IGNORE).&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Task DB already exists: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;  New sweep (tag=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="si">!r}</span><span class="s2">) has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks — tasks with &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;matching hashes will be silently skipped (INSERT OR IGNORE).</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;  If this is a different sweep reusing the same save_dir, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;consider using a per-sweep subdirectory to avoid DB collisions.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="n">queue_tasks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Queued </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks (tag=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="si">!r}</span><span class="s2">)&quot;</span><span class="p">)</span>
 
         <span class="c1"># ----- backend -----</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># set in run() once an HPC job is submitted</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">slurm_config</span><span class="p">:</span>
             <span class="n">p</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">slurm_config</span><span class="p">),</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -209,7 +245,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_locally</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">num_workers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_workers</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_jobs</span>
         <span class="k">if</span> <span class="n">num_workers</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">isolated</span><span class="p">:</span>
-            <span class="n">worker_loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+            <span class="n">worker_loop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span>
+                        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Use &#39;spawn&#39; instead of the default &#39;fork&#39; to avoid inheriting</span>
             <span class="c1"># GPU/CUDA contexts and threading locks from the parent process.</span>
@@ -219,14 +256,37 @@
             <span class="n">procs</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">ctx</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span>
                     <span class="n">target</span><span class="o">=</span><span class="n">worker_loop</span><span class="p">,</span>
-                    <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">),</span>
+                    <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span>
+                          <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">]),</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_workers</span><span class="p">)</span>
             <span class="p">]</span>
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">:</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">:</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">:</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">mark_orphans_interrupted</span>
+
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Keyboard interrupt — terminating worker processes. &quot;</span>
+                    <span class="s2">&quot;In-flight tasks will be marked interrupted.&quot;</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">:</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">:</span>
+                    <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+                <span class="c1"># Force-kill any that didn&#39;t exit cleanly.</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">procs</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
+                        <span class="n">p</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+                        <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+                <span class="c1"># Workers killed via SIGTERM don&#39;t run their own interrupt</span>
+                <span class="c1"># handler, so reconcile here: any task still &#39;running&#39; is</span>
+                <span class="c1"># owned by a now-dead worker.</span>
+                <span class="n">mark_orphans_interrupted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">])</span>
+                <span class="k">raise</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_wait_for_completion</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">poll_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span>
@@ -244,54 +304,90 @@
         <span class="k">if</span> <span class="n">poll_interval</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">poll_interval</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">POLL_INTERVAL</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_status_counts</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_status_counts</span><span class="p">,</span> <span class="n">mark_orphans_interrupted</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Waiting for tasks to complete...&quot;</span><span class="p">)</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">last_log_time</span> <span class="o">=</span> <span class="n">start_time</span>
 
+        <span class="n">job_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">job</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="c1"># Require the job to look terminal on this many consecutive polls</span>
+        <span class="c1"># before reconciling, so a single racy/transient status read (e.g.</span>
+        <span class="c1"># squeue+sacct both momentarily blank right after submission, or a</span>
+        <span class="c1"># qstat hiccup) can never reap a healthy job.</span>
+        <span class="n">terminal_confirmations</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">TERMINAL_DEBOUNCE</span> <span class="o">=</span> <span class="mi">3</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-                <span class="c1"># Get current status</span>
-                <span class="n">status_counts</span> <span class="o">=</span> <span class="n">get_status_counts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+                <span class="n">status_counts</span> <span class="o">=</span> <span class="n">get_status_counts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">])</span>
                 <span class="n">pending</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pending&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
                 <span class="n">running</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;running&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
                 <span class="n">done</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;done&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
                 <span class="n">failed</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-                <span class="n">total</span> <span class="o">=</span> <span class="n">pending</span> <span class="o">+</span> <span class="n">running</span> <span class="o">+</span> <span class="n">done</span> <span class="o">+</span> <span class="n">failed</span>
+                <span class="n">interrupted</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;interrupted&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">total</span> <span class="o">=</span> <span class="n">pending</span> <span class="o">+</span> <span class="n">running</span> <span class="o">+</span> <span class="n">done</span> <span class="o">+</span> <span class="n">failed</span> <span class="o">+</span> <span class="n">interrupted</span>
 
-                <span class="c1"># Check if complete</span>
+                <span class="c1"># All terminal — nothing left in flight.</span>
                 <span class="k">if</span> <span class="n">pending</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">running</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">failed</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;All tasks completed with </span><span class="si">{</span><span class="n">failed</span><span class="si">}</span><span class="s2"> failures&quot;</span><span class="p">)</span>
+                    <span class="n">issues</span> <span class="o">=</span> <span class="n">failed</span> <span class="o">+</span> <span class="n">interrupted</span>
+                    <span class="k">if</span> <span class="n">issues</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Sweep finished with issues: </span><span class="si">{</span><span class="n">failed</span><span class="si">}</span><span class="s2"> failed, </span><span class="si">{</span><span class="n">interrupted</span><span class="si">}</span><span class="s2"> interrupted&quot;</span>
+                        <span class="p">)</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;All </span><span class="si">{</span><span class="n">done</span><span class="si">}</span><span class="s2"> tasks completed successfully&quot;</span><span class="p">)</span>
-                    <span class="k">return</span> <span class="n">failed</span> <span class="o">==</span> <span class="mi">0</span>
+                    <span class="k">return</span> <span class="n">issues</span> <span class="o">==</span> <span class="mi">0</span>
+
+                <span class="c1"># Reconcile against the scheduler&#39;s ground truth: only when the</span>
+                <span class="c1"># job is *confirmed* ended (not merely &#39;unknown&#39;/unreported) yet</span>
+                <span class="c1"># tasks remain pending/running did the worker die (wall-time,</span>
+                <span class="c1"># OOM, crash) without finishing them. Debounced to ignore</span>
+                <span class="c1"># transient status reads.</span>
+                <span class="k">if</span> <span class="n">job_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">is_terminal</span><span class="p">(</span><span class="n">job_id</span><span class="p">):</span>
+                        <span class="n">terminal_confirmations</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">terminal_confirmations</span> <span class="o">=</span> <span class="mi">0</span>
+
+                    <span class="k">if</span> <span class="n">terminal_confirmations</span> <span class="o">&gt;=</span> <span class="n">TERMINAL_DEBOUNCE</span><span class="p">:</span>
+                        <span class="n">orphaned</span> <span class="o">=</span> <span class="n">mark_orphans_interrupted</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">job_id</span><span class="o">=</span><span class="n">job_id</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;HPC job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> has ended but &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pending</span><span class="si">}</span><span class="s2"> task(s) pending / </span><span class="si">{</span><span class="n">running</span><span class="si">}</span><span class="s2"> running. &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;Marked </span><span class="si">{</span><span class="n">orphaned</span><span class="si">}</span><span class="s2"> orphaned task(s) interrupted. &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;Re-run pending/interrupted tasks with: &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;flexlock-worker --task-db </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="s2"> --reclaim&quot;</span>
+                        <span class="p">)</span>
+                        <span class="k">return</span> <span class="kc">False</span>
 
                 <span class="c1"># Log progress periodically</span>
                 <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
                 <span class="k">if</span> <span class="n">elapsed</span> <span class="o">-</span> <span class="p">(</span><span class="n">last_log_time</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">LOG_FREQUENCY</span><span class="p">:</span>
-                    <span class="n">progress</span> <span class="o">=</span> <span class="p">(</span><span class="n">done</span> <span class="o">+</span> <span class="n">failed</span><span class="p">)</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+                    <span class="n">progress</span> <span class="o">=</span> <span class="p">(</span><span class="n">done</span> <span class="o">+</span> <span class="n">failed</span> <span class="o">+</span> <span class="n">interrupted</span><span class="p">)</span> <span class="o">/</span> <span class="n">total</span> <span class="o">*</span> <span class="mi">100</span> <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">&quot;Progress: </span><span class="si">{</span><span class="n">progress</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;(pending: </span><span class="si">{</span><span class="n">pending</span><span class="si">}</span><span class="s2">, running: </span><span class="si">{</span><span class="n">running</span><span class="si">}</span><span class="s2">, done: </span><span class="si">{</span><span class="n">done</span><span class="si">}</span><span class="s2">, failed: </span><span class="si">{</span><span class="n">failed</span><span class="si">}</span><span class="s2">)&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;(pending=</span><span class="si">{</span><span class="n">pending</span><span class="si">}</span><span class="s2">, running=</span><span class="si">{</span><span class="n">running</span><span class="si">}</span><span class="s2">, done=</span><span class="si">{</span><span class="n">done</span><span class="si">}</span><span class="s2">, &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;failed=</span><span class="si">{</span><span class="n">failed</span><span class="si">}</span><span class="s2">, interrupted=</span><span class="si">{</span><span class="n">interrupted</span><span class="si">}</span><span class="s2">)&quot;</span>
                     <span class="p">)</span>
                     <span class="n">last_log_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
                 <span class="c1"># Check timeout</span>
                 <span class="k">if</span> <span class="n">timeout</span> <span class="ow">and</span> <span class="n">elapsed</span> <span class="o">&gt;</span> <span class="n">timeout</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Timeout after </span><span class="si">{</span><span class="n">timeout</span><span class="si">}</span><span class="s2">s (pending: </span><span class="si">{</span><span class="n">pending</span><span class="si">}</span><span class="s2">, running: </span><span class="si">{</span><span class="n">running</span><span class="si">}</span><span class="s2">)&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Timeout after </span><span class="si">{</span><span class="n">timeout</span><span class="si">}</span><span class="s2">s &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;(pending=</span><span class="si">{</span><span class="n">pending</span><span class="si">}</span><span class="s2">, running=</span><span class="si">{</span><span class="n">running</span><span class="si">}</span><span class="s2">)&quot;</span>
                     <span class="p">)</span>
                     <span class="k">return</span> <span class="kc">False</span>
 
-                <span class="c1"># Wait before next check</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">poll_interval</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Keyboard interrupt received. &quot;</span>
-                <span class="s2">&quot;Tasks are still running. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Check status with: flexlock-status </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Keyboard interrupt received while waiting. &quot;</span>
+                <span class="s2">&quot;The submitted job keeps running on the cluster; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;monitor with: flexlock-status </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="kc">False</span>
 
@@ -311,9 +407,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">dump_to_yaml</span>
 
-        <span class="k">if</span> <span class="n">pending_count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">pending_count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;All tasks already completed.&quot;</span><span class="p">)</span>
-            <span class="n">dump_to_yaml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock.tasks&quot;</span><span class="p">)</span>
+            <span class="n">dump_to_yaml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock.tasks&quot;</span><span class="p">,</span>
+                         <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">])</span>
             <span class="k">return</span> <span class="kc">True</span>
 
         <span class="c1"># 1. Prepare Root Directory</span>
@@ -325,7 +422,7 @@
         <span class="c1"># We assume the Main Process has the correct context (repos, etc.)</span>
         <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">extract_tracking_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
         <span class="c1"># Set default repos if none specified</span>
-        <span class="n">snapshot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="n">root_dir</span><span class="p">)</span>
+        <span class="n">snapshot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">note</span><span class="p">)</span>
 
         <span class="c1"># 3. Populate SQLite DB</span>
         <span class="c1"># Store &#39;root_dir&#39; in the DB so workers know where the Master Lock is.</span>
@@ -341,19 +438,30 @@
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Running locally (pull-from-DB)&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_run_locally</span><span class="p">()</span>
 
-                <span class="c1"># Check if any tasks failed</span>
-                <span class="kn">from</span><span class="w"> </span><span class="nn">.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_status_counts</span>
+                <span class="c1"># All local workers have exited. Any task still &#39;running&#39; was</span>
+                <span class="c1"># owned by a worker that died (hard crash / OOM) without</span>
+                <span class="c1"># recording a terminal state — reconcile it now.</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_status_counts</span><span class="p">,</span> <span class="n">mark_orphans_interrupted</span>
 
-                <span class="n">status_counts</span> <span class="o">=</span> <span class="n">get_status_counts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
+                <span class="n">orphaned</span> <span class="o">=</span> <span class="n">mark_orphans_interrupted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">orphaned</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Marked </span><span class="si">{</span><span class="n">orphaned</span><span class="si">}</span><span class="s2"> task(s) interrupted &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;(worker exited without finishing them).&quot;</span>
+                    <span class="p">)</span>
+
+                <span class="n">status_counts</span> <span class="o">=</span> <span class="n">get_status_counts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">])</span>
                 <span class="n">failed</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;failed&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-                <span class="n">success</span> <span class="o">=</span> <span class="n">failed</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="n">interrupted</span> <span class="o">=</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;interrupted&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">success</span> <span class="o">=</span> <span class="p">(</span><span class="n">failed</span> <span class="o">+</span> <span class="n">interrupted</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># HPC backend execution</span>
                 <span class="c1"># Fixed args for worker_loop (as tuple for *args)</span>
-                <span class="n">fixed_args</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">)</span>
-                <span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">worker_loop</span><span class="p">,</span> <span class="o">*</span><span class="n">fixed_args</span><span class="p">)</span>
+                <span class="n">fixed_args</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span>
+                              <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">job</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">worker_loop</span><span class="p">,</span> <span class="o">*</span><span class="n">fixed_args</span><span class="p">)</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Submitted </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Submitted </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> job </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span>
                 <span class="p">)</span>
 
                 <span class="c1"># Wait for completion if requested</span>
@@ -365,7 +473,8 @@
 
         <span class="k">finally</span><span class="p">:</span>
             <span class="c1"># Dump tasks to YAML after all jobs are submitted (or completed locally)</span>
-            <span class="n">dump_to_yaml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock.tasks&quot;</span><span class="p">)</span>
+            <span class="n">dump_to_yaml</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock.tasks&quot;</span><span class="p">,</span>
+                         <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">success</span></div>
 </div>

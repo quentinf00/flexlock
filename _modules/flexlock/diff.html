@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.diff &mdash; FlexLock 0.3.2 documentation</title>
+  <title>flexlock.diff &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/diff.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=78d8237d"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,7 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -80,6 +81,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../flexlock.html">flexlock</a></li>
       <li class="breadcrumb-item active">flexlock.diff</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -92,6 +94,7 @@
   <h1>Source code for flexlock.diff</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Diff utilities for FlexLock.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Set</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">ListConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
@@ -125,19 +128,28 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">current</span> <span class="o">=</span> <span class="n">current</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">target</span>
 
-        <span class="c1"># Keys to strictly ignore during config comparison</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ignore_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">ignore_keys</span> <span class="ow">or</span> <span class="p">[])</span> <span class="o">|</span> <span class="p">{</span>
-            <span class="s2">&quot;save_dir&quot;</span><span class="p">,</span>
+        <span class="c1"># Keys that legitimately appear inside the user config and are</span>
+        <span class="c1"># FlexLock-managed (or explicitly requested) — ignored at *any* depth.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">always_ignore</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">ignore_keys</span> <span class="ow">or</span> <span class="p">[])</span> <span class="o">|</span> <span class="p">{</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;_snapshot_&quot;</span><span class="p">}</span>
+
+        <span class="c1"># Keys FlexLock injects at the snapshot top level (run metadata). These</span>
+        <span class="c1"># are only ignored at the top of the config subtree — a user</span>
+        <span class="c1"># hyperparameter named e.g. ``time`` or ``system`` nested deeper must</span>
+        <span class="c1"># NOT be silently ignored (issue 7), which would cause false cache hits.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toplevel_ignore</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;note&quot;</span><span class="p">,</span>
             <span class="s2">&quot;system&quot;</span><span class="p">,</span>
             <span class="s2">&quot;job_id&quot;</span><span class="p">,</span>
             <span class="s2">&quot;work_dir&quot;</span><span class="p">,</span>
             <span class="s2">&quot;cwd&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;_snapshot_&quot;</span><span class="p">,</span>
             <span class="s2">&quot;date&quot;</span><span class="p">,</span>
             <span class="s2">&quot;time&quot;</span><span class="p">,</span>
             <span class="s2">&quot;datetime&quot;</span><span class="p">,</span>
         <span class="p">}</span>
+
+        <span class="c1"># Back-compat: some callers/tests read ``ignore_keys``.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ignore_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">always_ignore</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">toplevel_ignore</span>
 
         <span class="c1"># For value normalization (handling interpolation)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">c_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">current_save_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">current_save_dir</span> <span class="k">else</span> <span class="kc">None</span>
@@ -161,12 +173,15 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Normalized value</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Normalizing value: </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2"> with root_dir: </span><span class="si">{</span><span class="n">root_dir</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">root_dir</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">root_dir</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">root_dir</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Value &#39;</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">&#39; contains root_dir &#39;</span><span class="si">{</span><span class="n">root_dir</span><span class="si">}</span><span class="s2">&#39;, normalizing.&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="s2">&quot;&lt;SAVE_DIR&gt;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">root_dir</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">val</span>
+        <span class="c1"># Prefix-only: replace an exact match or a genuine path prefix, never an</span>
+        <span class="c1"># arbitrary substring (issue 8). ``outputs/other`` must not be rewritten</span>
+        <span class="c1"># just because save_dir is ``outputs``.</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="o">==</span> <span class="n">root_dir</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&lt;SAVE_DIR&gt;&quot;</span>
+        <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">root_dir</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;&lt;SAVE_DIR&gt;&quot;</span> <span class="o">+</span> <span class="n">val</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">root_dir</span><span class="p">):]</span>
         <span class="k">return</span> <span class="n">val</span>
 
 <div class="viewcode-block" id="RunDiff.compare_git">
@@ -177,8 +192,14 @@
         <span class="n">c_repos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;repos&quot;</span><span class="p">,</span> <span class="p">{})</span>
         <span class="n">t_repos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;repos&quot;</span><span class="p">,</span> <span class="p">{})</span>
 
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">c_info</span> <span class="ow">in</span> <span class="n">c_repos</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># Iterate the union so a repo present on only one side is flagged</span>
+        <span class="c1"># symmetrically (issue 9) instead of being silently ignored.</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">c_repos</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">t_repos</span><span class="p">):</span>
+            <span class="n">c_info</span> <span class="o">=</span> <span class="n">c_repos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
             <span class="n">t_info</span> <span class="o">=</span> <span class="n">t_repos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">c_info</span><span class="p">:</span>
+                <span class="n">diff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Repo </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> only in target&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">t_info</span><span class="p">:</span>
                 <span class="n">diff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Repo </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> missing&quot;</span><span class="p">)</span>
                 <span class="k">continue</span>
@@ -256,9 +277,15 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
                 <span class="n">d2</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">)</span>
             <span class="p">):</span>
+                <span class="c1"># Injected run-metadata keys are ignored only at the top of the</span>
+                <span class="c1"># config subtree; user keys are compared at every depth.</span>
+                <span class="n">ignore_here</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">always_ignore</span>
+                <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                    <span class="n">ignore_here</span> <span class="o">=</span> <span class="n">ignore_here</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">toplevel_ignore</span>
+
                 <span class="n">all_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">d1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">d2</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
                 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">all_keys</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_keys</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ignore_here</span><span class="p">:</span>
                         <span class="k">continue</span>
 
                     <span class="n">new_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">path</span> <span class="k">else</span> <span class="n">k</span>
@@ -308,11 +335,22 @@
         <span class="n">c_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="p">{})</span>
         <span class="n">t_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="p">{})</span>
 
-        <span class="n">data_match</span> <span class="o">=</span> <span class="n">c_data</span> <span class="o">==</span> <span class="n">t_data</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">data_match</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">diffs</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Data differs&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">c_data</span> <span class="o">==</span> <span class="n">t_data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
 
-        <span class="k">return</span> <span class="n">data_match</span></div>
+        <span class="c1"># Name which keys/hashes differ instead of a bare &quot;Data differs&quot; (issue 9).</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">c_data</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">t_data</span><span class="p">)):</span>
+            <span class="n">cv</span> <span class="o">=</span> <span class="n">c_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">tv</span> <span class="o">=</span> <span class="n">t_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">c_data</span><span class="p">:</span>
+                <span class="n">detail</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: only in target&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">t_data</span><span class="p">:</span>
+                <span class="n">detail</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: only in current&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">cv</span> <span class="o">!=</span> <span class="n">tv</span><span class="p">:</span>
+                <span class="n">detail</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">cv</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="n">tv</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffs</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">detail</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">&quot;Data differs&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
 
 
 <div class="viewcode-block" id="RunDiff.is_match">

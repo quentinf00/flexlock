@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.api &mdash; FlexLock 0.5.0 documentation</title>
+  <title>flexlock.api &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/api.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=70f82a29"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,8 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -94,6 +94,7 @@
   <h1>Source code for flexlock.api</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Python API for FlexLock.&quot;&quot;&quot;</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">,</span> <span class="n">open_dict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
@@ -106,9 +107,30 @@
     <span class="n">extract_tracking_info</span><span class="p">,</span>
     <span class="n">select_and_freeze_root_refs</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span><span class="p">,</span> <span class="n">RunTracker</span><span class="p">,</span> <span class="n">write_complete_marker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.freeze</span><span class="w"> </span><span class="kn">import</span> <span class="n">freeze_deferred</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span><span class="p">,</span> <span class="n">RunTracker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.run_record</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunRecord</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.fingerprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">fingerprint</span> <span class="k">as</span> <span class="n">compute_fingerprint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">index</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.diff</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunDiff</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span> <span class="k">as</span> <span class="n">flexlock_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockExecutionError</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_leaf_paths</span><span class="p">(</span><span class="n">container</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield ``(dotpath, value)`` for every leaf in a plain dict/list container.</span>
+
+<span class="sd">    Dotpaths use OmegaConf&#39;s ``a.b.0`` selector form so they can be fed back to</span>
+<span class="sd">    ``OmegaConf.select`` — used by :meth:`Project.check` to probe each leaf.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">container</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">container</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">yield from</span> <span class="n">_leaf_paths</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">prefix</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">container</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">container</span><span class="p">):</span>
+            <span class="k">yield from</span> <span class="n">_leaf_paths</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">prefix</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">container</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_print_compiled_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
@@ -134,32 +156,82 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not import target function &#39;</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="Status">
+<a class="viewcode-back" href="../../api.html#flexlock.Status">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Status</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Terminal state of a run. A ``str`` subclass so ``status == &quot;SUCCESS&quot;``</span>
+<span class="sd">    and f-string formatting keep working for existing callers.&quot;&quot;&quot;</span>
+
+    <span class="n">SUCCESS</span> <span class="o">=</span> <span class="s2">&quot;SUCCESS&quot;</span>
+    <span class="n">CACHED</span> <span class="o">=</span> <span class="s2">&quot;CACHED&quot;</span>
+    <span class="n">FAILED</span> <span class="o">=</span> <span class="s2">&quot;FAILED&quot;</span>
+    <span class="n">INTERRUPTED</span> <span class="o">=</span> <span class="s2">&quot;INTERRUPTED&quot;</span>
+    <span class="n">SUBMITTED</span> <span class="o">=</span> <span class="s2">&quot;SUBMITTED&quot;</span>
+    <span class="n">SKIPPED</span> <span class="o">=</span> <span class="s2">&quot;SKIPPED&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_coerce_status</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">Status</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">s</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Status</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">s</span>  <span class="c1"># tolerate unknown strings rather than raising</span>
+
+
+<span class="c1"># Real attributes that a result-dict key must never shadow (issue 6).</span>
+<span class="n">_RESERVED_RESULT_KEYS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;result&quot;</span><span class="p">,</span> <span class="s2">&quot;metrics&quot;</span><span class="p">,</span> <span class="s2">&quot;cfg&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;get&quot;</span><span class="p">,</span>
+     <span class="s2">&quot;raise_on_failure&quot;</span><span class="p">,</span> <span class="s2">&quot;is_success&quot;</span><span class="p">}</span>
+<span class="p">)</span>
+
+
 <div class="viewcode-block" id="ExecutionResult">
 <a class="viewcode-back" href="../../api.html#flexlock.ExecutionResult">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExecutionResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Result object from task execution.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Typed result object from a run.</span>
+
+<span class="sd">    The function&#39;s return payload is kept in ``result`` (alias ``metrics``);</span>
+<span class="sd">    its keys are still reachable as attributes (``res.accuracy``) via</span>
+<span class="sd">    ``__getattr__`` — but only when they don&#39;t collide with a real attribute,</span>
+<span class="sd">    so a payload key named ``status``/``get`` no longer clobbers the object&#39;s</span>
+<span class="sd">    own API (issue 6).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">save_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">status</span><span class="p">:</span> <span class="s2">&quot;str | Status&quot;</span><span class="p">,</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">error</span><span class="p">:</span> <span class="s2">&quot;str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize execution result.</span>
-
 <span class="sd">        Args:</span>
 <span class="sd">            save_dir: Directory where results are saved</span>
-<span class="sd">            status: Status of execution (&quot;SUCCESS&quot;, &quot;SKIPPED&quot;, &quot;FAILED&quot;)</span>
+<span class="sd">            status: One of the :class:`Status` values</span>
 <span class="sd">            result: The actual return value from the function</span>
 <span class="sd">            cfg: Configuration used for execution</span>
+<span class="sd">            error: Error/traceback string for FAILED items (else None)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="n">save_dir</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">_coerce_status</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">result</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">cfg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
 
-        <span class="c1"># If result is a dict, expose its keys as attributes for convenience</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The return payload (alias for ``result``).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_success</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Status</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span> <span class="n">Status</span><span class="o">.</span><span class="n">CACHED</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Allow dict-like access to result.&quot;&quot;&quot;</span>
@@ -174,6 +246,30 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">default</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Expose result-dict keys as attributes without clobbering real ones.</span>
+
+<span class="sd">        Only invoked when normal attribute lookup fails, so real attributes</span>
+<span class="sd">        (status, save_dir, ...) always win over same-named payload keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_RESERVED_RESULT_KEYS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;result&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExecutionResult.raise_on_failure">
+<a class="viewcode-back" href="../../api.html#flexlock.ExecutionResult.raise_on_failure">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">raise_on_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExecutionResult&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise if the run did not succeed; return self otherwise (chainable).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Status</span><span class="o">.</span><span class="n">FAILED</span><span class="p">,</span> <span class="n">Status</span><span class="o">.</span><span class="n">INTERRUPTED</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">FlexLockExecutionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Run at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">save_dir</span><span class="si">}</span><span class="s2"> ended </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -266,8 +362,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The selected configuration (as DictConfig).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No defaults specified in Project initialization&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">select_and_freeze_root_refs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></div>
 
 
@@ -319,8 +413,15 @@
 
             <span class="n">match_include</span> <span class="o">=</span> <span class="n">collect_target_include_patterns</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
 
-        <span class="c1"># Generate fingerprint for this config</span>
-        <span class="n">fingerprint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_fingerprint</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="c1"># Compute the pure fingerprint digest — the index key. Both sweep tasks</span>
+        <span class="c1"># and serial runs record under this same key, so a config first run as a</span>
+        <span class="c1"># sweep task hits here when re-run serially (sweep items are first-class).</span>
+        <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">extract_tracking_info</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="n">compute_fingerprint</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not compute fingerprint for lookup: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="c1"># Determine where to search</span>
         <span class="k">if</span> <span class="n">search_dirs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -337,60 +438,74 @@
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No save_dir in config and no search_dirs provided&quot;</span><span class="p">)</span>
                 <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="c1"># Search for matching runs</span>
+        <span class="n">fallback</span> <span class="o">=</span> <span class="n">flexlock_config</span><span class="o">.</span><span class="n">get_env_bool</span><span class="p">(</span><span class="s2">&quot;FLEXLOCK_INDEX_FALLBACK&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">search_root</span> <span class="ow">in</span> <span class="n">search_dirs</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Searching for matching runs in: </span><span class="si">{</span><span class="n">search_root</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">root_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">search_root</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">root_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                <span class="k">continue</span>
 
-            <span class="c1"># Iterate over subdirectories (run directories)</span>
-            <span class="k">for</span> <span class="n">lock_file</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">(</span><span class="n">root_path</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;**/run.lock&quot;</span><span class="p">):</span>
-                <span class="n">run_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">lock_file</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Checking run.lock at </span><span class="si">{</span><span class="n">lock_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="c1"># Load candidate snapshot</span>
-                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">lock_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                        <span class="n">candidate_snapshot</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="c1"># 1. Fast path: single indexed lookup by fingerprint.</span>
+            <span class="k">if</span> <span class="n">fp</span><span class="p">:</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">row</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">resolved</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">verify_and_resolve</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">resolved</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚡ Cache Hit (index)! </span><span class="si">{</span><span class="n">resolved</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="n">resolved</span>
 
-                    <span class="c1"># Extract save_dir from both snapshots for normalization</span>
-                    <span class="n">proposed_save_dir</span> <span class="o">=</span> <span class="n">fingerprint</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">)</span>
-                    <span class="n">candidate_save_dir</span> <span class="o">=</span> <span class="n">candidate_snapshot</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                        <span class="s2">&quot;save_dir&quot;</span>
-                    <span class="p">)</span>
+            <span class="c1"># 2. Fallback: legacy glob scan for runs predating the index. On a</span>
+            <span class="c1">#    hit, backfill the index so the slow path self-eliminates.</span>
+            <span class="k">if</span> <span class="n">fallback</span> <span class="ow">and</span> <span class="n">root_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_glob_scan_match</span><span class="p">(</span>
+                    <span class="n">cfg</span><span class="p">,</span> <span class="n">root_path</span><span class="p">,</span> <span class="n">match_include</span><span class="p">,</span> <span class="n">match_exclude</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">fp</span><span class="p">:</span>
+                        <span class="n">index</span><span class="o">.</span><span class="n">record_run_lock</span><span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚡ Cache Hit (glob)! </span><span class="si">{</span><span class="n">match</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">match</span>
 
-                    <span class="c1"># Compare using RunDiff with save_dir context</span>
-                    <span class="n">differ</span> <span class="o">=</span> <span class="n">RunDiff</span><span class="p">(</span>
-                        <span class="n">current</span><span class="o">=</span><span class="n">fingerprint</span><span class="p">,</span>
-                        <span class="n">target</span><span class="o">=</span><span class="n">candidate_snapshot</span><span class="p">,</span>
-                        <span class="n">current_save_dir</span><span class="o">=</span><span class="n">proposed_save_dir</span><span class="p">,</span>
-                        <span class="n">target_save_dir</span><span class="o">=</span><span class="n">candidate_save_dir</span><span class="p">,</span>
-                        <span class="n">ignore_keys</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_snapshot_&quot;</span><span class="p">],</span>
-                        <span class="n">match_include</span><span class="o">=</span><span class="n">match_include</span><span class="p">,</span>
-                        <span class="n">match_exclude</span><span class="o">=</span><span class="n">match_exclude</span><span class="p">,</span>
-                    <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
-                    <span class="k">if</span> <span class="n">differ</span><span class="o">.</span><span class="n">is_match</span><span class="p">():</span>
-                        <span class="c1"># Require run.complete — interrupted runs left only</span>
-                        <span class="c1"># run.lock and must not be treated as cache hits.</span>
-                        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">run_dir</span> <span class="o">/</span> <span class="s2">&quot;run.complete&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                                <span class="sa">f</span><span class="s2">&quot;Match at </span><span class="si">{</span><span class="n">run_dir</span><span class="si">}</span><span class="s2"> has no run.complete &quot;</span>
-                                <span class="sa">f</span><span class="s2">&quot;(previous attempt incomplete); skipping&quot;</span>
-                            <span class="p">)</span>
-                            <span class="k">continue</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_glob_scan_match</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">root_path</span><span class="p">,</span> <span class="n">match_include</span><span class="p">,</span> <span class="n">match_exclude</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Legacy O(N) content scan used only as an index fallback (RunDiff).&quot;&quot;&quot;</span>
+        <span class="n">fingerprint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_fingerprint</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">lock_file</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">(</span><span class="n">root_path</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;**/run.lock&quot;</span><span class="p">):</span>
+            <span class="n">run_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">lock_file</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">lock_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">candidate_snapshot</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
-                        <span class="n">logger</span><span class="o">.</span><span class="n">success</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">&quot;⚡ Cache Hit! Found matching run at: </span><span class="si">{</span><span class="n">run_dir</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">proposed_save_dir</span> <span class="o">=</span> <span class="n">fingerprint</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">)</span>
+                <span class="n">candidate_save_dir</span> <span class="o">=</span> <span class="n">candidate_snapshot</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;config&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="s2">&quot;save_dir&quot;</span>
+                <span class="p">)</span>
+
+                <span class="n">differ</span> <span class="o">=</span> <span class="n">RunDiff</span><span class="p">(</span>
+                    <span class="n">current</span><span class="o">=</span><span class="n">fingerprint</span><span class="p">,</span>
+                    <span class="n">target</span><span class="o">=</span><span class="n">candidate_snapshot</span><span class="p">,</span>
+                    <span class="n">current_save_dir</span><span class="o">=</span><span class="n">proposed_save_dir</span><span class="p">,</span>
+                    <span class="n">target_save_dir</span><span class="o">=</span><span class="n">candidate_save_dir</span><span class="p">,</span>
+                    <span class="n">ignore_keys</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_snapshot_&quot;</span><span class="p">],</span>
+                    <span class="n">match_include</span><span class="o">=</span><span class="n">match_include</span><span class="p">,</span>
+                    <span class="n">match_exclude</span><span class="o">=</span><span class="n">match_exclude</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">differ</span><span class="o">.</span><span class="n">is_match</span><span class="p">():</span>
+                    <span class="c1"># Require run.complete — interrupted runs are not cache hits.</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">run_dir</span> <span class="o">/</span> <span class="s2">&quot;run.complete&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Match at </span><span class="si">{</span><span class="n">run_dir</span><span class="si">}</span><span class="s2"> has no run.complete; skipping&quot;</span>
                         <span class="p">)</span>
-                        <span class="k">return</span> <span class="n">run_dir</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No match for run at: </span><span class="si">{</span><span class="n">run_dir</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">differ</span><span class="o">.</span><span class="n">diffs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to read/compare </span><span class="si">{</span><span class="n">lock_file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                    <span class="k">continue</span>
-
+                        <span class="k">continue</span>
+                    <span class="k">return</span> <span class="n">run_dir</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No match for run at: </span><span class="si">{</span><span class="n">run_dir</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">differ</span><span class="o">.</span><span class="n">diffs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to read/compare </span><span class="si">{</span><span class="n">lock_file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
         <span class="k">return</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="Project.exists">
@@ -432,7 +547,11 @@
         <span class="k">if</span> <span class="n">match_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No matching run found. Use exists() to check first.&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Try to load results from various possible locations</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_cached_result</span><span class="p">(</span><span class="n">match_dir</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_cached_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">match_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecutionResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build a CACHED ExecutionResult from an existing run directory.&quot;&quot;&quot;</span>
         <span class="n">result_data</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="c1"># Try results.json</span>
@@ -450,8 +569,7 @@
 
         <span class="k">return</span> <span class="n">ExecutionResult</span><span class="p">(</span>
             <span class="n">save_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">match_dir</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;CACHED&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">result_data</span><span class="p">,</span> <span class="n">cfg</span><span class="o">=</span><span class="n">cfg</span>
-        <span class="p">)</span></div>
-
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="Project.run_stage">
 <a class="viewcode-back" href="../../api.html#flexlock.Project.run_stage">[docs]</a>
@@ -533,6 +651,10 @@
         <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">print_config</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">tag</span><span class="p">:</span> <span class="s2">&quot;str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="s2">&quot;int | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">note</span><span class="p">:</span> <span class="s2">&quot;str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">save_dir_policy</span><span class="p">:</span> <span class="s2">&quot;str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ExecutionResult | List[ExecutionResult] | None&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Submit a configuration for execution.</span>
 
@@ -573,6 +695,30 @@
 <span class="sd">                or PBS submission script, print it (with any validation</span>
 <span class="sd">                warnings), and return ``None`` without submitting. No-op</span>
 <span class="sd">                for local execution.</span>
+<span class="sd">            tag: Human-readable label for this sweep&#39;s rows in the shared task</span>
+<span class="sd">                DB (e.g. ``&quot;extract&quot;`` or ``&quot;collocate&quot;``). Passed through to</span>
+<span class="sd">                ``ParallelExecutor`` so workers and the status CLI can scope to</span>
+<span class="sd">                it. When ``None`` a deterministic hash is auto-generated.</span>
+<span class="sd">            note: Free-text intent recorded as a top-level ``note:`` key in</span>
+<span class="sd">                ``run.lock`` (sibling of ``timestamp``/``config``). Never enters</span>
+<span class="sd">                the fingerprint, so it can&#39;t perturb caching. For sweeps the note</span>
+<span class="sd">                lands on the master ``run.lock`` only; sweep items inherit it for</span>
+<span class="sd">                display via their ``.flexlock_marker`` → master lookup.</span>
+<span class="sd">            save_dir_policy: What to do when ``config.save_dir`` is already</span>
+<span class="sd">                occupied by a previous run (contains ``run.lock``), applied</span>
+<span class="sd">                once at submit time, after the ``smart_run`` cache check:</span>
+<span class="sd">                ``None``/``&quot;raise&quot;`` (default) refuses and raises;</span>
+<span class="sd">                ``&quot;increment&quot;`` versions the dir (``run`` → ``run_0000``,</span>
+<span class="sd">                claimed atomically); ``&quot;overwrite&quot;`` deletes the occupied</span>
+<span class="sd">                dir&#39;s contents first (never touches a dir without</span>
+<span class="sd">                ``run.lock``); ``&quot;skip&quot;`` returns the existing complete</span>
+<span class="sd">                run&#39;s result without executing; ``&quot;unsafe&quot;`` runs in place</span>
+<span class="sd">                with no check; ``&quot;timestamp&quot;`` appends</span>
+<span class="sd">                ``config.TIMESTAMP_FORMAT``. ``force=True`` bypasses the</span>
+<span class="sd">                default guard (explicit in-place rerun). Replaces the</span>
+<span class="sd">                ``${vinc:}`` / ``${now:}`` resolvers. For sweeps the policy</span>
+<span class="sd">                applies once to the sweep root; items nest beneath it, and</span>
+<span class="sd">                ``&quot;skip&quot;`` means resume (reuse complete items, run the rest).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            ``ExecutionResult`` (single), ``List[ExecutionResult]`` (sweep),</span>
@@ -597,13 +743,14 @@
                 <span class="n">overrides</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
             <span class="n">config</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">(</span><span class="n">overrides</span><span class="p">))</span>
 
-        <span class="c1"># Resolve save_dir exactly once. Resolvers like ${vinc:} look at the</span>
-        <span class="c1"># filesystem and would otherwise advance the counter every time</span>
-        <span class="c1"># cfg.save_dir is read (snapshot phase vs. complete-marker phase),</span>
-        <span class="c1"># splitting run.lock and run.complete across different dirs.</span>
-        <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">config</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">save_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">open_dict</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
-                <span class="n">config</span><span class="o">.</span><span class="n">save_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
+        <span class="c1"># Bake save_dir to a concrete string exactly once. Done here (not</span>
+        <span class="c1"># lazily during config reads) so run.lock and run.complete always land</span>
+        <span class="c1"># in the same directory. The policy itself (naming / collision guard)</span>
+        <span class="c1"># is applied later, after the smart_run cache check and the</span>
+        <span class="c1"># side-effect-free previews (print_config / dry_run).</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.save_dir</span><span class="w"> </span><span class="kn">import</span> <span class="n">SKIP</span><span class="p">,</span> <span class="n">apply_save_dir_policy</span><span class="p">,</span> <span class="n">resolve_save_dir</span>
+
+        <span class="n">resolve_save_dir</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">print_config</span><span class="p">:</span>
             <span class="c1"># When a sweep is given, preview each item&#39;s merged config so</span>
@@ -613,7 +760,10 @@
                 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_task_into_cfg</span>
 
                 <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">override</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sweep</span><span class="p">):</span>
+                    <span class="c1"># Mirror _submit_sweep exactly (merge → freeze) so the</span>
+                    <span class="c1"># preview matches what will actually execute.</span>
                     <span class="n">item_cfg</span> <span class="o">=</span> <span class="n">merge_task_into_cfg</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">override</span><span class="p">,</span> <span class="n">sweep_target</span><span class="p">)</span>
+                    <span class="n">item_cfg</span> <span class="o">=</span> <span class="n">freeze_deferred</span><span class="p">(</span><span class="n">item_cfg</span><span class="p">)</span>
                     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;# --- sweep item </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> ---&quot;</span><span class="p">)</span>
                     <span class="n">_print_compiled_config</span><span class="p">(</span><span class="n">item_cfg</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -621,16 +771,42 @@
             <span class="k">return</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="n">force</span><span class="p">:</span>
-            <span class="c1"># Invalidate the cache for this save_dir without touching outputs.</span>
-            <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;outputs/job&quot;</span><span class="p">))</span>
-            <span class="n">marker</span> <span class="o">=</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.complete&quot;</span>
-            <span class="k">if</span> <span class="n">marker</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Force flag enabled: invalidating cache at </span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="n">marker</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+            <span class="c1"># Invalidate the single-run cache marker. For sweeps the per-item</span>
+            <span class="c1"># markers and task DB are reset inside _submit_sweep (2.4).</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">sweep</span><span class="p">:</span>
+                <span class="n">save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;outputs/job&quot;</span><span class="p">))</span>
+                <span class="n">marker</span> <span class="o">=</span> <span class="n">save_dir</span> <span class="o">/</span> <span class="s2">&quot;run.complete&quot;</span>
+                <span class="k">if</span> <span class="n">marker</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Force flag enabled: invalidating cache at </span><span class="si">{</span><span class="n">save_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">marker</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
             <span class="n">smart_run</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="c1"># Handle sweep execution</span>
         <span class="k">if</span> <span class="n">sweep</span><span class="p">:</span>
+            <span class="c1"># A sweep runs each item in its own worker process; `isolated`</span>
+            <span class="c1"># (spawn a subprocess for a *single* run) can&#39;t be honoured here.</span>
+            <span class="c1"># Fail loudly rather than silently dropping it (issue 16).</span>
+            <span class="k">if</span> <span class="n">isolated</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockConfigError</span>
+
+                <span class="k">raise</span> <span class="n">FlexLockConfigError</span><span class="p">(</span>
+                    <span class="s2">&quot;isolated=True is not supported with sweep=... — sweep items &quot;</span>
+                    <span class="s2">&quot;already execute in separate worker processes.&quot;</span>
+                <span class="p">)</span>
+            <span class="c1"># A naming policy fixes the sweep root before items are built;</span>
+            <span class="c1"># guard policies are enforced per item inside _submit_sweep, after</span>
+            <span class="c1"># the per-item cache check (&#39;skip&#39; there means resume: reuse</span>
+            <span class="c1"># complete items, rerun crashed ones).</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.save_dir</span><span class="w"> </span><span class="kn">import</span> <span class="n">NAMING_POLICIES</span><span class="p">,</span> <span class="n">validate_policy</span>
+
+            <span class="n">validate_policy</span><span class="p">(</span><span class="n">save_dir_policy</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">save_dir_policy</span> <span class="ow">in</span> <span class="n">NAMING_POLICIES</span><span class="p">:</span>
+                <span class="n">apply_save_dir_policy</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">save_dir_policy</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
+                <span class="c1"># Items are fresh under the freshly named root; keep the</span>
+                <span class="c1"># default guard as a backstop.</span>
+                <span class="n">item_policy</span> <span class="o">=</span> <span class="s2">&quot;raise&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">item_policy</span> <span class="o">=</span> <span class="n">save_dir_policy</span> <span class="ow">or</span> <span class="s2">&quot;raise&quot;</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submit_sweep</span><span class="p">(</span>
                 <span class="n">config</span><span class="p">,</span>
                 <span class="n">sweep</span><span class="p">,</span>
@@ -646,6 +822,11 @@
                 <span class="n">sweep_target</span><span class="o">=</span><span class="n">sweep_target</span><span class="p">,</span>
                 <span class="n">sweep_root</span><span class="o">=</span><span class="n">sweep_root</span><span class="p">,</span>
                 <span class="n">debug</span><span class="o">=</span><span class="n">debug</span><span class="p">,</span>
+                <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+                <span class="n">item_policy</span><span class="o">=</span><span class="n">item_policy</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="c1"># Single execution path</span>
@@ -668,6 +849,13 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_preview_hpc_script</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">slurm_config</span><span class="p">,</span> <span class="n">pbs_config</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
 
+        <span class="c1"># Naming / collision-guard policy — after the cache check (a hit never</span>
+        <span class="c1"># claims or cleans anything) and after the previews (no side effects).</span>
+        <span class="k">if</span> <span class="n">apply_save_dir_policy</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">save_dir_policy</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span> <span class="o">==</span> <span class="n">SKIP</span><span class="p">:</span>
+            <span class="n">match_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">save_dir</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;save_dir_policy=&#39;skip&#39;: reusing result from </span><span class="si">{</span><span class="n">match_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_cached_result</span><span class="p">(</span><span class="n">match_dir</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">use_hpc</span><span class="p">:</span>
             <span class="c1"># Execute via HPC backend</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Submitting to HPC backend...&quot;</span><span class="p">)</span>
@@ -689,6 +877,8 @@
                 <span class="n">pbs_config</span><span class="o">=</span><span class="n">pbs_config</span><span class="p">,</span>
                 <span class="n">slurm_config</span><span class="o">=</span><span class="n">slurm_config</span><span class="p">,</span>
                 <span class="n">local_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="c1"># Run with wait parameter (executor handles waiting)</span>
@@ -736,6 +926,8 @@
                     <span class="n">cfg</span><span class="o">=</span><span class="n">executor_cfg</span><span class="p">,</span>
                     <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                     <span class="n">isolated</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="n">result_data</span> <span class="o">=</span> <span class="kc">None</span>
@@ -754,26 +946,33 @@
             <span class="c1"># Extract tracking info</span>
             <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span> <span class="o">=</span> <span class="n">extract_tracking_info</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
-            <span class="c1"># Eagerly freeze all resolver interpolations in one pass.</span>
-            <span class="c1">#</span>
-            <span class="c1"># select_and_freeze_root_refs preserves ${vinc:} resolver calls</span>
-            <span class="c1"># verbatim when freezing cross-tree refs (e.g. ${main.save_dir}</span>
-            <span class="c1"># pointing to ${vinc:results/exp} becomes a new ${vinc:} node).</span>
-            <span class="c1"># The save_dir freeze above already fired vinc: and cached the result</span>
-            <span class="c1"># in this OmegaConf instance.  A full to_container(resolve=True) drains</span>
-            <span class="c1"># that cache for every other ${vinc:} occurrence so they all get the same</span>
-            <span class="c1"># value.  Re-wrapping as a plain config prevents instantiate()&#39;s internal</span>
-            <span class="c1"># config.copy() — which creates a new instance with an empty cache — from</span>
-            <span class="c1"># firing the resolver again after snapshot() has created save_dir on disk.</span>
+            <span class="c1"># Single deferred-resolution point (local single-run path): fire</span>
+            <span class="c1"># the deferred resolvers (run_lock/latest) once and detach into a</span>
+            <span class="c1"># plain config. Re-wrapping prevents instantiate()&#39;s internal</span>
+            <span class="c1"># config.copy() — a fresh instance with an empty resolver cache —</span>
+            <span class="c1"># from re-firing anything after snapshot() has run.</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">_c</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-                <span class="n">config</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">_c</span><span class="p">)</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">.resolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_deferred</span>
+
+                <span class="n">config</span> <span class="o">=</span> <span class="n">resolve_deferred</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not fully resolve config before execution: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
+            <span class="c1"># Compute the fingerprint once (index key), stored in run.lock so</span>
+            <span class="c1"># `flexlock reindex` can rebuild the index from disk.</span>
+            <span class="n">run_fp</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">run_fp</span> <span class="o">=</span> <span class="n">compute_fingerprint</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not compute run fingerprint: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
             <span class="c1"># Create snapshot before execution</span>
             <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-                <span class="n">snapshot</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">prevs</span><span class="o">=</span><span class="n">prevs</span><span class="p">)</span>
+                <span class="n">snapshot</span><span class="p">(</span>
+                    <span class="n">config</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">prevs</span><span class="o">=</span><span class="n">prevs</span><span class="p">,</span>
+                    <span class="n">fingerprint</span><span class="o">=</span><span class="n">run_fp</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+                <span class="p">)</span>
 
             <span class="c1"># Execute the function</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Executing configuration...&quot;</span><span class="p">)</span>
@@ -782,26 +981,114 @@
                 <span class="kn">from</span><span class="w"> </span><span class="nn">.debug</span><span class="w"> </span><span class="kn">import</span> <span class="n">debug_on_fail</span>
 
                 <span class="n">run_func</span> <span class="o">=</span> <span class="n">debug_on_fail</span><span class="p">(</span><span class="n">run_func</span><span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">run_func</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">run_func</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="c1"># Record a failure sidecar next to run.lock so triage doesn&#39;t</span>
+                <span class="c1"># need to re-run. The user&#39;s exception still propagates unwrapped</span>
+                <span class="c1"># (docs §12); write_error never raises. KeyboardInterrupt is</span>
+                <span class="c1"># deliberately not caught — a bare run.lock is the interrupted</span>
+                <span class="c1"># signature.</span>
+                <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+                    <span class="n">RunRecord</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span><span class="o">.</span><span class="n">write_error</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+                <span class="k">raise</span>
 
             <span class="c1"># Save results if save_dir is specified</span>
             <span class="n">save_dir</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
-                <span class="n">results_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;results.json&quot;</span>
+                <span class="n">record</span> <span class="o">=</span> <span class="n">RunRecord</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">results_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
-                            <span class="n">result</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;result&quot;</span><span class="p">:</span> <span class="n">result</span><span class="p">},</span>
-                            <span class="n">f</span><span class="p">,</span>
-                            <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-                        <span class="p">)</span>
+                    <span class="n">record</span><span class="o">.</span><span class="n">write_results</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not save results to </span><span class="si">{</span><span class="n">results_file</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="n">write_complete_marker</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">save_dir</span><span class="p">),</span> <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Could not save results to </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">results_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">record</span><span class="o">.</span><span class="n">mark_complete</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+                <span class="c1"># Record the completed run in the project-wide index (2.2).</span>
+                <span class="k">if</span> <span class="n">run_fp</span><span class="p">:</span>
+                    <span class="n">index</span><span class="o">.</span><span class="n">record_run_lock</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">run_fp</span><span class="p">)</span>
 
             <span class="k">return</span> <span class="n">ExecutionResult</span><span class="p">(</span>
                 <span class="n">save_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">save_dir</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span> <span class="n">cfg</span><span class="o">=</span><span class="n">config</span>
             <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Project.check">
+<a class="viewcode-back" href="../../api.html#flexlock.Project.check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">sweep</span><span class="p">:</span> <span class="s2">&quot;List[Dict] | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sweep_target</span><span class="p">:</span> <span class="s2">&quot;str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">overrides</span><span class="p">:</span> <span class="s2">&quot;dict | List[str] | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">merge</span><span class="p">:</span> <span class="s2">&quot;str | Path | dict | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;List[dict]&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Preflight: fully resolve the config (and every sweep item) without</span>
+<span class="sd">        touching the filesystem or executing anything.</span>
+
+<span class="sd">        Mirrors submit&#39;s merge → freeze pipeline, but runs under the freeze</span>
+<span class="sd">        stubs so no resolver fires (``vinc``/``now`` take no ``mkdir``,</span>
+<span class="sd">        ``run_lock``/``latest`` read nothing). Every unresolvable interpolation</span>
+<span class="sd">        is reported — not just the first — as a dict with ``item`` (sweep index</span>
+<span class="sd">        or ``None``), ``full_key``, and ``error``.</span>
+
+<span class="sd">        Returns an empty list when everything resolves.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_task_into_cfg</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.resolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">frozen_resolvers</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConfBaseException</span>
+
+        <span class="c1"># Normalize config exactly like submit (but never mutate the caller&#39;s).</span>
+        <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">DictConfig</span><span class="p">):</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">merge</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">merge</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">merge</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">merge</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">overrides</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">overrides</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">overrides</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">overrides</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">merge_with</span><span class="p">(</span><span class="n">OmegaConf</span><span class="o">.</span><span class="n">from_dotlist</span><span class="p">(</span><span class="n">overrides</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">sweep</span><span class="p">:</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">merge_task_into_cfg</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">ov</span><span class="p">,</span> <span class="n">sweep_target</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ov</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sweep</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="p">[(</span><span class="kc">None</span><span class="p">,</span> <span class="n">config</span><span class="p">)]</span>
+
+        <span class="n">errors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="n">frozen_resolvers</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+                <span class="n">detached</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                    <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="c1"># Resolve leaf-by-leaf so every failure is reported, not only</span>
+                <span class="c1"># the first one OmegaConf.resolve would raise on.</span>
+                <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">_leaf_paths</span><span class="p">(</span>
+                    <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">detached</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;${&quot;</span> <span class="ow">in</span> <span class="n">val</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">OmegaConf</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">detached</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">throw_on_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="n">OmegaConfBaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">{</span>
+                                <span class="s2">&quot;item&quot;</span><span class="p">:</span> <span class="n">idx</span><span class="p">,</span>
+                                <span class="s2">&quot;full_key&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">&quot;full_key&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">path</span><span class="p">,</span>
+                                <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+                            <span class="p">}</span>
+                        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">errors</span></div>
 
 
     <span class="nd">@staticmethod</span>
@@ -863,10 +1150,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_sweep_save_dirs</span><span class="p">(</span><span class="n">base_config</span><span class="p">,</span> <span class="n">merged_items</span><span class="p">,</span> <span class="n">sweep_root</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure every sweep item&#39;s save_dir nests under the sweep root.</span>
 
-<span class="sd">        The sweep root is taken from ``sweep_root`` when provided, then from</span>
-<span class="sd">        ``base_config.save_dir``, otherwise from the parent of the first item&#39;s</span>
-<span class="sd">        save_dir. The tasks DB and per-item lineage markers all assume</span>
-<span class="sd">        containment; violating it produces an opaque crash in the worker.</span>
+<span class="sd">        The sweep root is taken from ``sweep_root`` when provided, otherwise</span>
+<span class="sd">        from the parent of the first (already merged and frozen) item&#39;s</span>
+<span class="sd">        save_dir — the same directory the tasks DB lives in. Validation only</span>
+<span class="sd">        ever touches the merged items, never ``base_config.save_dir`` (which</span>
+<span class="sd">        may still carry a per-item ``${.variable}`` that is unresolvable until</span>
+<span class="sd">        an item supplies it).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexLockValidationError</span>
 
@@ -878,14 +1167,11 @@
         <span class="k">if</span> <span class="n">sweep_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="c1"># Determine sweep root.</span>
-        <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">base_config</span> <span class="ow">and</span> <span class="n">base_config</span><span class="o">.</span><span class="n">save_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">effective_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">base_config</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">first_save</span> <span class="o">=</span> <span class="n">merged_items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">first_save</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">return</span>  <span class="c1"># nothing to validate against</span>
-            <span class="n">effective_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">first_save</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
+        <span class="c1"># Derive the sweep root from the merged items (concrete save_dirs).</span>
+        <span class="n">first_save</span> <span class="o">=</span> <span class="n">merged_items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">first_save</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>  <span class="c1"># nothing to validate against</span>
+        <span class="n">effective_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">first_save</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
 
         <span class="n">offenders</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sweep_cfg</span> <span class="ow">in</span> <span class="n">merged_items</span><span class="p">:</span>
@@ -997,6 +1283,84 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="p">()</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="Project.collect_results">
+<a class="viewcode-back" href="../../api.html#flexlock.Project.collect_results">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">collect_results</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">task_configs</span><span class="p">,</span> <span class="n">db_path</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build per-item ExecutionResults from the task DB&#39;s terminal state.</span>
+
+<span class="sd">        Replaces the old blanket ``status=&quot;SUCCESS&quot;`` — a task that raised is</span>
+<span class="sd">        now reported as ``FAILED`` with its traceback, so a sweep result set</span>
+<span class="sd">        faithfully reflects what happened (issue 2).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_all_tasks</span><span class="p">,</span> <span class="n">_hash_task</span>
+
+        <span class="n">by_id</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">t</span><span class="p">[</span><span class="s2">&quot;task_id&quot;</span><span class="p">]:</span> <span class="n">t</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">get_all_tasks</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span> <span class="k">if</span> <span class="n">tag</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">status_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;done&quot;</span><span class="p">:</span> <span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;failed&quot;</span><span class="p">:</span> <span class="s2">&quot;FAILED&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;interrupted&quot;</span><span class="p">:</span> <span class="s2">&quot;INTERRUPTED&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">task_configs</span><span class="p">):</span>
+            <span class="n">save_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">))</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">by_id</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_hash_task</span><span class="p">(</span><span class="n">cfg</span><span class="p">))</span>
+            <span class="n">db_status</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">row</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="n">status_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">db_status</span><span class="p">,</span> <span class="s2">&quot;SUBMITTED&quot;</span><span class="p">)</span>
+
+            <span class="n">result_data</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;SUCCESS&quot;</span><span class="p">:</span>
+                <span class="n">result_data</span> <span class="o">=</span> <span class="n">RunRecord</span><span class="p">(</span><span class="n">save_dir</span><span class="p">)</span><span class="o">.</span><span class="n">load_results</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">result_data</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">row</span><span class="p">:</span>
+                    <span class="n">result_data</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;result&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+            <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;FAILED&quot;</span><span class="p">:</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">row</span> <span class="k">else</span> <span class="kc">None</span>
+
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">idx</span><span class="p">,</span>
+                    <span class="n">ExecutionResult</span><span class="p">(</span>
+                        <span class="n">save_dir</span><span class="o">=</span><span class="n">save_dir</span><span class="p">,</span>
+                        <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                        <span class="n">result</span><span class="o">=</span><span class="n">result_data</span><span class="p">,</span>
+                        <span class="n">cfg</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+                        <span class="n">error</span><span class="o">=</span><span class="n">error</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sweep_db_dir</span><span class="p">(</span><span class="n">merged_items</span><span class="p">,</span> <span class="n">sweep_root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Path | None&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Directory that hosts the sweep&#39;s task DB (mirrors the parallel path).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">sweep_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">sweep_root</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="n">merged_items</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reset_sweep_for_force</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">merged_items</span><span class="p">,</span> <span class="n">sweep_root</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Invalidate per-item markers and the task DB so a forced sweep reruns.&quot;&quot;&quot;</span>
+        <span class="c1"># Per-item completion markers + results (so RunRecord/index see fresh runs).</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="n">merged_items</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span>
+                <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="s2">&quot;run.complete&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="s2">&quot;results.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Task DB (its pending_count==0 short-circuit would otherwise resume).</span>
+        <span class="n">db_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sweep_db_dir</span><span class="p">(</span><span class="n">merged_items</span><span class="p">,</span> <span class="n">sweep_root</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">db_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;-wal&quot;</span><span class="p">,</span> <span class="s2">&quot;-shm&quot;</span><span class="p">):</span>
+                <span class="p">(</span><span class="n">db_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;run.lock.tasks.db</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Force flag enabled: reset sweep task DB under </span><span class="si">{</span><span class="n">db_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_submit_sweep</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">base_config</span><span class="p">:</span> <span class="n">DictConfig</span><span class="p">,</span>
@@ -1013,6 +1377,11 @@
         <span class="n">sweep_target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">sweep_root</span><span class="p">:</span> <span class="s2">&quot;str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">tag</span><span class="p">:</span> <span class="s2">&quot;str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="s2">&quot;int | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">note</span><span class="p">:</span> <span class="s2">&quot;str | None&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">item_policy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;raise&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ExecutionResult</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Execute a parameter sweep.</span>
@@ -1043,11 +1412,13 @@
         <span class="c1"># in one place, before any execution.</span>
         <span class="n">merged_items</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">override</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sweep</span><span class="p">):</span>
+            <span class="c1"># Merge the sweep item into the base FIRST, so item-injected keys</span>
+            <span class="c1"># (e.g. `variable`) exist before any resolution — then freeze.</span>
             <span class="n">sweep_cfg</span> <span class="o">=</span> <span class="n">merge_task_into_cfg</span><span class="p">(</span><span class="n">base_config</span><span class="p">,</span> <span class="n">override</span><span class="p">,</span> <span class="n">sweep_target</span><span class="p">)</span>
-            <span class="c1"># Make self-contained for DB serialization.</span>
-            <span class="n">sweep_cfg</span> <span class="o">=</span> <span class="n">OmegaConf</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                <span class="n">OmegaConf</span><span class="o">.</span><span class="n">to_container</span><span class="p">(</span><span class="n">sweep_cfg</span><span class="p">,</span> <span class="n">resolve</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="c1"># Eager-resolve everything self-contained for DB serialization,</span>
+            <span class="c1"># while preserving deferred resolvers (run_lock/latest) as call</span>
+            <span class="c1"># strings so they fire once, on the worker, at stage start.</span>
+            <span class="n">sweep_cfg</span> <span class="o">=</span> <span class="n">freeze_deferred</span><span class="p">(</span><span class="n">sweep_cfg</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">dir_suffix</span> <span class="ow">and</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">sweep_cfg</span><span class="p">:</span>
                 <span class="c1"># Nest each item under the base save_dir (the sweep root) so</span>
                 <span class="c1"># tasks DB and lineage markers stay inside the same tree.</span>
@@ -1064,6 +1435,14 @@
         <span class="c1"># relative path. Surface a clear error before we queue anything.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_sweep_save_dirs</span><span class="p">(</span><span class="n">base_config</span><span class="p">,</span> <span class="n">merged_items</span><span class="p">,</span> <span class="n">sweep_root</span><span class="o">=</span><span class="n">sweep_root</span><span class="p">)</span>
 
+        <span class="c1"># Force: reset the per-item completion markers *and* the task DB so every</span>
+        <span class="c1"># item re-executes. Unlinking only the base marker (the old behaviour)</span>
+        <span class="c1"># missed both the per-item markers and the DB&#39;s pending_count==0</span>
+        <span class="c1"># resume short-circuit, so a forced sweep silently re-used cached</span>
+        <span class="c1"># tasks (issue 15).</span>
+        <span class="k">if</span> <span class="n">force</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reset_sweep_for_force</span><span class="p">(</span><span class="n">merged_items</span><span class="p">,</span> <span class="n">sweep_root</span><span class="p">)</span>
+
         <span class="c1"># Check each sweep config for cached results</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sweep_cfg</span> <span class="ow">in</span> <span class="n">merged_items</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">smart_run</span><span class="p">:</span>
@@ -1076,6 +1455,38 @@
                     <span class="k">continue</span>
 
             <span class="n">configs_to_run</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">sweep_cfg</span><span class="p">))</span>
+
+        <span class="c1"># Collision guard, per item, after the cache check (a cache hit never</span>
+        <span class="c1"># trips the guard). Applied here — before anything is queued — so a</span>
+        <span class="c1"># refusal aborts the whole sweep up front. Items whose save_dir is</span>
+        <span class="c1"># occupied by a previous run are handled per `item_policy`; items of</span>
+        <span class="c1"># *this* sweep sharing one save_dir don&#39;t trip it (nothing is occupied</span>
+        <span class="c1"># until execution starts).</span>
+        <span class="k">if</span> <span class="n">item_policy</span> <span class="o">!=</span> <span class="s2">&quot;unsafe&quot;</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">.save_dir</span><span class="w"> </span><span class="kn">import</span> <span class="n">clean_run_dir</span><span class="p">,</span> <span class="n">is_complete</span><span class="p">,</span> <span class="n">is_occupied</span><span class="p">,</span> <span class="n">occupied_error</span>
+
+            <span class="n">still_to_run</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sweep_cfg</span> <span class="ow">in</span> <span class="n">configs_to_run</span><span class="p">:</span>
+                <span class="n">item_dir</span> <span class="o">=</span> <span class="n">sweep_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">item_dir</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">is_occupied</span><span class="p">(</span><span class="n">item_dir</span><span class="p">):</span>
+                    <span class="n">still_to_run</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">sweep_cfg</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">item_policy</span> <span class="o">==</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">:</span>
+                    <span class="n">clean_run_dir</span><span class="p">(</span><span class="n">item_dir</span><span class="p">)</span>
+                    <span class="n">still_to_run</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">sweep_cfg</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">item_policy</span> <span class="o">==</span> <span class="s2">&quot;skip&quot;</span><span class="p">:</span>
+                    <span class="c1"># Resume: reuse complete items, rerun crashed ones in place.</span>
+                    <span class="k">if</span> <span class="n">is_complete</span><span class="p">(</span><span class="n">item_dir</span><span class="p">):</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sweep </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: skip — reusing </span><span class="si">{</span><span class="n">item_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="n">cached_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_cached_result</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">item_dir</span><span class="p">),</span> <span class="n">sweep_cfg</span><span class="p">))</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">still_to_run</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">sweep_cfg</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">force</span><span class="p">:</span>
+                    <span class="n">still_to_run</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">sweep_cfg</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">occupied_error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">item_dir</span><span class="p">),</span> <span class="n">sweep_item</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">configs_to_run</span> <span class="o">=</span> <span class="n">still_to_run</span>
 
         <span class="c1"># Execute remaining configs</span>
         <span class="k">if</span> <span class="n">configs_to_run</span><span class="p">:</span>
@@ -1128,38 +1539,33 @@
                     <span class="n">pbs_config</span><span class="o">=</span><span class="n">pbs_config</span><span class="p">,</span>
                     <span class="n">slurm_config</span><span class="o">=</span><span class="n">slurm_config</span><span class="p">,</span>
                     <span class="n">local_workers</span><span class="o">=</span><span class="n">n_jobs</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">use_hpc</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
                 <span class="p">)</span>
 
                 <span class="c1"># Run the sweep (executor handles waiting based on wait parameter)</span>
-                <span class="n">success</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="n">wait</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+                <span class="n">success</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="n">wait</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
 
-                <span class="c1"># Collect results from executed configs</span>
-                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">task_configs</span><span class="p">):</span>
-                    <span class="c1"># Try to load results</span>
-                    <span class="n">result_data</span> <span class="o">=</span> <span class="kc">None</span>
-                    <span class="k">if</span> <span class="s2">&quot;save_dir&quot;</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
-                        <span class="n">results_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">save_dir</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;results.json&quot;</span>
-                        <span class="k">if</span> <span class="n">results_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-                            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">results_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                                <span class="n">result_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-
-                    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="p">(</span>
-                            <span class="n">idx</span><span class="p">,</span>
-                            <span class="n">ExecutionResult</span><span class="p">(</span>
-                                <span class="n">save_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)),</span>
-                                <span class="n">status</span><span class="o">=</span><span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span>
-                                <span class="n">result</span><span class="o">=</span><span class="n">result_data</span><span class="p">,</span>
-                                <span class="n">cfg</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
-                            <span class="p">),</span>
-                        <span class="p">)</span>
+                <span class="c1"># Collect real per-task statuses from the task DB (issue 2).</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">collect_results</span><span class="p">(</span>
+                        <span class="n">indices</span><span class="p">,</span> <span class="n">task_configs</span><span class="p">,</span> <span class="n">executor</span><span class="o">.</span><span class="n">db_path</span><span class="p">,</span> <span class="n">executor</span><span class="o">.</span><span class="n">tag</span>
                     <span class="p">)</span>
+                <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Sequential execution (no backend, n_jobs=1)</span>
                 <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="n">configs_to_run</span><span class="p">:</span>
                     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Executing sweep </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sweep</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="c1"># Guard already applied above — run items unguarded so</span>
+                    <span class="c1"># same-save_dir items of one sweep behave as before.</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
-                        <span class="n">cfg</span><span class="p">,</span> <span class="n">sweep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">smart_run</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">debug</span>
+                        <span class="n">cfg</span><span class="p">,</span>
+                        <span class="n">sweep</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">smart_run</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">debug</span><span class="o">=</span><span class="n">debug</span><span class="p">,</span>
+                        <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+                        <span class="n">save_dir_policy</span><span class="o">=</span><span class="s2">&quot;unsafe&quot;</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">result</span><span class="p">))</span>
 

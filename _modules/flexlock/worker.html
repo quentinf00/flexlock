@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>flexlock.worker &mdash; FlexLock 0.4.1 documentation</title>
+  <title>flexlock.worker &mdash; FlexLock 0.8.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
 
@@ -13,7 +13,7 @@
     <link rel="canonical" href="https://quentinf00.github.io/flexlock/_modules/flexlock/worker.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=bd778e0b"></script>
+      <script src="../../_static/documentation_options.js?v=cce5339e"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -47,8 +47,8 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html#complete-usage-guide">Complete Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage_guide.html">FlexLock Usage Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../agentic_workflows.html">Agentic Workflows</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../debugging.html">Debugging with FlexLock</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../hpc_integration.html">HPC Integration</a></li>
 </ul>
@@ -92,36 +92,118 @@
            <div itemprop="articleBody">
              
   <h1>Source code for flexlock.worker</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Worker process for executing FlexLock tasks.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Worker process for executing FlexLock tasks.</span>
 
+<span class="sd">The worker is deliberately single-threaded while the user function runs: no</span>
+<span class="sd">background heartbeat thread or process. A live background thread would turn</span>
+<span class="sd">any fork the user&#39;s code performs (PyTorch DataLoader workers, DDP, ...) into</span>
+<span class="sd">a multi-threaded fork and corrupt the CUDA runtime in the child</span>
+<span class="sd">(``cudaErrorSystemNotReady`` / &quot;Unexpected error from cudaGetDeviceCount()&quot;).</span>
+<span class="sd">Liveness is instead reconciled by the controller against the OS/scheduler&#39;s</span>
+<span class="sd">authoritative view of worker state (see ``ParallelExecutor``).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Process</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">claim_next_task</span><span class="p">,</span> <span class="n">finish_task</span><span class="p">,</span> <span class="n">pending_count</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">merge_task_into_cfg</span><span class="p">,</span> <span class="n">instantiate</span><span class="p">,</span> <span class="n">extract_tracking_info</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span><span class="p">,</span> <span class="n">write_complete_marker</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">omegaconf</span><span class="w"> </span><span class="kn">import</span> <span class="n">OmegaConf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.resolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_deferred</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.run_record</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunRecord</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.fingerprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">fingerprint</span> <span class="k">as</span> <span class="n">compute_fingerprint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">index</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flexlock</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span> <span class="k">as</span> <span class="n">_config</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_current_job_id</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Best-effort scheduler job id from the environment (SLURM/PBS).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;SLURM_JOB_ID&quot;</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;PBS_JOBID&quot;</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="kc">None</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_preflight_cuda</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;tuple[bool, str]&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check that a CUDA context can actually be created on this node.</span>
+
+<span class="sd">    Returns ``(ok, detail)``. Enabling this (``FLEXLOCK_PREFLIGHT_CUDA=1``)</span>
+<span class="sd">    asserts &quot;this job needs a working GPU&quot;, so anything short of a successful</span>
+<span class="sd">    allocation is a failure:</span>
+
+<span class="sd">    - torch not importable -&gt; skipped (``ok=True``); it&#39;s a misconfiguration,</span>
+<span class="sd">      not a node fault, and the user function will report it plainly.</span>
+<span class="sd">    - ``cuda.is_available()`` False, or a real allocation raises -&gt; ``ok=False``.</span>
+<span class="sd">      A bare ``torch.zeros(1, device=&#39;cuda&#39;)`` is exactly what fails with</span>
+<span class="sd">      ``cudaErrorSystemNotReady`` (802) on a node whose GPU stack is unhealthy</span>
+<span class="sd">      (Fabric Manager down, driver/kernel-module mismatch).</span>
+<span class="sd">    - allocation succeeds -&gt; ``ok=True``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># torch absent / broken install</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;skipped (torch not importable: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;torch.cuda.is_available() is False (no usable GPU)&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">synchronize</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ok (</span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">get_device_name</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
 
 
 <div class="viewcode-block" id="worker_loop">
 <a class="viewcode-back" href="../../api.html#flexlock.worker.worker_loop">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">worker_loop</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">task_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">db_path</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A worker loop that continuously claims and executes tasks from the task database.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">worker_loop</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">task_to</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Claim and execute tasks from the task database until none remain.</span>
+
+<span class="sd">    ``tags`` restricts which rows this worker claims (and the idle-check</span>
+<span class="sd">    pending count). ``None`` (default) claims any row, matching legacy</span>
+<span class="sd">    untagged DBs and the ``flexlock-worker`` CLI without ``--tags``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">func</span> <span class="o">=</span> <span class="n">instantiate</span>
     <span class="n">node</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;HOSTNAME&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;local&quot;</span>
+    <span class="n">job_id</span> <span class="o">=</span> <span class="n">_current_job_id</span><span class="p">()</span>
 
-    <span class="c1"># Find the master lock file (parent lock)</span>
-    <span class="c1"># The master lock should be in the parent directory of the db_path</span>
-    <span class="n">db_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+    <span class="n">db_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="n">db_dir</span> <span class="o">=</span> <span class="n">db_path</span><span class="o">.</span><span class="n">parent</span>
     <span class="n">master_lock</span> <span class="o">=</span> <span class="n">db_dir</span> <span class="o">/</span> <span class="s2">&quot;run.lock&quot;</span>
 
+    <span class="c1"># Optional GPU pre-flight: fail fast on an unhealthy node before claiming</span>
+    <span class="c1"># any task, so a bad GPU stack surfaces as one clear log line rather than</span>
+    <span class="c1"># an opaque CUDA traceback deep inside the user&#39;s training. Tasks are left</span>
+    <span class="c1"># pending for a healthy worker to pick up.</span>
+    <span class="k">if</span> <span class="n">_config</span><span class="o">.</span><span class="n">PREFLIGHT_CUDA</span><span class="p">:</span>
+        <span class="n">ok</span><span class="p">,</span> <span class="n">detail</span> <span class="o">=</span> <span class="n">_preflight_cuda</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;[preflight] CUDA unusable on node </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">detail</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Not claiming any task — they stay pending for another worker. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;This is almost always a node/driver problem (NVIDIA Fabric &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Manager down or driver/kernel-module mismatch), not your code. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Resubmit excluding this node (e.g. sbatch --exclude=</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">).&quot;</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[preflight] CUDA </span><span class="si">{</span><span class="n">detail</span><span class="si">}</span><span class="s2"> on node </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Stagger startup so multiple workers don&#39;t all claim the same task.</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="n">task</span> <span class="o">=</span> <span class="n">claim_next_task</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">claim_next_task</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">job_id</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">pending_count</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pending_count</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="n">tags</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;All tasks finished.&quot;</span><span class="p">)</span>
                 <span class="k">break</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;No task available – sleeping 5s&quot;</span><span class="p">)</span>
@@ -130,77 +212,87 @@
 
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Worker </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2"> running task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Get task_id for DB operations</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">_hash_task</span>
-
         <span class="n">task_id</span> <span class="o">=</span> <span class="n">_hash_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
 
+        <span class="n">task_save_dir</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">task_cfg</span> <span class="o">=</span> <span class="n">merge_task_into_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">task_to</span><span class="p">)</span>
 
-            <span class="c1"># 3. Resolve Data Dependencies (Just-in-Time)</span>
-            <span class="c1"># We re-run resolution because task overrides might change data paths</span>
-            <span class="c1"># e.g. override=&quot;data.fold=1&quot; changes ${input:data/fold_${data.fold}}</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span> <span class="o">=</span> <span class="n">extract_tracking_info</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">)</span>
+            <span class="c1"># Single deferred-resolution point: run_lock/latest fire exactly</span>
+            <span class="c1"># once, here at stage start on the worker, now that the per-item</span>
+            <span class="c1"># override has been merged in. Everything else was already frozen</span>
+            <span class="c1"># to concrete values at submit time.</span>
+            <span class="n">task_cfg</span> <span class="o">=</span> <span class="n">resolve_deferred</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">)</span>
 
-            <span class="c1"># 4. Create DELTA Snapshot (DB storage only)</span>
-            <span class="c1"># We pass the path to the Master Lock</span>
+            <span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">prevs</span> <span class="o">=</span> <span class="n">extract_tracking_info</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">)</span>
+
             <span class="n">task_save_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">task_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;save_dir&quot;</span><span class="p">,</span> <span class="n">db_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;task_</span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
             <span class="n">task_save_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-            <span class="c1"># Get snapshot data without writing file</span>
+            <span class="c1"># Compute the fingerprint with the task&#39;s full git identity (repos</span>
+            <span class="c1"># from the merged config) so a task cache-hits when the same config</span>
+            <span class="c1"># is later run serially. The run.lock snapshot itself still uses the</span>
+            <span class="c1"># parent_lock delta optimisation (repos=None).</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">task_fp</span> <span class="o">=</span> <span class="n">compute_fingerprint</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">,</span> <span class="n">repos</span><span class="o">=</span><span class="n">repos</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not compute task fingerprint: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">task_fp</span> <span class="o">=</span> <span class="kc">None</span>
+
             <span class="n">snapshot_data</span> <span class="o">=</span> <span class="n">snapshot</span><span class="p">(</span>
                 <span class="n">task_cfg</span><span class="p">,</span>
-                <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>  <span class="c1"># Capture task-specific data</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
                 <span class="n">prevs</span><span class="o">=</span><span class="n">prevs</span><span class="p">,</span>
-                <span class="n">repos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Skip repos, we rely on Parent</span>
+                <span class="n">repos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                 <span class="n">parent_lock</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">master_lock</span><span class="p">)</span> <span class="k">if</span> <span class="n">master_lock</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-                <span class="n">return_snapshot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Return data for DB storage instead of writing file</span>
+                <span class="n">return_snapshot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">fingerprint</span><span class="o">=</span><span class="n">task_fp</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="c1"># Store snapshot in database</span>
             <span class="k">if</span> <span class="n">snapshot_data</span><span class="p">:</span>
                 <span class="kn">from</span><span class="w"> </span><span class="nn">flexlock.taskdb</span><span class="w"> </span><span class="kn">import</span> <span class="n">update_task_snapshot</span>
-
                 <span class="n">update_task_snapshot</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">snapshot_data</span><span class="p">)</span>
-                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stored snapshot for task </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2"> in database&quot;</span><span class="p">)</span>
-
-            <span class="c1"># Write marker file for lineage discovery. Prefer a path</span>
-            <span class="c1"># relative to the task&#39;s parent dir (keeps the marker portable</span>
-            <span class="c1"># if the sweep tree is moved together) but fall back to the</span>
-            <span class="c1"># absolute path if the DB lives outside the task tree.</span>
-            <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
             <span class="n">marker_file</span> <span class="o">=</span> <span class="n">task_save_dir</span> <span class="o">/</span> <span class="s2">&quot;.flexlock_marker&quot;</span>
-            <span class="n">db_abs</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+            <span class="n">db_abs</span> <span class="o">=</span> <span class="n">db_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">db_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">db_abs</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">task_save_dir</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">resolve</span><span class="p">()))</span>
             <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
                 <span class="n">db_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">db_abs</span><span class="p">)</span>
-            <span class="n">marker_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;db&quot;</span><span class="p">:</span> <span class="n">db_str</span><span class="p">,</span> <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task_id</span><span class="p">}</span>
-            <span class="n">marker_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">marker_data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrote marker file at </span><span class="si">{</span><span class="n">marker_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">marker_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;db&quot;</span><span class="p">:</span> <span class="n">db_str</span><span class="p">,</span> <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task_id</span><span class="p">},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 
-            <span class="c1"># 5. Execute</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">task_cfg</span><span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task successful: </span><span class="si">{</span><span class="n">task_cfg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-            <span class="c1"># Persist the function&#39;s return value as results.json so the</span>
-            <span class="c1"># parent (api.submit) can rehydrate `ExecutionResult.result`.</span>
-            <span class="c1"># Without this, parallel sweeps and isolated runs always come</span>
-            <span class="c1"># back with result=None.</span>
+            <span class="n">record</span> <span class="o">=</span> <span class="n">RunRecord</span><span class="p">(</span><span class="n">task_save_dir</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">results_file</span> <span class="o">=</span> <span class="n">task_save_dir</span> <span class="o">/</span> <span class="s2">&quot;results.json&quot;</span>
-                <span class="n">payload</span> <span class="o">=</span> <span class="n">result</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;result&quot;</span><span class="p">:</span> <span class="n">result</span><span class="p">}</span>
-                <span class="n">results_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">))</span>
+                <span class="n">record</span><span class="o">.</span><span class="n">write_results</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not write results.json at </span><span class="si">{</span><span class="n">task_save_dir</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-            <span class="n">write_complete_marker</span><span class="p">(</span><span class="n">task_save_dir</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+            <span class="n">record</span><span class="o">.</span><span class="n">mark_complete</span><span class="p">(</span><span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+            <span class="c1"># Record this sweep task in the project-wide index so it&#39;s a</span>
+            <span class="c1"># first-class cache entry (issue 1).</span>
+            <span class="k">if</span> <span class="n">task_fp</span><span class="p">:</span>
+                <span class="n">index</span><span class="o">.</span><span class="n">record_task</span><span class="p">(</span><span class="n">task_save_dir</span><span class="p">,</span> <span class="n">db_path</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">task_fp</span><span class="p">)</span>
             <span class="n">finish_task</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="c1"># SIGINT — mark the in-flight task interrupted so it&#39;s distinct</span>
+            <span class="c1"># from a genuine failure, then propagate so the worker exits.</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Worker interrupted while running task </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">finish_task</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;interrupted&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">finish_task</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span></div>
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Mirror the failure into the task dir as run.error so triage needs</span>
+            <span class="c1"># no sqlite; taskdb keeps the traceback too. write_error never raises.</span>
+            <span class="k">if</span> <span class="n">task_save_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">RunRecord</span><span class="p">(</span><span class="n">task_save_dir</span><span class="p">)</span><span class="o">.</span><span class="n">write_error</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span> <span class="n">node</span><span class="o">=</span><span class="n">node</span><span class="p">)</span>
+            <span class="n">finish_task</span><span class="p">(</span><span class="n">db_path</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">tb</span><span class="p">)</span></div>
 
 </pre></div>
 

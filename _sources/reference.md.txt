@@ -18,13 +18,31 @@ All FlexLock environment variables are prefixed with `FLEXLOCK_`.
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
 | `FLEXLOCK_WARN_SMART_RUN` | bool | `true` | Warn when `smart_run=True` but `search_dirs=None` |
+| `FLEXLOCK_INDEX` | path | *(auto)* | Explicit path to the project-wide fingerprint index DB. Overrides auto-discovery. |
+| `FLEXLOCK_INDEX_FALLBACK` | bool | `true` | On an index miss, fall back to the legacy `**/run.lock` glob scan and backfill the index on a hit. |
+
+**Project-wide fingerprint index.** `smart_run` cache hits are served from a
+derived SQLite index that maps a run *fingerprint* (config + code tree hashes +
+data hashes) to where a completed run lives — a `run.lock` directory **or** a
+sweep task `(task_db, task_id)`. This makes sweep items first-class: a config
+first run as a sweep task is a cache hit when re-run serially, and vice-versa.
+Only successful (`status='done'`) runs are ever served.
+
+The index is a *derived cache* — `run.lock` stays authoritative and the index
+can always be deleted and rebuilt with `flexlock reindex <dir>`. Its location is
+resolved as: `$FLEXLOCK_INDEX` → the nearest `.flexlock/index.db` walking up
+from each `search_dir` (skipping `$HOME`/tmp/filesystem-root) →
+`<results_root>/.flexlock/index.db`. For hits to land, the read and write paths
+must resolve to the same file — a project wrapper should set `search_dirs` (and,
+if needed, `$FLEXLOCK_INDEX`) so they agree. Auto-indexing is skipped when a run
+has no project context (its index would sit directly in `$HOME`/tmp/root).
 
 ### Data Hashing
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `FLEXLOCK_CACHE` | path | `~/.cache` | Base directory for FlexLock cache |
-| `FLEXLOCK_NO_CACHE` | bool | `false` | Disable hash caching |
+| `FLEXLOCK_CACHE` | path | `~/.cache` | Base dir for the data-hash cache (stored under `<FLEXLOCK_CACHE>/flexlock/hashes_v<N>.db`) |
+| `FLEXLOCK_NO_CACHE` | bool | `false` | Force-disable hash caching (overrides a `use_cache=True` argument; never re-enables `use_cache=False`) |
 | `FLEXLOCK_DIR_FILE_LIMIT` | int | `1000` | Max files to hash in a directory before warning |
 | `FLEXLOCK_CACHE_DIR_FILE_LIMIT` | int | `1000` | Override file limit for cache operations |
 
@@ -52,18 +70,6 @@ All FlexLock environment variables are prefixed with `FLEXLOCK_`.
 - `auto`: Detect environment - use PDB for scripts, inject locals for notebooks/interactive
 - `pdb`: Always use PDB post-mortem debugger
 - `inject`: Always inject locals into caller's namespace (for notebooks)
-
-### Display
-
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `FLEXLOCK_MAX_DISPLAY_ITEMS` | int | `10` | Maximum items to show in summaries |
-
-### Validation
-
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `FLEXLOCK_STRICT_VALIDATION` | bool | `true` | Enable strict configuration validation |
 
 ### Boolean Values
 
@@ -239,3 +245,61 @@ except FlexLockExecutionError as e:
 except FlexLockError as e:
     print(f"Other FlexLock error: {e}")
 ```
+
+## On-Disk Run Files
+
+A run directory is owned by `RunRecord` (`flexlock/run_record.py`). Every file is
+written atomically (temp file + `os.replace`).
+
+### `run.lock` (YAML)
+
+The snapshot written *before* execution — the human-editable record. Top-level
+keys: `timestamp`, `config` (resolved), and optionally `note`, `repos` (git
+tree/commit per tracked repo), `data` (data hashes), `lineage` (upstream runs),
+`fingerprint`, `parent`.
+
+```yaml
+timestamp: "2026-07-10T10:00:00"
+note: "baseline before lr sweep"     # only present when --note / note= was passed
+config:
+  _target_: myproject.train.train
+  save_dir: outputs/exp/train
+  lr: 0.1
+repos:
+  main: {commit: "abc…", tree: "def…", path: "/repo", is_dirty: false}
+data: {train_csv: "xxh64:…"}
+lineage:
+  extract: {path: "/abs/outputs/exp/extract", info: {...}}
+fingerprint: "sha256:…"
+```
+
+`note` is metadata only — it is excluded from the fingerprint (which hashes
+`{config, repos, data}`) and ignored by `RunDiff`, so it never affects caching.
+
+### `run.complete` (JSON)
+
+Success marker written after the user function returns. A cache hit requires
+*both* `run.lock` and `run.complete`. Writing it also clears any stale
+`run.error`.
+
+### `run.error` (JSON, schema v1)
+
+Failure sidecar written next to `run.lock` when the user function raises. Mirrors
+the traceback the task DB also stores, so triage needs no sqlite. Capturing it
+never masks the original exception (which still propagates unwrapped).
+
+```json
+{"version": 1, "exc_type": "ValueError", "exc_message": "...",
+ "traceback": "full formatted chain", "timestamp": "ISO-8601",
+ "task_id": "optional (sweep)", "node": "optional (sweep)"}
+```
+
+`KeyboardInterrupt` is deliberately not captured — a bare `run.lock` with no
+`run.complete`/`run.error` is the interrupted signature.
+
+### `results.json` (JSON)
+
+The user function's return payload (`{"result": value}` when it isn't a dict).
+
+For the JSON contracts of the query commands (`show`, `graph`, `why`), see
+[Agentic Workflows](agentic_workflows.md).
