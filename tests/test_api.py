@@ -242,6 +242,43 @@ defaults = {
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
+@pytest.mark.parametrize(
+    "snapshot, expected",
+    [
+        ({"data": {"input": "${...input_path}"}}, {"data": {"input": "data/raw"}}),
+        ({"prevs": ["${...input_path}"]}, {"prevs": ["data/raw"]}),
+    ],
+)
+def test_submit_hpc_resolves_relative_snapshot_refs(snapshot, expected, tmp_path):
+    """HPC submit must resolve _snapshot_ against the parented config.
+
+    Regression: the use_hpc branch used to copy the *unresolved* _snapshot_
+    into a re-rooted OmegaConf, severing the parent chain so relative refs
+    (``${...key}``) inside _snapshot_ raised InterpolationKeyError. It must
+    resolve first, like the isolated and sweep branches do.
+    """
+    from unittest.mock import patch
+
+    project = Project()
+    config = OmegaConf.create(
+        {
+            "_target_": "tests.test_api.dummy_func",
+            "input_path": "data/raw",
+            "save_dir": str(tmp_path / "out"),
+            "_snapshot_": snapshot,
+        }
+    )
+
+    # Stub the executor so nothing is actually submitted; capture its cfg.
+    with patch("flexlock.parallel.ParallelExecutor") as mock_exec:
+        mock_exec.return_value.run.return_value = True
+        # Must not raise InterpolationKeyError.
+        project.submit(config, slurm_config="unused.yaml", smart_run=False)
+
+    captured = mock_exec.call_args.kwargs["cfg"]
+    assert OmegaConf.to_container(captured._snapshot_, resolve=True) == expected
+
+
 # ── run_stage tests ────────────────────────────────────────────
 
 

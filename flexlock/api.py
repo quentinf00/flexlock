@@ -736,8 +736,17 @@ class Project:
             from .parallel import ParallelExecutor
 
             save_dir = config.get("save_dir", "outputs/job")
+            # Resolve _snapshot_ while config still has its parent chain: the
+            # executor_cfg below is re-rooted, so relative refs (${...key})
+            # inside _snapshot_ would no longer reach the stage node.
+            if "_snapshot_" in config:
+                snapshot_resolved = OmegaConf.to_container(
+                    config._snapshot_, resolve=True
+                )
+            else:
+                snapshot_resolved = {}
             executor_cfg = OmegaConf.create(
-                {"save_dir": str(save_dir), "_snapshot_": config.get("_snapshot_", {})}
+                {"save_dir": str(save_dir), "_snapshot_": snapshot_resolved}
             )
 
             executor = ParallelExecutor(
