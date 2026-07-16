@@ -52,5 +52,6 @@ flexlock-run -d myproject.pipeline.cfg -s train --print-config   # config resolv
 flexlock-run -d myproject.pipeline.cfg -s train --dry-run        # (HPC) script renders
 ```
 
-`flexlock stages` walks the config **without resolving**, so it never fires
-`${vinc:}`/creates dirs — safe to run repeatedly while iterating.
+`flexlock stages` walks the config **without resolving**, and
+`--print-config`/`--check`/`--dry-run` never create or claim directories —
+all safe to run repeatedly while iterating.

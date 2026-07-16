@@ -169,22 +169,24 @@ propagate into `log_dir` and `ckpt_dir`. Root-scope refs (`${root_anchor}`,
 `${main.save_dir}`) are *frozen to their concrete value* at `proj.get()`
 time, which keeps the returned sub-tree pickleable for HPC dispatch.
 
-### `${vinc:path}` — auto-numbered run dirs
+### `save_dir_policy` — collision guard (replaces `${vinc:}` / `${now:}`)
+
+Keep `save_dir` a **stable** path in configs; `save_dir_policy` decides what
+happens when it's already occupied (default `"raise"`; `"increment"` versions
+it the way `${vinc:}` used to, `"timestamp"` replaces `${now:}`). See
+[`resolvers.md`](resolvers.md#save_dir_policy-replaces-vinc--now) for the full
+policy table and migration guide. `${vinc:}`/`${now:}` still work for one
+deprecation cycle but emit a `DeprecationWarning`.
 
 ```python
-save_dir='${vinc:outputs/train/run}'
+save_dir='outputs/train/run'
+proj.submit(cfg, save_dir_policy="increment")
 # → outputs/train/run_0000, run_0001, ...
 ```
 
-`vinc` scans the parent dir for existing matches, picks the next free
-slot, and returns the path. FlexLock resolves `save_dir` **once per
-submit**, so `${vinc:}` advances the counter exactly once per call
-(deterministic per submit) — `run.lock` and `run.complete` always land
-in the same directory, even though both phases read `cfg.save_dir`.
-
-Other resolvers: `${now:%Y%m%d}` (timestamp), `${latest:glob_pattern}`
-(newest match), `${run_lock:<run_dir>,<dotted.key>}` (read a value from
-an upstream `run.lock`).
+Other resolvers: `${latest:glob_pattern}` (newest match),
+`${run_lock:<run_dir>,<dotted.key>}` (read a value from an upstream
+`run.lock`).
 
 ---
 
@@ -1016,8 +1018,6 @@ override, or an HPC backend.
 
 4. **`pipeline_dir="???"` is mandatory.** OmegaConf raises if it's left
    unresolved, which is the intended guard — every run must name its experiment.
-   Combine with `${vinc:results/pipeline}` as the *default* anchor if you want
-   auto-numbered experiments when none is given.
 
 ---
 

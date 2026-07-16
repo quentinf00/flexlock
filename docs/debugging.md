@@ -268,7 +268,7 @@ import pandas as pd
 def analyze_data(
     data_path: str = "data/results.csv",
     threshold: float = 0.5,
-    save_dir: str = "${vinc:results/analysis}"
+    save_dir: str = "results/analysis"
 ):
     """Analyze experiment results."""
 
@@ -325,7 +325,7 @@ from flexlock.utils import log_to_file
 from loguru import logger
 
 @flexcli
-def train(lr=0.01, save_dir="${vinc:results/train}"):
+def train(lr=0.01, save_dir="results/train"):
     with log_to_file(Path(save_dir) / "debug.log"):
         logger.debug(f"Starting with lr={lr}")
 

@@ -42,7 +42,8 @@ flexlock show <run_dir> --format json        # .error = {exc_type, exc_message, 
 
 Classify by `exc_type`:
 - **User-code error** (`ValueError`, `KeyError`, shape mismatch, assertion): fix
-  the code/config, then re-run.
+  the code/config, then re-run **with `--force`** — the save_dir still holds
+  the crashed run's `run.lock`, so a bare re-run raises by default.
 - **Node/infra fault** (CUDA `cudaErrorSystemNotReady`, OOM, `interrupted` with
   "orphaned"): not your code — retry elsewhere.
 
@@ -52,6 +53,7 @@ Classify by `exc_type`:
 |---|---|
 | sweep tasks stranded `running` by a dead worker | `flexlock-worker --task-db <db> --reclaim` |
 | want to force re-execution of a cached run | re-run with `force=True` / `--force` (clears `run.complete`; success clears `run.error`) |
+| "save_dir ... already contains a run" | expected (0.8 collision guard): `--force` reruns in place; `--save-dir-policy increment`/`overwrite`/`skip` are the alternatives (`skip` = resume for sweeps) |
 | clean up interrupted attempts | `flexlock gc --incomplete` |
 
 **Never delete run directories by hand** — use `flexlock gc` so tagged runs and
