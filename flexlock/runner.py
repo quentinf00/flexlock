@@ -689,13 +689,6 @@ class FlexLockRunner:
             print(OmegaConf.to_yaml(node_cfg), end="")
             return None
 
-        # --enqueue: append compiled config to a YAML queue file and exit.
-        if args.enqueue:
-            cfg_dict = OmegaConf.to_container(node_cfg, resolve=False, throw_on_missing=False)
-            n = enqueue_to_file(args.enqueue, cfg_dict)
-            logger.info(f"Enqueued 1 task → {args.enqueue} ({n} task(s) in queue)")
-            return None
-
         # Load the sweep list from whichever source the user picked.
         sweep_tasks = load_sweep(
             sweep=args.sweep,
@@ -703,6 +696,37 @@ class FlexLockRunner:
             sweep_key=args.sweep_key,
             root_cfg=root_cfg,
         )
+
+        # --enqueue: append the compiled config(s) to a YAML queue file, exit.
+        # Below load_sweep so a sweep source expands into one queue entry per
+        # item (each item merged at --sweep-target + frozen, mirroring the
+        # submit-time preview); without a sweep, the single compiled node config
+        # is enqueued.
+        if args.enqueue:
+            if sweep_tasks:
+                from .freeze import freeze_deferred
+
+                n = 0
+                for item in sweep_tasks:
+                    item_cfg = merge_task_into_cfg(node_cfg, item, args.sweep_target)
+                    item_cfg = freeze_deferred(item_cfg)
+                    cfg_dict = OmegaConf.to_container(
+                        item_cfg, resolve=False, throw_on_missing=False
+                    )
+                    n = enqueue_to_file(args.enqueue, cfg_dict)
+                logger.info(
+                    f"Enqueued {len(sweep_tasks)} task(s) → {args.enqueue} "
+                    f"({n} task(s) in queue)"
+                )
+            else:
+                cfg_dict = OmegaConf.to_container(
+                    node_cfg, resolve=False, throw_on_missing=False
+                )
+                n = enqueue_to_file(args.enqueue, cfg_dict)
+                logger.info(
+                    f"Enqueued 1 task → {args.enqueue} ({n} task(s) in queue)"
+                )
+            return None
 
         # Honour FLEXLOCK_DEBUG env var as a CLI-side debug toggle.
         debug = args.debug or config.get_env_bool("FLEXLOCK_DEBUG", False)

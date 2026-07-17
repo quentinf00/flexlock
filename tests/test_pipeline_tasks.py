@@ -475,3 +475,52 @@ def test_mixed_queue_plain_and_composite(tmp_path):
 
     assert _read_order(plain_dir) == ["plain"]
     assert _read_order(comp_root) == ["a", "b"]
+
+
+# ---------------------------------------------------------------------------
+# Phase 5 — single-stage --sweep + --enqueue
+# ---------------------------------------------------------------------------
+
+def test_single_stage_sweep_enqueue_writes_merged_items(tmp_path):
+    """`--sweep 0.1,0.2 --sweep-target lr --enqueue q` → 2 merged plain entries."""
+    from flexlock.runner import FlexLockRunner
+
+    cfg_file = tmp_path / "cfg.yaml"
+    cfg_file.write_text(yaml.safe_dump({
+        "_target_": "builtins.dict",
+        "save_dir": str(tmp_path / "out"),
+        "lr": 0.0,
+        # A deferred resolver must survive the roundtrip unresolved.
+        "ckpt": "${latest:model.ckpt}",
+    }))
+    q = tmp_path / "queue.yaml"
+
+    FlexLockRunner().run(cli_args=[
+        "-c", str(cfg_file),
+        "--sweep", "0.1,0.2", "--sweep-target", "lr",
+        "--enqueue", str(q),
+    ])
+
+    data = yaml.safe_load(q.read_text())
+    assert len(data) == 2
+    assert [d["lr"] for d in data] == [0.1, 0.2]
+    assert "_stages_" not in data[0]
+    # Deferred resolver preserved as a call string, not fired.
+    assert data[0]["ckpt"] == "${latest:model.ckpt}"
+
+
+def test_single_stage_enqueue_no_sweep_unchanged(tmp_path):
+    """Without a sweep, --enqueue still writes exactly one compiled entry."""
+    from flexlock.runner import FlexLockRunner
+
+    cfg_file = tmp_path / "cfg.yaml"
+    cfg_file.write_text(yaml.safe_dump(
+        {"_target_": "builtins.dict", "save_dir": "out", "lr": 0.01}
+    ))
+    q = tmp_path / "queue.yaml"
+
+    FlexLockRunner().run(cli_args=["-c", str(cfg_file), "--enqueue", str(q)])
+
+    data = yaml.safe_load(q.read_text())
+    assert len(data) == 1
+    assert data[0]["lr"] == 0.01
