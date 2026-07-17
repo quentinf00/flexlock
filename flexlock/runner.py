@@ -21,6 +21,13 @@ from . import config
 from loguru import logger
 
 
+def _is_composite_item(task) -> bool:
+    """True when a sweep/queue item is a composite pipeline task."""
+    from omegaconf import DictConfig
+
+    return isinstance(task, (dict, DictConfig)) and "_stages_" in task
+
+
 class FlexLockRunner:
     def __init__(self):
         self.parser = self._build_parser()
@@ -490,6 +497,91 @@ class FlexLockRunner:
             return _raw(results[0])
         return [_raw(item_results) for item_results in results]
 
+    def _run_pipeline_queue(self, args, proj, node_cfg, sweep_tasks, debug):
+        """Dispatch a --sweep-file queue that contains composite pipeline tasks.
+
+        Composite items are used as-is (self-contained, frozen at build time —
+        never re-merge the base config into them). Plain items are normalized by
+        merging into the compiled node config and wrapping as single-stage
+        composites, so the whole queue goes through :meth:`Project.submit_pipeline`
+        uniformly. Returns the per-item raw results (single-stage items unwrap to
+        their stage's raw value).
+        """
+        from .freeze import freeze_deferred
+
+        items = []
+        for t in sweep_tasks:
+            if _is_composite_item(t):
+                stages = t["_stages_"]
+                items.append([
+                    OmegaConf.create(
+                        OmegaConf.to_container(s, resolve=False, throw_on_missing=False)
+                        if OmegaConf.is_config(s)
+                        else s
+                    )
+                    for s in stages
+                ])
+            else:
+                merged = merge_task_into_cfg(node_cfg, t, args.sweep_target)
+                items.append([freeze_deferred(merged)])
+
+        # --check: preflight-resolve every stage config, then exit.
+        if args.check:
+            errors = []
+            for i, stage_cfgs in enumerate(items):
+                for j, stage_cfg in enumerate(stage_cfgs):
+                    for e in proj.check(stage_cfg):
+                        e = dict(e)
+                        e["item"] = i
+                        e["stage"] = j
+                        errors.append(e)
+            if not errors:
+                print("[flexlock] check OK — all interpolations resolve.")
+                return None
+            print(
+                f"[flexlock] check FAILED — {len(errors)} unresolved "
+                f"interpolation(s):"
+            )
+            for e in errors:
+                print(
+                    f"  - item {e['item']}, stage {e['stage']}, "
+                    f"{e['full_key']}: {e['error']}"
+                )
+            raise SystemExit(1)
+
+        # --print-config / --dump: iterate items × stages, then exit.
+        if args.print_config or args.dump:
+            for i, stage_cfgs in enumerate(items):
+                for j, stage_cfg in enumerate(stage_cfgs):
+                    print(f"# --- item {i} / stage {j} ---")
+                    if args.print_config:
+                        self._print_config_and_docstring(stage_cfg)
+                    else:
+                        print(OmegaConf.to_yaml(stage_cfg), end="")
+            return None
+
+        results = proj.submit_pipeline(
+            items,
+            n_jobs=args.n_jobs,
+            smart_run=bool(args.check_exists),
+            slurm_config=getattr(args, "slurm_config", None),
+            pbs_config=getattr(args, "pbs_config", None),
+            sweep_root=getattr(args, "sweep_root", None),
+            debug=debug,
+            dry_run=getattr(args, "dry_run", False),
+            note=getattr(args, "note", None),
+            save_dir_policy=getattr(args, "save_dir_policy", None),
+            force=getattr(args, "force", False),
+        )
+        if results is None:  # dry_run
+            return None
+
+        out = []
+        for item_results in results:
+            raws = [r.result if hasattr(r, "result") else r for r in item_results]
+            out.append(raws[0] if len(raws) == 1 else raws)
+        return out
+
     def _prepare_node(self, cfg, name="exp"):
         """Ensure ``cfg`` has a ``save_dir`` — fall back to ``outputs/<name>/<timestamp>``."""
         if "save_dir" not in cfg or cfg.save_dir is None:
@@ -617,6 +709,18 @@ class FlexLockRunner:
 
         # Hand off to the single execution kernel.
         proj = Project(root_cfg)
+
+        # Composite pipeline entries in the queue (Phase 4): a --sweep-file may
+        # contain {"_stages_": [...]} composite tasks (produced by
+        # `-s a b --enqueue`). When at least one is present, route the whole
+        # queue through submit_pipeline — composite items are used as-is (the
+        # base config is never re-merged into them), plain items are normalized
+        # by merging into the compiled node config and wrapping as single-stage
+        # composites.
+        if any(_is_composite_item(t) for t in sweep_tasks):
+            return self._run_pipeline_queue(
+                args, proj, node_cfg, sweep_tasks, debug
+            )
 
         # --check: side-effect-free preflight resolution, then exit.
         if args.check:

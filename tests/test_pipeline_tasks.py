@@ -387,3 +387,91 @@ def test_submit_pipeline_smart_run_all_cached(tmp_path):
     )
     assert [r.status for r in results[0]] == ["CACHED", "CACHED"]
     assert _read_order(root) == ["train", "probe"]
+
+
+# ---------------------------------------------------------------------------
+# Phase 4 — composite entries in --sweep-file (dequeue)
+# ---------------------------------------------------------------------------
+
+_PIPELINE_YAML = """
+pipeline_dir: ???
+
+stage_a:
+  _target_: tests.test_pipeline_tasks.record_stage
+  name: a
+  save_dir: ${pipeline_dir}/a
+  log: ${pipeline_dir}/order.log
+
+stage_b:
+  _target_: tests.test_pipeline_tasks.record_stage
+  name: b
+  save_dir: ${pipeline_dir}/b
+  log: ${pipeline_dir}/order.log
+  upstream: ${pipeline_dir}/a
+"""
+
+
+def test_enqueue_then_sweep_file_roundtrip(tmp_path):
+    """`-s a b --enqueue` twice → 2 composite entries; --sweep-file runs both."""
+    from flexlock.runner import FlexLockRunner
+
+    cfg_file = tmp_path / "pipeline.yaml"
+    cfg_file.write_text(_PIPELINE_YAML)
+    q = tmp_path / "queue.yaml"
+
+    root1 = tmp_path / "xp1"
+    root2 = tmp_path / "xp2"
+    for root in (root1, root2):
+        FlexLockRunner().run(cli_args=[
+            "-c", str(cfg_file), "-s", "stage_a", "stage_b",
+            "-o", f"pipeline_dir={root}", "--enqueue", str(q),
+        ])
+
+    # Deferred/root refs survived the roundtrip as concrete frozen values.
+    queued = yaml.safe_load(q.read_text())
+    assert len(queued) == 2
+    assert queued[0]["_stages_"][0]["save_dir"] == str(root1 / "a")
+
+    # Dequeue and run both composite items (no base re-merge).
+    FlexLockRunner().run(cli_args=[
+        "-c", str(cfg_file), "--sweep-file", str(q), "--n_jobs", "2",
+    ])
+
+    for root in (root1, root2):
+        assert _read_order(root) == ["a", "b"]
+        assert (root / "a" / "run.complete").exists()
+        assert (root / "b" / "run.complete").exists()
+
+
+def test_mixed_queue_plain_and_composite(tmp_path):
+    """A queue with one plain override dict + one composite runs both."""
+    from flexlock.runner import FlexLockRunner
+
+    # Base config is a single-stage node; the plain item is an override for it.
+    base = tmp_path / "base.yaml"
+    plain_dir = tmp_path / "plain"
+    base.write_text(yaml.safe_dump({
+        "_target_": TARGET,
+        "name": "plain",
+        "save_dir": str(plain_dir),
+        "log": str(plain_dir / "order.log"),
+    }))
+
+    comp_root = tmp_path / "comp"
+    q = tmp_path / "queue.yaml"
+    # Plain override entry.
+    from flexlock import enqueue_to_file
+    enqueue_to_file(q, {"name": "plain"})
+    # Composite entry (two stages).
+    enqueue_to_file(q, {"_stages_": [
+        _stage("a", comp_root),
+        _stage("b", comp_root, upstream=str(comp_root / "a")),
+    ]})
+
+    FlexLockRunner().run(cli_args=[
+        "-c", str(base), "--sweep-file", str(q),
+        "--sweep-root", str(tmp_path),
+    ])
+
+    assert _read_order(plain_dir) == ["plain"]
+    assert _read_order(comp_root) == ["a", "b"]
