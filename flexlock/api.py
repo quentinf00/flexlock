@@ -1073,6 +1073,344 @@ class Project:
                 f"<common_parent> (e.g. --sweep-root {Path(offenders[0][1]).parent})."
             )
 
+    @staticmethod
+    def _pipeline_stage_dirs(item) -> "list[str]":
+        """Concrete save_dirs of one pipeline item's stages (must all be set)."""
+        from .exceptions import FlexLockValidationError
+
+        dirs = []
+        for j, stage in enumerate(item):
+            sd = stage.get("save_dir") if hasattr(stage, "get") else None
+            if sd is None:
+                raise FlexLockValidationError(
+                    f"Pipeline stage {j} has no save_dir. Every stage of a "
+                    f"composite pipeline task needs a concrete save_dir (the "
+                    f"task DB and lineage markers are anchored to it)."
+                )
+            dirs.append(str(sd))
+        return dirs
+
+    def _pipeline_roots(self, items, sweep_root):
+        """Derive (master_root, item_roots) for a pipeline submission.
+
+        Each item's root is the common path of its stage ``save_dir``s (the
+        pipeline dir). The master root — where the task DB lives — is the
+        ``sweep_root`` when given, the item root for a single item, and the
+        common path of the item roots otherwise. Without an explicit
+        ``sweep_root``, multi-item pipelines must nest under the first item's
+        parent (mirroring ``_validate_sweep_save_dirs``).
+        """
+        import os
+
+        from .exceptions import FlexLockValidationError
+
+        item_roots = [
+            Path(os.path.commonpath(
+                [os.path.abspath(sd) for sd in self._pipeline_stage_dirs(item)]
+            ))
+            for item in items
+        ]
+
+        if sweep_root is not None:
+            return Path(sweep_root), item_roots
+
+        if len(item_roots) == 1:
+            return item_roots[0], item_roots
+
+        expected_root = item_roots[0].parent
+        offenders = [
+            (i, root)
+            for i, root in enumerate(item_roots)
+            if not root.is_relative_to(expected_root)
+        ]
+        if offenders:
+            lines = [f"  item {i}: pipeline dir {root}" for i, root in offenders]
+            raise FlexLockValidationError(
+                f"Pipeline item save_dirs must nest under a common root "
+                f"({expected_root}); the tasks DB and lineage markers live "
+                f"there. Offending items:\n"
+                + "\n".join(lines)
+                + f"\n\nTo keep the current save_dirs, use --sweep-root "
+                f"<common_parent> (e.g. --sweep-root {offenders[0][1].parent})."
+            )
+        return Path(os.path.commonpath(item_roots)), item_roots
+
+    def _collect_pipeline_results(
+        self, indices, queued_items, queued_tasks, db_path, tag
+    ) -> "list[tuple[int, list[ExecutionResult]]]":
+        """Per-stage ExecutionResults for queued pipeline items.
+
+        The composite row's terminal status maps to the item; each stage is
+        classified from its dir: ``run.complete`` → SUCCESS (a stage that ran
+        before a later failure stays SUCCESS), the failing stage (``run.error``
+        present on a failed row) → FAILED with the row's error, unreached
+        stages → SUBMITTED (or INTERRUPTED when the row was interrupted).
+        """
+        from .taskdb import get_all_tasks, _hash_task
+
+        by_id = {
+            t["task_id"]: t
+            for t in get_all_tasks(db_path, tags=[tag] if tag else None)
+        }
+        out = []
+        for idx, item, task_dict in zip(indices, queued_items, queued_tasks):
+            row = by_id.get(_hash_task(task_dict))
+            db_status = row["status"] if row else None
+            stage_results = []
+            for stage_cfg in item:
+                sd = Path(str(stage_cfg.get("save_dir")))
+                record = RunRecord(sd)
+                if record.complete_path.exists():
+                    stage_results.append(
+                        ExecutionResult(
+                            save_dir=str(sd),
+                            status=Status.SUCCESS,
+                            result=record.load_results(),
+                            cfg=stage_cfg,
+                        )
+                    )
+                elif db_status == "failed" and record.error_path.exists():
+                    stage_results.append(
+                        ExecutionResult(
+                            save_dir=str(sd),
+                            status=Status.FAILED,
+                            cfg=stage_cfg,
+                            error=row.get("error") if row else None,
+                        )
+                    )
+                elif db_status == "interrupted":
+                    stage_results.append(
+                        ExecutionResult(
+                            save_dir=str(sd),
+                            status=Status.INTERRUPTED,
+                            cfg=stage_cfg,
+                        )
+                    )
+                else:
+                    stage_results.append(
+                        ExecutionResult(
+                            save_dir=str(sd), status=Status.SUBMITTED, cfg=stage_cfg
+                        )
+                    )
+            out.append((idx, stage_results))
+        return out
+
+    def submit_pipeline(
+        self,
+        items: "List[List[DictConfig]]",
+        *,
+        n_jobs: int = 1,
+        smart_run: bool = False,
+        search_dirs: List[str] = None,
+        slurm_config: str = None,
+        pbs_config: str = None,
+        wait: bool = True,
+        sweep_root: "str | None" = None,
+        tag: "str | None" = None,
+        force: bool = False,
+        timeout: "int | None" = None,
+        note: "str | None" = None,
+        save_dir_policy: "str | None" = None,
+        debug: bool = False,
+        dry_run: bool = False,
+    ) -> "List[List[ExecutionResult]] | None":
+        """Submit composite pipeline tasks: one task per item, stages in order.
+
+        Each *item* is a list of already-compiled, frozen stage configs (the
+        caller applied :func:`freeze_deferred`; deferred resolvers fire on the
+        worker at stage start). One item becomes one composite task in the
+        sweep task DB (``{"_stages_": [...]}``): the worker runs its stages
+        sequentially, so intra-item ordering holds by construction, while
+        parallelism (local ``n_jobs``, Slurm/PBS array workers) fans out
+        across items.
+
+        Composite tasks are self-contained — the base config is never
+        re-merged into them at dequeue time.
+
+        Known limitation: all stages of an item run inside one scheduler job /
+        worker slot, so per-stage HPC resource configs are not possible.
+
+        Args:
+            items: ``items[i][j]`` is the ``j``-th stage config of item ``i``.
+            n_jobs: Parallel workers fanning out across items.
+            smart_run: Driver-side cache check — an item whose every stage
+                cache-hits returns CACHED without queueing; partial hits queue
+                the item with stage-level resume (``_skip_complete_``).
+            search_dirs: Directories searched for cached runs (smart_run).
+            slurm_config / pbs_config: Path to HPC backend YAML.
+            wait: Block until completion (HPC). ``False`` returns SUBMITTED
+                skeleton results.
+            sweep_root: Override the master root hosting the task DB; also
+                opts out of the containment validation.
+            tag / note / timeout: As in :meth:`submit`.
+            force: Invalidate every stage's completion markers and reset the
+                task DB so all items rerun.
+            save_dir_policy: Collision guard applied per stage dir before
+                queueing — ``raise`` (default, unless ``force``),
+                ``overwrite``, ``skip`` (stage-level resume), ``unsafe``.
+                Naming policies (``increment``/``timestamp``) don't compose
+                with pre-baked cross-stage paths and are rejected.
+            debug: Post-mortem debugger (local in-process execution only).
+            dry_run: With an HPC backend, render the submission script and
+                return ``None`` without queueing anything.
+
+        Returns:
+            ``results[i][j]`` is the :class:`ExecutionResult` of item ``i``'s
+            stage ``j`` (or ``None`` for ``dry_run``).
+        """
+        from .exceptions import FlexLockValidationError
+        from .parallel import ParallelExecutor
+        from .save_dir import (
+            NAMING_POLICIES,
+            clean_run_dir,
+            is_occupied,
+            occupied_error,
+            validate_policy,
+        )
+
+        if not items:
+            return []
+
+        validate_policy(save_dir_policy)
+        if save_dir_policy in NAMING_POLICIES:
+            raise FlexLockValidationError(
+                f"save_dir_policy={save_dir_policy!r} is not supported for "
+                f"pipelines: naming policies rewrite save_dir at submit time, "
+                f"which breaks the pre-baked cross-stage paths of the frozen "
+                f"stage configs. Use 'overwrite', 'skip', 'unsafe', or bake "
+                f"a fresh pipeline dir into the config instead."
+            )
+        item_policy = save_dir_policy or "raise"
+
+        # Master root (task DB home) + containment validation.
+        master_root, _item_roots = self._pipeline_roots(items, sweep_root)
+
+        use_hpc = pbs_config is not None or slurm_config is not None
+
+        if dry_run:
+            if not use_hpc:
+                logger.info("dry_run is a no-op for local execution.")
+                return None
+            self._preview_hpc_script(
+                OmegaConf.create({"save_dir": str(master_root)}),
+                slurm_config,
+                pbs_config,
+            )
+            return None
+
+        # force: reset every stage's completion markers and the task DB so the
+        # pending_count==0 resume short-circuit can't kick in.
+        if force:
+            for item in items:
+                for sd in self._pipeline_stage_dirs(item):
+                    d = Path(sd)
+                    (d / "run.complete").unlink(missing_ok=True)
+                    (d / "results.json").unlink(missing_ok=True)
+            for suffix in ("", "-wal", "-shm"):
+                (master_root / f"run.lock.tasks.db{suffix}").unlink(missing_ok=True)
+            logger.info(
+                f"Force flag enabled: reset pipeline task DB under {master_root}"
+            )
+            smart_run = False
+
+        # Stage-level resume on the worker: requested via smart_run/check-exists
+        # or the 'skip' guard policy.
+        skip_complete = bool(smart_run) or item_policy == "skip"
+
+        # Driver-side cache check: items whose every stage cache-hits return
+        # CACHED without queueing. Partial hits queue with stage-level resume.
+        cached_results: list = []
+        to_queue: list = []  # (index, item)
+        for i, item in enumerate(items):
+            if smart_run:
+                matches = [
+                    self._find_matching_run(stage_cfg, search_dirs)
+                    for stage_cfg in item
+                ]
+                if all(m is not None for m in matches):
+                    logger.info(f"Pipeline item {i}: all stages cached — skipping")
+                    cached_results.append(
+                        (i, [
+                            self._load_cached_result(m, stage_cfg)
+                            for m, stage_cfg in zip(matches, item)
+                        ])
+                    )
+                    continue
+            to_queue.append((i, item))
+
+        # Collision guard, per stage dir, driver-side, before queueing.
+        if item_policy != "unsafe":
+            for i, item in to_queue:
+                for sd in self._pipeline_stage_dirs(item):
+                    if not is_occupied(sd):
+                        continue
+                    if item_policy == "overwrite":
+                        clean_run_dir(sd)
+                    elif item_policy == "skip":
+                        pass  # worker resumes past complete stages
+                    elif force:
+                        pass  # explicit in-place rerun
+                    else:
+                        raise occupied_error(str(sd), sweep_item=i)
+
+        results: list = []
+        if to_queue:
+            # Serialize each item as a self-contained composite task dict.
+            queued_tasks = []
+            for _, item in to_queue:
+                task_dict = {
+                    "_stages_": [
+                        OmegaConf.to_container(
+                            stage, resolve=False, throw_on_missing=False
+                        )
+                        for stage in item
+                    ]
+                }
+                if skip_complete:
+                    task_dict["_skip_complete_"] = True
+                queued_tasks.append(task_dict)
+
+            executor_cfg = OmegaConf.create(
+                {"save_dir": str(master_root), "_snapshot_": {}}
+            )
+            func = instantiate
+            if debug:
+                if use_hpc or n_jobs > 1:
+                    logger.warning(
+                        "debug=True is ignored for parallel/HPC pipeline "
+                        "execution (post-mortem PDB needs an in-process run)."
+                    )
+                else:
+                    from .debug import debug_on_fail
+
+                    func = debug_on_fail(func)
+
+            executor = ParallelExecutor(
+                func=func,
+                tasks=queued_tasks,
+                task_target=None,
+                cfg=executor_cfg,
+                n_jobs=n_jobs,
+                pbs_config=pbs_config,
+                slurm_config=slurm_config,
+                local_workers=n_jobs if not use_hpc else None,
+                tag=tag,
+                note=note,
+            )
+            executor.run(wait=wait, timeout=timeout)
+
+            results = self._collect_pipeline_results(
+                [i for i, _ in to_queue],
+                [item for _, item in to_queue],
+                queued_tasks,
+                executor.db_path,
+                executor.tag,
+            )
+
+        all_results = cached_results + results
+        all_results.sort(key=lambda x: x[0])
+        return [item_results for _, item_results in all_results]
+
     def submit_chained(
         self,
         config=None,

@@ -213,3 +213,177 @@ def test_plain_task_behaviour_unchanged(tmp_path):
     assert row["status"] == "done"
     result = _plain(row["result"])
     assert result == {"name": "a"}
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 — Project.submit_pipeline
+# ---------------------------------------------------------------------------
+
+def _item(root, names=("train", "probe")):
+    """Build one pipeline item: a list of frozen stage DictConfigs."""
+    cfgs = []
+    prev = None
+    for name in names:
+        d = _stage(name, root)
+        if prev is not None:
+            d["upstream"] = prev
+        prev = d["save_dir"]
+        cfgs.append(OmegaConf.create(d))
+    return cfgs
+
+
+def test_submit_pipeline_local_single_item(tmp_path):
+    from flexlock.api import Project
+
+    root = tmp_path / "xp1"
+    results = Project().submit_pipeline([_item(root)])
+
+    assert len(results) == 1 and len(results[0]) == 2
+    assert all(r.status == "SUCCESS" for r in results[0])
+    assert _read_order(root) == ["train", "probe"]
+    assert results[0][0].result == {"name": "train"}
+    # Task DB lives at the item's pipeline dir (master root).
+    assert (root / "run.lock.tasks.db").exists()
+
+
+def test_submit_pipeline_two_items_parallel(tmp_path):
+    """2 items x 2 stages, n_jobs=2: intra-item order holds, items fan out."""
+    from flexlock.api import Project
+
+    base = tmp_path / "results"
+    items = [_item(base / "xp1"), _item(base / "xp2")]
+    results = Project().submit_pipeline(items, n_jobs=2)
+
+    assert len(results) == 2
+    for item_res, root in zip(results, (base / "xp1", base / "xp2")):
+        assert [r.status for r in item_res] == ["SUCCESS", "SUCCESS"]
+        # per-item log: intra-item ordering preserved
+        assert _read_order(root) == ["train", "probe"]
+    # Master root = common parent of the item pipeline dirs.
+    assert (base / "run.lock.tasks.db").exists()
+
+
+def test_submit_pipeline_containment_validation(tmp_path):
+    from flexlock.api import Project
+    from flexlock.exceptions import FlexLockValidationError
+
+    items = [_item(tmp_path / "a" / "xp1"), _item(tmp_path / "b" / "xp2")]
+    with pytest.raises(FlexLockValidationError, match="sweep-root"):
+        Project().submit_pipeline(items)
+
+    # Explicit sweep_root opts out of the containment constraint.
+    results = Project().submit_pipeline(items, sweep_root=str(tmp_path))
+    assert len(results) == 2
+    assert (tmp_path / "run.lock.tasks.db").exists()
+
+
+def test_submit_pipeline_rejects_naming_policies(tmp_path):
+    from flexlock.api import Project
+    from flexlock.exceptions import FlexLockValidationError
+
+    for policy in ("increment", "timestamp"):
+        with pytest.raises(FlexLockValidationError, match="not supported"):
+            Project().submit_pipeline(
+                [_item(tmp_path / "xp1")], save_dir_policy=policy
+            )
+
+
+def test_submit_pipeline_guard_raises_on_occupied(tmp_path):
+    from flexlock.api import Project
+    from flexlock.exceptions import FlexLockValidationError
+
+    root = tmp_path / "xp1"
+    item = _item(root)
+    # Occupy the first stage dir with a previous run.lock.
+    d = Path(item[0].save_dir)
+    d.mkdir(parents=True)
+    (d / "run.lock").write_text("config: {}\n")
+
+    with pytest.raises(FlexLockValidationError, match="already contains"):
+        Project().submit_pipeline([item])
+
+    # 'overwrite' cleans the dir and proceeds.
+    results = Project().submit_pipeline([item], save_dir_policy="overwrite")
+    assert [r.status for r in results[0]] == ["SUCCESS", "SUCCESS"]
+
+
+def test_submit_pipeline_force_resets_and_reruns(tmp_path):
+    from flexlock.api import Project
+
+    root = tmp_path / "xp1"
+    item = _item(root)
+    proj = Project()
+    proj.submit_pipeline([item])
+    assert _read_order(root) == ["train", "probe"]
+
+    # Second run without force resumes via the DB (nothing new executes) —
+    # with force everything reruns.
+    proj.submit_pipeline([item], force=True)
+    assert _read_order(root) == ["train", "probe", "train", "probe"]
+
+
+def test_submit_pipeline_failure_result_shape(tmp_path):
+    from flexlock.api import Project
+
+    root = tmp_path / "xp1"
+    fail_stage = OmegaConf.create(_stage("mid", root, fail=True))
+    item = [
+        OmegaConf.create(_stage("first", root)),
+        fail_stage,
+        OmegaConf.create(_stage("last", root)),
+    ]
+    results = Project().submit_pipeline([item])
+
+    statuses = [r.status for r in results[0]]
+    assert statuses == ["SUCCESS", "FAILED", "SUBMITTED"]
+    assert "[stage 2/3 mid]" in results[0][1].error
+
+
+def test_submit_pipeline_wait_false_returns_submitted(tmp_path):
+    from unittest.mock import patch
+    from flexlock.api import Project
+
+    root = tmp_path / "xp1"
+    with patch("flexlock.parallel.SlurmBackend") as mock_backend:
+        mock_backend.return_value.submit.return_value.job_id = "123"
+        slurm_yaml = tmp_path / "slurm.yaml"
+        slurm_yaml.write_text("partition: test\n")
+        results = Project().submit_pipeline(
+            [_item(root)], slurm_config=str(slurm_yaml), wait=False
+        )
+
+    assert [r.status for r in results[0]] == ["SUBMITTED", "SUBMITTED"]
+
+
+def test_submit_pipeline_dry_run_does_not_touch_db(tmp_path, capsys):
+    from flexlock.api import Project
+
+    root = tmp_path / "xp1"
+    slurm_yaml = tmp_path / "slurm.yaml"
+    slurm_yaml.write_text(yaml.safe_dump(
+        {"startup_lines": ["#SBATCH --partition=test"], "python_exe": "python"}
+    ))
+
+    out = Project().submit_pipeline(
+        [_item(root)], slurm_config=str(slurm_yaml), dry_run=True
+    )
+
+    assert out is None
+    assert not (root / "run.lock.tasks.db").exists()
+    assert "dry run" in capsys.readouterr().out
+
+
+def test_submit_pipeline_smart_run_all_cached(tmp_path):
+    from flexlock.api import Project
+
+    root = tmp_path / "xp1"
+    item = _item(root)
+    proj = Project()
+    proj.submit_pipeline([item])
+
+    # Re-submit with smart_run: every stage cache-hits -> CACHED, no rerun.
+    results = proj.submit_pipeline(
+        [item], smart_run=True, search_dirs=[str(root)]
+    )
+    assert [r.status for r in results[0]] == ["CACHED", "CACHED"]
+    assert _read_order(root) == ["train", "probe"]

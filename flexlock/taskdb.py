@@ -98,6 +98,17 @@ def _conn(db_path: Path):
     if not hasattr(_thread_local_conns, "conns"):
         _thread_local_conns.conns = {}
 
+    # A cached connection whose file was deleted (e.g. force=True resetting a
+    # task DB) points at a dead inode: reads/writes would silently target the
+    # unlinked file. Drop it so a fresh DB file is created.
+    if db_path_str in _thread_local_conns.conns and not db_path.exists():
+        try:
+            _thread_local_conns.conns[db_path_str].close()
+        except sqlite3.Error:
+            pass
+        del _thread_local_conns.conns[db_path_str]
+        logger.debug(f"Dropped stale connection for deleted DB {db_path_str}")
+
     # Check if a connection for this specific db_path already exists in the thread's cache.
     if db_path_str not in _thread_local_conns.conns:
         # If not, create a new connection and add it to the cache.
