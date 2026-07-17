@@ -281,7 +281,22 @@ flexlock-run -d myproject.defaults -s train
 
 # Select nested node
 flexlock-run -d myproject.defaults -s experiments.baseline
+
+# Multi-stage: run several stages in order as a pipeline (space- or
+# comma-separated). Each sweep item becomes one composite pipeline task.
+flexlock-run -d myproject.defaults -s train linear_probe -o pipeline_dir=results/xp
+flexlock-run -d myproject.defaults -s train,linear_probe \
+    --sweep-target pipeline_dir --sweep results/xp1,results/xp2 --n_jobs 2
 ```
+
+**Multi-stage (`-s` with more than one stage)** runs the stages sequentially as
+a pipeline (a downstream stage sees the upstream stage's artifacts on disk). It
+composes with `--sweep*`, `--slurm-config`/`--pbs-config`, and `--enqueue`:
+each sweep item is merged into the root config before selection, then becomes
+one composite `{_stages_: [...]}` task whose stages run in order on one worker,
+while parallelism / array workers fan out across items. It is only incompatible
+with `-O`/`-M` and `-e` (they target a single selected node). See usage guide
+§14g. All stages of an item share one scheduler job (no per-stage HPC resources).
 
 **Works with:**
 - Python configs (dict keys)
@@ -572,8 +587,18 @@ flexlock-run -d defaults -s train --sweep-file queue.yaml --slurm-config slurm.y
   save_dir: results/exp
 ```
 
+**With a sweep** (`--sweep`/`--sweep-key`/`--sweep-file`), `--enqueue` appends
+**one entry per sweep item** — each merged at `--sweep-target` and frozen —
+instead of a single config. Previously the sweep was silently dropped.
+
+**With multi-stage** (`-s` with more than one stage), `--enqueue` appends **one
+composite `{_stages_: [...]}` entry per sweep item** (or one for a no-sweep
+pipeline). Composite entries in a `--sweep-file` run as-is; plain entries in the
+same file are merged into the compiled node config and run as single-stage
+pipelines.
+
 **Notes:**
-- The enqueued config is stored with interpolations **unresolved** so that resolvers like `${vinc:}` fire at run time and each task gets its own unique directory.
+- The enqueued config is stored with interpolations **unresolved** so that resolvers like `${vinc:}`/`${run_lock:}`/`${latest:}` fire at run time and each task gets its own unique directory.
 - Writes are atomic (temp-file + rename) so concurrent `--enqueue` calls from different terminals are safe.
 - Re-running `--sweep-file queue.yaml` after adding new items is safe: tasks already completed are skipped via the `INSERT OR IGNORE` logic in the task DB.
 

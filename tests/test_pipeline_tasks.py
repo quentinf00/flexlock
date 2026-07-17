@@ -524,3 +524,41 @@ def test_single_stage_enqueue_no_sweep_unchanged(tmp_path):
     data = yaml.safe_load(q.read_text())
     assert len(data) == 1
     assert data[0]["lr"] == 0.01
+
+
+# ---------------------------------------------------------------------------
+# HPC dispatch boundary (no cluster in CI)
+# ---------------------------------------------------------------------------
+
+def test_submit_pipeline_hpc_inline_completes(tmp_path, monkeypatch):
+    """Monkeypatch the Slurm backend to run worker_loop inline; the composite
+    path completes end-to-end through the HPC dispatch."""
+    import flexlock.parallel as parallel
+    from flexlock.api import Project
+
+    class _FakeJob:
+        job_id = "1"
+
+    class _FakeBackend:
+        def __init__(self, *a, **k):
+            pass
+
+        def submit(self, fn, *args):
+            fn(*args)  # run worker_loop synchronously in-process
+            return _FakeJob()
+
+        def is_terminal(self, job_id):
+            return True
+
+    monkeypatch.setattr(parallel, "SlurmBackend", _FakeBackend)
+
+    slurm_yaml = tmp_path / "slurm.yaml"
+    slurm_yaml.write_text(yaml.safe_dump({"startup_lines": [], "python_exe": "python"}))
+
+    root = tmp_path / "xp1"
+    results = Project().submit_pipeline(
+        [_item(root)], slurm_config=str(slurm_yaml)
+    )
+
+    assert [r.status for r in results[0]] == ["SUCCESS", "SUCCESS"]
+    assert _read_order(root) == ["train", "probe"]
