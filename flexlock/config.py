@@ -76,6 +76,20 @@ SNAPSHOT_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 # Database filename suffix
 DB_FILENAME_SUFFIX = ".tasks.db"
 
+# Attempts for DB write transactions when SQLite reports "database is locked"
+# (jittered exponential backoff between attempts, on top of busy_timeout).
+DB_RETRY_ATTEMPTS = get_env_int("FLEXLOCK_DB_RETRY_ATTEMPTS", 8)
+
+# Cap on the backoff delay between retry attempts (seconds)
+DB_RETRY_MAX_BACKOFF = get_env_float("FLEXLOCK_DB_RETRY_MAX_BACKOFF", 5.0)
+
+# Number of tasks a worker claims per DB transaction. Raise this (e.g. 16-64)
+# when running hundreds of workers against one DB on a shared filesystem:
+# claim and finish write-lock traffic both drop by this factor. Trade-off: a
+# worker that dies strands up to this many claimed tasks until the controller
+# reconciles orphans / --reclaim resets them.
+CLAIM_BATCH = get_env_int("FLEXLOCK_CLAIM_BATCH", 1)
+
 
 # ==================== Pre-flight checks ====================
 

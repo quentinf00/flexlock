@@ -76,7 +76,7 @@ def test_worker_exits_without_claiming_on_bad_gpu(tmp_path):
 
     with patch("flexlock.worker._config.PREFLIGHT_CUDA", True), \
          patch.dict(sys.modules, {"torch": _fake_torch(alloc_error=err)}), \
-         patch("flexlock.worker.claim_next_task", side_effect=boom_claim):
+         patch("flexlock.worker.claim_next_tasks", side_effect=boom_claim):
         worker_loop(func=lambda c: None, cfg={}, task_to=".", db_path=db)
 
     assert sentinel["claimed"] is False

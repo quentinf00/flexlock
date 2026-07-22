@@ -6,6 +6,15 @@ description = "A lightweight and painless SciOps library"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
+dependencies = [
+    "gitpython>=3.1.45,<4",
+    "xxhash>=3.5.0,<4",
+    "joblib>=1.5.2,<2",
+    "pandas>=2.3.2,<3",
+    "omegaconf>=2.3.0,<3",
+    "loguru>=0.7.3,<0.8",
+    "cloudpickle>=3.0.0,<4",
+]
 
 [project.scripts]
 flexlock = "flexlock.cli:main"
@@ -43,15 +52,15 @@ channels = ["conda-forge"]
 [tool.pixi.package.host-dependencies]
 hatchling = "*"
 
+# Runtime deps are declared once in [project.dependencies] (PyPI names) and
+# mapped to conda-forge automatically by the build backend (see build.config
+# below). Only python itself, which is not a PyPI project dependency, is pinned.
 [tool.pixi.package.run-dependencies]
 python = "3.11.*"
-gitpython = ">=3.1.45,<4"
-python-xxhash = ">=3.5.0,<4"
-joblib = ">=1.5.2,<2"
-pandas = ">=2.3.2,<3"
-omegaconf = ">=2.3.0,<3"
-loguru = ">=0.7.0,<1"
-cloudpickle = ">=3.0.0,<4"
+
+[tool.pixi.package.build.config]
+# Map [project.dependencies] -> conda run-deps via the prefix.dev mapping service.
+ignore-pypi-mapping = false
 
 [tool.pixi.tasks]
 test = { cmd = "pytest" }
@@ -82,15 +91,11 @@ flexlock = { path = ".", editable = true }
 mlflow = ">=3.2.0,<4"
 
 
+# Workspace/dev env. pixi reads [project.dependencies] as pypi-dependencies of
+# the default env, and the editable self-install (feature.test) pulls them too,
+# so only the conda python interpreter is declared here.
 [tool.pixi.dependencies]
 python = "3.11.*"
-gitpython = ">=3.1.45,<4"
-python-xxhash = ">=3.5.0,<4"
-joblib = ">=1.5.2,<2"
-pandas = ">=2.3.2,<3"
-omegaconf = ">=2.3.0,<3"
-loguru = ">=0.7.3,<0.8"
-cloudpickle = ">=3.0.0,<4"
 
 [tool.pixi.environments]
 build = { features = ["build"] }

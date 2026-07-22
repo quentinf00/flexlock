@@ -111,7 +111,9 @@ Examples:
             + (f", tags={tags}" if tags else "")
             + ")"
         )
-        job = backend.submit(worker_loop, None, empty_cfg, None, db_path, tags)
+        job = backend.submit(
+            worker_loop, None, empty_cfg, None, db_path, tags
+        )
         logger.info(f"Submitted job {job.job_id}")
     else:
         logger.info(
@@ -125,7 +127,10 @@ Examples:
         else:
             ctx = multiprocessing.get_context("spawn")
             procs = [
-                ctx.Process(target=worker_loop, args=(None, empty_cfg, None, db_path, tags))
+                ctx.Process(
+                    target=worker_loop,
+                    args=(None, empty_cfg, None, db_path, tags),
+                )
                 for _ in range(args.n_jobs)
             ]
             for p in procs:

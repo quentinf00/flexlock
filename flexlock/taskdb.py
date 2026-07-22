@@ -1,7 +1,9 @@
 """SQLite-based task database for FlexLock parallel execution."""
 
 from pathlib import Path
+import random
 import sqlite3
+import time
 from omegaconf import OmegaConf, DictConfig, ListConfig
 import threading
 from loguru import logger
@@ -9,6 +11,8 @@ import yaml
 import hashlib
 from contextlib import contextmanager
 from typing import Any, List
+
+from . import config as _config
 
 _thread_local_conns = threading.local()
 
@@ -102,7 +106,11 @@ def _conn(db_path: Path):
     if db_path_str not in _thread_local_conns.conns:
         # If not, create a new connection and add it to the cache.
         try:
-            c = sqlite3.connect(db_path_str, check_same_thread=False)
+            # Autocommit mode: write transactions are managed explicitly by
+            # _write_txn (BEGIN IMMEDIATE), reads run without a transaction.
+            c = sqlite3.connect(
+                db_path_str, check_same_thread=False, isolation_level=None
+            )
             # Set PRAGMA for better performance and concurrency.
             c.execute("PRAGMA journal_mode=DELETE")
             c.execute("PRAGMA busy_timeout=30000")
@@ -163,6 +171,45 @@ def _conn(db_path: Path):
         pass
 
 
+def _write_txn(db_path: Path, op):
+    """Run ``op(conn)`` in a BEGIN IMMEDIATE transaction, retrying on lock.
+
+    ``busy_timeout`` alone is not enough with many workers on one DB: a
+    deferred transaction upgrading SHARED->RESERVED returns SQLITE_BUSY
+    immediately (bypassing the timeout), and fcntl locks on network
+    filesystems (NFS/Lustre) can fail spuriously. BEGIN IMMEDIATE takes the
+    write lock up front, and this loop adds jittered exponential backoff on
+    top of busy_timeout. Retrying re-runs ``op`` from scratch, so ``op``
+    must be a pure function of its statements (no external side effects).
+    """
+    delay = 0.05
+    attempts = max(1, _config.DB_RETRY_ATTEMPTS)
+    for attempt in range(attempts):
+        try:
+            with _conn(db_path) as c:
+                try:
+                    c.execute("BEGIN IMMEDIATE")
+                    out = op(c)
+                    c.commit()
+                    return out
+                except BaseException:
+                    c.rollback()
+                    raise
+        except sqlite3.OperationalError as e:
+            msg = str(e).lower()
+            if "locked" not in msg and "busy" not in msg:
+                raise
+            if attempt == attempts - 1:
+                raise
+            sleep = random.uniform(delay, 2 * delay)
+            logger.debug(
+                f"{db_path} locked ({e}); retry {attempt + 1}/{attempts} "
+                f"in {sleep:.2f}s"
+            )
+            time.sleep(sleep)
+            delay = min(delay * 2, _config.DB_RETRY_MAX_BACKOFF)
+
+
 def queue_tasks(db_path: Path, tasks: List[Any], tag: str | None = None) -> None:
     """Adds a list of tasks to the database if they don't already exist.
 
@@ -174,12 +221,60 @@ def queue_tasks(db_path: Path, tasks: List[Any], tag: str | None = None) -> None
     first tag. That only happens when the work is truly identical, which is
     acceptable.
     """
-    with _conn(db_path) as c:
+    rows = [(_hash_task(t), _to_yaml(t), tag) for t in tasks]
+
+    def op(c):
         c.executemany(
             "INSERT OR IGNORE INTO tasks (task_id, task_info, tag) VALUES (?, ?, ?)",
-            [(_hash_task(t), _to_yaml(t), tag) for t in tasks],
+            rows,
         )
-        c.commit()
+
+    _write_txn(db_path, op)
+
+
+def claim_next_tasks(
+    db_path: Path,
+    node: str,
+    job_id: str | None = None,
+    tags=None,
+    n: int = 1,
+) -> List[Any]:
+    """Claims up to ``n`` pending tasks in one write transaction.
+
+    Batching is the main lever against DB contention at scale: with many
+    workers, one claim transaction per batch instead of per task divides
+    the write-lock traffic by ``n``. Returns the claimed tasks (possibly
+    fewer than ``n``, empty when nothing is pending).
+
+    ``node`` and ``job_id`` record which worker/scheduler job owns the tasks,
+    so the controller can later reconcile orphaned tasks against the OS/
+    scheduler's view of worker liveness (no self-reported heartbeat needed).
+
+    ``tags`` restricts the claim to rows whose ``tag`` matches (``None``
+    claims any row, preserving backwards-compatible behaviour for untagged DBs).
+    """
+    tag_frag, tag_params = _tag_filter(tags)
+
+    def op(c):
+        cur = c.execute(
+            f"""
+            UPDATE tasks
+               SET status='running',
+                   node=?,
+                   job_id=?,
+                   ts_start=CURRENT_TIMESTAMP
+            WHERE task_id IN (
+                SELECT task_id FROM tasks
+                WHERE status='pending' {tag_frag}
+                LIMIT ?
+            )
+            RETURNING task_info
+            """,
+            (node, job_id, *tag_params, n),
+        )
+        return [r[0] for r in cur.fetchall()]
+
+    return [_from_yaml(r) for r in _write_txn(db_path, op)]
 
 
 def claim_next_task(
@@ -190,36 +285,42 @@ def claim_next_task(
 ) -> Any | None:
     """Claims the next available pending task and marks it as running.
 
-    ``node`` and ``job_id`` record which worker/scheduler job owns the task,
-    so the controller can later reconcile orphaned tasks against the OS/
-    scheduler's view of worker liveness (no self-reported heartbeat needed).
-
-    ``tags`` restricts the claim to rows whose ``tag`` matches (``None``
-    claims any row, preserving backwards-compatible behaviour for untagged DBs).
+    Single-task convenience wrapper over ``claim_next_tasks``.
     """
-    tag_frag, tag_params = _tag_filter(tags)
-    with _conn(db_path) as c:
-        cur = c.execute(
-            f"""
-            UPDATE tasks
-               SET status='running',
-                   node=?,
-                   job_id=?,
-                   ts_start=CURRENT_TIMESTAMP
-            WHERE task_id = (
-                SELECT task_id FROM tasks
-                WHERE status='pending' {tag_frag}
-                LIMIT 1
+    tasks = claim_next_tasks(db_path, node, job_id=job_id, tags=tags, n=1)
+    return tasks[0] if tasks else None
+
+
+def finish_tasks(db_path: Path, entries: List[dict]) -> None:
+    """Marks a batch of tasks finished in one write transaction.
+
+    Each entry is a dict with key ``task`` (required) and optional ``error``,
+    ``result``, ``status`` — same semantics as ``finish_task``. Workers
+    buffer per-task outcomes and flush them here once per claimed batch.
+    """
+    rows = []
+    for e in entries:
+        error = e.get("error")
+        status = e.get("status") or ("failed" if error else "done")
+        result = e.get("result")
+        rows.append(
+            (
+                status,
+                error,
+                _to_yaml(result) if result is not None else None,
+                _hash_task(e["task"]),
             )
-            RETURNING task_info
-            """,
-            (node, job_id, *tag_params),
         )
-        row = cur.fetchone()
-        if row:
-            c.commit()
-            return _from_yaml(row[0])
-    return None
+    if not rows:
+        return
+
+    def op(c):
+        c.executemany(
+            "UPDATE tasks SET status=?, error=?, result_info=?, ts_end=CURRENT_TIMESTAMP WHERE task_id=?",
+            rows,
+        )
+
+    _write_txn(db_path, op)
 
 
 def finish_task(
@@ -234,16 +335,7 @@ def finish_task(
     ``status`` defaults to ``'done'`` on success, ``'failed'`` on error.
     Pass ``status='interrupted'`` when the worker was killed mid-task.
     """
-    tid = _hash_task(task)
-    if status is None:
-        status = "failed" if error else "done"
-    result_str = _to_yaml(result) if result is not None else None
-    with _conn(db_path) as c:
-        c.execute(
-            "UPDATE tasks SET status=?, error=?, result_info=?, ts_end=CURRENT_TIMESTAMP WHERE task_id=?",
-            (status, error, result_str, tid),
-        )
-        c.commit()
+    finish_tasks(db_path, [dict(task=task, error=error, result=result, status=status)])
 
 
 def _update_running(
@@ -274,13 +366,14 @@ def _update_running(
         set_clause = "status=?, error=?, ts_end=CURRENT_TIMESTAMP"
         set_params = [new_status, error]
 
-    with _conn(db_path) as c:
+    def op(c):
         cur = c.execute(
             f"UPDATE tasks SET {set_clause} WHERE {where}",
             (*set_params, *params),
         )
-        c.commit()
         return cur.rowcount
+
+    return _write_txn(db_path, op)
 
 
 def mark_orphans_interrupted(
@@ -360,12 +453,15 @@ def update_task_snapshot(db_path: Path, task_id: str, snapshot_data: dict) -> No
     """
     import json
 
-    with _conn(db_path) as c:
+    payload = json.dumps(snapshot_data)
+
+    def op(c):
         c.execute(
             "UPDATE tasks SET snapshot=? WHERE task_id=?",
-            (json.dumps(snapshot_data), task_id),
+            (payload, task_id),
         )
-        c.commit()
+
+    _write_txn(db_path, op)
 
 
 def get_task_snapshot(db_path: Path, task_id: str) -> dict | None:
