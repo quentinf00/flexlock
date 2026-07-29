@@ -160,15 +160,27 @@ class SlurmBackend(Backend):
             # colliding with a dependency torch/lightning imports lazily during
             # CUDA init can break the GPU stack in confusing ways.
             f"sys.path.append({str(Path.cwd().resolve())!r})",
-            f"with open('{pickled_path}', 'rb') as f:",
-            "    data = cloudpickle.load(f)",
-            "    fn, a, kw = data",
-            "fn(*a, **kw)",
+            # The __main__ guard is mandatory: with the `spawn`/`forkserver`
+            # multiprocessing start methods (e.g. torch DataLoader workers),
+            # the child re-imports this bootstrap as `__mp_main__`. Without the
+            # guard the task fn would run again in every worker.
+            "def _flexlock_run():",
+            f"    with open({str(pickled_path)!r}, 'rb') as f:",
+            "        fn, a, kw = cloudpickle.load(f)",
+            "    fn(*a, **kw)",
+            "if __name__ == '__main__':",
+            "    _flexlock_run()",
         ]
         python_code = "\n".join(python_script)
+        # Write the bootstrap to a real file (not stdin). Running via a heredoc
+        # pipe (`python - <<PY`) leaves __main__.__file__ == '<stdin>', which
+        # `spawn`/`forkserver` workers cannot re-import (FileNotFoundError on
+        # '<stdin>'). A concrete path makes the main module importable.
+        bootstrap_path = f"{pickled_path}.main.py"
         lines.extend(
             [
-                f"{self.python_exe} - <<'PY'\n{python_code}\nPY",
+                f"cat > {bootstrap_path} <<'PY'\n{python_code}\nPY",
+                f"{self.python_exe} {bootstrap_path}",
             ]
         )
         return "\n".join(lines)

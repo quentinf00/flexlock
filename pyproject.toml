@@ -7,10 +7,10 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
-    "gitpython>=3.1.45,<4",
+    "gitpython>=3.1.46,<4",
     "xxhash>=3.5.0,<4",
     "joblib>=1.5.2,<2",
-    "pandas>=2.3.2,<3",
+    "pandas>=2.3.0,<3",
     "omegaconf>=2.3.0,<3",
     "loguru>=0.7.3,<0.8",
     "cloudpickle>=3.0.0,<4",
