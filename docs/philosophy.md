@@ -175,7 +175,7 @@ filesystem, with no server.** Other tools cover parts of this, some better.
 | Skips runs whose inputs are unchanged | ✅ per run | ❌ | ✅ per stage | ✅ per call | ✅ per rule (mtime or checksum) |
 | Code identity in the cache key | git tree, narrowed to `_target_` modules | ❌ | files listed as `deps` | hash of task source | rule code and params |
 | Environment in the cache key | lockfile hashes | ❌ | only if listed as a dep | ❌ | conda env per rule |
-| Slurm / PBS | ✅ pull-based workers | ✅ Slurm via submitit | ❌ | ✅ executors | ✅ |
+| Slurm / PBS | ✅ pull-based workers | ✅ Slurm via submitit | ❌ | ❌ (AWS Batch, Kubernetes) | ✅ |
 | Remote storage for outputs | ❌ | ❌ | ✅ `dvc push/pull` | ✅ S3 etc. | ✅ storage plugins |
 | Needs a server or daemon | ❌ | ❌ | ❌ | ❌ (optional DB) | ❌ |
 

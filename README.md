@@ -305,7 +305,7 @@ beyond the filesystem.
 | Overrides and sweeps | ✅ | ✅ | ✅ `dvc exp` | ❌ | ❌ |
 | Skips unchanged runs | ✅ per run | ❌ | ✅ per stage | ✅ per call | ✅ per rule |
 | Code identity in cache key | git tree of `_target_` modules | ❌ | listed deps | task source | rule code |
-| Slurm / PBS | ✅ | ✅ submitit | ❌ | ✅ | ✅ |
+| Slurm / PBS | ✅ | ✅ submitit | ❌ | ❌ cloud only | ✅ |
 | Remote output storage | ❌ | ❌ | ✅ | ✅ | ✅ |
 
 See [Philosophy & Design](docs/philosophy.md#comparison-with-other-tools) for
