@@ -349,6 +349,11 @@ flexlock-run -d defaults -o base_dir=outputs seed=42
 - Primitive types: `param=1`, `flag=true`, `name=model`
 - Nested paths: `model.layers=12`
 - Lists: `devices=[0,1,2]`
+- Swaps: `model=@big_model` **replaces** the node with the config
+  `big_model` from the `-d` module (or `@pkg.module.attr`); `@@x` is the
+  literal `@x`. Overrides apply in order, so `model=@big_model model.width=16`
+  tweaks the swapped model. Also valid for `-O` and in `--sweep` values. See
+  the usage guide, "Swapping a subtree".
 
 ---
 

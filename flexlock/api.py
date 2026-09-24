@@ -8,6 +8,9 @@ from typing import List, Dict, Any, Optional
 import yaml
 import json
 from .utils import (
+    apply_overrides,
+    defaults_module,
+    expand_swaps,
     instantiate,
     load_python_defaults,
     extract_tracking_info,
@@ -205,6 +208,10 @@ class ChainedResult:
 
 
 class Project:
+    # Module that bare ``@name`` overrides / sweep values resolve against
+    # (set from an import-string ``defaults``; the CLI sets it from ``-d``).
+    override_module = None
+
     def __init__(self, defaults: "str | DictConfig | dict | None" = None):
         """Initialize a FlexLock project.
 
@@ -216,6 +223,9 @@ class Project:
                 - ``None`` for a project with no defaults — useful for
                   one-off submissions of an explicit config.
         """
+        self.override_module = (
+            defaults_module(defaults) if isinstance(defaults, str) else None
+        )
         if defaults is None:
             self.defaults_str = None
             self.defaults = OmegaConf.create({})
@@ -627,9 +637,11 @@ class Project:
             else:
                 config.merge_with(OmegaConf.create(merge))
         if overrides is not None:
-            if isinstance(overrides, dict):
-                overrides = [f"{k}={v}" for k, v in overrides.items()]
-            config.merge_with(OmegaConf.from_dotlist(overrides))
+            # In order; key=@name swaps the node (see utils.apply_overrides).
+            apply_overrides(config, overrides, module=self.override_module)
+        if sweep:
+            # "@name" sweep values swap in a named config (replace, not merge).
+            sweep = [expand_swaps(item, self.override_module) for item in sweep]
 
         # Fix which run each ${run:...} means now, at submit (a no-op when the
         # CLI already did it); records the resolved runs as lineage.
@@ -959,9 +971,11 @@ class Project:
             else:
                 config.merge_with(OmegaConf.create(merge))
         if overrides is not None:
-            if isinstance(overrides, dict):
-                overrides = [f"{k}={v}" for k, v in overrides.items()]
-            config.merge_with(OmegaConf.from_dotlist(overrides))
+            # In order; key=@name swaps the node (see utils.apply_overrides).
+            apply_overrides(config, overrides, module=self.override_module)
+        if sweep:
+            # "@name" sweep values swap in a named config (replace, not merge).
+            sweep = [expand_swaps(item, self.override_module) for item in sweep]
 
         if sweep:
             items = [

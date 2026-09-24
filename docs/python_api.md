@@ -293,7 +293,7 @@ def submit(
 **Parameters:**
 - `config`: Accepts a `DictConfig`, a key string (looked up via `proj.get`), or `None` (use `proj.defaults`).
 - `sweep_target`: Dot-path where each sweep item is merged into the base config. `None` merges items at the root.
-- `overrides`: Dict (`{'lr': 0.01}`) or dotlist (`['lr=0.01']`) merged into `config` before execution.
+- `overrides`: Dict (`{'lr': 0.01}`) or dotlist (`['lr=0.01']`) merged into `config` before execution, in order. A value `"@name"` replaces the node with the config `name` from `Project.override_module` (the module of an import-string `defaults`) or `"@pkg.mod.attr"`; sweep items accept `"@name"` values too.
 - `merge`: Path to a YAML file (or a dict) merged into `config` before execution. `overrides` is applied after `merge`.
 - `debug`: Wrap the user function with the post-mortem debugger so exceptions drop into PDB.
 - `print_config`: Print the resolved config and return `None` without executing — useful for inspecting sweep-merged or override-merged configs before launching.

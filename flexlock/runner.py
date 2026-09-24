@@ -14,6 +14,8 @@ from .utils import (
     parse_sweep_string,
     load_sweep,
     enqueue_to_file,
+    apply_overrides,
+    defaults_module,
 )
 from .exceptions import FlexLockValidationError
 from . import config
@@ -270,7 +272,8 @@ class FlexLockRunner:
             cfg.merge_with(OmegaConf.load(args.merge))
         overrides = self._flatten_overrides(args.overrides)
         if overrides:
-            cfg.merge_with(OmegaConf.from_dotlist(overrides))
+            # key=@name swaps the node for a config of the -d module.
+            apply_overrides(cfg, overrides, module=defaults_module(args.defaults))
 
         if args.debug:
             logger.debug(f"Final Root Config: {cfg}")
@@ -390,6 +393,8 @@ class FlexLockRunner:
         self._validate_multiselect(args)
         debug = args.debug or config.get_env_bool("FLEXLOCK_DEBUG", False)
         proj = Project(root_cfg)
+        # -O key=@name resolves against the -d module, as -o does.
+        proj.override_module = defaults_module(args.defaults)
 
         results = []
         for sel in selects:
@@ -556,6 +561,8 @@ class FlexLockRunner:
 
         # Hand off to the single execution kernel.
         proj = Project(root_cfg)
+        # -O key=@name resolves against the -d module, as -o does.
+        proj.override_module = defaults_module(args.defaults)
 
         # --check: side-effect-free preflight resolution, then exit.
         if args.check:

@@ -287,7 +287,7 @@ preset error message; the reference appears in `prevs`; the resolved path is in
 - Debug runs: make them their own preset (`train_x_debug`); address matching
   is anchored on the full attribute name, so `train_x` never matches it.
 
-## Phase 4 — Subtree swap by name: `@attr`
+## Phase 4 — Subtree swap by name: `@attr` (done)
 
 ```
 flexlock-run -d sst_ml_mapping.starter.xps_glob.train_small_cloud_gap -s main \
@@ -312,6 +312,23 @@ Files: `runner.py` (`load_config`, `_flatten_overrides`), `utils.load_sweep`,
 
 Tests: root and after-select overrides; replace-not-merge; fully qualified
 fallback; escape; sweep expansion; error listing.
+
+### As built (notes)
+
+- `utils.apply_overrides` applies `-o`/`-O`/`overrides=` in order: plain
+  entries are batched into `from_dotlist` as before, `key=@name` replaces the
+  node (`OmegaConf.update(..., merge=False)`), `key=@@x` sets `@x` directly.
+  A leading `@` was never valid before (YAML rejects it), so nothing breaks.
+- `@name` resolves against `Project.override_module`: set from an
+  import-string `defaults`, and by the runner from `-d`. A class attribute
+  (default `None`) so `Project.__new__` instances work.
+- Sweeps: `expand_swaps` turns `"@name"` values (in `--sweep` strings, sweep
+  files, API items) into `Swap` markers on the submitting side;
+  `merge_task_into_cfg` pops them before the deep merge and applies them as
+  replacements after it. Workers never import the config module.
+- Checked on `xps_glob.train_small_cloud_gap -o main.lit_module.model=@big_model --dump`:
+  the node is exactly `big_model` (its own `downsample` default, not
+  `small_model`'s), and `_preset_.overrides` keeps the typed override.
 
 ## Phase 5 — Later (separate plan)
 

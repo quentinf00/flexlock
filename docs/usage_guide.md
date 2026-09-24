@@ -141,6 +141,37 @@ defaults  +  -c yaml  +  -m merge_file  +  -o root.overrides
 `-O` and `-M` apply *after* selection, so you can override the selected
 node without disturbing the root.
 
+### Swapping a subtree: `key=@name`
+
+A value starting with `@` names a config instead of giving one, and
+**replaces** the node (the way Hydra config groups do), rather than merging
+into it:
+
+```bash
+flexlock-run -d my.xps.train_x -s main -o main.lit_module.model=@big_model
+flexlock-run -d my.xps.train_x -s main -O lit_module.model=@big_model   # after select
+flexlock-run -d my.xps.train_x -s main -o main.model=@other.module.huge_model
+flexlock-run -d my.xps.train_x -s main --sweep "@small_model,@big_model" \
+    --sweep-target main.lit_module.model
+```
+
+- `@name` is an attribute of the `-d` module (`my.xps` above), so building
+  blocks defined next to your presets (`small_model = py2cfg(...)`) can be
+  swapped by name. `@pkg.module.attr` reaches a config defined elsewhere.
+- Replacement matters: merging `big_model` into `small_model` would keep the
+  keys only `small_model` has. With `@`, the node is exactly `big_model`.
+- Overrides apply in order, so `-o main.model=@big_model main.model.width=16`
+  swaps, then tweaks the new model.
+- `@@x` is the literal string `@x`. An unknown name is an error listing the
+  module's config attributes.
+- The override is recorded as typed in `_preset_`; the expanded subtree is in
+  `config`, so provenance is complete. The same works from Python:
+  `Project("my.xps.train_x").submit("main", overrides={"model": "@big_model"})`
+  and in sweep items (`{model: "@big_model"}` in a sweep file).
+
+This replaces registry resolvers such as `${sel_model:small}` over a
+`_MODELS` dict.
+
 ### Relative interpolations
 
 Within a node, prefer relative refs over root-scope refs. They're the

@@ -602,15 +602,186 @@ def load_python_defaults(import_path: str):
     return getattr(module, var_name)
 
 
-def merge_task_into_cfg(cfg: DictConfig, task: Any, task_to: str | None) -> DictConfig:
-    """Merge a task into the config."""
-    # Create a minimal config with just the task structure
+# ── @name overrides: swap a subtree for a named config ──
 
-    if (task_to is not None) and (task_to != "."):
-        task_branch = OmegaConf.create({})
-        OmegaConf.update(task_branch, task_to, task, force_add=True)
-        task = task_branch
-    return OmegaConf.merge(cfg, task)
+
+class Swap:
+    """A config value that *replaces* its node instead of merging into it.
+
+    Produced by :func:`expand_swaps` for ``@name`` values; consumed by
+    :func:`merge_task_into_cfg` and :func:`apply_overrides`. Replacement (as
+    in Hydra config groups) is what swapping needs: merging a new model into
+    the old one would keep the old model's extra keys.
+    """
+
+    def __init__(self, name: str, value: Any):
+        self.name = name
+        self.value = value
+
+    def __repr__(self):
+        return f"Swap(@{self.name})"
+
+
+def defaults_module(import_path: "str | None"):
+    """The module a ``-d`` / ``Project(defaults=...)`` string points into."""
+    if not import_path:
+        return None
+    s = str(import_path)
+    if ":" in s:
+        left = s.split(":", 1)[0]
+    elif s.endswith(".py") or Path(s).is_file():
+        left = s
+    else:
+        left = s.rsplit(".", 1)[0]
+    if left.endswith(".py") or Path(left).is_file():
+        stem = Path(left).stem
+        if stem not in sys.modules:
+            load_python_defaults(f"{left}:__name__")
+        return sys.modules.get(stem)
+    try:
+        return importlib.import_module(left)
+    except ImportError:
+        return None
+
+
+def _config_attrs(module) -> list:
+    return sorted(
+        n for n, v in vars(module).items()
+        if not n.startswith("_") and isinstance(v, (dict, DictConfig))
+    )
+
+
+def resolve_swap(name: str, module=None) -> Any:
+    """Value of ``@name``: an attribute of ``module``, else ``pkg.mod.attr``."""
+    from .exceptions import FlexLockConfigError
+
+    if module is not None and hasattr(module, name):
+        value = getattr(module, name)
+    elif "." in name or ":" in name:
+        try:
+            value = load_python_defaults(name)
+        except Exception as exc:
+            raise FlexLockConfigError(f"@{name}: could not import it ({exc})")
+    else:
+        where = f"in {module.__name__}" if module is not None else "(no -d module)"
+        available = ", ".join(_config_attrs(module)) if module is not None else ""
+        raise FlexLockConfigError(
+            f"@{name}: no such attribute {where}. "
+            + (f"Config attributes: {available}. " if available else "")
+            + "Use @pkg.module.attr for a config defined elsewhere, or @@ for "
+            "a literal '@'."
+        )
+    if isinstance(value, (dict, list)):
+        value = OmegaConf.create(value)
+    elif isinstance(value, (DictConfig, ListConfig)):
+        value = value.copy()
+    return value
+
+
+def expand_swaps(value: Any, module=None) -> Any:
+    """Turn ``"@name"`` strings (at any depth) into :class:`Swap` markers.
+
+    ``"@@x"`` is the escape for the literal string ``"@x"``.
+    """
+    if isinstance(value, str):
+        if value.startswith("@@"):
+            return value[1:]
+        if value.startswith("@") and len(value) > 1:
+            name = value[1:]
+            return Swap(name, resolve_swap(name, module))
+        return value
+    if isinstance(value, dict):
+        return {k: expand_swaps(v, module) for k, v in value.items()}
+    if isinstance(value, list):
+        return [expand_swaps(v, module) for v in value]
+    return value
+
+
+def _pop_swaps(value: Any, path: str, out: list) -> Any:
+    """Remove Swap markers from ``value``, collecting ``(dotpath, value)``."""
+    if isinstance(value, Swap):
+        out.append((path, value.value))
+        return None
+    if isinstance(value, dict):
+        kept = {}
+        for k, v in value.items():
+            child = f"{path}.{k}" if path else str(k)
+            if isinstance(v, Swap):
+                out.append((child, v.value))
+            else:
+                kept[k] = _pop_swaps(v, child, out)
+        return kept
+    return value
+
+
+def _apply_swaps(cfg: DictConfig, swaps: list) -> None:
+    for path, value in swaps:
+        with open_dict(cfg):
+            OmegaConf.update(cfg, path, value, merge=False, force_add=True)
+
+
+def merge_task_into_cfg(cfg: DictConfig, task: Any, task_to: str | None) -> DictConfig:
+    """Merge a task into the config (``@name`` swaps replace their node)."""
+    prefix = "" if task_to in (None, ".") else task_to
+    swaps: list = []
+    task = _pop_swaps(task, prefix, swaps)
+    if task is None:  # the whole task was a swap
+        merged = cfg.copy()
+    else:
+        # Create a minimal config with just the task structure
+        if prefix:
+            task_branch = OmegaConf.create({})
+            OmegaConf.update(task_branch, task_to, task, force_add=True)
+            task = task_branch
+        merged = OmegaConf.merge(cfg, task)
+    _apply_swaps(merged, swaps)
+    return merged
+
+
+def apply_overrides(cfg: DictConfig, overrides, module=None) -> None:
+    """Apply dotlist overrides in order, with ``key=@name`` swaps.
+
+    Plain ``key=value`` entries merge as before (consecutive ones in one
+    ``from_dotlist``); ``key=@name`` *replaces* the node at ``key`` with the
+    config named ``name`` (an attribute of ``module``, the ``-d`` module, or
+    a fully qualified ``pkg.mod.attr``). Order matters: ``model=@big
+    model.width=16`` swaps, then tweaks the new model. ``key=@@x`` sets the
+    literal ``@x`` (a bare leading ``@`` was never valid: YAML rejects it).
+    A dict is accepted too (``{"model": "@big", "lr": 0.1}``).
+    """
+    if not overrides:
+        return
+    if isinstance(overrides, dict):
+        items = list(overrides.items())
+        plain = lambda k, v: OmegaConf.from_dotlist([f"{k}={v}"])  # noqa: E731
+    else:
+        items = [tuple(o.split("=", 1)) if "=" in o else (o, None) for o in overrides]
+        plain = None
+
+    batch: list = []
+
+    def flush():
+        if batch:
+            cfg.merge_with(OmegaConf.from_dotlist(batch))
+            batch.clear()
+
+    for key, value in items:
+        if isinstance(value, str) and value.startswith("@") and not value.startswith("@@"):
+            flush()
+            _apply_swaps(cfg, [(key, resolve_swap(value[1:], module))])
+            continue
+        if isinstance(value, str) and value.startswith("@@"):
+            # Set directly: YAML (from_dotlist) can't parse a leading '@'.
+            flush()
+            with open_dict(cfg):
+                OmegaConf.update(cfg, key, value[1:], force_add=True)
+            continue
+        if plain is None:
+            batch.append(f"{key}={value}" if value is not None else key)
+        else:
+            flush()
+            cfg.merge_with(plain(key, value))
+    flush()
 
 
 @contextmanager
