@@ -38,6 +38,17 @@ the JSON contracts below are the interface.
    flexlock tag -l
    ```
 
+5. **Presets** (which named config produced which runs). When the project
+   keeps its configs in a module (the `-d` target), list its catalogue and the
+   runs of the presets that matter:
+   ```bash
+   flexlock presets <config.module> --format json   # name, selects, comment, runs
+   flexlock runs <module.attr> -s <key> --format json   # newest first
+   ```
+   `flexlock show` also reports each run's `preset` (defaults, select, and the
+   overrides it was launched with). Prefer this over grouping by directory
+   name when several presets share a results tree.
+
 ## Status meanings
 
 | status | meaning |
@@ -55,7 +66,7 @@ Check timestamps / the scheduler before declaring a run dead.
 ## Suggested summary structure
 
 - One-line health: `N complete, M failed, K running/interrupted`.
-- Per-stage table: stage · newest status · timestamp · note · key metric.
+- Per-stage table: stage (or preset) · newest status · timestamp · note · key metric.
 - Failures section: each failed node with `exc_type` and a one-line cause.
 - Tagged runs and their lineage.
 - Recommended next actions (re-run, reclaim, gc).

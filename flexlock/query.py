@@ -243,6 +243,7 @@ def load_run_summary(run_dir, scan_root=None, downstream=True) -> dict:
     run_dir = Path(run_dir).resolve()
     scan_root = Path(scan_root).resolve() if scan_root else run_dir.parent
 
+    from .presets import preset_of
     from .record import load_record
 
     st = run_status(run_dir)
@@ -263,6 +264,7 @@ def load_run_summary(run_dir, scan_root=None, downstream=True) -> dict:
         "timestamp": lock.get("timestamp"),
         "note": note,
         "target": config.get("_target_") if isinstance(config, dict) else None,
+        "preset": preset_of(config) if isinstance(config, dict) else None,
         "fingerprint": lock.get("fingerprint"),
         "tag": _tag_for_path(run_dir, scan_root),
         "error": st.get("error"),
@@ -657,6 +659,14 @@ def format_summary_md(summary: dict) -> str:
         meta.append(f"- **note:** {summary['note']}")
     if summary.get("target"):
         meta.append(f"- **target:** `{summary['target']}`")
+    preset = summary.get("preset")
+    if preset:
+        sel = f" -s {preset['select']}" if preset.get("select") else ""
+        ov = " ".join(
+            [f"-o {o}" for o in preset.get("overrides", [])]
+            + [f"-O {o}" for o in preset.get("overrides_after_select", [])]
+        )
+        meta.append(f"- **preset:** `{preset['defaults']}{sel}`" + (f" `{ov}`" if ov else ""))
     if summary.get("timestamp"):
         meta.append(f"- **timestamp:** {summary['timestamp']}")
     meta.append(f"- **kind:** {summary['kind']}")

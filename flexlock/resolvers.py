@@ -246,4 +246,20 @@ def resolve_deferred(cfg: DictConfig) -> DictConfig:
     it from any parent so downstream ``config.copy()`` cannot re-fire anything.
     """
     resolved = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=False)
-    return OmegaConf.create(resolved)
+    return OmegaConf.create(_escape_literals(resolved))
+
+
+def _escape_literals(value):
+    """Re-escape ``${`` in already-resolved values before re-wrapping.
+
+    After a full resolve, a string can only still contain ``${`` if it was an
+    escaped literal (backslash-escaped interpolation) or a resolver's output. Re-wrapping it in a
+    fresh config would turn it back into a live interpolation, so escape it.
+    """
+    if isinstance(value, str):
+        return value.replace("${", "\\${") if "${" in value else value
+    if isinstance(value, dict):
+        return {k: _escape_literals(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_escape_literals(v) for v in value]
+    return value

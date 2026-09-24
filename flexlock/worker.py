@@ -28,6 +28,7 @@ from flexlock.fingerprint import fingerprint as compute_fingerprint
 from flexlock import index
 from flexlock import config as _config
 from flexlock.git_utils import code_drift
+from flexlock.presets import link_run
 from flexlock.record import is_task_record, materialize, read_lock
 
 
@@ -305,6 +306,7 @@ def _run_one_task(
             logger.warning(f"Could not write results.json at {task_save_dir}: {e}")
 
         record.mark_complete(result=result)
+        link_run(task_save_dir, task_cfg)
         # Record this sweep task in the project-wide index so it's a
         # first-class cache entry (issue 1).
         if task_fp:

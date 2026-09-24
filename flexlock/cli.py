@@ -626,6 +626,89 @@ def cmd_show(args):
         print(query.format_summary_md(summary))
 
 
+# ── runs / presets subcommands ─────────────────────────────────
+
+def _preset_roots(args):
+    from .presets import presets_roots
+
+    return presets_roots(extra=args.root or ())
+
+
+def cmd_runs(args):
+    """List the complete runs of a preset, newest first."""
+    from .presets import find_runs, preset_of
+
+    runs = find_runs(
+        args.preset, select=args.select, roots=_preset_roots(args),
+        strict=args.strict,
+    )
+    if args.limit:
+        runs = runs[: args.limit]
+
+    rows = []
+    for r in runs:
+        record = r.record() or {}
+        p = preset_of(record.get("config") or {}) or {}
+        rows.append({
+            "path": str(r.path),
+            "preset": r.defaults,
+            "select": r.select,
+            "completed": datetime.fromtimestamp(r.completed).isoformat(timespec="seconds"),
+            "note": record.get("note"),
+            "overrides": p.get("overrides", []) + p.get("overrides_after_select", []),
+        })
+
+    if args.format == "json":
+        print(json.dumps(rows, indent=2))
+        return
+    if not rows:
+        print(f"No complete runs of preset '{args.preset}'"
+              + (f" -s {args.select}" if args.select else "")
+              + ". Presets are recorded for runs made with flexlock-run -d/-s "
+              "or Project('module.attr').get(key).")
+        return
+    cwd = Path.cwd()
+    for row in rows:
+        path = Path(row["path"])
+        shown = path.relative_to(cwd) if cwd in path.parents else path
+        extra = "  " + " ".join(row["overrides"]) if row["overrides"] else ""
+        note = f"  # {row['note']}" if row["note"] else ""
+        print(f"{row['completed']}  {shown}{extra}{note}")
+
+
+def cmd_presets(args):
+    """List the presets (runnable configs) a module defines, with run counts."""
+    from .presets import list_presets
+
+    presets = list_presets(args.module, roots=_preset_roots(args))
+    if args.format == "json":
+        print(json.dumps(presets, indent=2))
+        return
+    if args.format == "md":
+        print(f"# Presets in `{args.module}`\n")
+        for p in presets:
+            print(f"## {p['name']}\n")
+            if p["comment"]:
+                print(f"{p['comment']}\n")
+            for sel in p["selects"]:
+                s = f" -s {sel}" if sel else ""
+                n = p["runs"].get(sel or "", 0)
+                print(f"- `flexlock-run -d {args.module}.{p['name']}{s}` "
+                      f"({n} run{'s' if n != 1 else ''})")
+            print()
+        return
+    if not presets:
+        print(f"No presets (configs with a stage holding _target_ and save_dir) "
+              f"in {args.module}")
+        return
+    width = max(len(p["name"]) for p in presets)
+    for p in presets:
+        sels = ",".join(s or "(root)" for s in p["selects"])
+        n = sum(p["runs"].values())
+        comment = f"  # {p['comment'][:80]}" if p["comment"] else ""
+        print(f"{p['name']:<{width}}  -s {sels:<10} {n:>3} runs{comment}")
+
+
 # ── graph subcommand ───────────────────────────────────────────
 
 def cmd_graph(args):
@@ -881,6 +964,45 @@ def main():
         help="Skip the downstream lineage scan (faster)",
     )
     show_parser.set_defaults(func=cmd_show)
+
+    # runs
+    runs_parser = subparsers.add_parser(
+        "runs", help="List complete runs of a preset (-d target + -s), newest first"
+    )
+    runs_parser.add_argument(
+        "preset",
+        help="Preset address: module.attr, module:attr, a suffix such as "
+        "xps_glob.train_x, or file.py:attr",
+    )
+    runs_parser.add_argument("-s", "--select", help="Only runs of this -s key")
+    runs_parser.add_argument(
+        "--strict", action="store_true",
+        help="Only runs made with no -o/-O/-m/-M overrides",
+    )
+    runs_parser.add_argument("--limit", type=int, help="Show at most N runs")
+    runs_parser.add_argument(
+        "--root", metavar="DIR", action="append",
+        help="Also search the .flexlock/ under DIR (repeatable)",
+    )
+    runs_parser.add_argument("--format", choices=["text", "json"], default="text")
+    runs_parser.set_defaults(func=cmd_runs)
+
+    # presets
+    presets_parser = subparsers.add_parser(
+        "presets", help="List the presets a config module defines, with run counts"
+    )
+    presets_parser.add_argument(
+        "module", help="Config module (dotted name or path/to/file.py)"
+    )
+    presets_parser.add_argument(
+        "--root", metavar="DIR", action="append",
+        help="Also count runs from the .flexlock/ under DIR (repeatable)",
+    )
+    presets_parser.add_argument(
+        "--format", choices=["text", "md", "json"], default="text",
+        help="md renders a catalogue (a generated index.md)",
+    )
+    presets_parser.set_defaults(func=cmd_presets)
 
     # graph
     graph_parser = subparsers.add_parser(

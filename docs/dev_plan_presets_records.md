@@ -136,7 +136,7 @@ lineage via `prevs`, `${run_lock:}` and `flexlock show` all see the same record.
 - `record.read_lock` keeps timestamps as strings (as `OmegaConf.load` did):
   plain `yaml.safe_load` returns `datetime`, which OmegaConf rejects.
 
-## Phase 2 — Presets
+## Phase 2 — Presets (done)
 
 ### Definition
 
@@ -205,6 +205,30 @@ normalization + links + lookup), `cli.py`.
 Tests: address normalization (dotted, `a.b:c`, file forms); `_preset_` never
 changes the fingerprint; links created for serial, sweep and HPC-task runs;
 `reindex` rebuilds them; `flexlock runs` ordering and suffix ambiguity.
+
+### As built (notes)
+
+- `_preset_` goes only on runnable nodes (`_target_` + `save_dir`), the same
+  definition `flexlock presets` uses, so `proj.get("params")` or a model
+  sub-config never gains a key. It is stripped from the fingerprint at any
+  depth.
+- Overrides are stored as typed but escaped (`\${`), so an override such as
+  `-o 'train_dir=${run:...}'` stays text inside `_preset_`. This exposed a
+  general bug: `resolve_deferred` re-wrapped resolved values, turning any
+  escaped literal back into a live interpolation; it now re-escapes.
+- Link names are the save_dir relative to the project (`results__xp1__train`):
+  the `pipeline_dir` pattern gives many runs the same basename.
+- Index location: the walk-up now stops at any existing `.flexlock/` dir
+  (not only one holding `index.db`), so a project-level `.flexlock/` (the
+  template creates one) serves every results dir. Existing per-results-dir
+  indexes are still found first. `flexlock runs` also scans `*/.flexlock` and
+  `*/*/.flexlock` below the current dir.
+- `flexlock presets` counts stages at the attribute's top level or one level
+  down; deeper nodes with a `save_dir` (e.g. a Lightning callback) are
+  building blocks. Checked on `sst_ml_mapping.starter.xps_glob`: 60+ presets
+  listed with their comment blocks.
+- Runs made before this phase have no `_preset_`; `reindex` cannot infer one.
+- Not done: `@flexcli` scripts (no `-d`) record no preset.
 
 ## Phase 3 — Run references: `${run:...}`
 

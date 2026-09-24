@@ -249,7 +249,12 @@ class Project:
         Returns:
             The selected configuration (as DictConfig).
         """
-        return select_and_freeze_root_refs(self.defaults, key)
+        node = select_and_freeze_root_refs(self.defaults, key)
+        if self.defaults_str is not None:
+            from .presets import attach, make_preset
+
+            attach(node, make_preset(self.defaults_str, key))
+        return node
 
     def _generate_fingerprint(self, cfg: DictConfig) -> dict:
         """
@@ -900,6 +905,9 @@ class Project:
                     )
                 record_code_drift(save_dir)
                 record.mark_complete(result=result)
+                from .presets import link_run
+
+                link_run(save_dir, config)
                 # Record the completed run in the project-wide index (2.2).
                 if run_fp:
                     index.record_run_lock(save_dir, run_fp)

@@ -419,3 +419,13 @@ def test_run_lock_resolver_native_types(tmp_path):
     assert isinstance(run_lock_resolver(str(run_dir), "config.lr"), float)
     assert run_lock_resolver(str(run_dir), "config.use_amp") is True
     assert run_lock_resolver(str(run_dir), "config.hidden_dims") == [128, 256, 128]
+
+
+def test_resolve_deferred_keeps_escaped_literals():
+    """An escaped ${...} must stay text after the resolve-and-rewrap step."""
+    from flexlock.resolvers import resolve_deferred
+
+    cfg = OmegaConf.create({"a": 1, "lit": "\\${a}", "ref": "${a}"})
+    out = resolve_deferred(cfg)
+    assert out.lit == "${a}" and out.ref == 1
+    assert OmegaConf.to_container(out, resolve=True)["lit"] == "${a}"

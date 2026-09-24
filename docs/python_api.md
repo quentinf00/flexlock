@@ -223,6 +223,12 @@ concrete values, while resolver calls (`${vinc:}`, `${latest:}`,
 `${run_lock:}`) and intra-sub-tree references are preserved for resolution
 at submit time.
 
+When the project was built from an import string
+(`Project("pkg.xps.pipeline_cfg")`) and the node is runnable (`_target_` +
+`save_dir`), `get` also records the preset as `_preset_`
+(`defaults: pkg.xps:pipeline_cfg`, `select: <key>`), so the run shows up in
+`flexlock runs` / `flexlock presets`. It never affects caching.
+
 ```python
 # Get config by key
 train_cfg = proj.get('train')

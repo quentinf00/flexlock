@@ -39,6 +39,22 @@ SAVE_DIR_PLACEHOLDER = "<SAVE_DIR>"
 # config portion of the digest.
 _TRACKING_KEYS = ("_snapshot_",)
 
+# Provenance-only keys stripped at *any* depth: which preset produced a run
+# must never change its identity, even for a stage nested in another config.
+_PROVENANCE_KEYS = ("_preset_",)
+
+
+def _strip_provenance(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            k: _strip_provenance(v)
+            for k, v in value.items()
+            if k not in _PROVENANCE_KEYS
+        }
+    if isinstance(value, list):
+        return [_strip_provenance(v) for v in value]
+    return value
+
 
 def _to_container(cfg: Any) -> Any:
     """Resolve an OmegaConf config to a plain container; pass dicts through."""
@@ -82,9 +98,9 @@ def canonical_config(cfg: Any) -> Any:
     # Drop the run's own save_dir and tracking keys, then normalize any nested
     # references to save_dir into the placeholder.
     stripped = {
-        k: v
+        k: _strip_provenance(v)
         for k, v in container.items()
-        if k != "save_dir" and k not in _TRACKING_KEYS
+        if k != "save_dir" and k not in _TRACKING_KEYS + _PROVENANCE_KEYS
     }
     return _normalize_paths(stripped, save_dir if isinstance(save_dir, str) else None)
 

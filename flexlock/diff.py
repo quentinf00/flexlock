@@ -34,7 +34,9 @@ class RunDiff:
 
         # Keys that legitimately appear inside the user config and are
         # FlexLock-managed (or explicitly requested) — ignored at *any* depth.
-        self.always_ignore = set(ignore_keys or []) | {"save_dir", "_snapshot_"}
+        self.always_ignore = set(ignore_keys or []) | {
+            "save_dir", "_snapshot_", "_preset_"
+        }
 
         # Keys FlexLock injects at the snapshot top level (run metadata). These
         # are only ignored at the top of the config subtree — a user

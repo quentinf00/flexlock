@@ -336,6 +336,21 @@ class FlexLockRunner:
                 "root-level overrides (-o pipeline_dir=..., -m, -c)."
             )
 
+    def _attach_preset(self, args, node_cfg, select):
+        """Record which preset (-d/-c + -s + overrides) produced this node."""
+        from .presets import attach, make_preset
+
+        source = args.defaults or args.config
+        if not source:
+            return
+        attach(node_cfg, make_preset(
+            source,
+            select,
+            overrides=self._flatten_overrides(args.overrides),
+            overrides_after_select=self._flatten_overrides(args.overrides_after_select),
+            merges=[args.merge, args.merge_after_select],
+        ))
+
     def _build_node_cfg(self, args, root_cfg, base_cfg, select, name=None):
         """Select a node from ``root_cfg`` and prepare it for submission.
 
@@ -357,7 +372,9 @@ class FlexLockRunner:
             _b.merge_with(node_cfg)
             node_cfg.merge_with(_b)
 
-        return self._prepare_node(node_cfg, name=name or select or "exp")
+        node_cfg = self._prepare_node(node_cfg, name=name or select or "exp")
+        self._attach_preset(args, node_cfg, select)
+        return node_cfg
 
     def _run_multi(self, args, root_cfg, base_cfg, selects):
         """Run a sequence of selected stages in order, locally and blocking.
@@ -476,6 +493,7 @@ class FlexLockRunner:
 
         # Inject a default save_dir if the selected node doesn't carry one.
         node_cfg = self._prepare_node(node_cfg)
+        self._attach_preset(args, node_cfg, select)
 
         # --edit-config / -e: open compiled config in $EDITOR before running.
         if args.edit_config:

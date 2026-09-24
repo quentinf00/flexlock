@@ -488,6 +488,55 @@ submit(cfg, force=True)   # re-execute, overwriting in place
 `force=True` invalidates `run.complete` (so `smart_run` doesn't short-
 circuit), preserves outputs and `run.lock`, and re-runs the function.
 
+### Presets: which config produced a run
+
+A **preset** is what you pass on the command line: the `-d` target (a Python
+attribute holding a config) plus the `-s` key. You don't register anything:
+every run made through `flexlock-run -d/-s`, or through
+`Project("pkg.module.attr").get(key)`, records its preset in the config as a
+reserved `_preset_` key, along with the overrides you typed:
+
+```yaml
+# run.lock
+config:
+  _target_: sst_ml_mapping.starter.train.train
+  _preset_:
+    defaults: sst_ml_mapping.starter.xps_glob:train_small_cloud_gap_compact
+    select: main
+    overrides: ["main.lit_module.lr=1e-4"]   # -o, as typed
+    overrides_after_select: []               # -O
+    merges: []                               # -m / -M
+  ...
+```
+
+`_preset_` is provenance only: it never enters the fingerprint (so caching is
+unaffected), `RunDiff` ignores it, and `instantiate` strips it before calling
+your function. Only runnable nodes (`_target_` + `save_dir`) get one.
+
+When a run completes, FlexLock adds a symlink under the project's
+`.flexlock/presets/<defaults>/<select>/`, which makes the runs of a preset
+cheap to list:
+
+```bash
+flexlock runs xps_glob.train_small_cloud_gap_compact       # newest first
+flexlock runs train_small_cloud_gap_compact -s main --strict  # no overrides
+flexlock presets sst_ml_mapping.starter.xps_glob             # the catalogue
+flexlock presets sst_ml_mapping.starter.xps_glob --format md > docs/presets.md
+```
+
+`flexlock presets` lists every attribute of a config module that holds a
+runnable stage (at its top level or one level down; deeper nodes such as
+models or callbacks are building blocks), with the comment block above its
+definition and its number of runs. It can replace a hand-maintained index of
+commands. Addresses match by suffix: `xps_glob.train_x`, `xps_glob:train_x`
+and `train_x` all find `pkg.starter.xps_glob:train_x`.
+
+Put a `.flexlock/` directory at the project root (the project template does)
+so one set of links serves every results directory; without it the links live
+next to each results directory's index, which `flexlock runs` also finds from
+the project root. `flexlock reindex <results_root>` rebuilds the links. Runs
+made before presets were recorded have no `_preset_` and don't appear.
+
 ---
 
 ## 8. Smart run / caching
@@ -515,6 +564,12 @@ Mechanism:
 
 Rebuild the index at any time with `flexlock reindex <results_root>`; deleting
 it is always safe.
+
+The index lives in the nearest `.flexlock/` directory above the run (walking up
+from its parent), or `<parent>/.flexlock/` if there is none; `$FLEXLOCK_INDEX`
+overrides both. A `.flexlock/` at the project root therefore collects every
+run in the project, which is what `flexlock runs` and cache lookups from the
+project root expect. The same directory holds the preset links (§7).
 
 ### When caches miss
 

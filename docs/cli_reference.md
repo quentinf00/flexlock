@@ -153,6 +153,35 @@ DEF=myproject.pipeline.cfg
 flexlock-run -d "$DEF" -s "$(flexlock stages -d "$DEF" --format keys | fzf)"
 ```
 
+### `flexlock runs` — Runs of a Preset
+
+List the complete runs of a preset (the `-d` target + `-s` key they were
+launched with), newest first. See the usage guide, §7 "Presets".
+
+```bash
+flexlock runs xps_glob.train_small_cloud_gap_compact          # suffix match
+flexlock runs pkg.starter.xps_glob:train_x -s main --limit 5
+flexlock runs train_x --strict        # only runs made with no -o/-O/-m/-M
+flexlock runs train_x --format json   # {path, preset, select, completed, note, overrides}
+flexlock runs train_x --root results_old   # also search results_old/.flexlock
+```
+
+Searched: the `.flexlock/` serving the current directory, any `.flexlock/` up
+to two levels below it, and `--root` dirs. Links to deleted runs are pruned.
+
+### `flexlock presets` — Catalogue of a Config Module
+
+List the attributes of a config module that hold runnable stages, with the
+comment block above each definition, the `-s` keys, and run counts.
+
+```bash
+flexlock presets sst_ml_mapping.starter.xps_glob               # text
+flexlock presets sst_ml_mapping.starter.xps_glob --format md   # a generated index
+flexlock presets configs/defaults.py --format json
+```
+
+The module is imported, as `flexlock-run -d` would.
+
 ### `flexlock report` — Static HTML Report
 
 Render a self-contained, offline-openable HTML report (no CDN) of a results tree.

@@ -62,6 +62,17 @@ def compare_snapshots(snap1: dict, snap2: dict, show_details: bool = False) -> b
             for d in diffs.get(key, []):
                 print(f"  - {d}")
 
+    from flexlock.presets import preset_of
+
+    p1, p2 = (preset_of(s.get("config") or {}) for s in (snap1, snap2))
+    if p1 or p2:
+        def _fmt(p):
+            if not p:
+                return "(none)"
+            ov = " ".join(p.get("overrides", []) + p.get("overrides_after_select", []))
+            return f"{p['defaults']} -s {p.get('select')}" + (f"  {ov}" if ov else "")
+        print(f"Preset: {_fmt(p1)}" if p1 == p2 else f"Preset: {_fmt(p1)}  →  {_fmt(p2)}")
+
     for label, snap in (("first", snap1), ("second", snap2)):
         drift = snap.get("code_drift")
         if drift:

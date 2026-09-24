@@ -13,7 +13,7 @@ never returned as cache hits.
 
 Location resolution (see :func:`resolve_index_path`):
   1. ``$FLEXLOCK_INDEX`` if set;
-  2. the nearest existing ``.flexlock/index.db`` walking up from ``base``;
+  2. the nearest existing ``.flexlock/`` dir walking up from ``base``;
   3. otherwise ``<base>/.flexlock/index.db``.
 
 Writers on the read and write paths must resolve to the *same* file for a hit
@@ -115,9 +115,11 @@ def resolve_index_path(base, create_parent: bool = False) -> Path:
         for candidate_dir in [cur, *cur.parents]:
             if candidate_dir in skip:
                 continue
-            candidate = candidate_dir / INDEX_DIRNAME / INDEX_FILENAME
-            if candidate.exists():
-                p = candidate
+            # An existing .flexlock/ dir claims everything below it, even
+            # before its index.db exists: a project-level .flexlock/ (e.g.
+            # from the template) then serves every results dir in the project.
+            if (candidate_dir / INDEX_DIRNAME).is_dir():
+                p = candidate_dir / INDEX_DIRNAME / INDEX_FILENAME
                 break
         if p is None:
             p = cur / INDEX_DIRNAME / INDEX_FILENAME
@@ -311,6 +313,7 @@ def reindex(root) -> int:
     tasks, in the task DB. Runs from before fingerprints were stored are
     skipped. Returns the number of rows written.
     """
+    from .presets import link_run
     from .record import iter_run_dirs, load_record, marker_db, read_marker
 
     root = Path(root)
@@ -322,6 +325,7 @@ def reindex(root) -> int:
         fp = data.get("fingerprint")
         if not fp or not (run_dir / "run.complete").exists():
             continue
+        link_run(run_dir, data.get("config") or {})
         marker = read_marker(run_dir)
         if marker is None or ((run_dir / "run.lock").exists() and "task_id" in data):
             record_run_lock(run_dir, fp)

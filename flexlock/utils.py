@@ -642,15 +642,19 @@ def instantiate(config, *args, **kwargs):
         return [instantiate(item) for item in config]
 
     # config is a dict — never mutate the caller's object. Copy before
-    # stripping the tracking-only "_snapshot_" key so the original keeps it.
-    if "_snapshot_" in config:
+    # stripping the tracking-only "_snapshot_"/"_preset_" keys so the
+    # original keeps them.
+    reserved = [k for k in ("_snapshot_", "_preset_") if k in config]
+    if reserved:
         if isinstance(config, DictConfig):
             config = config.copy()
             with open_dict(config):
-                del config["_snapshot_"]
+                for k in reserved:
+                    del config[k]
         else:
             config = dict(config)
-            del config["_snapshot_"]
+            for k in reserved:
+                del config[k]
 
     # 2. Check if this dict represents a target object
     if "_target_" not in config:
