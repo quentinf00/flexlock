@@ -14,7 +14,7 @@ from .utils import (
     select_and_freeze_root_refs,
 )
 from .freeze import freeze_deferred
-from .snapshot import snapshot, RunTracker
+from .snapshot import snapshot, RunTracker, record_code_drift
 from .run_record import RunRecord
 from .fingerprint import fingerprint as compute_fingerprint
 from . import index
@@ -872,6 +872,7 @@ class Project:
                 # signature.
                 if "save_dir" in config:
                     RunRecord(config.save_dir).write_error(exc)
+                    record_code_drift(config.save_dir)
                 raise
 
             # Save results if save_dir is specified
@@ -884,6 +885,7 @@ class Project:
                     logger.warning(
                         f"Could not save results to {record.results_path}: {e}"
                     )
+                record_code_drift(save_dir)
                 record.mark_complete(result=result)
                 # Record the completed run in the project-wide index (2.2).
                 if run_fp:

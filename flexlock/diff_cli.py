@@ -63,6 +63,13 @@ def compare_snapshots(snap1: dict, snap2: dict, show_details: bool = False) -> b
             for d in diffs.get(key, []):
                 print(f"  - {d}")
 
+    for label, snap in (("first", snap1), ("second", snap2)):
+        drift = snap.get("code_drift")
+        if drift:
+            files = ", ".join(f"{r}:{p}" for r, ps in drift.items() for p in ps)
+            print(f"⚠ Code drift in {label} run (recorded tree may not match "
+                  f"what ran): {files}")
+
     print(f"\nOverall: {'✓ Snapshots Match' if is_match else '✗ Snapshots Differ'}\n")
     return is_match
 

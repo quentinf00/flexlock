@@ -14,8 +14,10 @@ import os
 import random
 import time
 import traceback
+from datetime import datetime
 from pathlib import Path
 
+import yaml
 from loguru import logger
 
 from .taskdb import claim_next_tasks, finish_tasks, pending_count
@@ -26,6 +28,7 @@ from flexlock.run_record import RunRecord
 from flexlock.fingerprint import fingerprint as compute_fingerprint
 from flexlock import index
 from flexlock import config as _config
+from flexlock.git_utils import code_drift
 
 
 def _current_job_id() -> str | None:
@@ -135,6 +138,52 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
             finish_tasks(db_path, finished)
 
 
+_master_cache: dict = {}
+
+
+def _master_code(master_lock: Path):
+    """``(repos, snapshot epoch)`` from the sweep master run.lock, read once."""
+    key = str(master_lock)
+    if key not in _master_cache:
+        repos, since = {}, None
+        try:
+            with open(master_lock) as f:
+                data = yaml.safe_load(f) or {}
+            repos = data.get("repos") or {}
+            ts = data.get("timestamp")
+            since = datetime.fromisoformat(ts).timestamp() if ts else None
+        except Exception as exc:
+            logger.debug(f"Could not read master lock {master_lock}: {exc}")
+        _master_cache[key] = (repos, since)
+    return _master_cache[key]
+
+
+def _task_code_drift(master_lock: Path) -> dict:
+    """Loaded repo files that changed since the master snapshot (see code_drift)."""
+    repos, since = _master_code(master_lock)
+    if not repos or since is None:
+        return {}
+    try:
+        return code_drift(repos, since)
+    except Exception as exc:
+        logger.debug(f"code drift check failed: {exc}")
+        return {}
+
+
+def _with_drift(snapshot_data, master_lock):
+    """Return the task snapshot extended with ``code_drift``, or None if clean."""
+    if not snapshot_data:
+        return None
+    drift = _task_code_drift(master_lock)
+    if not drift:
+        return None
+    logger.warning(
+        f"Code changed after the snapshot; the recorded tree may not match "
+        f"what ran: {drift}"
+    )
+    return dict(snapshot_data, code_drift=drift)
+
+
 def _run_one_task(
     func, cfg, task_to, db_path, db_dir, master_lock, node, task, finished
 ):
@@ -149,6 +198,7 @@ def _run_one_task(
     task_id = _hash_task(task)
 
     task_save_dir = None
+    snapshot_data = None
     try:
         task_cfg = merge_task_into_cfg(cfg, task, task_to)
 
@@ -209,7 +259,10 @@ def _run_one_task(
         # first-class cache entry (issue 1).
         if task_fp:
             index.record_task(task_save_dir, db_path, task_id, task_fp)
-        finished.append(dict(task=task, result=result))
+        finished.append(dict(
+            task=task, result=result,
+            snapshot=_with_drift(snapshot_data, master_lock),
+        ))
 
     except KeyboardInterrupt:
         # SIGINT — mark the in-flight task interrupted so it's distinct
@@ -225,4 +278,7 @@ def _run_one_task(
         # no sqlite; taskdb keeps the traceback too. write_error never raises.
         if task_save_dir is not None:
             RunRecord(task_save_dir).write_error(e, task_id=task_id, node=node)
-        finished.append(dict(task=task, error=tb))
+        finished.append(dict(
+            task=task, error=tb,
+            snapshot=_with_drift(snapshot_data, master_lock),
+        ))

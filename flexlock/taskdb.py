@@ -295,9 +295,12 @@ def finish_tasks(db_path: Path, entries: List[dict]) -> None:
     """Marks a batch of tasks finished in one write transaction.
 
     Each entry is a dict with key ``task`` (required) and optional ``error``,
-    ``result``, ``status`` — same semantics as ``finish_task``. Workers
-    buffer per-task outcomes and flush them here once per claimed batch.
+    ``result``, ``status`` — same semantics as ``finish_task`` — and
+    ``snapshot``, which replaces the task's stored snapshot (used to append
+    end-of-run facts such as ``code_drift`` without an extra transaction).
+    Workers buffer per-task outcomes and flush them here once per claimed batch.
     """
+    import json
     rows = []
     for e in entries:
         error = e.get("error")
@@ -308,6 +311,7 @@ def finish_tasks(db_path: Path, entries: List[dict]) -> None:
                 status,
                 error,
                 _to_yaml(result) if result is not None else None,
+                json.dumps(e["snapshot"]) if e.get("snapshot") else None,
                 _hash_task(e["task"]),
             )
         )
@@ -316,7 +320,8 @@ def finish_tasks(db_path: Path, entries: List[dict]) -> None:
 
     def op(c):
         c.executemany(
-            "UPDATE tasks SET status=?, error=?, result_info=?, ts_end=CURRENT_TIMESTAMP WHERE task_id=?",
+            "UPDATE tasks SET status=?, error=?, result_info=?, "
+            "snapshot=COALESCE(?, snapshot), ts_end=CURRENT_TIMESTAMP WHERE task_id=?",
             rows,
         )
 

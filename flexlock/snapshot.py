@@ -22,6 +22,38 @@ def write_complete_marker(save_dir: Path, result=None) -> Path:
     return RunRecord(save_dir).mark_complete(result=result)
 
 
+def record_code_drift(save_dir) -> dict:
+    """Append ``code_drift`` to ``save_dir/run.lock`` if loaded code changed.
+
+    Call when the run ends (success or failure). Compares the modules loaded
+    in this process against the tree recorded in run.lock; see
+    :func:`flexlock.git_utils.code_drift`. Never raises.
+    """
+    import yaml
+    from .git_utils import code_drift
+
+    try:
+        lock = Path(save_dir) / "run.lock"
+        with open(lock) as f:
+            data = yaml.safe_load(f) or {}
+        repos = data.get("repos")
+        ts = data.get("timestamp")
+        if not repos or not ts:
+            return {}
+        drift = code_drift(repos, datetime.fromisoformat(ts).timestamp())
+        if drift:
+            logger.warning(
+                f"Code changed after the snapshot; the recorded tree may not "
+                f"match what ran: {drift}"
+            )
+            data["code_drift"] = drift
+            RunRecord(save_dir).write_lock(data)
+        return drift
+    except Exception as exc:
+        logger.debug(f"code drift check failed for {save_dir}: {exc}")
+        return {}
+
+
 def is_complete(run_dir: Path) -> bool:
     """Return True if ``run_dir`` has both ``run.lock`` and ``run.complete``."""
     return RunRecord(run_dir).is_complete

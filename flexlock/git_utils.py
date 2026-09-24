@@ -194,3 +194,101 @@ def get_git_commit(path: str = ".") -> str:
         raise FlexLockSnapshotError(
             f"Could not get git commit for {path!r}: {e}"
         ) from e
+
+
+_tree_listing_cache: dict = {}
+
+
+def _tree_blobs(repo: GitRepo, tree: str) -> dict:
+    """``{repo-relative path: blob sha}`` for every file in ``tree`` (memoized)."""
+    key = (repo.working_tree_dir, tree)
+    listing = _tree_listing_cache.get(key)
+    if listing is None:
+        listing = {}
+        for line in repo.git.ls_tree("-r", "--full-tree", tree).splitlines():
+            meta, path = line.split("\t", 1)
+            listing[path] = meta.split()[2]
+        _tree_listing_cache[key] = listing
+    return listing
+
+
+def _blob_sha(path: Path) -> str:
+    """Git blob hash of a file (same as ``git hash-object``), without a subprocess."""
+    import hashlib
+
+    data = path.read_bytes()
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def code_drift(repos: dict, since: float, modules=None) -> dict:
+    """Loaded source files that differ from the recorded tree.
+
+    A run records its code as a git tree at snapshot time, but Python loads a
+    module when it is first imported: an edit made while the job waited in the
+    queue, or before a lazy import, runs code the tree does not describe. This
+    checks every module in ``modules`` (default ``sys.modules``) whose file lies
+    in a recorded repo and was modified after ``since`` (epoch seconds of the
+    snapshot); a file counts as drifted when its content differs from the
+    tree's blob, or when it is a new, non-ignored file absent from the tree.
+
+    Args:
+        repos: The ``repos`` section of a run record
+            (``{name: {"path": ..., "tree": ...}}``).
+        since: Snapshot time; files with an older mtime are skipped unread.
+        modules: Iterable of module objects (defaults to ``sys.modules``).
+
+    Returns:
+        ``{repo name: [repo-relative paths]}`` for repos with drift; empty
+        when the loaded code matches the recorded tree.
+    """
+    import sys
+
+    if modules is None:
+        modules = list(sys.modules.values())
+    files = set()
+    for mod in modules:
+        f = getattr(mod, "__file__", None)
+        if f and f.endswith(".py"):
+            try:
+                files.add(Path(f).resolve())
+            except OSError:
+                continue
+
+    drift = {}
+    for name, info in (repos or {}).items():
+        tree = info.get("tree") if isinstance(info, dict) else None
+        if not tree or not info.get("path"):
+            continue
+        try:
+            repo = GitRepo(info["path"], search_parent_directories=True)
+            root = Path(repo.working_tree_dir).resolve()
+            blobs = _tree_blobs(repo, tree)
+        except Exception:
+            continue
+
+        changed, new = [], []
+        for f in files:
+            try:
+                rel = f.relative_to(root).as_posix()
+                if f.stat().st_mtime <= since:
+                    continue
+            except (ValueError, OSError):
+                continue
+            if rel in blobs:
+                if _blob_sha(f) != blobs[rel]:
+                    changed.append(rel)
+            else:
+                new.append(rel)
+
+        if new:
+            # New files only count if git would have tracked them (drops .pixi,
+            # build dirs, ...). check-ignore exits 1 when nothing is ignored.
+            try:
+                ignored = set(repo.git.check_ignore(*new).splitlines())
+            except Exception:
+                ignored = set()
+            changed.extend(p for p in new if p not in ignored)
+
+        if changed:
+            drift[name] = sorted(changed)
+    return drift

@@ -221,6 +221,44 @@ def extract_tracking_info(cfg) -> Tuple[Dict, Dict, List]:
     return repos, data, prevs
 
 
+def collect_task_repos(cfg, tasks, task_to=None) -> Dict:
+    """Repos to record in a sweep master's run.lock, including the tasks' own.
+
+    ``extract_tracking_info(cfg)`` only sees the base config. When ``_target_``
+    (or ``_snapshot_.repos``) lives in the tasks instead (a single HPC run, or
+    ``--sweep-file`` of full configs), the base yields nothing, and since
+    workers record tasks as deltas against the master, no code state would be
+    recorded at all. Tasks are grouped by their ``_target_``/``_snapshot_``
+    so the cost is one merge per distinct target, not per task.
+    """
+    repos, _, _ = extract_tracking_info(cfg)
+    seen = set()
+    for task in tasks:
+        node = task
+        if task_to and isinstance(task, (dict, DictConfig)):
+            node = OmegaConf.select(OmegaConf.create(task), task_to)
+        if not isinstance(node, (dict, DictConfig)):
+            continue
+        target = node.get("_target_")
+        snap = node.get("_snapshot_")
+        if target is None and snap is None:
+            continue
+        key = (str(target), str(snap))
+        if key in seen:
+            continue
+        seen.add(key)
+        try:
+            task_repos, _, _ = extract_tracking_info(
+                merge_task_into_cfg(cfg, task, task_to)
+            )
+        except Exception as exc:
+            logger.debug(f"Could not extract repos from task {target}: {exc}")
+            continue
+        for name, info in task_repos.items():
+            repos.setdefault(name, info)
+    return repos
+
+
 def _find_run_dir(start_path: str) -> str | None:
     """Walk up from a path to find the nearest directory containing run.lock."""
     p = Path(start_path)

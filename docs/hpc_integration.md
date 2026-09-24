@@ -543,6 +543,16 @@ export FLEXLOCK_CLAIM_BATCH=32   # a dead worker strands up to 32 claimed tasks
 
 See [Shared filesystems](#shared-filesystems) for the underlying limits.
 
+### Code changed while a job was queued or running
+
+A run records its code as a git tree at submit time. Python loads a module when
+it is first imported, so an edit made while the job waits in the queue (or
+before a lazy import) runs code that tree does not describe. When a run ends,
+FlexLock checks every loaded module in a tracked repo against the recorded tree
+and lists mismatches under `code_drift` in the run record; `flexlock diff`
+shows them as a warning. To avoid drift, don't edit tracked code until queued
+jobs have started and imported it.
+
 ### Shared filesystems
 
 FlexLock keeps its state in two SQLite files that live on the shared

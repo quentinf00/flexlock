@@ -14,7 +14,7 @@ from multiprocessing import Process
 import yaml
 from typing import Any, List
 from flexlock.snapshot import snapshot
-from flexlock.utils import extract_tracking_info
+from flexlock.utils import extract_tracking_info, collect_task_repos
 from flexlock import config
 
 
@@ -319,8 +319,11 @@ class ParallelExecutor:
         # 2. CREATE MASTER SNAPSHOT
         # This captures the Code state ONCE for the whole sweep
         # We assume the Main Process has the correct context (repos, etc.)
-        repos, data, _ = extract_tracking_info(self.cfg)
-        # Set default repos if none specified
+        _, data, _ = extract_tracking_info(self.cfg)
+        # Include repos of the tasks' own _target_s: when the base config has
+        # none (single HPC run, --sweep-file of full configs), workers would
+        # otherwise record no code state (they snapshot tasks as deltas).
+        repos = collect_task_repos(self.cfg, self.tasks, self.task_target)
         snapshot(self.cfg, repos=repos, data=data, save_path=root_dir, note=self.note)
 
         # 3. Populate SQLite DB
