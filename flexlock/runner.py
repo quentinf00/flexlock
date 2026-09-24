@@ -17,6 +17,7 @@ from .utils import (
 )
 from .exceptions import FlexLockValidationError
 from . import config
+from .presets import freeze_run_refs
 from loguru import logger
 
 
@@ -374,6 +375,7 @@ class FlexLockRunner:
 
         node_cfg = self._prepare_node(node_cfg, name=name or select or "exp")
         self._attach_preset(args, node_cfg, select)
+        freeze_run_refs(node_cfg)
         return node_cfg
 
     def _run_multi(self, args, root_cfg, base_cfg, selects):
@@ -494,6 +496,9 @@ class FlexLockRunner:
         # Inject a default save_dir if the selected node doesn't carry one.
         node_cfg = self._prepare_node(node_cfg)
         self._attach_preset(args, node_cfg, select)
+        # Resolve ${run:...} now so --dump/--enqueue/--edit-config show (and
+        # queue) the concrete run, and a queued job can't pick a newer one.
+        freeze_run_refs(node_cfg)
 
         # --edit-config / -e: open compiled config in $EDITOR before running.
         if args.edit_config:

@@ -230,7 +230,7 @@ changes the fingerprint; links created for serial, sweep and HPC-task runs;
 - Runs made before this phase have no `_preset_`; `reindex` cannot infer one.
 - Not done: `@flexcli` scripts (no `-d`) record no preset.
 
-## Phase 3 — Run references: `${run:...}`
+## Phase 3 — Run references: `${run:...}` (done)
 
 ```
 ${run:<address>,<select>}           latest complete run of the preset
@@ -269,6 +269,23 @@ prevs).
 Tests: latest vs pin vs strict; incomplete and failed runs skipped; missing
 preset error message; the reference appears in `prevs`; the resolved path is in
 `--dump` output.
+
+### As built (notes)
+
+- `presets.freeze_run_refs(cfg)` resolves only values containing `${run:`
+  (other flexlock resolvers stubbed, other interpolations untouched), so
+  `${.save_dir}/logs` still follows `--save-dir-policy increment`. Called by
+  the runner right after selection (so `--dump`, `--enqueue`, `--edit-config`
+  see the concrete run), by `Project.submit` (no-op if already done, covers the
+  Python API and single HPC runs), and per sweep item before the sweep freeze.
+- `Project.get` keeps `${run:}` as a call string (the selection freeze stubs
+  every flexlock resolver, `run` included); `submit` resolves it.
+- Lineage: resolutions inside `freeze_run_refs` are collected and appended to
+  the config's `_snapshot_.prevs` (never part of the fingerprint).
+- `strict` is accepted as the 3rd argument (`${run:x,main,strict}`): an empty
+  pin (`,,strict`) makes OmegaConf warn.
+- Debug runs: make them their own preset (`train_x_debug`); address matching
+  is anchored on the full attribute name, so `train_x` never matches it.
 
 ## Phase 4 — Subtree swap by name: `@attr`
 

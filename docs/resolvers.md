@@ -10,6 +10,7 @@ moment:
 | Binding time      | Mechanism                                    |
 |-------------------|----------------------------------------------|
 | submit-time       | plain interpolation (`${a.b}`), resolved eagerly when a stage is selected/submitted |
+| submit-time       | `${run:<preset>,<select>}`: the newest complete run of a preset, fixed when you submit (also by `--dump`/`--enqueue`) |
 | `save_dir` collision / naming | `save_dir_policy=` on `submit()`/`run` (see below) |
 | stage-start       | deferred resolvers `${run_lock:}` / `${latest:}`, fired once on the worker |
 | per-sweep-item    | the sweep item is merged **before** resolution, so `${variable}` sees it |
@@ -102,6 +103,44 @@ date: ${now:%Y%m%d}                  # "20240115"
 ```
 
 ---
+
+### `${run:preset,select[,pin][,strict]}` - Newest Run of a Preset
+
+The directory of the newest **complete** run of a preset (the `-d` target +
+`-s` key it was launched with; see the usage guide, §7 "Presets"). Use it
+instead of copying a versioned path such as `results/train_x_0005`.
+
+```python
+infer = dict(
+    train_dir="${run:xps_glob.train_small_cloud_gap,main}",
+    main=py2cfg(infer_fn, xp_path="${train_dir}",
+                checkpoint="${train_dir}/checkpoints/best_model.ckpt", ...),
+)
+```
+
+```bash
+# pin a version (the run whose dir name, or path, ends with the pin)
+flexlock-run -d my.xps.infer -s main -o 'train_dir=${run:xps_glob.train_x,main,0005}'
+# only runs launched without -o/-O/-m/-M overrides
+flexlock-run -d my.xps.infer -s main -o 'train_dir=${run:xps_glob.train_x,main,strict}'
+```
+
+**Behavior:**
+- Any run of the preset matches, whatever its overrides (use `strict`, or a
+  separate preset such as `train_x_debug`, to keep quick tests out).
+- "Newest" means most recently completed; failed, interrupted and running
+  runs are skipped. The preset address matches by suffix
+  (`xps_glob.train_x`, `xps_glob:train_x`, `train_x`).
+- **Resolved once, at submit** (and by `--dump`, `--enqueue`,
+  `--print-config`): the concrete path is what the config, the task DB and
+  `run.lock` record, so a job waiting in the queue can't pick a newer run.
+  The choice is logged: `${run:xps_glob.train_x,main} → results/train_x_0005`.
+- The resolved run is added to `_snapshot_.prevs`, so lineage
+  (`flexlock show`/`graph`) records it without a hand-written entry.
+- No match is an error that lists the preset's complete runs (or similarly
+  named presets). Without a `select`, runs of several `-s` keys are an error.
+- Only values containing `${run:` are resolved early; other interpolations in
+  the config (e.g. `${.save_dir}/logs`) keep their usual binding time.
 
 ### `${latest:glob}` - Find Latest Path
 
@@ -417,10 +456,13 @@ proj.submit(cfg, save_dir_policy="increment")
 cfg = py2cfg(train, save_dir='outputs/exp/run_0042')
 ```
 
-### 2. Use `${latest:...}` for Pipeline Stages
+### 2. Reference upstream runs by preset, not by path
 
 ```python
-# Good: Automatically finds latest upstream
+# Best: the newest complete run of the upstream preset, recorded at submit
+train_cfg = py2cfg(train, preprocess_dir='${run:xps.preprocess,main}')
+
+# Good: Automatically finds latest upstream by glob (mtime, any run)
 train_cfg = py2cfg(
     train,
     preprocess_dir='${latest:outputs/preprocess/run_*}'

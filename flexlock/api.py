@@ -14,6 +14,7 @@ from .utils import (
     select_and_freeze_root_refs,
 )
 from .freeze import freeze_deferred
+from .presets import freeze_run_refs
 from .snapshot import snapshot, RunTracker, record_code_drift
 from .run_record import RunRecord
 from .fingerprint import fingerprint as compute_fingerprint
@@ -629,6 +630,10 @@ class Project:
             if isinstance(overrides, dict):
                 overrides = [f"{k}={v}" for k, v in overrides.items()]
             config.merge_with(OmegaConf.from_dotlist(overrides))
+
+        # Fix which run each ${run:...} means now, at submit (a no-op when the
+        # CLI already did it); records the resolved runs as lineage.
+        freeze_run_refs(config)
 
         # Bake save_dir to a concrete string exactly once. Done here (not
         # lazily during config reads) so run.lock and run.complete always land
@@ -1310,6 +1315,8 @@ class Project:
             # Eager-resolve everything self-contained for DB serialization,
             # while preserving deferred resolvers (run_lock/latest) as call
             # strings so they fire once, on the worker, at stage start.
+            # ${run:} per item first, so its lineage lands in the item.
+            freeze_run_refs(sweep_cfg)
             sweep_cfg = freeze_deferred(sweep_cfg)
             if dir_suffix and "save_dir" in sweep_cfg:
                 # Nest each item under the base save_dir (the sweep root) so

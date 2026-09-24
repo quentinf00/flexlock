@@ -24,7 +24,7 @@ from flexlock.record import load_record
 from flexlock.runner import FlexLockRunner
 from flexlock.utils import instantiate
 
-STAGE_SRC = "def run(save_dir, x=1, model=None):\n    return {'x': x}\n"
+STAGE_SRC = "def run(save_dir, x=1, model=None, log=None):\n    return {'x': x}\n"
 
 XPS_SRC = '''\
 from flexlock import py2cfg
@@ -238,3 +238,124 @@ def test_cli_runs_and_presets_output(project, capsys):
     cli_main()
     out = capsys.readouterr().out
     assert "`flexlock-run -d prespkg.xps.train_a -s main` (1 run)" in out
+
+
+# ── ${run:...} references (phase 3) ──
+
+DOWN_SRC = '''\
+from flexlock import py2cfg
+from prespkg.stage import run
+
+infer_a = dict(
+    train_dir="${run:xps.train_a,main}",
+    main=py2cfg(run, x=9, model="${train_dir}/results.json",
+                save_dir="RESULTS/infer_a", log="${.save_dir}/logs"),
+)
+'''
+
+
+@pytest.fixture
+def down(project):
+    (project / "prespkg" / "down.py").write_text(
+        DOWN_SRC.replace("RESULTS", str(project / "results"))
+    )
+    return project
+
+
+def _train(*extra):
+    _run("-d", "prespkg.xps.train_a", "-s", "main",
+         "--save-dir-policy", "increment", *extra)
+
+
+def _model_of(save_dir):
+    return load_record(save_dir)["config"]["model"]
+
+
+def test_run_ref_picks_newest_and_records_lineage(down):
+    _train()
+    _train()
+    _run("-d", "prespkg.down.infer_a", "-s", "main")
+    newest = str((down / "results/train_a_0001").resolve())
+    record = load_record(down / "results/infer_a")
+    assert record["config"]["model"] == f"{newest}/results.json"
+    assert newest in record["config"]["_snapshot_"]["prevs"]
+    assert any(v.get("path") == newest for v in record["lineage"].values())
+
+
+def test_run_ref_pin_and_strict(down):
+    _train()
+    _train("-o", "main.x=7")
+    _run("-d", "prespkg.down.infer_a", "-s", "main",
+         "-o", "train_dir=${run:xps.train_a,main,0000}")
+    assert "train_a_0000/" in _model_of(down / "results/infer_a")
+    _run("-d", "prespkg.down.infer_a", "-s", "main", "--force",
+         "-o", "train_dir=${run:xps.train_a,main,strict}")
+    assert "train_a_0000/" in _model_of(down / "results/infer_a")
+
+
+def test_run_ref_resolved_before_save_dir_policy(down):
+    """Relative refs stay live: log follows the incremented save_dir."""
+    _train()
+    _run("-d", "prespkg.down.infer_a", "-s", "main",
+         "--save-dir-policy", "increment")
+    config = load_record(down / "results/infer_a_0000")["config"]
+    assert config["log"].endswith("infer_a_0000/logs")
+
+
+def test_run_ref_skips_incomplete_runs(down):
+    _train()
+    _train()
+    (down / "results/train_a_0001/run.complete").unlink()
+    _run("-d", "prespkg.down.infer_a", "-s", "main")
+    assert "train_a_0000/" in _model_of(down / "results/infer_a")
+
+
+def test_run_ref_errors(down):
+    from flexlock.exceptions import FlexLockConfigError
+
+    with pytest.raises(Exception, match="no complete run of preset xps.train_a"):
+        _run("-d", "prespkg.down.infer_a", "-s", "main")
+    _run("-d", "prespkg.xps.pipe", "-s", "prep", "train")
+    from flexlock.presets import resolve_run
+
+    with pytest.raises(FlexLockConfigError, match="several -s keys"):
+        resolve_run("xps.pipe")
+    _train()
+    with pytest.raises(FlexLockConfigError, match=r"Complete runs of this preset: train_a_0000"):
+        resolve_run("xps.train_a", "main", "0009")
+
+
+def test_dump_and_enqueue_show_concrete_run(down, capsys):
+    _train()
+    _run("-d", "prespkg.down.infer_a", "-s", "main", "--dump")
+    out = capsys.readouterr().out
+    assert "${run:" not in out and "train_a_0000/results.json" in out
+    queue = down / "queue.yaml"
+    _run("-d", "prespkg.down.infer_a", "-s", "main", "--enqueue", str(queue))
+    assert "train_a_0000/results.json" in queue.read_text()
+
+
+def test_project_get_keeps_ref_until_submit(down):
+    _train()
+    proj = Project("prespkg.down.infer_a")
+    cfg = proj.get("main")
+    raw = OmegaConf.to_container(cfg, resolve=False)["model"]
+    assert raw.startswith("${run:xps.train_a,main}")
+    result = proj.submit(cfg)
+    assert "train_a_0000" in _model_of(result.save_dir)
+
+
+def test_run_ref_in_sweep_items(down):
+    _train()
+    _train()
+    results = down / "results"
+    sweep = results / "sweep.yaml"
+    sweep.write_text(
+        f"- {{train_dir: '${{run:xps.train_a,main,0000}}', "
+        f"save_dir: {results}/sw/i0}}\n"
+        f"- {{train_dir: '${{run:xps.train_a,main}}', save_dir: {results}/sw/i1}}\n"
+    )
+    _run("-d", "prespkg.down.infer_a", "-s", "main", "--sweep-file", str(sweep),
+         "--sweep-target", ".", "--n_jobs", "2")
+    assert "train_a_0000/" in load_record(results / "sw/i0")["config"]["train_dir"] + "/"
+    assert load_record(results / "sw/i1")["config"]["train_dir"].endswith("train_a_0001")

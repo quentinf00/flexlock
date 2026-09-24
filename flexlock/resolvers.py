@@ -154,6 +154,17 @@ def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
     return value
 
 
+def run_resolver(address, select=None, pin=None, strict=None) -> str:
+    """``${run:<preset>[,<select>[,<pin>[,strict]]]}`` → newest complete run dir.
+
+    See :func:`flexlock.presets.resolve_run`. Resolved once at submit time by
+    :func:`flexlock.presets.freeze_run_refs`, so the choice is recorded.
+    """
+    from .presets import resolve_run
+
+    return resolve_run(address, select, pin, strict)
+
+
 def register_resolvers():
     """
     Registers the flexlock resolvers with OmegaConf.
@@ -162,6 +173,7 @@ def register_resolvers():
     OmegaConf.register_new_resolver("vinc", vinc_resolver)
     OmegaConf.register_new_resolver("latest", latest_resolver, use_cache=False)
     OmegaConf.register_new_resolver("run_lock", run_lock_resolver, use_cache=False)
+    OmegaConf.register_new_resolver("run", run_resolver, use_cache=False)
 
 
 # The real resolver implementations plus their registration options, so a stub
@@ -172,6 +184,7 @@ def _real_resolvers():
         "vinc": (vinc_resolver, {}),
         "latest": (latest_resolver, {"use_cache": False}),
         "run_lock": (run_lock_resolver, {"use_cache": False}),
+        "run": (run_resolver, {"use_cache": False}),
     }
 
 

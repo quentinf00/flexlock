@@ -34,6 +34,12 @@ the **symptom** you'll see if you skip it.
 5. **Architecture knobs read from upstream via `${run_lock:}`** rather than being
    re-specified. *Symptom:* silent train/eval config drift; false cache hits.
 
+5b. **Inputs from another experiment via `${run:<preset>,<select>}`**, never a
+   copied versioned path (`results/train_x_0005`). It resolves to the newest
+   complete run of that preset at submit, is logged and recorded as lineage;
+   pin with a third argument (`,0005`) when a result must stay fixed.
+   *Symptom:* stale hard-coded paths; inference silently using an old model.
+
 6. **Declare lineage + tracked inputs under `_snapshot_`.**
    ```yaml
    train:

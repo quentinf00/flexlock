@@ -229,6 +229,9 @@ When the project was built from an import string
 (`defaults: pkg.xps:pipeline_cfg`, `select: <key>`), so the run shows up in
 `flexlock runs` / `flexlock presets`. It never affects caching.
 
+`${run:...}` references are kept as call strings by `get` and resolved by
+`submit`, which records the chosen run in the config and its lineage.
+
 ```python
 # Get config by key
 train_cfg = proj.get('train')

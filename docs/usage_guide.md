@@ -537,6 +537,26 @@ next to each results directory's index, which `flexlock runs` also finds from
 the project root. `flexlock reindex <results_root>` rebuilds the links. Runs
 made before presets were recorded have no `_preset_` and don't appear.
 
+### Referencing another preset's runs: `${run:}`
+
+To use the output of another experiment, reference its preset instead of
+copying a versioned path:
+
+```python
+infer_cloud_gap = dict(
+    train_dir="${run:xps_glob.train_small_cloud_gap,main}",   # newest complete run
+    main=py2cfg(infer_fn, xp_path="${train_dir}", ...),
+)
+```
+
+Add a pin (`${run:xps_glob.train_x,main,0005}`) to use a specific version, or
+`strict` (`${run:xps_glob.train_x,main,strict}`) to ignore runs made with
+overrides. The reference is resolved when you submit: the chosen path is
+logged, frozen into the config (and into `--dump`/`--enqueue` output), and
+added to the run's lineage. Keep quick tests from being picked up by making
+them their own preset (`train_x_debug = ...`). Full reference:
+[resolvers](resolvers.md).
+
 ---
 
 ## 8. Smart run / caching

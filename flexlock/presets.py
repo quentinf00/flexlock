@@ -30,6 +30,7 @@ import ast
 import importlib
 import os
 import sys
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional
@@ -382,3 +383,133 @@ def list_presets(module_spec: str, roots: Optional[Iterable[Path]] = None) -> li
             },
         })
     return out
+
+
+# ── ${run:...} references ──
+
+_recorders: list = []
+
+
+@contextmanager
+def recording_run_refs():
+    """Collect the run dirs that ``${run:...}`` resolves to inside this block."""
+    resolved: list = []
+    _recorders.append(resolved)
+    try:
+        yield resolved
+    finally:
+        _recorders.pop()
+
+
+def _no_run_message(address, select, pin, strict) -> str:
+    wanted = address + (f" -s {select}" if select else "")
+    wanted += (f" pinned to {pin!r}" if pin else "") + (" (strict)" if strict else "")
+    candidates = find_runs(address)
+    if candidates:
+        listed = ", ".join(
+            f"{r.path.name} (-s {r.select})" for r in candidates[:10]
+        )
+        return (
+            f"${{run:}}: no complete run of {wanted}. Complete runs of this "
+            f"preset: {listed}."
+        )
+    known = sorted({
+        r.defaults for r in all_runs(presets_roots())
+        if address.split(":")[-1].split(".")[-1] in r.defaults
+    })
+    hint = f" Recorded presets with a similar name: {', '.join(known[:10])}." if known else ""
+    return (
+        f"${{run:}}: no complete run of preset {wanted} under "
+        f"{[str(r) for r in presets_roots()] or 'any .flexlock/'}.{hint} Only "
+        f"runs launched with flexlock-run -d/-s (or Project('mod.attr').get) "
+        f"are recorded."
+    )
+
+
+def resolve_run(address, select=None, pin=None, strict=None) -> str:
+    """Path of the newest complete run of a preset (the ``${run:}`` resolver).
+
+    ``pin`` keeps runs whose dir name (or path) ends with it, e.g. ``0005`` or
+    ``xp1/train``; ``strict`` (the literal ``strict``, as 3rd or 4th argument:
+    ``${run:x,main,strict}``, ``${run:x,main,0005,strict}``) keeps runs made
+    with no overrides. With no ``select``, runs of several ``-s`` keys are
+    ambiguous.
+    """
+    from .exceptions import FlexLockConfigError
+
+    address = str(address)
+    select = None if select in (None, "") else str(select)
+    pin = None if pin in (None, "") else str(pin)
+    strict = str(strict).lower() == "strict" if strict not in (None, "") else False
+    if pin is not None and pin.lower() == "strict":  # ${run:x,main,strict}
+        pin, strict = None, True
+
+    runs = find_runs(address, select=select, strict=strict)
+    if pin:
+        runs = [
+            r for r in runs
+            if r.path.name.endswith(pin) or r.path.as_posix().endswith(pin)
+        ]
+    if not runs:
+        raise FlexLockConfigError(_no_run_message(address, select, pin, strict))
+    if select is None and len({r.select for r in runs}) > 1:
+        selects = sorted({str(r.select) for r in runs})
+        raise FlexLockConfigError(
+            f"${{run:{address}}} matches runs of several -s keys ({selects}); "
+            f"add the key: ${{run:{address},<key>}}."
+        )
+    path = str(runs[0].path)
+    logger.info(f"${{run:{address},{select or ''}}} → {path}")
+    for recorder in _recorders:
+        recorder.append(path)
+    return path
+
+
+def _run_ref_nodes(cfg, out):
+    """Collect ``(parent, key)`` for every leaf whose raw value uses ``${run:``."""
+    from omegaconf import ListConfig
+
+    keys = cfg.keys() if isinstance(cfg, DictConfig) else range(len(cfg))
+    for key in keys:
+        node = cfg._get_node(key)
+        if isinstance(node, (DictConfig, ListConfig)):
+            if not node._is_none() and not node._is_missing():
+                _run_ref_nodes(node, out)
+            continue
+        raw = node._value()
+        if isinstance(raw, str) and "${run:" in raw:
+            out.append((cfg, key))
+
+
+def freeze_run_refs(cfg) -> list:
+    """Resolve every ``${run:...}`` in ``cfg`` in place, now, and record lineage.
+
+    Called at submit (and by ``--dump``/``--enqueue``) so the run that
+    "newest" means is fixed when you launch, not when a queued job starts.
+    Only values containing ``${run:`` are touched; other flexlock resolvers
+    in the same value stay frozen call strings, and unrelated interpolations
+    (``${.save_dir}/logs``) stay live. The resolved run dirs are appended to
+    ``_snapshot_.prevs`` so lineage records them. Returns those dirs.
+    """
+    from .resolvers import _real_resolvers, _stubbed
+
+    if not isinstance(cfg, DictConfig):
+        return []
+    targets: list = []
+    _run_ref_nodes(cfg, targets)
+    if not targets:
+        return []
+    others = tuple(name for name in _real_resolvers() if name != "run")
+    with recording_run_refs() as resolved, _stubbed(others):
+        for parent, key in targets:
+            parent[key] = parent[key]
+    if resolved:
+        with open_dict(cfg):
+            if cfg.get("_snapshot_") is None:
+                cfg["_snapshot_"] = {}
+            prevs = list(cfg._snapshot_.get("prevs") or [])
+            for path in resolved:
+                if path not in prevs:
+                    prevs.append(path)
+            cfg._snapshot_["prevs"] = prevs
+    return resolved
