@@ -526,15 +526,48 @@ squeue    # Slurm
 
 ### Task Database Locked
 
-**Symptom:** "Database locked" errors.
+**Symptom:** "database is locked" errors or workers idling while tasks remain.
 
-**Cause:** Multiple workers accessing simultaneously (normal).
+**Cause:** Many workers writing to one SQLite file on a shared filesystem.
 
-**Solution:** FlexLock handles this automatically with retries. If persistent:
-```python
-# Increase timeout in config
-c.execute("PRAGMA busy_timeout=30000")  # 30 seconds
+**What FlexLock already does:** write transactions use `BEGIN IMMEDIATE`
+with jittered exponential backoff (`FLEXLOCK_DB_RETRY_ATTEMPTS`,
+`FLEXLOCK_DB_RETRY_MAX_BACKOFF`) on top of a 30 s `busy_timeout`.
+
+**If it persists:** claim several tasks per transaction, which divides lock
+traffic by the batch size:
+
+```bash
+export FLEXLOCK_CLAIM_BATCH=32   # a dead worker strands up to 32 claimed tasks
 ```
+
+See [Shared filesystems](#shared-filesystems) for the underlying limits.
+
+### Shared filesystems
+
+FlexLock keeps its state in two SQLite files that live on the shared
+filesystem next to your results:
+
+| File | Written by | Journal mode | If it breaks |
+|------|------------|--------------|--------------|
+| `run.lock.tasks.db` (task queue) | controller + every worker | `DELETE` | tasks stuck in `running`; reset with `flexlock-worker --task-db <db> --reclaim` |
+| `.flexlock/index.db` (fingerprint index) | controller + every worker | `DELETE` | lookups fall back to a slower scan; rebuild with `flexlock reindex` |
+
+SQLite relies on POSIX `fcntl` locks. How far that holds depends on the
+filesystem:
+
+- **Local disk, GPFS/Spectrum Scale, recent Lustre (with `flock` mount
+  option):** locking is reliable. Hundreds of workers are fine with
+  `FLEXLOCK_CLAIM_BATCH` raised.
+- **NFSv4:** works, but lock round-trips are slow. Expect contention above a
+  few dozen concurrent workers; raise `FLEXLOCK_CLAIM_BATCH`.
+- **NFSv3, Lustre mounted with `localflock` or `noflock`, CIFS/SMB:** locks
+  are unreliable or node-local. Two workers can claim the same task, and the
+  database can be corrupted. Don't run multi-node sweeps on these mounts;
+  put the task DB on a filesystem with working locks.
+
+Check your mount options with `mount | grep <path>`. WAL mode is never used
+because it requires shared memory on a single host.
 
 ### Jobs Not Completing
 

@@ -292,14 +292,24 @@ pip install -e .
 
 ## Comparison with Other Tools
 
-| Feature | FlexLock | Hydra | MLflow | DVC |
-|---------|----------|-------|--------|-----|
-| **Configuration** | Python + YAML | YAML | Code | YAML |
-| **Reproducibility** | Automatic | Manual | Partial | Partial |
-| **Smart Caching** | ✅ | ❌ | ❌ | ✅ |
-| **Multi-stage Pipelines** | ✅ | ❌ | ❌ | ✅ |
-| **Parallel Sweeps** | ✅ | ✅ | ❌ | ❌ |
-| **Learning Curve** | Low | Medium | Low | High |
+FlexLock combines Hydra-style configuration (overrides, sweeps, callables as
+config) with DVC-style provenance (runs traceable to code, config and data,
+and skipped when unchanged). It grew out of
+[ZenDag](https://github.com/quentinf00/zendag), which generated DVC pipelines
+from Hydra configs. The key difference: the cache key belongs to each run,
+not to a workspace lockfile, so sweeps and HPC jobs need no shared state
+beyond the filesystem.
+
+| | FlexLock | Hydra | DVC | redun | Snakemake |
+|---|---|---|---|---|---|
+| Overrides and sweeps | ✅ | ✅ | ✅ `dvc exp` | ❌ | ❌ |
+| Skips unchanged runs | ✅ per run | ❌ | ✅ per stage | ✅ per call | ✅ per rule |
+| Code identity in cache key | git tree of `_target_` modules | ❌ | listed deps | task source | rule code |
+| Slurm / PBS | ✅ | ✅ submitit | ❌ | ✅ | ✅ |
+| Remote output storage | ❌ | ❌ | ✅ | ✅ | ✅ |
+
+See [Philosophy & Design](docs/philosophy.md#comparison-with-other-tools) for
+the full comparison and when to pick another tool.
 
 ## Contributing
 

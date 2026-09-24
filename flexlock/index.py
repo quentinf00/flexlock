@@ -22,6 +22,7 @@ agree (or set ``$FLEXLOCK_INDEX``).
 """
 
 import os
+import random
 import sqlite3
 import tempfile
 import time
@@ -131,7 +132,9 @@ def resolve_index_path(base, create_parent: bool = False) -> Path:
 def _connect(index_path: Path) -> sqlite3.Connection:
     index_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(index_path), timeout=15.0)
-    conn.execute("PRAGMA journal_mode=WAL")
+    # Not WAL: WAL needs shared memory on a single host, and sweep workers on
+    # different nodes write this file over NFS/Lustre. DELETE matches taskdb.
+    conn.execute("PRAGMA journal_mode=DELETE")
     conn.execute("PRAGMA busy_timeout=15000")
     conn.execute(_SCHEMA)
     return conn
@@ -150,9 +153,42 @@ def upsert(
     task_id: Optional[str] = None,
     status: str = STATUS_DONE,
 ) -> None:
-    """Insert-or-replace a row keyed by fingerprint. Idempotent."""
+    """Insert-or-replace a row keyed by fingerprint. Idempotent.
+
+    Retries on lock contention (many workers finishing at once); a row lost
+    here only costs a slower glob-fallback lookup later, never a wrong hit.
+    """
+    from . import config as _config
+
+    delay = 0.05
+    attempts = max(1, _config.DB_RETRY_ATTEMPTS)
+    for attempt in range(attempts):
+        try:
+            _upsert_once(
+                index_path, fingerprint, location_kind, save_dir,
+                run_lock_path, task_db_path, task_id, status,
+            )
+            return
+        except sqlite3.OperationalError as e:
+            msg = str(e).lower()
+            if ("locked" in msg or "busy" in msg) and attempt < attempts - 1:
+                time.sleep(random.uniform(delay, 2 * delay))
+                delay = min(delay * 2, _config.DB_RETRY_MAX_BACKOFF)
+                continue
+            logger.warning(f"Fingerprint index upsert failed ({index_path}): {e}")
+            return
+        except sqlite3.Error as e:
+            # The index is a derived cache; a write failure must never break a run.
+            logger.warning(f"Fingerprint index upsert failed ({index_path}): {e}")
+            return
+
+
+def _upsert_once(
+    index_path, fingerprint, location_kind, save_dir,
+    run_lock_path, task_db_path, task_id, status,
+) -> None:
+    conn = _connect(Path(index_path))
     try:
-        conn = _connect(Path(index_path))
         with conn:
             conn.execute(
                 "INSERT OR REPLACE INTO runs "
@@ -169,10 +205,8 @@ def upsert(
                     time.time(),
                 ),
             )
+    finally:
         conn.close()
-    except sqlite3.Error as e:
-        # The index is a derived cache; a write failure must never break a run.
-        logger.warning(f"Fingerprint index upsert failed ({index_path}): {e}")
 
 
 def record_run_lock(save_dir, fingerprint: str) -> None:

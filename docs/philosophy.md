@@ -139,28 +139,57 @@ eval_result = proj.submit(eval_config)
 └─────────────────────────────────────────────┘
 ```
 
+### Where FlexLock Comes From
+
+FlexLock is the third attempt at one goal: **Hydra's ergonomics** (overrides,
+sweeps, callables as config) **with DVC's provenance** (every result traceable
+to its code, config and data, and never recomputed needlessly).
+
+1. **Hydra + DVC side by side.** Each is good at its half, but they don't
+   share a model of a run. Hydra writes timestamped output dirs; DVC wants
+   stages declared in `dvc.yaml` with fixed paths and keeps one `dvc.lock`
+   per workspace.
+2. **[ZenDag](https://github.com/quentinf00/zendag)** generated `dvc.yaml`
+   from a hydra-zen store, discovering inputs and outputs through `${deps:}`
+   and `${outs:}` resolvers, with MLflow for tracking. It worked, but every
+   change went through two phases (regenerate the DAG, then `dvc repro`),
+   every sweep point had to be registered in the store up front, and parallel
+   or HPC runs all competed for the single workspace lockfile.
+3. **FlexLock** removes the generated DAG. Each run hashes its own inputs
+   (config, code tree, data, lockfiles) and stores the hash next to its
+   outputs in `run.lock`. The cache key belongs to the run, not the
+   workspace, so sweeps and Slurm jobs need no shared lockfile, pipelines are
+   plain Python, and any config Hydra-style overrides can produce is cacheable
+   without registering it first.
+
 ### Comparison with Other Tools
 
-| Feature | FlexLock | Hydra | MLflow | DVC | Sacred |
-|---------|----------|-------|--------|-----|--------|
-| **Configuration** | Python + YAML | YAML + Python | Code | YAML | Python |
-| **Reproducibility** | Automatic | Manual | Partial | Partial | Automatic |
-| **Smart Caching** | ✅ | ❌ | ❌ | ✅ | ❌ |
-| **Multi-stage** | ✅ | ❌ | ❌ | ✅ | ❌ |
-| **Parallel Sweeps** | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Learning Curve** | Low | Medium | Low | High | Medium |
+FlexLock's niche is narrow on purpose: **caching and provenance for
+Python-configured runs, aware of which code files matter, on a shared HPC
+filesystem, with no server.** Other tools cover parts of this, some better.
 
-**FlexLock vs Hydra:**
-- FlexLock: Batteries-included reproducibility + pipelines
-- Hydra: Powerful config composition, but no built-in tracking
+| | FlexLock | Hydra (+ submitit) | DVC | redun | Snakemake |
+|---|---|---|---|---|---|
+| Config as Python callables | ✅ `py2cfg` | ✅ via hydra-zen | ❌ params files | ✅ task args | ❌ |
+| CLI overrides and sweeps | ✅ | ✅ multirun, Optuna and other sweepers | ✅ `dvc exp run -S`, queue | ❌ | ❌ |
+| Skips runs whose inputs are unchanged | ✅ per run | ❌ | ✅ per stage | ✅ per call | ✅ per rule (mtime or checksum) |
+| Code identity in the cache key | git tree, narrowed to `_target_` modules | ❌ | files listed as `deps` | hash of task source | rule code and params |
+| Environment in the cache key | lockfile hashes | ❌ | only if listed as a dep | ❌ | conda env per rule |
+| Slurm / PBS | ✅ pull-based workers | ✅ Slurm via submitit | ❌ | ✅ executors | ✅ |
+| Remote storage for outputs | ❌ | ❌ | ✅ `dvc push/pull` | ✅ S3 etc. | ✅ storage plugins |
+| Needs a server or daemon | ❌ | ❌ | ❌ | ❌ (optional DB) | ❌ |
 
-**FlexLock vs MLflow:**
-- FlexLock: Experiment orchestration + tracking
-- MLflow: Model registry + deployment focus
-
-**FlexLock vs DVC:**
-- FlexLock: In-memory pipelines, smart caching
-- DVC: Git-like versioning for data
+**Choose something else when:**
+- you need rich config composition (config groups, defaults lists) or
+  sweeper plugins: use **Hydra**;
+- you need to version and share data and models through remote storage:
+  use **DVC**;
+- your pipeline is a large file-based DAG that benefits from global
+  scheduling: use **Snakemake** or **Nextflow**;
+- you want function-level caching with full call-graph lineage: look at
+  **redun** or **Pydra**;
+- you need dashboards for metrics: use **MLflow** or **W&B**. FlexLock can
+  link runs to MLflow (see [MLflow integration](mlflow_integration.md)).
 
 ### Getting Started
 
