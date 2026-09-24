@@ -248,6 +248,33 @@ class RunDiff:
         self.diffs["data"] = detail or ["Data differs"]
         return False
 
+    def compare_env(self):
+        """Compare environment lockfile hashes.
+
+        A target without an ``env`` section predates environment hashing; it
+        is treated as a match so existing caches keep working (the index
+        backfill then records the run under its env-aware fingerprint).
+        """
+        c_env = self.current.get("env") or {}
+        t_env = self.target.get("env")
+        if t_env is None or c_env == t_env:
+            return True
+        detail = []
+        for key in sorted(set(c_env) | set(t_env)):
+            if key not in c_env:
+                detail.append(f"{key}: only in target")
+            elif key not in t_env:
+                detail.append(f"{key}: only in current")
+            elif c_env[key] != t_env[key]:
+                detail.append(f"{key}: lockfile changed")
+        self.diffs["env"] = detail
+        return False
+
     def is_match(self):
         """Check if the current run matches the target run."""
-        return self.compare_git() and self.compare_config() and self.compare_data()
+        return (
+            self.compare_git()
+            and self.compare_config()
+            and self.compare_data()
+            and self.compare_env()
+        )

@@ -8,7 +8,12 @@ A *fingerprint* is a deterministic digest over the inputs that define a run:
     no ref side effects), restricted to each repo's ``include``/``exclude``
     pathspec so the "relevant files unchanged" notion becomes plain digest
     equality rather than a special case in the matcher;
-  * data hashes for tracked data paths.
+  * data hashes for tracked data paths;
+  * **environment** hashes: the content of dependency lockfiles
+    (``pixi.lock``, ``uv.lock``, ...) found at each tracked repo's root, so a
+    package upgrade is a cache miss. Absent when no lockfile is found or when
+    ``FLEXLOCK_HASH_ENV=0``, which leaves the digest unchanged for such
+    projects.
 
 The digest is the single key used by the project-wide index (see ``index.py``)
 to decide cache hits, so it must be stable across processes and machines for
@@ -24,6 +29,7 @@ from omegaconf import OmegaConf, DictConfig
 
 from .git_utils import create_shadow_tree
 from .data_hash import hash_data
+from . import config as _config
 
 # Placeholder substituted for the run's own save_dir so location doesn't leak
 # into the fingerprint.
@@ -93,6 +99,55 @@ def _repo_tree(repo_info: Mapping[str, Any]) -> str:
     return result["tree"]
 
 
+_lockfile_cache: dict = {}
+
+
+def _file_digest(path: str) -> str:
+    """sha256 of a file, memoized on (path, mtime, size) for the process."""
+    st = os.stat(path)
+    key = (path, st.st_mtime_ns, st.st_size)
+    digest = _lockfile_cache.get(key)
+    if digest is None:
+        h = hashlib.sha256()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(1 << 20), b""):
+                h.update(chunk)
+        digest = h.hexdigest()
+        _lockfile_cache[key] = digest
+    return digest
+
+
+def _repo_root(path: str) -> Optional[str]:
+    from git.repo import Repo as GitRepo
+
+    try:
+        return GitRepo(path, search_parent_directories=True).working_tree_dir
+    except Exception:
+        return None
+
+
+def env_hashes(repos: Optional[Mapping[str, Mapping[str, Any]]]) -> dict:
+    """Hash dependency lockfiles at the root of each tracked repo.
+
+    Returns ``{"<repo>/<lockfile>": sha256}``; empty when hashing is disabled
+    or no lockfile exists. Keys use the repo *name*, not its absolute path, so
+    the digest is stable across machines that mount the repo elsewhere.
+    """
+    if not repos or not _config.hash_env_enabled():
+        return {}
+    names = _config.env_lockfile_names()
+    out = {}
+    for repo_name, info in sorted(repos.items()):
+        root = _repo_root(info["path"])
+        if root is None:
+            continue
+        for lock_name in names:
+            lock_path = os.path.join(root, lock_name)
+            if os.path.isfile(lock_path):
+                out[f"{repo_name}/{lock_name}"] = _file_digest(lock_path)
+    return out
+
+
 def fingerprint(
     cfg: Any,
     repos: Optional[Mapping[str, Mapping[str, Any]]] = None,
@@ -118,6 +173,10 @@ def fingerprint(
         parts["repos"] = {
             name: _repo_tree(info) for name, info in sorted(repos.items())
         }
+
+    env = env_hashes(repos)
+    if env:
+        parts["env"] = env
 
     if data:
         parts["data"] = {

@@ -5,6 +5,7 @@ from pathlib import Path
 from omegaconf import OmegaConf
 from .git_utils import create_shadow_snapshot
 from .data_hash import hash_data
+from .fingerprint import env_hashes
 from .load_stage import load_stage_from_path
 from .run_record import RunRecord, COMPLETE_MARKER, COMPLETE_VERSION
 from loguru import logger
@@ -65,6 +66,10 @@ class RunTracker:
                 snapshot_data["module"] = repo_info["module"]
             snapshot_data["path"] = path
             self.data["repos"][name] = snapshot_data
+
+        env = env_hashes(repos)
+        if env:
+            self.data["env"] = env
 
     def record_data(self, data_paths: dict):
         self.data["data"] = {k: hash_data(v) for k, v in data_paths.items()}

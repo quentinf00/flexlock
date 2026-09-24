@@ -64,3 +64,13 @@ def test_cli_json_output(tmp_path, capsys):
     data = json.loads(capsys.readouterr().out)
     assert data["match"] is False
     assert "config" in data["diffs"]
+
+
+def test_run_comparison_reports_all_differing_sections():
+    from flexlock.diff_cli import run_comparison
+
+    a = {"config": {"lr": 1}, "data": {"x": "h1"}, "env": {"m/pixi.lock": "a"}}
+    b = {"config": {"lr": 2}, "data": {"x": "h2"}, "env": {"m/pixi.lock": "b"}}
+    is_match, diffs = run_comparison(a, b)
+    assert not is_match
+    assert {"config", "data", "env"} <= set(diffs)

@@ -37,13 +37,18 @@ def run_comparison(snap1: dict, snap2: dict) -> "tuple[bool, dict]":
 
     The single source of truth for both the text/JSON printers here and
     ``flexlock why``. ``diffs`` is a JSON-serializable dict of lists keyed by
-    ``git``/``config``/``data`` (only the categories that differ appear).
+    ``git``/``config``/``data``/``env`` (only the categories that differ appear).
     """
     diff = RunDiff(snap1, snap2)
-    # is_match() runs all three comparisons, populating diff.diffs as a side
-    # effect. Call it first so diffs is complete regardless of short-circuiting.
-    is_match = diff.is_match()
-    return is_match, dict(diff.diffs)
+    # Run every comparison explicitly: is_match() short-circuits on the first
+    # differing section, which would leave later sections out of diff.diffs.
+    results = [
+        diff.compare_git(),
+        diff.compare_config(),
+        diff.compare_data(),
+        diff.compare_env(),
+    ]
+    return all(results), dict(diff.diffs)
 
 
 def compare_snapshots(snap1: dict, snap2: dict, show_details: bool = False) -> bool:
@@ -51,7 +56,7 @@ def compare_snapshots(snap1: dict, snap2: dict, show_details: bool = False) -> b
     is_match, diffs = run_comparison(snap1, snap2)
 
     print("\n=== Snapshot Comparison ===\n")
-    for label, key in (("Git", "git"), ("Config", "config"), ("Data", "data")):
+    for label, key in (("Git", "git"), ("Config", "config"), ("Data", "data"), ("Env", "env")):
         section_match = key not in diffs
         print(f"{label:6s}: {'✓ Match' if section_match else '✗ Differ'}")
         if not section_match and show_details:

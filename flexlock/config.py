@@ -60,6 +60,31 @@ DEFAULT_TIMEOUT = int(_timeout_str) if _timeout_str else 3600
 # Whether to warn when smart_run=True but search_dirs=None
 WARN_SMART_RUN_NO_SEARCH_DIRS = get_env_bool("FLEXLOCK_WARN_SMART_RUN", True)
 
+# Environment lockfiles looked up at the root of each tracked repo. Their
+# content hashes enter the run fingerprint, so a dependency upgrade (numpy,
+# torch, ...) invalidates cached runs. Read at call time via
+# ``env_lockfile_names()``/``hash_env_enabled()`` so tests and wrappers can
+# toggle them. Disable with FLEXLOCK_HASH_ENV=0; override the list with a
+# comma-separated FLEXLOCK_ENV_LOCKFILES.
+DEFAULT_ENV_LOCKFILES = (
+    "pixi.lock",
+    "uv.lock",
+    "poetry.lock",
+    "Pipfile.lock",
+    "conda-lock.yml",
+)
+
+
+def hash_env_enabled() -> bool:
+    return get_env_bool("FLEXLOCK_HASH_ENV", True)
+
+
+def env_lockfile_names() -> tuple:
+    raw = os.environ.get("FLEXLOCK_ENV_LOCKFILES")
+    if raw is None:
+        return DEFAULT_ENV_LOCKFILES
+    return tuple(n.strip() for n in raw.split(",") if n.strip())
+
 
 # ==================== Timestamp Format ====================
 
