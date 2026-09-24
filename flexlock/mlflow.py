@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Dict, Optional, Any
 from contextlib import contextmanager
 from loguru import logger
-from omegaconf import OmegaConf
 
 
 def _flatten_dict(
@@ -142,24 +141,25 @@ def mlflow_context(
         # This solves the "Empty Run" problem. Even if this is just a plotting script,
         # we log the run.lock and logs from the folder so this run looks complete.
         if log_config:
+            from .record import load_record
+
             lock_path = save_dir / "run.lock"
-            if lock_path.exists():
+            record = load_record(save_dir)
+            if record is not None:
                 try:
                     # Log Config Params
-                    cfg_obj = OmegaConf.load(lock_path)
-                    content = cfg_obj.get("config", cfg_obj)  # Handle nested or flat
-                    flat_params = _flatten_dict(
-                        OmegaConf.to_container(content, resolve=True)
-                    )
+                    content = record.get("config", record)  # Handle nested or flat
+                    flat_params = _flatten_dict(content)
 
                     # Sanitize (truncate long strings to avoid MLflow param length limits)
                     clean_params = {k: str(v)[:250] for k, v in flat_params.items()}
                     mlflow.log_params(clean_params)
-                    logger.info(f"Logged parameters from {lock_path}")
+                    logger.info(f"Logged parameters from the run record in {save_dir}")
 
-                    # Log the lock file itself
-                    mlflow.log_artifact(str(lock_path))
-                    logger.info(f"Logged artifact: {lock_path}")
+                    # Log the lock file itself (absent for task_record="db" tasks)
+                    if lock_path.exists():
+                        mlflow.log_artifact(str(lock_path))
+                        logger.info(f"Logged artifact: {lock_path}")
                 except Exception as e:
                     logger.warning(f"MLflow config logging warning: {e}")
 

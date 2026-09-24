@@ -72,6 +72,7 @@ class ParallelExecutor:
         isolated: bool = False,
         tag: str | None = None,
         note: str | None = None,
+        task_record: str | None = None,
     ):
         """Initializes the ParallelExecutor.
 
@@ -92,6 +93,10 @@ class ParallelExecutor:
                 re-runs reuse the same tag (resume-safe).  Pass an explicit human-
                 readable string (e.g. ``"extract"``) to target this sweep from the
                 ``flexlock-worker --tags`` CLI.
+            task_record: ``"dir"`` (default, ``$FLEXLOCK_TASK_RECORD``) writes
+                each task's full run.lock into its save_dir; ``"db"`` keeps it
+                in the task DB only. Stored in the master run.lock so workers
+                attached later follow it.
         """
         self.func = func
         self.tasks = tasks
@@ -101,6 +106,12 @@ class ParallelExecutor:
         self.local_workers = local_workers
         self.isolated = isolated
         self.note = note
+        self.task_record = task_record or config.default_task_record()
+        if self.task_record not in config.TASK_RECORD_MODES:
+            raise ValueError(
+                f"task_record must be one of {config.TASK_RECORD_MODES}, "
+                f"got {self.task_record!r}"
+            )
 
         self.save_dir = Path(cfg.save_dir)
         self.db_path = self.save_dir / "run.lock.tasks.db"
@@ -324,7 +335,10 @@ class ParallelExecutor:
         # none (single HPC run, --sweep-file of full configs), workers would
         # otherwise record no code state (they snapshot tasks as deltas).
         repos = collect_task_repos(self.cfg, self.tasks, self.task_target)
-        snapshot(self.cfg, repos=repos, data=data, save_path=root_dir, note=self.note)
+        snapshot(
+            self.cfg, repos=repos, data=data, save_path=root_dir, note=self.note,
+            meta={"task_record": self.task_record},
+        )
 
         # 3. Populate SQLite DB
         # Store 'root_dir' in the DB so workers know where the Master Lock is.

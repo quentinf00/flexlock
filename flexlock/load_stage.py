@@ -1,7 +1,6 @@
 """Utility for loading data from a previous FlexLock stage."""
 
 from pathlib import Path
-import yaml
 
 
 def load_stage_from_path(path: str) -> dict:
@@ -31,16 +30,15 @@ def _load_and_flatten_recursively(
     if canonical_key in all_stages:
         return
 
+    from .record import load_record
+
     stage_path = Path(stage_path_str)
-    lock_file = stage_path / "run.lock"
-
-    if not lock_file.exists():
+    stage_data = load_record(stage_path)
+    if stage_data is None:
         raise FileNotFoundError(
-            f"run.lock not found in previous stage '{stage_key}': {lock_file}"
+            f"run.lock not found (and no sweep-task marker) in previous stage "
+            f"'{stage_key}': {stage_path}"
         )
-
-    with open(lock_file, "r") as f:
-        stage_data = yaml.safe_load(f)
 
     # Recurse into nested stages first (depth-first)
     # Support both "lineage" (new) and "prevs" (legacy)

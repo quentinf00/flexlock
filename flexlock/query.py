@@ -36,15 +36,10 @@ _TASK_STATUS_MAP = {
 
 
 def _load_lock(run_dir: Path) -> Optional[dict]:
-    """Parse ``run.lock`` with a side-effect-free loader, or ``None``."""
-    lock = Path(run_dir) / LOCK_NAME
-    if not lock.exists():
-        return None
-    try:
-        with open(lock) as f:
-            return yaml.safe_load(f)
-    except Exception:
-        return None
+    """The run's full record (run.lock or task DB row), or ``None``."""
+    from .record import load_record
+
+    return load_record(run_dir)
 
 
 def _read_marker(run_dir: Path) -> Optional[dict]:
@@ -248,31 +243,16 @@ def load_run_summary(run_dir, scan_root=None, downstream=True) -> dict:
     run_dir = Path(run_dir).resolve()
     scan_root = Path(scan_root).resolve() if scan_root else run_dir.parent
 
+    from .record import load_record
+
     st = run_status(run_dir)
     kind = st["kind"]
-    lock = _load_lock(run_dir)
-
-    # Sweep-task dirs carry no run.lock; reconstruct from the task DB snapshot
-    # and inherit note/repos from the master lock.
-    marker = _read_marker(run_dir)
-    master_lock = None
-    if lock is None and marker is not None:
-        db_path = _resolve_marker_db(run_dir, marker)
-        task_id = marker.get("task_id")
-        if db_path.exists() and task_id:
-            from .taskdb import get_task_snapshot
-
-            snap = get_task_snapshot(db_path, task_id)
-            if snap:
-                lock = snap
-        master_lock = _load_lock(db_path.parent) if db_path.exists() else None
-
-    lock = lock or {}
+    # The full record wherever it lives (task run.lock, or task DB row
+    # materialized with the master's repos/env/note).
+    lock = load_record(run_dir) or {}
     config = lock.get("config", {}) or {}
-    repos = lock.get("repos") or (master_lock or {}).get("repos") or {}
+    repos = lock.get("repos") or {}
     note = lock.get("note")
-    if note is None and master_lock:
-        note = master_lock.get("note")
 
     summary = {
         "schema_version": SCHEMA_VERSION,
@@ -488,6 +468,8 @@ def build_graph(results_root, include_groups=False) -> dict:
 
     from .cli import find_results_dirs
 
+    from .record import load_record
+
     root = Path(results_root).resolve()
     tag_map = _all_tags_by_path(root)
 
@@ -501,7 +483,7 @@ def build_graph(results_root, include_groups=False) -> dict:
     for run in find_results_dirs(str(root)):
         run_dir = Path(run["path"]).resolve()
         node_id = str(run_dir)
-        lock = _load_lock(run_dir) or {}
+        lock = load_record(run_dir) or {}
         st = run_status(run_dir)
         config = lock.get("config", {}) or {}
         repos = lock.get("repos") or {}

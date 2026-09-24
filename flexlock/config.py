@@ -75,6 +75,18 @@ DEFAULT_ENV_LOCKFILES = (
 )
 
 
+# Where a sweep task's record goes: "dir" writes a full run.lock into the
+# task's save_dir (the dir is self-describing); "db" keeps it only in the task
+# DB with a .flexlock_marker pointer (fewer files for huge sweeps). Either way
+# flexlock.record.load_record finds it.
+TASK_RECORD_MODES = ("dir", "db")
+
+
+def default_task_record() -> str:
+    mode = os.environ.get("FLEXLOCK_TASK_RECORD", "dir")
+    return mode if mode in TASK_RECORD_MODES else "dir"
+
+
 def hash_env_enabled() -> bool:
     return get_env_bool("FLEXLOCK_HASH_ENV", True)
 

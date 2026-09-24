@@ -304,31 +304,29 @@ def verify_and_resolve(base, row: IndexRow) -> Optional[Path]:
 
 
 def reindex(root) -> int:
-    """Backfill the index by walking ``**/run.lock`` under ``root``.
+    """Backfill the index from every run record under ``root``.
 
-    Uses the ``fingerprint`` stored in each ``run.lock`` (written at snapshot
-    time). Runs from before fingerprints were stored are skipped. Returns the
-    number of rows written.
+    Uses the ``fingerprint`` stored in each record (written at snapshot time),
+    whether it lives in a ``run.lock`` or, for ``task_record="db"`` sweep
+    tasks, in the task DB. Runs from before fingerprints were stored are
+    skipped. Returns the number of rows written.
     """
-    import yaml
+    from .record import iter_run_dirs, load_record, marker_db, read_marker
 
     root = Path(root)
     count = 0
-    for lock_file in root.glob("**/run.lock"):
-        run_dir = lock_file.parent
-        try:
-            data = yaml.safe_load(lock_file.read_text())
-        except Exception as e:
-            logger.debug(f"reindex: skipping {lock_file}: {e}")
-            continue
+    for run_dir in iter_run_dirs(root):
+        data = load_record(run_dir)
         if not isinstance(data, dict):
             continue
         fp = data.get("fingerprint")
-        if not fp:
+        if not fp or not (run_dir / "run.complete").exists():
             continue
-        if not (run_dir / "run.complete").exists():
-            continue
-        record_run_lock(run_dir, fp)
+        marker = read_marker(run_dir)
+        if marker is None or ((run_dir / "run.lock").exists() and "task_id" in data):
+            record_run_lock(run_dir, fp)
+        else:
+            record_task(run_dir, marker_db(run_dir, marker), marker["task_id"], fp)
         count += 1
     logger.info(f"reindex: recorded {count} run(s) under {root}")
     return count

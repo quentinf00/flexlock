@@ -176,6 +176,7 @@ def snapshot(
     return_snapshot=False,
     fingerprint=None,
     note=None,
+    meta=None,
 ):
     """
     Create a snapshot of the current run state.
@@ -188,6 +189,8 @@ def snapshot(
         parent_lock: Path to parent run.lock (for delta snapshots)
         save_path: Custom save directory (overrides cfg.save_dir)
         return_snapshot: If True, return snapshot dict instead of/in addition to saving
+        meta: Extra top-level keys for the record (e.g. a sweep master's
+            ``task_record``). Never part of the fingerprint.
 
     Returns:
         dict if return_snapshot=True, else None
@@ -205,6 +208,8 @@ def snapshot(
     # carry it and `flexlock reindex` can rebuild the index from disk.
     if fingerprint is not None:
         tracker.data["fingerprint"] = fingerprint
+    if meta:
+        tracker.data.update(meta)
 
     # 1. Record Git & Data (Hashing)
     if repos:
@@ -231,16 +236,12 @@ def snapshot(
             if p.is_file():
                 p = p.parent
 
-            lock_file = p / "run.lock"
-            if lock_file.exists():
-                try:
-                    data = OmegaConf.to_container(
-                        OmegaConf.load(lock_file), resolve=True
-                    )
-                    logger.debug(f"Found snapshot at: {p}")
-                    return (p, data)
-                except Exception as e:
-                    logger.warning(f"Failed to read run.lock at {p}: {e}")
+            from .record import load_record
+
+            data = load_record(p)
+            if data is not None:
+                logger.debug(f"Found snapshot at: {p}")
+                return (p, data)
 
             return None
 

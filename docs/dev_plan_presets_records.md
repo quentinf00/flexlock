@@ -63,7 +63,7 @@ Costs one checkout per distinct tree; the SIF bind-mount must include
 `.flexlock/`. It covers Python code in tracked repos, not data files the code
 reads through relative paths.
 
-## Phase 1 — Run records: one place per run, one reader
+## Phase 1 — Run records: one place per run, one reader (done)
 
 ### 1a. Write the full record into the task dir (default)
 
@@ -117,6 +117,24 @@ Migrate every consumer onto it:
 Tests: a matrix of {serial, param sweep, single HPC task, sweep-file of full
 configs} × {dir, db}. For each, `flexlock diff A B`, cache fallback hit,
 lineage via `prevs`, `${run_lock:}` and `flexlock show` all see the same record.
+
+### As built (notes)
+
+- `task_record` is stored in the master `run.lock` (`snapshot(meta=...)`), so
+  workers attached later with `flexlock-worker` follow it without CLI
+  plumbing; masters written before this change have no key and keep DB-only.
+- A dir-mode task writes `run.lock` only if the dir has none, holds its own
+  record (rerun), or holds the master stub of a single-task sweep. Tasks that
+  share one `save_dir` never clobber each other; the first keeps the file.
+- Task records carry `task_id` and `code_timestamp` (the master's snapshot
+  time, used by the drift check once a single-task record replaces the stub).
+- The collision guard skips dirs with a `.flexlock_marker`: they are resumed
+  through the task DB, as before task dirs carried a `run.lock`.
+- `gc` keeps anything inside or containing a protected (tagged or lineage)
+  path, and `gc --incomplete` never prunes tasks the DB reports running or
+  pending.
+- `record.read_lock` keeps timestamps as strings (as `OmegaConf.load` did):
+  plain `yaml.safe_load` returns `datetime`, which OmegaConf rejects.
 
 ## Phase 2 — Presets
 

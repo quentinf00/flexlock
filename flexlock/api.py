@@ -357,12 +357,14 @@ class Project:
         self, cfg, root_path, match_include, match_exclude
     ) -> Optional[Path]:
         """Legacy O(N) content scan used only as an index fallback (RunDiff)."""
+        from .record import iter_run_dirs, load_record
+
         fingerprint = self._generate_fingerprint(cfg)
-        for lock_file in Path(root_path).glob("**/run.lock"):
-            run_dir = Path(lock_file).parent
+        for run_dir in iter_run_dirs(root_path):
             try:
-                with open(lock_file, "r") as f:
-                    candidate_snapshot = yaml.safe_load(f)
+                candidate_snapshot = load_record(run_dir)
+                if candidate_snapshot is None:
+                    continue
 
                 proposed_save_dir = fingerprint.get("config", {}).get("save_dir")
                 candidate_save_dir = candidate_snapshot.get("config", {}).get(
@@ -390,7 +392,7 @@ class Project:
                 else:
                     logger.debug(f"No match for run at: {run_dir}: {differ.diffs}")
             except Exception as e:
-                logger.debug(f"Failed to read/compare {lock_file}: {e}")
+                logger.debug(f"Failed to read/compare {run_dir}: {e}")
                 continue
         return None
 
@@ -440,11 +442,12 @@ class Project:
             with open(results_file, "r") as f:
                 result_data = json.load(f)
 
-        # Try loading from run.lock
-        lock_file = match_dir / "run.lock"
-        if result_data is None and lock_file.exists():
-            with open(lock_file, "r") as f:
-                lock_data = yaml.safe_load(f)
+        # Fall back to the run record (run.lock or task DB)
+        if result_data is None:
+            from .record import load_record
+
+            lock_data = load_record(match_dir)
+            if lock_data is not None:
                 result_data = lock_data.get("result", {})
 
         return ExecutionResult(
@@ -527,6 +530,7 @@ class Project:
         timeout: "int | None" = None,
         note: "str | None" = None,
         save_dir_policy: "str | None" = None,
+        task_record: "str | None" = None,
     ) -> "ExecutionResult | List[ExecutionResult] | None":
         """Submit a configuration for execution.
 
@@ -591,6 +595,12 @@ class Project:
                 ``${vinc:}`` / ``${now:}`` resolvers. For sweeps the policy
                 applies once to the sweep root; items nest beneath it, and
                 ``"skip"`` means resume (reuse complete items, run the rest).
+            task_record: Where each sweep task's record goes: ``"dir"`` (default,
+                or ``$FLEXLOCK_TASK_RECORD``) writes a full ``run.lock`` into the
+                task's save_dir; ``"db"`` keeps it in the task DB only (fewer
+                files for very large sweeps). Single runs, including HPC ones,
+                always get a ``run.lock``. Readers find either through
+                :func:`flexlock.record.load_record`.
 
         Returns:
             ``ExecutionResult`` (single), ``List[ExecutionResult]`` (sweep),
@@ -699,6 +709,7 @@ class Project:
                 timeout=timeout,
                 note=note,
                 item_policy=item_policy,
+                task_record=task_record,
             )
 
         # Single execution path
@@ -760,6 +771,7 @@ class Project:
                 local_workers=None,
                 tag=tag,
                 note=note,
+                task_record="dir",
             )
 
             # Run with wait parameter (executor handles waiting)
@@ -809,6 +821,7 @@ class Project:
                     isolated=True,
                     tag=tag,
                     note=note,
+                    task_record="dir",
                 )
                 executor.run(wait=True)
                 result_data = None
@@ -1252,6 +1265,7 @@ class Project:
         timeout: "int | None" = None,
         note: "str | None" = None,
         item_policy: str = "raise",
+        task_record: "str | None" = None,
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -1333,12 +1347,20 @@ class Project:
         # *this* sweep sharing one save_dir don't trip it (nothing is occupied
         # until execution starts).
         if item_policy != "unsafe":
+            from .record import MARKER_NAME
             from .save_dir import clean_run_dir, is_complete, is_occupied, occupied_error
 
             still_to_run = []
             for i, sweep_cfg in configs_to_run:
                 item_dir = sweep_cfg.get("save_dir")
-                if item_dir is None or not is_occupied(item_dir):
+                # A dir with a .flexlock_marker belongs to a sweep task: it is
+                # managed by its task DB (resume via the DB, as before task
+                # dirs carried a run.lock), not by the collision guard.
+                if (
+                    item_dir is None
+                    or not is_occupied(item_dir)
+                    or (Path(item_dir) / MARKER_NAME).exists()
+                ):
                     still_to_run.append((i, sweep_cfg))
                 elif item_policy == "overwrite":
                     clean_run_dir(item_dir)
@@ -1411,6 +1433,7 @@ class Project:
                     local_workers=n_jobs if not use_hpc else None,
                     tag=tag,
                     note=note,
+                    task_record=task_record,
                 )
 
                 # Run the sweep (executor handles waiting based on wait parameter)

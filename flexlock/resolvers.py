@@ -121,17 +121,18 @@ def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
         ${run_lock:${run_dir},config.lit_module.regression_checkpoint_path,null}
     """
     from loguru import logger
-    import yaml
 
-    lock_path = Path(run_dir) / "run.lock"
-    if not lock_path.exists():
+    from .record import load_record
+
+    data = load_record(run_dir)
+    if data is None:
         if default is not _MISSING:
             logger.warning(f"run_lock resolver: no run.lock at {run_dir}, using default")
             return default
-        raise FileNotFoundError(f"run_lock resolver: no run.lock found in {run_dir}")
-
-    with open(lock_path) as f:
-        data = yaml.safe_load(f)
+        raise FileNotFoundError(
+            f"run_lock resolver: no run.lock found in {run_dir} "
+            f"(nor a sweep-task record)"
+        )
 
     # Navigate dot-path
     value = data
@@ -142,7 +143,7 @@ def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
             if default is not _MISSING:
                 return default
             raise KeyError(
-                f"run_lock resolver: key '{key}' not found in {lock_path} "
+                f"run_lock resolver: key '{key}' not found in the run record at {run_dir} "
                 f"(failed at '{part}')"
             )
 

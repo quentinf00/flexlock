@@ -17,7 +17,6 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-import yaml
 from loguru import logger
 
 from .taskdb import claim_next_tasks, finish_tasks, pending_count
@@ -29,6 +28,7 @@ from flexlock.fingerprint import fingerprint as compute_fingerprint
 from flexlock import index
 from flexlock import config as _config
 from flexlock.git_utils import code_drift
+from flexlock.record import is_task_record, materialize, read_lock
 
 
 def _current_job_id() -> str | None:
@@ -141,26 +141,30 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
 _master_cache: dict = {}
 
 
-def _master_code(master_lock: Path):
-    """``(repos, snapshot epoch)`` from the sweep master run.lock, read once."""
-    key = str(master_lock)
+def _master(master_lock: Path) -> dict:
+    """The sweep master record, read once per (path, mtime)."""
+    try:
+        key = (str(master_lock), master_lock.stat().st_mtime_ns)
+    except OSError:
+        return {}
     if key not in _master_cache:
-        repos, since = {}, None
-        try:
-            with open(master_lock) as f:
-                data = yaml.safe_load(f) or {}
-            repos = data.get("repos") or {}
-            ts = data.get("timestamp")
-            since = datetime.fromisoformat(ts).timestamp() if ts else None
-        except Exception as exc:
-            logger.debug(f"Could not read master lock {master_lock}: {exc}")
-        _master_cache[key] = (repos, since)
+        _master_cache[key] = read_lock(master_lock.parent) or {}
     return _master_cache[key]
+
+
+def _code_since(master: dict):
+    """Epoch of the snapshot that recorded the master's code tree."""
+    ts = master.get("code_timestamp") or master.get("timestamp")
+    try:
+        return datetime.fromisoformat(ts).timestamp() if ts else None
+    except ValueError:
+        return None
 
 
 def _task_code_drift(master_lock: Path) -> dict:
     """Loaded repo files that changed since the master snapshot (see code_drift)."""
-    repos, since = _master_code(master_lock)
+    master = _master(master_lock)
+    repos, since = master.get("repos"), _code_since(master)
     if not repos or since is None:
         return {}
     try:
@@ -184,6 +188,34 @@ def _with_drift(snapshot_data, master_lock):
     return dict(snapshot_data, code_drift=drift)
 
 
+def _task_lock_record(snapshot_data, master, master_lock, task_id, task_save_dir):
+    """Full run.lock content for a task: its delta + the master's code state."""
+    record = materialize(snapshot_data, master)
+    record["task_id"] = task_id
+    code_ts = master.get("code_timestamp") or master.get("timestamp")
+    if code_ts:
+        record["code_timestamp"] = code_ts
+    if Path(task_save_dir).resolve() == master_lock.parent.resolve():
+        record.pop("parent", None)  # it would point at this very file
+    return record
+
+
+def _owns_lock(task_save_dir: Path, master_lock: Path, task_id: str) -> bool:
+    """Whether this task may write ``task_save_dir/run.lock``.
+
+    Yes when the dir has no lock, holds this task's own record (a rerun), or
+    holds the sweep master stub of a single-task sweep (HPC single run). No
+    when another task or an unrelated run already wrote it: the record then
+    stays in the DB only, so tasks sharing a save_dir never clobber each other.
+    """
+    existing = read_lock(task_save_dir)
+    if existing is None:
+        return True
+    if is_task_record(existing):
+        return existing.get("task_id") == task_id
+    return Path(task_save_dir).resolve() == master_lock.parent.resolve()
+
+
 def _run_one_task(
     func, cfg, task_to, db_path, db_dir, master_lock, node, task, finished
 ):
@@ -199,6 +231,7 @@ def _run_one_task(
 
     task_save_dir = None
     snapshot_data = None
+    lock_record = None
     try:
         task_cfg = merge_task_into_cfg(cfg, task, task_to)
 
@@ -237,6 +270,23 @@ def _run_one_task(
             from flexlock.taskdb import update_task_snapshot
             update_task_snapshot(db_path, task_id, snapshot_data)
 
+        # task_record="dir": the task dir gets its own full run.lock (the
+        # DB row stays filled either way; flexlock.record reads both).
+        master = _master(master_lock)
+        lock_record = None
+        if snapshot_data and master.get("task_record") == "dir":
+            if _owns_lock(task_save_dir, master_lock, task_id):
+                lock_record = _task_lock_record(
+                    snapshot_data, master, master_lock, task_id, task_save_dir
+                )
+                RunRecord(task_save_dir).write_lock(lock_record)
+            else:
+                logger.warning(
+                    f"{task_save_dir} already holds another run's run.lock; "
+                    f"task {task_id[:8]}'s record is kept in the task DB only. "
+                    f"Give sweep items distinct save_dirs to get one per task."
+                )
+
         marker_file = task_save_dir / ".flexlock_marker"
         db_abs = db_path.resolve()
         try:
@@ -259,10 +309,12 @@ def _run_one_task(
         # first-class cache entry (issue 1).
         if task_fp:
             index.record_task(task_save_dir, db_path, task_id, task_fp)
-        finished.append(dict(
-            task=task, result=result,
-            snapshot=_with_drift(snapshot_data, master_lock),
-        ))
+        drifted = _with_drift(snapshot_data, master_lock)
+        if drifted and lock_record is not None:
+            RunRecord(task_save_dir).write_lock(
+                dict(lock_record, code_drift=drifted["code_drift"])
+            )
+        finished.append(dict(task=task, result=result, snapshot=drifted))
 
     except KeyboardInterrupt:
         # SIGINT — mark the in-flight task interrupted so it's distinct
@@ -278,7 +330,9 @@ def _run_one_task(
         # no sqlite; taskdb keeps the traceback too. write_error never raises.
         if task_save_dir is not None:
             RunRecord(task_save_dir).write_error(e, task_id=task_id, node=node)
-        finished.append(dict(
-            task=task, error=tb,
-            snapshot=_with_drift(snapshot_data, master_lock),
-        ))
+        drifted = _with_drift(snapshot_data, master_lock)
+        if drifted and lock_record is not None:
+            RunRecord(task_save_dir).write_lock(
+                dict(lock_record, code_drift=drifted["code_drift"])
+            )
+        finished.append(dict(task=task, error=tb, snapshot=drifted))

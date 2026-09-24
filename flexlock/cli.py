@@ -29,12 +29,13 @@ def find_git_repo(start_path="."):
 
 def find_results_dirs(root="."):
     """Find all directories containing run.lock files."""
+    from .record import load_record
+
     results = []
     for lock_file in Path(root).rglob("run.lock"):
         run_dir = lock_file.parent
         try:
-            with open(lock_file) as f:
-                data = yaml.safe_load(f)
+            data = load_record(run_dir)
             results.append({
                 "path": str(run_dir),
                 "timestamp": data.get("timestamp", ""),
@@ -131,13 +132,12 @@ def collect_lineage_refs(repo, run_dir):
     if shadow:
         refs.append(shadow)
 
-    # Load run.lock to find lineage
-    lock_file = Path(run_dir) / "run.lock"
-    if lock_file.exists():
-        try:
-            with open(lock_file) as f:
-                data = yaml.safe_load(f)
+    # Load the run record to find lineage
+    from .record import load_record
 
+    data = load_record(run_dir)
+    if data is not None:
+        try:
             # Get shadow refs from repos recorded in run.lock
             repos_data = data.get("repos", {})
             for repo_info in repos_data.values():
@@ -236,10 +236,11 @@ def cmd_tag(args):
         print("Usage: flexlock tag <name> <path>", file=sys.stderr)
         sys.exit(1)
 
+    from .record import is_run_dir
+
     run_dir = Path(args.path).resolve()
-    lock_file = run_dir / "run.lock"
-    if not lock_file.exists():
-        print(f"Error: No run.lock found at {run_dir}", file=sys.stderr)
+    if not is_run_dir(run_dir):
+        print(f"Error: No run record (run.lock or task marker) at {run_dir}", file=sys.stderr)
         sys.exit(1)
 
     repo = find_git_repo(str(run_dir))
@@ -345,6 +346,19 @@ def _tag_delete(args):
 
 # ── gc subcommand ──────────────────────────────────────────────
 
+def _is_protected(path, protected) -> bool:
+    """Whether gc must keep ``path`` given resolved ``protected`` paths.
+
+    A run is protected if it is, sits inside, or contains a protected path:
+    sweep task dirs live inside their (tagged) master, and deleting an
+    untagged master would take a tagged task with it.
+    """
+    path = Path(path).resolve()
+    return any(
+        path == p or p in path.parents or path in p.parents for p in protected
+    )
+
+
 def cmd_gc(args):
     """Garbage collect untagged run directories and orphaned shadow refs."""
     search_root = args.path or "."
@@ -358,9 +372,14 @@ def cmd_gc(args):
     # These are previous attempts interrupted before the user function returned;
     # no tag protection logic is needed (they were never completed).
     if getattr(args, "incomplete", False):
+        from .query import run_status
+
+        # Sweep tasks that are still queued or running also lack run.complete;
+        # their task DB knows, so never prune those.
         incomplete = [
             r for r in runs
             if not (Path(r["path"]) / "run.complete").exists()
+            and run_status(r["path"])["status"] not in ("running", "pending")
         ]
         if not incomplete:
             print("No incomplete runs found.")
@@ -405,11 +424,11 @@ def cmd_gc(args):
         _collect_lineage_paths(tagged_path, protected_paths)
 
     # Identify unprotected runs
+    protected_resolved = [Path(p).resolve() for p in protected_paths]
     to_remove = []
     to_keep = []
     for run in runs:
-        resolved = str(Path(run["path"]).resolve())
-        if resolved in protected_paths or run["path"] in protected_paths:
+        if _is_protected(run["path"], protected_resolved):
             to_keep.append(run)
         else:
             to_remove.append(run)
@@ -460,13 +479,13 @@ def cmd_gc(args):
 
 def _collect_lineage_paths(run_path, protected):
     """Recursively collect all lineage paths as protected."""
-    lock_file = Path(run_path) / "run.lock"
-    if not lock_file.exists():
+    from .record import load_record
+
+    data = load_record(run_path)
+    if data is None:
         return
 
     try:
-        with open(lock_file) as f:
-            data = yaml.safe_load(f)
         lineage = data.get("lineage") or data.get("prevs", {})
         for nested_data in lineage.values():
             nested_path = nested_data.get("path") or nested_data.get("config", {}).get("save_dir")

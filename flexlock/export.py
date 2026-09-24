@@ -8,6 +8,7 @@ import tempfile
 import os
 from pathlib import Path
 from loguru import logger
+from flexlock.record import materialize, read_lock
 from flexlock.taskdb import get_task_snapshot, list_task_snapshots
 
 
@@ -26,6 +27,8 @@ def export_task(db_path: Path, task_id: str, output_dir: Path) -> None:
     snapshot_data = get_task_snapshot(db_path, task_id)
     if not snapshot_data:
         raise ValueError(f"Task {task_id} not found in {db_path}")
+    # The DB stores a delta; complete it with the master's repos/env/note.
+    snapshot_data = materialize(snapshot_data, read_lock(Path(db_path).parent))
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -57,9 +60,11 @@ def export_all_tasks(db_path: Path, output_base_dir: Path, status: str = None) -
         return
 
     output_base_dir.mkdir(parents=True, exist_ok=True)
+    master = read_lock(Path(db_path).parent)
 
     for task_id, snapshot_data, task_status in tasks:
         if snapshot_data:
+            snapshot_data = materialize(snapshot_data, master)
             task_output_dir = output_base_dir / f"task_{task_id[:8]}"
             task_output_dir.mkdir(parents=True, exist_ok=True)
 

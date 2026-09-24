@@ -7,7 +7,6 @@ in scripts and CI — the old behaviour always exited 0).
 import argparse
 import json
 import sys
-import yaml
 from pathlib import Path
 from loguru import logger
 from flexlock.diff import RunDiff
@@ -15,13 +14,13 @@ from flexlock.taskdb import get_task_snapshot
 
 
 def load_snapshot_from_dir(dir_path: Path) -> dict:
-    """Load snapshot from a directory (finds run.lock file)."""
-    lock_file = dir_path / "run.lock"
-    if not lock_file.exists():
-        raise FileNotFoundError(f"No run.lock found in {dir_path}")
+    """Load a run's record (run.lock, or its task DB row for sweep tasks)."""
+    from flexlock.record import load_record
 
-    with open(lock_file) as f:
-        return yaml.safe_load(f)
+    record = load_record(dir_path)
+    if record is None:
+        raise FileNotFoundError(f"No run record (run.lock or task marker) in {dir_path}")
+    return record
 
 
 def load_snapshot_from_db(db_path: Path, task_id: str) -> dict:

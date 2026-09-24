@@ -515,9 +515,30 @@ perturb caching or diffs. It surfaces in `flexlock show`/`graph`/`report`.
 flexlock-run -d defaults -s train --note "baseline before lr sweep"
 ```
 
-For sweeps the note lands on the **master** `run.lock` only; sweep items inherit
-it for display via their `.flexlock_marker` → master lookup. For a multi-stage
-`-s a b` run, the same note is applied to each stage.
+For sweeps the note lands on the **master** `run.lock`; sweep items inherit it
+(copied into each task's `run.lock` with `--task-record dir`, looked up through
+the master otherwise). For a multi-stage `-s a b` run, the same note is applied
+to each stage.
+
+---
+
+### `--task-record {dir,db}`
+Where each sweep task's record (config, code tree, env, fingerprint) is kept.
+
+- `dir` (default, or `$FLEXLOCK_TASK_RECORD`): a full `run.lock` in the task's
+  `save_dir`, like a serial run. The directory describes itself.
+- `db`: only in the task DB (`<sweep_root>/run.lock.tasks.db`), with a
+  `.flexlock_marker` pointer in the task dir. Use it for sweeps over thousands
+  of items (e.g. `--sweep-file paths.txt`) to avoid one more file per item.
+
+Either way `flexlock diff`/`show`/`graph`/`why`, `${run_lock:}`, lineage and the
+cache find the record. Single runs, including Slurm/PBS ones, always get a
+`run.lock`. Sweep items that share one `save_dir` can't each have a
+`run.lock`; the first task keeps the file and the others stay in the DB.
+
+```bash
+flexlock-run -d configs.defaults -s extract --sweep-file paths.txt --task-record db
+```
 
 ---
 

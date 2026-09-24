@@ -560,7 +560,7 @@ filesystem next to your results:
 
 | File | Written by | Journal mode | If it breaks |
 |------|------------|--------------|--------------|
-| `run.lock.tasks.db` (task queue) | controller + every worker | `DELETE` | tasks stuck in `running`; reset with `flexlock-worker --task-db <db> --reclaim` |
+| `run.lock.tasks.db` (task queue; task records with `--task-record db`) | controller + every worker | `DELETE` | tasks stuck in `running`; reset with `flexlock-worker --task-db <db> --reclaim` |
 | `.flexlock/index.db` (fingerprint index) | controller + every worker | `DELETE` | lookups fall back to a slower scan; rebuild with `flexlock reindex` |
 
 SQLite relies on POSIX `fcntl` locks. How far that holds depends on the

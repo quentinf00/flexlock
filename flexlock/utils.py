@@ -260,16 +260,10 @@ def collect_task_repos(cfg, tasks, task_to=None) -> Dict:
 
 
 def _find_run_dir(start_path: str) -> str | None:
-    """Walk up from a path to find the nearest directory containing run.lock."""
-    p = Path(start_path)
-    if p.is_file():
-        p = p.parent
-    # Walk up, but stop at filesystem root
-    while p != p.parent:
-        if (p / "run.lock").exists():
-            return str(p)
-        p = p.parent
-    return None
+    """Walk up from a path to the nearest run dir (run.lock or task marker)."""
+    from .record import find_run_dir
+
+    return find_run_dir(start_path)
 
 
 def to_dictconfig(incfg):

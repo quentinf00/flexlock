@@ -198,6 +198,15 @@ class FlexLockRunner:
             "the timestamp format. Replaces the ${vinc:}/${now:} resolvers.",
         )
         parser.add_argument(
+            "--task-record",
+            choices=["dir", "db"],
+            default=None,
+            help="Where each sweep task's record goes. 'dir' (default, or "
+            "$FLEXLOCK_TASK_RECORD): a full run.lock in the task's save_dir. "
+            "'db': only in the task DB, for sweeps over thousands of items. "
+            "flexlock diff/show/cache find either.",
+        )
+        parser.add_argument(
             "--force",
             action="store_true",
             help="Invalidate run.complete and re-execute in place (bypasses "
@@ -559,6 +568,7 @@ class FlexLockRunner:
             note=getattr(args, "note", None),
             save_dir_policy=getattr(args, "save_dir_policy", None),
             force=getattr(args, "force", False),
+            task_record=getattr(args, "task_record", None),
         )
 
         # Back-compat: the runner historically returned the user function's
