@@ -197,9 +197,15 @@ def snapshot(
             lock_file = p / "run.lock"
             if lock_file.exists():
                 try:
+                    from .run_record import is_placeholder_lock, load_lock_data
+
                     data = OmegaConf.to_container(
                         OmegaConf.load(lock_file), resolve=True
                     )
+                    if is_placeholder_lock(data):
+                        # Single-task HPC master placeholder: use the task
+                        # snapshot from run.lock.tasks.db instead.
+                        data = load_lock_data(p)
                     logger.debug(f"Found snapshot at: {p}")
                     return (p, data)
                 except Exception as e:

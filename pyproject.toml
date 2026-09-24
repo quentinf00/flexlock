@@ -26,7 +26,7 @@ flexlock-worker = "flexlock.worker_cli:main"
 
 [tool.pixi.package]
 name = "flexlock"
-version = "0.8.2"
+version = "0.8.3"
 
 [build-system]
 build-backend = "hatchling.build"

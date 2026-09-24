@@ -210,6 +210,25 @@ def _write_txn(db_path: Path, op):
             delay = min(delay * 2, _config.DB_RETRY_MAX_BACKOFF)
 
 
+def reset_db(db_path: Path) -> None:
+    """Delete a task DB (and its WAL/SHM files) so its tasks are re-queued.
+
+    Closes this thread's cached connection first: otherwise ``_conn`` keeps
+    writing to the unlinked inode and the path is never recreated.
+    """
+    db_path = Path(db_path)
+    conns = getattr(_thread_local_conns, "conns", None)
+    if conns:
+        c = conns.pop(str(db_path.resolve()), None)
+        if c is not None:
+            try:
+                c.close()
+            except sqlite3.Error:
+                pass
+    for suffix in ("", "-wal", "-shm"):
+        Path(f"{db_path}{suffix}").unlink(missing_ok=True)
+
+
 def queue_tasks(db_path: Path, tasks: List[Any], tag: str | None = None) -> None:
     """Adds a list of tasks to the database if they don't already exist.
 

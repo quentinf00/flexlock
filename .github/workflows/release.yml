@@ -1,0 +1,90 @@
+name: Release
+
+# Push a tag vX.Y.Z (matching flexlock/__init__.py and [tool.pixi.package]
+# version) to build and publish the PyPI and conda packages.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build-dist:
+    name: build sdist/wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Tag matches package versions
+        run: python .github/scripts/check_version.py "${GITHUB_REF_NAME}"
+
+      - run: uv build
+
+      - name: Wheel installs into a clean venv and imports
+        run: |
+          uv venv /tmp/wheelcheck
+          uv pip install --python /tmp/wheelcheck/bin/python dist/*.whl
+          cd /tmp && /tmp/wheelcheck/bin/python -c "import flexlock; print(flexlock.__version__)"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish-pypi:
+    name: publish to PyPI (trusted publishing)
+    needs: build-dist
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/flexlock
+    permissions:
+      id-token: write  # OIDC token for PyPI trusted publishing; no stored secret
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+
+  conda:
+    name: build + upload conda package (anaconda.org/quentinf00)
+    runs-on: ubuntu-latest
+    environment:
+      name: anaconda
+      url: https://anaconda.org/quentinf00/flexlock
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Tag matches package versions
+        run: python3 .github/scripts/check_version.py "${GITHUB_REF_NAME}"
+
+      - uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        with:
+          pixi-version: v0.73.0
+          run-install: false
+
+      - name: Build conda package ([tool.pixi.package], pixi-build-python)
+        run: pixi build --output-dir conda-out
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: conda-package
+          path: conda-out/*.conda
+          if-no-files-found: error
+
+      - name: Upload to anaconda.org
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+        run: |
+          test -n "$ANACONDA_API_TOKEN" || { echo "::error::repo secret ANACONDA_API_TOKEN is not set"; exit 1; }
+          pixi exec --spec "anaconda-client>=1.14" -- \
+            anaconda -s api.anaconda.org -t "$ANACONDA_API_TOKEN" \
+            upload --user quentinf00 --label main conda-out/*.conda

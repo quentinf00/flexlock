@@ -37,4 +37,5 @@ FlexLock Documentation
    :caption: Additional
 
    README
+   changelog
 

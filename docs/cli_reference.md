@@ -88,6 +88,22 @@ flexlock gc results/ -f --refs
 
 ---
 
+### `flexlock repair-locks` — Rewrite Placeholder run.locks
+
+Single HPC/isolated runs submitted with FlexLock < 0.8.3 kept their real
+snapshot only in `run.lock.tasks.db`; their `run.lock` is a placeholder. The
+readers fall back to the DB automatically. This command rewrites those files
+once (see [HPC Integration](hpc_integration.md#runlock-of-a-single-hpc-run)).
+
+```bash
+flexlock repair-locks results/ -n   # dry run: list the dirs that would change
+flexlock repair-locks results/      # rewrite; keeps run.lock.placeholder.bak
+```
+
+Sweep roots are left alone (they have no single config).
+
+---
+
 ### `flexlock show` — Inspect One Run
 
 Machine-readable status, metadata, lineage, and config for a single run. The

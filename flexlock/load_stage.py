@@ -39,8 +39,9 @@ def _load_and_flatten_recursively(
             f"run.lock not found in previous stage '{stage_key}': {lock_file}"
         )
 
-    with open(lock_file, "r") as f:
-        stage_data = yaml.safe_load(f)
+    from .run_record import load_lock_data
+
+    stage_data = load_lock_data(stage_path)
 
     # Recurse into nested stages first (depth-first)
     # Support both "lineage" (new) and "prevs" (legacy)

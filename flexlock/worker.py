@@ -18,11 +18,11 @@ from pathlib import Path
 
 from loguru import logger
 
-from .taskdb import claim_next_tasks, finish_tasks, pending_count
+from .taskdb import claim_next_tasks, finish_tasks, pending_count, dump_to_yaml
 from flexlock.utils import merge_task_into_cfg, instantiate, extract_tracking_info
 from flexlock.resolvers import resolve_deferred
 from flexlock.snapshot import snapshot
-from flexlock.run_record import RunRecord
+from flexlock.run_record import RunRecord, merge_master_into_task_snapshot
 from flexlock.fingerprint import fingerprint as compute_fingerprint
 from flexlock import index
 from flexlock import config as _config
@@ -119,6 +119,13 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
         if not batch:
             if pending_count(db_path, tags=tags) == 0:
                 logger.info("All tasks finished.")
+                # Refresh run.lock.tasks from the worker side too: the
+                # submitter only dumps it when it stops waiting, so a
+                # ``wait=False``/interrupted submit left it stale (``[]``).
+                try:
+                    dump_to_yaml(db_path, db_dir / "run.lock.tasks", tags=tags)
+                except Exception as exc:
+                    logger.warning(f"Could not refresh run.lock.tasks: {exc}")
                 break
             logger.debug("No task available – sleeping 5s")
             time.sleep(5)
@@ -133,6 +140,37 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
                 )
         finally:
             finish_tasks(db_path, finished)
+
+
+def _same_dir(a, b) -> bool:
+    try:
+        return Path(a).resolve() == Path(b).resolve()
+    except Exception:
+        return False
+
+
+def _write_owned_master_lock(master_lock: Path, task_save_dir: Path, snapshot_data: dict) -> dict:
+    """Replace the placeholder master run.lock with the task's full snapshot.
+
+    Inherits run-level metadata from the placeholder (``note``, and
+    ``repos``/``data`` if the task recorded none) and drops the
+    self-referential ``parent``. Written atomically (temp + os.replace) before
+    the user function runs, so a running job already has a real run.lock and
+    ``run.complete`` is added next to it on success. Returns the dict written
+    (also stored in the task DB so file and DB agree).
+    """
+    import yaml
+
+    master = None
+    if master_lock.exists():
+        try:
+            with open(master_lock) as f:
+                master = yaml.safe_load(f)
+        except Exception as exc:
+            logger.warning(f"Could not read master lock {master_lock}: {exc}")
+    data = merge_master_into_task_snapshot(snapshot_data, master, task_save_dir)
+    RunRecord(task_save_dir).write_lock(data)
+    return data
 
 
 def _run_one_task(
@@ -173,17 +211,40 @@ def _run_one_task(
             logger.warning(f"Could not compute task fingerprint: {exc}")
             task_fp = None
 
-        snapshot_data = snapshot(
-            task_cfg,
-            data=data,
-            prevs=prevs,
-            repos=None,
-            parent_lock=str(master_lock) if master_lock.exists() else None,
-            return_snapshot=True,
-            fingerprint=task_fp,
-        )
+        # A task whose save_dir *is* the master dir (single-task HPC/isolated
+        # submission) owns that dir's run.lock: the submit-time master lock
+        # is only a placeholder ({save_dir, _snapshot_}), so the task writes
+        # its full snapshot there, exactly like the local serial path.
+        owns_master = _same_dir(task_save_dir, db_dir)
+
+        snapshot_data = None
+        if owns_master and repos:
+            # Record the git state like a serial run would (no parent delta:
+            # the placeholder master carries no repos of its own). Never let
+            # a git hiccup on the compute node fail the task.
+            try:
+                snapshot_data = snapshot(
+                    task_cfg, data=data, prevs=prevs, repos=repos,
+                    return_snapshot=True, fingerprint=task_fp,
+                )
+            except Exception as exc:
+                logger.warning(f"Could not record git state for {task_save_dir}: {exc}")
+        if snapshot_data is None:
+            snapshot_data = snapshot(
+                task_cfg,
+                data=data,
+                prevs=prevs,
+                repos=None,
+                parent_lock=str(master_lock) if master_lock.exists() else None,
+                return_snapshot=True,
+                fingerprint=task_fp,
+            )
 
         if snapshot_data:
+            if owns_master:
+                snapshot_data = _write_owned_master_lock(
+                    master_lock, task_save_dir, snapshot_data
+                )
             from flexlock.taskdb import update_task_snapshot
             update_task_snapshot(db_path, task_id, snapshot_data)
 

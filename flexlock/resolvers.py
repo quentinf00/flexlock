@@ -121,7 +121,7 @@ def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
         ${run_lock:${run_dir},config.lit_module.regression_checkpoint_path,null}
     """
     from loguru import logger
-    import yaml
+    from .run_record import load_lock_data
 
     lock_path = Path(run_dir) / "run.lock"
     if not lock_path.exists():
@@ -130,8 +130,9 @@ def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
             return default
         raise FileNotFoundError(f"run_lock resolver: no run.lock found in {run_dir}")
 
-    with open(lock_path) as f:
-        data = yaml.safe_load(f)
+    # Effective lock: a single-task HPC master placeholder falls back to the
+    # task snapshot stored in run.lock.tasks.db (runs predating the worker fix).
+    data = load_lock_data(run_dir)
 
     # Navigate dot-path
     value = data

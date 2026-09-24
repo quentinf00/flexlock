@@ -255,7 +255,14 @@ class FlexLockRunner:
 
         # 3. Outer Overrides
         if args.config:
-            cfg.merge_with(OmegaConf.load(args.config))
+            if Path(args.config).name == "run.lock":
+                # A placeholder master lock (single-task HPC run predating the
+                # worker fix) is replaced by its task-DB snapshot.
+                from .run_record import load_lock_data
+
+                cfg.merge_with(OmegaConf.create(load_lock_data(Path(args.config).parent)))
+            else:
+                cfg.merge_with(OmegaConf.load(args.config))
         if args.merge:
             cfg.merge_with(OmegaConf.load(args.merge))
         overrides = self._flatten_overrides(args.overrides)

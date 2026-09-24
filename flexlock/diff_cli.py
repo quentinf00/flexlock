@@ -16,12 +16,13 @@ from flexlock.taskdb import get_task_snapshot
 
 def load_snapshot_from_dir(dir_path: Path) -> dict:
     """Load snapshot from a directory (finds run.lock file)."""
+    from flexlock.run_record import load_lock_data
+
     lock_file = dir_path / "run.lock"
     if not lock_file.exists():
         raise FileNotFoundError(f"No run.lock found in {dir_path}")
 
-    with open(lock_file) as f:
-        return yaml.safe_load(f)
+    return load_lock_data(dir_path)
 
 
 def load_snapshot_from_db(db_path: Path, task_id: str) -> dict:

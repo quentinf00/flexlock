@@ -9,6 +9,7 @@ from pathlib import Path
 from git.repo import Repo as GitRepo
 
 from .git_utils import sanitize_ref_name
+from .run_record import load_lock_data
 
 
 def find_git_repo(start_path="."):
@@ -33,8 +34,7 @@ def find_results_dirs(root="."):
     for lock_file in Path(root).rglob("run.lock"):
         run_dir = lock_file.parent
         try:
-            with open(lock_file) as f:
-                data = yaml.safe_load(f)
+            data = load_lock_data(run_dir)
             results.append({
                 "path": str(run_dir),
                 "timestamp": data.get("timestamp", ""),
@@ -135,8 +135,7 @@ def collect_lineage_refs(repo, run_dir):
     lock_file = Path(run_dir) / "run.lock"
     if lock_file.exists():
         try:
-            with open(lock_file) as f:
-                data = yaml.safe_load(f)
+            data = load_lock_data(run_dir)
 
             # Get shadow refs from repos recorded in run.lock
             repos_data = data.get("repos", {})
@@ -465,8 +464,7 @@ def _collect_lineage_paths(run_path, protected):
         return
 
     try:
-        with open(lock_file) as f:
-            data = yaml.safe_load(f)
+        data = load_lock_data(run_path)
         lineage = data.get("lineage") or data.get("prevs", {})
         for nested_data in lineage.values():
             nested_path = nested_data.get("path") or nested_data.get("config", {}).get("save_dir")
@@ -573,6 +571,50 @@ def cmd_migrate_cache_markers(args):
         except Exception as e:
             print(f"  Error writing marker for {p}: {e}", file=sys.stderr)
     print(f"Wrote {written} markers.")
+
+
+def cmd_repair_locks(args):
+    """Rewrite placeholder run.locks of single-task HPC/isolated runs.
+
+    Runs submitted before 0.8.3 kept their real snapshot only in
+    ``run.lock.tasks.db``; see :func:`flexlock.run_record.materialize_lock`.
+    """
+    import yaml
+
+    from .run_record import is_placeholder_lock, load_lock_data, materialize_lock
+
+    root = Path(args.path or ".")
+    candidates = []
+    for db in sorted(root.rglob("run.lock.tasks.db")):
+        d = db.parent
+        lock = d / "run.lock"
+        if not lock.exists():
+            continue
+        try:
+            raw = yaml.safe_load(lock.read_text())
+        except Exception:
+            continue
+        if not is_placeholder_lock(raw):
+            continue
+        eff = load_lock_data(d)
+        if eff is not None and not is_placeholder_lock(eff):
+            candidates.append(d)
+
+    if not candidates:
+        print(f"No placeholder run.lock to repair under {root}")
+        return
+    for d in candidates:
+        print(f"  {d}")
+    if args.dry_run:
+        print(f"\n(dry run — {len(candidates)} run.lock(s) would be rewritten)")
+        return
+    n = 0
+    for d in candidates:
+        try:
+            n += bool(materialize_lock(d))
+        except Exception as e:
+            print(f"  Error repairing {d}: {e}", file=sys.stderr)
+    print(f"Rewrote {n} run.lock(s) (placeholders kept as run.lock.placeholder.bak).")
 
 
 def cmd_reindex(args):
@@ -833,6 +875,15 @@ def main():
     mig_parser.add_argument("-n", "--dry-run", action="store_true")
     mig_parser.add_argument("-f", "--force", action="store_true", help="Skip confirmation")
     mig_parser.set_defaults(func=cmd_migrate_cache_markers)
+
+    # repair-locks
+    repair_parser = subparsers.add_parser(
+        "repair-locks",
+        help="Rewrite placeholder run.locks of single-task HPC runs from their task DB",
+    )
+    repair_parser.add_argument("path", nargs="?", help="Root directory to search (default: .)")
+    repair_parser.add_argument("-n", "--dry-run", action="store_true")
+    repair_parser.set_defaults(func=cmd_repair_locks)
 
     # reindex
     reindex_parser = subparsers.add_parser(

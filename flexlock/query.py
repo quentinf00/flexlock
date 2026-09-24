@@ -37,12 +37,10 @@ _TASK_STATUS_MAP = {
 
 def _load_lock(run_dir: Path) -> Optional[dict]:
     """Parse ``run.lock`` with a side-effect-free loader, or ``None``."""
-    lock = Path(run_dir) / LOCK_NAME
-    if not lock.exists():
-        return None
+    from .run_record import load_lock_data
+
     try:
-        with open(lock) as f:
-            return yaml.safe_load(f)
+        return load_lock_data(run_dir)
     except Exception:
         return None
 
