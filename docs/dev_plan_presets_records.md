@@ -330,6 +330,62 @@ fallback; escape; sweep expansion; error listing.
   the node is exactly `big_model` (its own `downsample` default, not
   `small_model`'s), and `_preset_.overrides` keeps the typed override.
 
+## Phase 6 — Chained HPC jobs (planned)
+
+Source: the maxss-ml / tcwind_benchtools Slurm usage. Four patterns show up:
+
+| Pattern | Missing piece |
+|---|---|
+| `slurm_gpu_hpc_after<JOBID>.yaml` copies | a dependency flag that doesn't need a copy of the resources file |
+| `submit.sh` + `run_stage.sh`: 7 jobs chained with `afterok`, `case` stage→command | per-stage resources (GPU train / GPU infer / CPU score), two pixi envs, a job id you can capture |
+| argparse scripts behind `.slurm` wrappers (`p0_rescore.py`, `score_dump_ibtracs.py`, …) | none in FlexLock: they aren't stages, so they have no `run.lock` and hard-coded paths |
+| `flexlock-worker` array draining a task DB | nothing; already fits |
+
+Principle: Slurm runs the DAG (`afterok`); FlexLock doesn't become a DAG engine.
+Multi-stage `-s a b` chains stages *inside one job* (same resources, per-item
+chains in sweeps: see branch `pipeline-tasks`); `--after` chains *across jobs*.
+
+### 6a. `--after JOBID[:JOBID...]` and `--print-job-id`
+
+- `--after` adds `#SBATCH --dependency=afterok:<ids>` (PBS: `-W depend=afterok:`).
+  Valid only with `--slurm-config` / `--pbs-config`.
+- `--print-job-id` prints only the job id on stdout (like `sbatch --parsable`);
+  today it is only logged (`parallel.py`), so `$(...)` can't capture it.
+- Python: `Project.submit(..., after=[...])`; the result exposes the job id.
+
+### 6b. Deferred `${run:}` under `--after`
+
+Phase 3 binds `${run:}` at submit time, so in a chain submitted at once the
+upstream run doesn't exist yet ("no run"). When `--after` is set, leave
+`${run:}` values unresolved and bind them at job start (`afterok` guarantees
+the upstream finished); record the binding in `_snapshot_.prevs` as today.
+Pinned references (`${run:p,sel,0005}`) still bind at submit.
+
+### 6c. Per-stage scheduler profiles
+
+A stage key `_slurm_: gpu_train` resolved to a profile file (e.g.
+`slurm/gpu_train.yaml` next to the project root or a module attribute), stripped
+from the fingerprint like `_preset_`. `--slurm-config` on the CLI overrides it.
+The profile's `startup_lines` already carry the env (`pixi shell-hook -e hpc`),
+which covers stages living in different projects/envs.
+
+### Target usage (b13_intense_p0)
+
+```bash
+h1=$(flexlock-run -d maxss_configs.train.b13_intense_p0.cfg_h1 --after 4923603 --print-job-id)
+h2=$(flexlock-run -d maxss_configs.train.b13_intense_p0.cfg_h2 -s main --after $h1 --print-job-id)
+ev=$(flexlock-run -d maxss_configs.eval.b13_intense -s test anggrek --after $h2 --print-job-id)
+```
+
+with `cfg_h2.init_ckpt_path = "${run:b13_intense_p0.cfg_h1}/checkpoints/best_model.ckpt"`.
+
+### Order
+
+1. Merge `pipeline-tasks` and `env-fingerprint` (conflicts not yet checked).
+2. 6a. 3. 6b. 4. 6c.
+5. Project side (not FlexLock): port the eval/score scripts to stages
+   (`p0_rescore.py`'s `RUNS` × product table → presets or a sweep).
+
 ## Phase 5 — Later (separate plan)
 
 Symlink key index replacing `index.db`, extracting the fingerprint + store core
