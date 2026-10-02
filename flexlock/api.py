@@ -207,6 +207,13 @@ class ChainedResult:
         )
 
 
+def _reset_task_db(db_dir: Path) -> None:
+    """Delete ``run.lock.tasks.db`` (+ WAL/SHM) under ``db_dir`` for a forced rerun."""
+    from .taskdb import reset_db
+
+    reset_db(Path(db_dir) / "run.lock.tasks.db")
+
+
 class Project:
     # Module that bare ``@name`` overrides / sweep values resolve against
     # (set from an import-string ``defaults``; the CLI sets it from ``-d``).
@@ -769,6 +776,10 @@ class Project:
             from .parallel import ParallelExecutor
 
             save_dir = config.get("save_dir", "outputs/job")
+            if force:
+                # The executor queues with INSERT OR IGNORE: a 'done' row left
+                # by the previous run would make run() a no-op.
+                _reset_task_db(Path(str(save_dir)))
             # Resolve _snapshot_ while config still has its parent chain: the
             # executor_cfg below is re-rooted, so relative refs (${...key})
             # inside _snapshot_ would no longer reach the stage node.
@@ -825,6 +836,8 @@ class Project:
                 from .parallel import ParallelExecutor
 
                 save_dir = config.get("save_dir", "outputs/job")
+                if force:
+                    _reset_task_db(Path(str(save_dir)))
                 if "_snapshot_" in config:
                     snapshot_resolved = OmegaConf.to_container(
                         config._snapshot_, resolve=True
@@ -1348,8 +1361,7 @@ class Project:
                     d = Path(sd)
                     (d / "run.complete").unlink(missing_ok=True)
                     (d / "results.json").unlink(missing_ok=True)
-            for suffix in ("", "-wal", "-shm"):
-                (master_root / f"run.lock.tasks.db{suffix}").unlink(missing_ok=True)
+            _reset_task_db(master_root)
             logger.info(
                 f"Force flag enabled: reset pipeline task DB under {master_root}"
             )
@@ -1605,8 +1617,7 @@ class Project:
         # Task DB (its pending_count==0 short-circuit would otherwise resume).
         db_dir = self._sweep_db_dir(merged_items, sweep_root)
         if db_dir is not None:
-            for suffix in ("", "-wal", "-shm"):
-                (db_dir / f"run.lock.tasks.db{suffix}").unlink(missing_ok=True)
+            _reset_task_db(db_dir)
             logger.info(f"Force flag enabled: reset sweep task DB under {db_dir}")
 
     def _submit_sweep(

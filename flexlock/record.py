@@ -137,6 +137,17 @@ def load_record(run_dir) -> Optional[dict]:
         record = _record_from_db(run_dir, marker)
         if record is not None:
             return record
+    if lock is not None and (run_dir / TASKS_DB_NAME).exists():
+        from .run_record import is_placeholder_lock, _task_snapshot_for_dir
+
+        if is_placeholder_lock(lock):
+            snapshot = _task_snapshot_for_dir(run_dir)
+            if snapshot is not None:
+                record = materialize(snapshot, lock)
+                parent = record.get("parent")
+                if parent and Path(parent).parent.resolve() == run_dir.resolve():
+                    record.pop("parent")
+                return record
     return lock
 
 

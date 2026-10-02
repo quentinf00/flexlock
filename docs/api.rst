@@ -111,6 +111,11 @@ FlexLock API Reference
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: flexlock.run_record
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: flexlock.taskdb
    :members:
    :undoc-members:

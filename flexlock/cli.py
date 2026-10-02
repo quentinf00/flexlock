@@ -594,6 +594,50 @@ def cmd_migrate_cache_markers(args):
     print(f"Wrote {written} markers.")
 
 
+def cmd_repair_locks(args):
+    """Rewrite placeholder run.locks of single-task HPC/isolated runs.
+
+    Runs submitted before 0.8.3 kept their real snapshot only in
+    ``run.lock.tasks.db``; see :func:`flexlock.run_record.materialize_lock`.
+    """
+    import yaml
+
+    from .run_record import is_placeholder_lock, load_lock_data, materialize_lock
+
+    root = Path(args.path or ".")
+    candidates = []
+    for db in sorted(root.rglob("run.lock.tasks.db")):
+        d = db.parent
+        lock = d / "run.lock"
+        if not lock.exists():
+            continue
+        try:
+            raw = yaml.safe_load(lock.read_text())
+        except Exception:
+            continue
+        if not is_placeholder_lock(raw):
+            continue
+        eff = load_lock_data(d)
+        if eff is not None and not is_placeholder_lock(eff):
+            candidates.append(d)
+
+    if not candidates:
+        print(f"No placeholder run.lock to repair under {root}")
+        return
+    for d in candidates:
+        print(f"  {d}")
+    if args.dry_run:
+        print(f"\n(dry run — {len(candidates)} run.lock(s) would be rewritten)")
+        return
+    n = 0
+    for d in candidates:
+        try:
+            n += bool(materialize_lock(d))
+        except Exception as e:
+            print(f"  Error repairing {d}: {e}", file=sys.stderr)
+    print(f"Rewrote {n} run.lock(s) (placeholders kept as run.lock.placeholder.bak).")
+
+
 def cmd_reindex(args):
     """Rebuild the project-wide fingerprint index from run.lock files."""
     from . import index
@@ -935,6 +979,15 @@ def main():
     mig_parser.add_argument("-n", "--dry-run", action="store_true")
     mig_parser.add_argument("-f", "--force", action="store_true", help="Skip confirmation")
     mig_parser.set_defaults(func=cmd_migrate_cache_markers)
+
+    # repair-locks
+    repair_parser = subparsers.add_parser(
+        "repair-locks",
+        help="Rewrite placeholder run.locks of single-task HPC runs from their task DB",
+    )
+    repair_parser.add_argument("path", nargs="?", help="Root directory to search (default: .)")
+    repair_parser.add_argument("-n", "--dry-run", action="store_true")
+    repair_parser.set_defaults(func=cmd_repair_locks)
 
     # reindex
     reindex_parser = subparsers.add_parser(

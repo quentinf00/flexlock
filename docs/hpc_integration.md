@@ -3,16 +3,118 @@
 FlexLock provides seamless integration with HPC cluster schedulers (PBS and Slurm) for running experiments at scale.
 
 ## Overview
-...
-(after line 15)
-**Task Database Location:**
-The tasks database (`run.lock.tasks.db`) is written to the **parent directory** of the `save_dir`, not inside the `save_dir` itself. For example, if `save_dir` is `outputs/train/run_0001`, the DB is at `outputs/train/run.lock.tasks.db`. This is a critical detail for monitoring jobs via `flexlock-status`.
-...
-(after line 61)
-**Task Database Location:**
-The tasks database (`run.lock.tasks.db`) is written to the **parent directory** of the `save_dir`, not inside the `save_dir` itself. For example, if `save_dir` is `outputs/train/run_0001`, the DB is at `outputs/train/run.lock.tasks.db`. This is a critical detail for monitoring jobs via `flexlock-status`.
-...
 
+FlexLock's HPC integration allows you to:
+
+- ✅ Submit jobs to PBS or Slurm queues with a single parameter
+- ✅ Monitor job status in real-time with `flexlock-status`
+- ✅ Wait for job completion or submit and continue
+- ✅ Run parameter sweeps across cluster nodes
+- ✅ Use Singularity containers for reproducible environments
+- ✅ Automatic task database for distributed job management
+
+## Quick Start
+
+### Basic HPC Submission
+
+```python
+from flexlock.api import Project
+
+proj = Project(defaults='configs.defaults')
+config = proj.get('train')
+
+# Submit to PBS and wait for completion
+result = proj.submit(
+    config,
+    pbs_config='configs/pbs.yaml',
+    wait=True
+)
+
+print(f"Accuracy: {result.accuracy}")
+```
+
+### Non-Blocking Submission
+
+```python
+# Submit and continue without waiting
+result = proj.submit(
+    config,
+    pbs_config='configs/pbs.yaml',
+    wait=False
+)
+
+print("Job submitted")
+# Job continues running on cluster
+```
+
+### Monitor Job Status
+
+```bash
+# Real-time monitoring
+flexlock-status outputs/train/run.lock.tasks.db --watch
+
+# Check failed tasks
+flexlock-status outputs/train/run.lock.tasks.db --failed --verbose
+```
+
+## Files Written by an HPC Submission
+
+An HPC submission (and a local `isolated=True` run) goes through a task
+queue. Its files all live **inside the submitted `save_dir`**:
+
+| File | Content |
+| --- | --- |
+| `run.lock.tasks.db` | SQLite task queue: one row per task with its status, error and full snapshot. Point `flexlock-status` at it. |
+| `run.lock.tasks` | YAML dump of the task table, refreshed by the submitter and by the worker when the queue drains. |
+| `run.lock` | The run's receipt (see below). |
+| `slurm_logs/` / `pbs_logs/` | Scheduler scripts and logs. |
+
+For a single run with `save_dir='outputs/train/run_0001'` the DB is
+`outputs/train/run_0001/run.lock.tasks.db`. For a sweep it sits in the sweep
+root, next to the per-item directories (`outputs/sweep/run.lock.tasks.db`,
+items in `outputs/sweep/sweep_0000/`, ...).
+
+### `run.lock` of a single HPC run
+
+At submit time the executor writes a *placeholder* `run.lock` whose `config`
+holds only `save_dir` and `_snapshot_`. The real config is resolved on the
+compute node (deferred resolvers such as `${run_lock:...}` and `${latest:...}`
+fire there). Since FlexLock 0.8.3 the worker then replaces the placeholder
+with the task's full snapshot (resolved config, fingerprint, git state,
+lineage, and the submit-time `note`). It does this atomically, before the user
+function runs. A single HPC run therefore has the same `run.lock` as a local
+run, and `${run_lock:...}`, `flexlock show`, `flexlock-diff` and
+`flexlock-run -c run.lock` work on it.
+
+A sweep root keeps its placeholder: it has no single config. Each item's
+snapshot is in the task DB, and `flexlock show` rebuilds it from there.
+
+**Runs submitted with FlexLock < 0.8.3** still have a placeholder `run.lock`.
+Readers (`${run_lock:...}`, `show`/`diff`/`ls`/`gc`/`tag`, `load_stage`,
+`flexlock-run -c run.lock`) fall back to the snapshot stored in
+`run.lock.tasks.db`, so they keep working. To rewrite those files once
+(the placeholder is kept as `run.lock.placeholder.bak`):
+
+```bash
+flexlock repair-locks results/ --dry-run   # list the dirs that would change
+flexlock repair-locks results/
+```
+
+or from Python:
+
+```python
+from flexlock.run_record import materialize_lock, load_lock_data
+
+load_lock_data("results/train_0005")      # effective lock, no side effects
+materialize_lock("results/train_0005")    # True if run.lock was rewritten
+```
+
+### Forced reruns
+
+`force=True` on a single HPC or isolated submission deletes the run's
+`run.complete` and its `run.lock.tasks.db`, then re-queues and re-executes the
+task. Before 0.8.3 the old `done` row in the DB made the forced submit a
+silent no-op.
 
 ## PBS Configuration
 
@@ -311,8 +413,21 @@ flexlock-status outputs/sweep/run.lock.tasks.db --watch
 ```
 
 Output:
-...
-(after line 337)
+```
+============================================================
+Task Status Summary
+============================================================
+Pending:       12
+Running:        3
+Done:          45
+Failed:         2
+------------------------------------------------------------
+Total:         62
+Progress:    75.8% (47/62 completed)
+
+Status:     ⏳ In progress
+============================================================
+
 Refreshing in 10s... (Ctrl+C to stop)
 ```
 

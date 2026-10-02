@@ -20,7 +20,7 @@ from pathlib import Path
 from loguru import logger
 from omegaconf import OmegaConf, DictConfig
 
-from .taskdb import claim_next_tasks, finish_tasks, pending_count
+from .taskdb import claim_next_tasks, finish_tasks, pending_count, dump_to_yaml
 from flexlock.utils import merge_task_into_cfg, instantiate, extract_tracking_info
 from flexlock.resolvers import resolve_deferred
 from flexlock.snapshot import snapshot
@@ -117,15 +117,25 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
             logger.warning(f"Could not compute task fingerprint: {exc}")
             task_fp = None
 
-        snapshot_data = snapshot(
-            stage_cfg,
-            data=data,
-            prevs=prevs,
-            repos=None,
-            parent_lock=str(master_lock) if master_lock.exists() else None,
-            return_snapshot=True,
-            fingerprint=task_fp,
-        )
+        master = _master(master_lock)
+        # The master normally records every stage's repositories. A legacy
+        # master may lack a repository discovered on the worker.
+        missing_repos = set(repos) - set(master.get("repos") or {})
+        if task_save_dir.resolve() == db_dir.resolve() and missing_repos:
+            try:
+                snapshot_data = snapshot(
+                    stage_cfg, data=data, prevs=prevs, repos=repos,
+                    return_snapshot=True, fingerprint=task_fp,
+                )
+            except Exception as exc:
+                logger.warning(f"Could not record git state for {task_save_dir}: {exc}")
+
+        if snapshot_data is None:
+            snapshot_data = snapshot(
+                stage_cfg, data=data, prevs=prevs, repos=None,
+                parent_lock=str(master_lock) if master_lock.exists() else None,
+                return_snapshot=True, fingerprint=task_fp,
+            )
 
         if snapshot_data:
             _store_stage_snapshot(db_path, task_id, snapshot_data, snapshots)
@@ -312,6 +322,13 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
         if not batch:
             if pending_count(db_path, tags=tags) == 0:
                 logger.info("All tasks finished.")
+                # Refresh run.lock.tasks from the worker side too: the
+                # submitter only dumps it when it stops waiting, so a
+                # ``wait=False``/interrupted submit left it stale (``[]``).
+                try:
+                    dump_to_yaml(db_path, db_dir / "run.lock.tasks", tags=tags)
+                except Exception as exc:
+                    logger.warning(f"Could not refresh run.lock.tasks: {exc}")
                 break
             logger.debug("No task available – sleeping 5s")
             time.sleep(5)

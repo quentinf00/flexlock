@@ -173,3 +173,145 @@ class RunRecord:
         if self.lock_path.exists():
             return STATUS_INCOMPLETE
         return STATUS_MISSING
+
+
+# ── effective run.lock (placeholder master → task-DB snapshot) ──
+#
+# A ParallelExecutor master dir gets a *placeholder* run.lock at submit time
+# (``config`` holds only ``save_dir`` + ``_snapshot_``); the real, worker-side
+# snapshot of each task lives in ``run.lock.tasks.db`` (``snapshot`` column).
+# For a single-task HPC/isolated submission the task runs *in* the master dir,
+# so that placeholder is the only run.lock of the run. Workers now overwrite
+# it with the task snapshot (worker._write_owned_master_lock); the helpers
+# below let readers see the real snapshot for run dirs created before that fix.
+
+TASKS_DB_NAME = "run.lock.tasks.db"
+MARKER_NAME = ".flexlock_marker"
+_PLACEHOLDER_CONFIG_KEYS = {"save_dir", "_snapshot_"}
+
+
+def is_placeholder_lock(lock: Any) -> bool:
+    """True for a master-dir placeholder: ``config`` ⊆ {save_dir, _snapshot_}."""
+    if not isinstance(lock, dict):
+        return False
+    cfg = lock.get("config")
+    return isinstance(cfg, dict) and set(cfg) <= _PLACEHOLDER_CONFIG_KEYS
+
+
+def _same_dir(a, b) -> bool:
+    try:
+        return Path(a).resolve() == Path(b).resolve()
+    except Exception:
+        return False
+
+
+def merge_master_into_task_snapshot(task_snap: dict, master: Optional[dict], run_dir) -> dict:
+    """Build the run.lock of a task that ran in its master dir.
+
+    Starts from the task snapshot (resolved config, fingerprint, lineage) and
+    inherits run-level metadata the worker snapshot does not carry (``note``,
+    and ``repos``/``data`` when the task recorded none). A ``parent`` pointer
+    to the dir's own run.lock is dropped (it would be self-referential).
+    """
+    out = dict(task_snap)
+    master = master if isinstance(master, dict) else {}
+    for key in ("note", "repos", "data"):
+        if key not in out and master.get(key):
+            out[key] = master[key]
+    parent = out.get("parent")
+    if parent and _same_dir(Path(parent).parent, run_dir):
+        out.pop("parent")
+    return out
+
+
+def _task_snapshot_for_dir(run_dir: Path) -> Optional[dict]:
+    """Read-only lookup of the task snapshot that ran *in* ``run_dir``.
+
+    Uses the ``.flexlock_marker`` task_id when present, else the most recent
+    row whose snapshot ``config.save_dir`` is ``run_dir`` (done rows first).
+    Opens the DB read-only (no schema migration, no write lock).
+    """
+    import sqlite3
+
+    db = run_dir / TASKS_DB_NAME
+    if not db.exists():
+        return None
+    task_id = None
+    marker = run_dir / MARKER_NAME
+    if marker.exists():
+        try:
+            task_id = json.loads(marker.read_text()).get("task_id")
+        except Exception:
+            task_id = None
+    try:
+        conn = sqlite3.connect(f"file:{db.resolve()}?mode=ro", uri=True, timeout=30)
+    except sqlite3.Error as exc:
+        logger.warning(f"Could not open {db} read-only: {exc}")
+        return None
+    try:
+        rows = conn.execute(
+            "SELECT task_id, snapshot, status FROM tasks WHERE snapshot IS NOT NULL "
+            "ORDER BY (status = 'done') DESC, ts_start DESC"
+        ).fetchall()
+    except sqlite3.Error as exc:
+        logger.warning(f"Could not read {db}: {exc}")
+        return None
+    finally:
+        conn.close()
+    candidates = []
+    for tid, snap_text, _status in rows:
+        try:
+            snap = json.loads(snap_text)
+        except Exception:
+            continue
+        if "stages" in snap:
+            snap = snap["stages"].get(str(run_dir.resolve()))
+            if not snap:
+                continue
+        if task_id is not None and tid == task_id:
+            return snap
+        save_dir = (snap.get("config") or {}).get("save_dir")
+        if save_dir is not None and _same_dir(save_dir, run_dir):
+            candidates.append(snap)
+    return candidates[0] if candidates else None
+
+
+def load_lock_data(run_dir) -> Optional[dict]:
+    """Side-effect-free *effective* run.lock of ``run_dir`` (or ``None``).
+
+    Parses ``run.lock`` with ``yaml.safe_load`` (no resolvers fire). When it is
+    a master placeholder and the dir's task DB holds the snapshot of a task
+    that ran in this very dir (single-task HPC/isolated submission), returns
+    that snapshot merged with the master's run-level metadata instead. Sweep
+    masters (tasks in sub-dirs) keep their placeholder: there is no single
+    config to show for them.
+    """
+    from .record import load_record
+
+    return load_record(run_dir)
+
+
+def materialize_lock(run_dir, backup: bool = True) -> bool:
+    """Rewrite a placeholder ``run.lock`` with its effective (task-DB) content.
+
+    One-off repair for run dirs created before workers finalized run.lock.
+    Keeps the placeholder as ``run.lock.placeholder.bak`` when ``backup``.
+    Returns True when the file was rewritten.
+    """
+    import yaml
+
+    run_dir = Path(run_dir)
+    lock_path = run_dir / LOCK_NAME
+    if not lock_path.exists():
+        return False
+    with open(lock_path) as f:
+        raw = yaml.safe_load(f)
+    if not is_placeholder_lock(raw):
+        return False
+    effective = load_lock_data(run_dir)
+    if effective is None or is_placeholder_lock(effective):
+        return False
+    if backup:
+        _atomic_write(run_dir / "run.lock.placeholder.bak", lock_path.read_text())
+    RunRecord(run_dir).write_lock(effective)
+    return True
