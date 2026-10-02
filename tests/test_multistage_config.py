@@ -296,13 +296,39 @@ def test_multistage_rejects_after_select_override(temp_yaml, tmp_path):
         )
 
 
-def test_multistage_rejects_sweep(temp_yaml, tmp_path):
-    """Sweep + multi-stage has no defined Phase 1 semantic — reject it."""
+def test_multistage_composes_with_sweep(temp_yaml, tmp_path):
+    """-s a b --sweep merges each item at the root pre-selection, then runs
+    one composite pipeline task per item (stages in order)."""
+    from flexlock.runner import FlexLockRunner
+
+    f, config_path = temp_yaml
+    _pipeline_yaml(f)
+    root1 = tmp_path / "xp1"
+    root2 = tmp_path / "xp2"
+    FlexLockRunner().run(
+        cli_args=[
+            "-c", str(config_path),
+            "-s", "stage_a", "stage_b",
+            "--sweep-target", "pipeline_dir",
+            "--sweep", f"{root1},{root2}",
+        ]
+    )
+
+    for root in (root1, root2):
+        assert _read_order(root) == ["a", "b"]
+        assert (root / "a").exists()
+        assert (root / "b").exists()
+
+
+def test_multistage_rejects_after_select_merge(temp_yaml, tmp_path):
+    """-M targets a single node — still ambiguous with a stage sequence."""
     from flexlock.runner import FlexLockRunner
     from flexlock.exceptions import FlexLockValidationError
 
     f, config_path = temp_yaml
     _pipeline_yaml(f)
+    mfile = tmp_path / "m.yaml"
+    mfile.write_text("name: x\n")
 
     with pytest.raises(FlexLockValidationError):
         FlexLockRunner().run(
@@ -310,7 +336,7 @@ def test_multistage_rejects_sweep(temp_yaml, tmp_path):
                 "-c", str(config_path),
                 "-s", "stage_a", "stage_b",
                 "-o", f"pipeline_dir={tmp_path}",
-                "--sweep", "1,2",
+                "-M", str(mfile),
             ]
         )
 
@@ -360,3 +386,54 @@ def test_context_preservation_sanity():
     # 3. Ensure converting to container resolves correctly
     container = OmegaConf.to_container(node, resolve=True)
     assert container["val"] == 200
+
+
+def test_multistage_dump_iterates_items_and_stages(temp_yaml, tmp_path, capsys):
+    """--dump over -s a b --sweep prints each item × stage with headers and
+    each sweep item's root merge reaches the stage save_dir."""
+    from flexlock.runner import FlexLockRunner
+
+    f, config_path = temp_yaml
+    _pipeline_yaml(f)
+    FlexLockRunner().run(
+        cli_args=[
+            "-c", str(config_path),
+            "-s", "stage_a", "stage_b",
+            "--sweep-target", "pipeline_dir",
+            "--sweep", f"{tmp_path}/xp1,{tmp_path}/xp2",
+            "--dump",
+        ]
+    )
+    out = capsys.readouterr().out
+    assert "# --- item 0 / stage: stage_a ---" in out
+    assert "# --- item 1 / stage: stage_b ---" in out
+    # Per-item root merge reached each stage save_dir.
+    assert f"{tmp_path}/xp1/a" in out
+    assert f"{tmp_path}/xp2/b" in out
+
+
+def test_multistage_enqueue_writes_composite_tasks(temp_yaml, tmp_path):
+    """-s a b --enqueue twice with different pipeline_dir → 2 composite entries."""
+    import yaml as _yaml
+    from flexlock.runner import FlexLockRunner
+
+    f, config_path = temp_yaml
+    _pipeline_yaml(f)
+    q = tmp_path / "queue.yaml"
+
+    for name in ("xp1", "xp2"):
+        FlexLockRunner().run(
+            cli_args=[
+                "-c", str(config_path),
+                "-s", "stage_a", "stage_b",
+                "-o", f"pipeline_dir={tmp_path}/{name}",
+                "--enqueue", str(q),
+            ]
+        )
+
+    data = _yaml.safe_load(q.read_text())
+    assert len(data) == 2
+    assert all("_stages_" in d for d in data)
+    assert len(data[0]["_stages_"]) == 2
+    assert data[0]["_stages_"][0]["save_dir"] == f"{tmp_path}/xp1/a"
+    assert data[1]["_stages_"][1]["save_dir"] == f"{tmp_path}/xp2/b"

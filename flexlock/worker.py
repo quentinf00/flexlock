@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 from loguru import logger
+from omegaconf import OmegaConf, DictConfig
 
 from .taskdb import claim_next_tasks, finish_tasks, pending_count
 from flexlock.utils import merge_task_into_cfg, instantiate, extract_tracking_info
@@ -70,6 +71,194 @@ def _preflight_cuda() -> "tuple[bool, str]":
         return True, f"ok ({torch.cuda.get_device_name(0)})"
     except Exception as e:
         return False, f"{type(e).__name__}: {e}"
+
+
+def _is_composite(task) -> bool:
+    """True when ``task`` is a composite pipeline task (``{"_stages_": [...]}``)."""
+    return isinstance(task, (dict, DictConfig)) and "_stages_" in task
+
+
+def _store_stage_snapshot(db_path, task_id, snapshot_data, snapshots=None):
+    """Persist a plain task delta or all executed stages of a composite task."""
+    from .taskdb import update_task_snapshot
+
+    if snapshots is not None:
+        save_dir = Path(snapshot_data["config"]["save_dir"]).resolve()
+        snapshots[str(save_dir)] = snapshot_data
+        snapshot_data = {"stages": snapshots}
+    update_task_snapshot(db_path, task_id, snapshot_data)
+
+
+def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
+               stage=None, snapshots=None):
+    """Execute a stage with the same provenance and records as a plain task."""
+    task_save_dir = None
+    snapshot_data = None
+    lock_record = None
+    try:
+        # Single deferred-resolution point: run_lock/latest fire exactly
+        # once, here at stage start on the worker, now that the per-item
+        # override has been merged in. Everything else was already frozen
+        # to concrete values at submit time.
+        stage_cfg = resolve_deferred(stage_cfg)
+
+        repos, data, prevs = extract_tracking_info(stage_cfg)
+
+        task_save_dir = Path(stage_cfg.get("save_dir", db_dir / f"task_{task_id}"))
+        task_save_dir.mkdir(parents=True, exist_ok=True)
+
+        # Compute the fingerprint with the task's full git identity (repos
+        # from the merged config) so a task cache-hits when the same config
+        # is later run serially. The run.lock snapshot itself still uses the
+        # parent_lock delta optimisation (repos=None).
+        try:
+            task_fp = compute_fingerprint(stage_cfg, repos=repos, data=data)
+        except Exception as exc:
+            logger.warning(f"Could not compute task fingerprint: {exc}")
+            task_fp = None
+
+        snapshot_data = snapshot(
+            stage_cfg,
+            data=data,
+            prevs=prevs,
+            repos=None,
+            parent_lock=str(master_lock) if master_lock.exists() else None,
+            return_snapshot=True,
+            fingerprint=task_fp,
+        )
+
+        if snapshot_data:
+            _store_stage_snapshot(db_path, task_id, snapshot_data, snapshots)
+
+        # task_record="dir": the task dir gets its own full run.lock (the
+        # DB row stays filled either way; flexlock.record reads both).
+        master = _master(master_lock)
+        lock_record = None
+        if snapshot_data and master.get("task_record") == "dir":
+            if _owns_lock(task_save_dir, master_lock, task_id):
+                lock_record = _task_lock_record(
+                    snapshot_data, master, master_lock, task_id, task_save_dir
+                )
+                RunRecord(task_save_dir).write_lock(lock_record)
+            else:
+                logger.warning(
+                    f"{task_save_dir} already holds another run's run.lock; "
+                    f"task {task_id[:8]}'s record is kept in the task DB only. "
+                    f"Give sweep items distinct save_dirs to get one per task."
+                )
+
+        marker_file = task_save_dir / ".flexlock_marker"
+        db_abs = db_path.resolve()
+        try:
+            db_str = str(db_abs.relative_to(task_save_dir.parent.resolve()))
+        except ValueError:
+            db_str = str(db_abs)
+        marker_file.write_text(json.dumps({"db": db_str, "task_id": task_id}, indent=2))
+
+        result = func(stage_cfg)
+        logger.info(f"Task successful: {stage_cfg}")
+
+        record = RunRecord(task_save_dir)
+        try:
+            record.write_results(result)
+        except Exception as e:
+            logger.warning(f"Could not write results.json at {task_save_dir}: {e}")
+
+        record.mark_complete(result=result)
+        link_run(task_save_dir, stage_cfg)
+        # Record this sweep task in the project-wide index so it's a
+        # first-class cache entry (issue 1).
+        if task_fp:
+            index.record_task(task_save_dir, db_path, task_id, task_fp)
+        return task_save_dir, result
+
+    except KeyboardInterrupt:
+        raise
+    except Exception as e:
+        if task_save_dir is not None:
+            RunRecord(task_save_dir).write_error(
+                e, task_id=task_id, node=node, stage=stage
+            )
+        raise
+    finally:
+        drifted = _with_drift(snapshot_data, master_lock)
+        if drifted:
+            _store_stage_snapshot(db_path, task_id, drifted, snapshots)
+            if lock_record is not None:
+                RunRecord(task_save_dir).write_lock(
+                    dict(lock_record, code_drift=drifted["code_drift"])
+                )
+
+
+def _detach_stage_cfg(stage_raw) -> DictConfig:
+    """Build a self-contained DictConfig for one composite-task stage."""
+    if isinstance(stage_raw, DictConfig):
+        stage_raw = OmegaConf.to_container(
+            stage_raw, resolve=False, throw_on_missing=False
+        )
+    return OmegaConf.create(stage_raw)
+
+
+def _run_composite(func, task, db_path, db_dir, master_lock, node, task_id, finished):
+    """Run a composite task's stages sequentially; buffer its terminal DB state.
+
+    Stages are self-contained configs frozen at build time — the base config
+    is never re-merged into them. On a stage failure the remaining stages are
+    aborted and the task row is marked ``failed`` with the traceback prefixed
+    by the failing stage. On success the row's result is the per-stage list
+    ``[{"save_dir": ..., "result": ...}, ...]``.
+
+    ``KeyboardInterrupt`` propagates to :func:`worker_loop`, which marks the
+    row interrupted; completed stage dirs keep their ``run.complete`` so a
+    reclaim with ``_skip_complete_`` resumes past them.
+    """
+    from .taskdb import get_task_snapshot
+
+    stages = task["_stages_"]
+    skip_complete = bool(task.get("_skip_complete_", False))
+    n = len(stages)
+    stage_results = []
+    stored = get_task_snapshot(db_path, task_id) or {}
+    snapshots = dict(stored.get("stages", {}))
+
+    for i, stage_raw in enumerate(stages):
+        stage_cfg = _detach_stage_cfg(stage_raw)
+        save_dir = stage_cfg.get("save_dir")
+        stage_name = Path(save_dir).name if save_dir else f"stage_{i}"
+        label = f"stage {i + 1}/{n} {stage_name}"
+
+        if (
+            skip_complete
+            and save_dir is not None
+            and (Path(save_dir) / "run.complete").exists()
+        ):
+            logger.info(f"[{label}] {save_dir} already complete — skipping")
+            stage_results.append(
+                {
+                    "save_dir": str(save_dir),
+                    "result": RunRecord(save_dir).load_results(),
+                    "skipped": True,
+                }
+            )
+            continue
+
+        logger.info(f"[{label}] running → {save_dir}")
+        try:
+            stage_dir, result = _run_stage(
+                func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
+                stage=label, snapshots=snapshots,
+            )
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            tb = traceback.format_exc()
+            logger.exception(f"[{label}] failed: {e} — aborting remaining stages")
+            finished.append(dict(task=task, error=f"[{label}] {tb}"))
+            return
+
+        stage_results.append({"save_dir": str(stage_dir), "result": result})
+
+    finished.append(dict(task=task, result=stage_results))
 
 
 def worker_loop(func, cfg, task_to: str, db_path, tags=None):
@@ -220,121 +409,24 @@ def _owns_lock(task_save_dir: Path, master_lock: Path, task_id: str) -> bool:
 def _run_one_task(
     func, cfg, task_to, db_path, db_dir, master_lock, node, task, finished
 ):
-    """Execute one claimed task; append its outcome record to ``finished``.
+    """Execute one claimed task and buffer its terminal state for the batch."""
+    from .taskdb import _hash_task
 
-    The record is written to the DB by the caller's per-batch
-    ``finish_tasks`` flush (also on interrupt, via its ``finally``).
-    """
-    logger.info(f"Worker {node} running task {task}")
-
-    from flexlock.taskdb import _hash_task
     task_id = _hash_task(task)
-
-    task_save_dir = None
-    snapshot_data = None
-    lock_record = None
     try:
-        task_cfg = merge_task_into_cfg(cfg, task, task_to)
-
-        # Single deferred-resolution point: run_lock/latest fire exactly
-        # once, here at stage start on the worker, now that the per-item
-        # override has been merged in. Everything else was already frozen
-        # to concrete values at submit time.
-        task_cfg = resolve_deferred(task_cfg)
-
-        repos, data, prevs = extract_tracking_info(task_cfg)
-
-        task_save_dir = Path(task_cfg.get("save_dir", db_dir / f"task_{task_id}"))
-        task_save_dir.mkdir(parents=True, exist_ok=True)
-
-        # Compute the fingerprint with the task's full git identity (repos
-        # from the merged config) so a task cache-hits when the same config
-        # is later run serially. The run.lock snapshot itself still uses the
-        # parent_lock delta optimisation (repos=None).
-        try:
-            task_fp = compute_fingerprint(task_cfg, repos=repos, data=data)
-        except Exception as exc:
-            logger.warning(f"Could not compute task fingerprint: {exc}")
-            task_fp = None
-
-        snapshot_data = snapshot(
-            task_cfg,
-            data=data,
-            prevs=prevs,
-            repos=None,
-            parent_lock=str(master_lock) if master_lock.exists() else None,
-            return_snapshot=True,
-            fingerprint=task_fp,
-        )
-
-        if snapshot_data:
-            from flexlock.taskdb import update_task_snapshot
-            update_task_snapshot(db_path, task_id, snapshot_data)
-
-        # task_record="dir": the task dir gets its own full run.lock (the
-        # DB row stays filled either way; flexlock.record reads both).
-        master = _master(master_lock)
-        lock_record = None
-        if snapshot_data and master.get("task_record") == "dir":
-            if _owns_lock(task_save_dir, master_lock, task_id):
-                lock_record = _task_lock_record(
-                    snapshot_data, master, master_lock, task_id, task_save_dir
-                )
-                RunRecord(task_save_dir).write_lock(lock_record)
-            else:
-                logger.warning(
-                    f"{task_save_dir} already holds another run's run.lock; "
-                    f"task {task_id[:8]}'s record is kept in the task DB only. "
-                    f"Give sweep items distinct save_dirs to get one per task."
-                )
-
-        marker_file = task_save_dir / ".flexlock_marker"
-        db_abs = db_path.resolve()
-        try:
-            db_str = str(db_abs.relative_to(task_save_dir.parent.resolve()))
-        except ValueError:
-            db_str = str(db_abs)
-        marker_file.write_text(json.dumps({"db": db_str, "task_id": task_id}, indent=2))
-
-        result = func(task_cfg)
-        logger.info(f"Task successful: {task_cfg}")
-
-        record = RunRecord(task_save_dir)
-        try:
-            record.write_results(result)
-        except Exception as e:
-            logger.warning(f"Could not write results.json at {task_save_dir}: {e}")
-
-        record.mark_complete(result=result)
-        link_run(task_save_dir, task_cfg)
-        # Record this sweep task in the project-wide index so it's a
-        # first-class cache entry (issue 1).
-        if task_fp:
-            index.record_task(task_save_dir, db_path, task_id, task_fp)
-        drifted = _with_drift(snapshot_data, master_lock)
-        if drifted and lock_record is not None:
-            RunRecord(task_save_dir).write_lock(
-                dict(lock_record, code_drift=drifted["code_drift"])
+        if _is_composite(task):
+            _run_composite(
+                func, task, db_path, db_dir, master_lock, node, task_id, finished
             )
-        finished.append(dict(task=task, result=result, snapshot=drifted))
-
+        else:
+            task_cfg = merge_task_into_cfg(cfg, task, task_to)
+            _, result = _run_stage(
+                func, task_cfg, db_path, db_dir, master_lock, node, task_id
+            )
+            finished.append(dict(task=task, result=result))
     except KeyboardInterrupt:
-        # SIGINT — mark the in-flight task interrupted so it's distinct
-        # from a genuine failure, then propagate so the worker exits.
-        logger.warning(f"Worker interrupted while running task {task_id}")
         finished.append(dict(task=task, status="interrupted"))
         raise
-
     except Exception as e:
-        tb = traceback.format_exc()
         logger.exception(f"Task failed: {e}")
-        # Mirror the failure into the task dir as run.error so triage needs
-        # no sqlite; taskdb keeps the traceback too. write_error never raises.
-        if task_save_dir is not None:
-            RunRecord(task_save_dir).write_error(e, task_id=task_id, node=node)
-        drifted = _with_drift(snapshot_data, master_lock)
-        if drifted and lock_record is not None:
-            RunRecord(task_save_dir).write_lock(
-                dict(lock_record, code_drift=drifted["code_drift"])
-            )
-        finished.append(dict(task=task, error=tb, snapshot=drifted))
+        finished.append(dict(task=task, error=traceback.format_exc()))

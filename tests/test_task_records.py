@@ -199,3 +199,57 @@ def test_export_materializes_master_fields(recpkg, tmp_path):
     export_all_tasks(root / "run.lock.tasks.db", out)
     (exported,) = list(out.glob("task_*/run.lock"))
     assert "recpkg" in yaml.safe_load(exported.read_text())["repos"]
+
+
+@pytest.mark.parametrize("mode", ["dir", "db"])
+def test_pipeline_stages_keep_distinct_records_and_upstream_refs(recpkg, tmp_path, mode, monkeypatch):
+    """A downstream stage must read the upstream record before the row finishes."""
+    from flexlock.freeze import freeze_deferred
+    from flexlock.index import reindex, resolve_index_path
+    from flexlock.presets import attach, make_preset, presets_dir
+    from flexlock.taskdb import get_all_tasks, get_task_snapshot
+
+    monkeypatch.setattr("flexlock.worker.random.uniform", lambda a, b: 0)
+    monkeypatch.setenv("FLEXLOCK_TASK_RECORD", mode)
+    root = tmp_path / "pipeline"
+    a, b = root / "a", root / "b"
+    first = OmegaConf.create(_task(a, 7))
+    second = OmegaConf.create(_task(b, f"${{run_lock:{a},config.x}}"))
+    for name, cfg in (("a", first), ("b", second)):
+        attach(cfg, make_preset("recpkg.stage", name))
+    results = Project().submit_pipeline([[freeze_deferred(first), freeze_deferred(second)]])
+    assert all(result.is_success for result in results[0])
+    assert [result.result["x"] for result in results[0]] == [7, 7]
+    for name, path in (("a", a), ("b", b)):
+        record = load_record(path)
+        _assert_full(record, 7)
+        assert record["config"]["save_dir"] == str(path)
+        assert record["config"]["_preset_"]["select"] == name
+        assert bool(read_lock(path)) == (mode == "dir")
+        defaults = record["config"]["_preset_"]["defaults"]
+        links = list((presets_dir(path) / defaults / name).iterdir())
+        assert any(link.resolve() == path for link in links)
+    row = get_all_tasks(root / "run.lock.tasks.db")[0]
+    snapshot = get_task_snapshot(root / "run.lock.tasks.db", row["task_id"])
+    assert set(snapshot["stages"]) == {str(a.resolve()), str(b.resolve())}
+    resolve_index_path(root).unlink(missing_ok=True)
+    assert reindex(root) == 2
+
+
+def test_composite_export_materializes_each_stage(recpkg, tmp_path, monkeypatch):
+    from flexlock.export import export_task
+    from flexlock.diff_cli import load_snapshot_from_db
+    from flexlock.taskdb import get_all_tasks
+
+    monkeypatch.setattr("flexlock.worker.random.uniform", lambda a, b: 0)
+    root = tmp_path / "pipeline"
+    _drain(root, [{"_stages_": [_task(root / "a", 1), _task(root / "b", 2)]}], "db")
+    db = root / "run.lock.tasks.db"
+    row = get_all_tasks(db)[0]
+    exported = tmp_path / "exported"
+    export_task(db, row["task_id"], exported)
+    record = read_lock(exported)
+    for i, name in enumerate(("a", "b"), 1):
+        _assert_full(record["stages"][str((root / name).resolve())], i)
+    with pytest.raises(ValueError, match="stage directories"):
+        load_snapshot_from_db(db, row["task_id"])

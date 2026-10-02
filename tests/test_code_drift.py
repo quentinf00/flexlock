@@ -155,3 +155,43 @@ def test_serial_run_lock_gets_drift(drift_pkg, tmp_path):
     assert record_code_drift(save_dir) == {"driftpkg": ["driftpkg/stage.py"]}
     lock = yaml.safe_load((save_dir / "run.lock").read_text())
     assert lock["code_drift"] == {"driftpkg": ["driftpkg/stage.py"]}
+
+
+def test_collect_composite_task_repos(drift_pkg, tmp_path):
+    base = OmegaConf.create({"save_dir": str(tmp_path / "out")})
+    tasks = [{"_stages_": [
+        {"_target_": "driftpkg.stage.run", "save_dir": str(tmp_path / "a")},
+        {"_target_": "driftpkg.stage.run", "save_dir": str(tmp_path / "b")},
+    ]}]
+    repos = collect_task_repos(base, tasks)
+    assert set(repos) == {"driftpkg"}
+    assert os.path.realpath(repos["driftpkg"]["path"]) == os.path.realpath(drift_pkg)
+
+
+def test_composite_failure_preserves_stage_code_drift(drift_pkg, tmp_path, monkeypatch):
+    from flexlock.record import load_record
+    from flexlock.taskdb import get_all_tasks
+    from flexlock.utils import instantiate
+
+    monkeypatch.setattr("flexlock.worker.random.uniform", lambda a, b: 0)
+    root = tmp_path / "pipeline"
+    stages = [
+        {"_target_": "driftpkg.stage.run", "save_dir": str(root / name), "x": i}
+        for i, name in enumerate(("a", "b"), 1)
+    ]
+
+    def edit_then_fail(cfg):
+        if cfg.x == 2:
+            _touch_later(drift_pkg / "driftpkg" / "stage.py", MOD_SRC + "# changed\n")
+            raise RuntimeError("second stage failed")
+        return instantiate(cfg)
+
+    ParallelExecutor(
+        func=edit_then_fail, tasks=[{"_stages_": stages}], task_target=None,
+        cfg=OmegaConf.create({"save_dir": str(root)}), n_jobs=1, task_record="db",
+    ).run()
+    assert get_all_tasks(root / "run.lock.tasks.db")[0]["status"] == "failed"
+    assert "code_drift" not in load_record(root / "a")
+    assert load_record(root / "b")["code_drift"] == {"driftpkg": ["driftpkg/stage.py"]}
+    assert (root / "a" / "run.complete").exists()
+    assert (root / "b" / "run.error").exists()

@@ -28,6 +28,11 @@ def load_snapshot_from_db(db_path: Path, task_id: str) -> dict:
     snapshot = get_task_snapshot(db_path, task_id)
     if snapshot is None:
         raise ValueError(f"No snapshot found for task_id '{task_id}' in {db_path}")
+    if "stages" in snapshot:
+        raise ValueError(
+            "A composite task contains multiple stage records; compare the "
+            "stage directories instead."
+        )
     return snapshot
 
 

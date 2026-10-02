@@ -16,11 +16,19 @@ from .utils import (
     enqueue_to_file,
     apply_overrides,
     defaults_module,
+    merge_task_into_cfg,
 )
 from .exceptions import FlexLockValidationError
 from . import config
 from .presets import freeze_run_refs
 from loguru import logger
+
+
+def _is_composite_item(task) -> bool:
+    """True when a sweep/queue item is a composite pipeline task."""
+    from omegaconf import DictConfig
+
+    return isinstance(task, (dict, DictConfig)) and "_stages_" in task
 
 
 class FlexLockRunner:
@@ -100,9 +108,11 @@ class FlexLockRunner:
             nargs="+",
             help="Dot-separated key selecting the node to run. Pass several "
             "(space- or comma-separated, e.g. '-s train linear_probe' or "
-            "'-s train,linear_probe') to run stages in order. Multi-stage is "
-            "incompatible with -O/-M, sweeps, and HPC backends (run those "
-            "stages one at a time).",
+            "'-s train,linear_probe') to run stages in order as a pipeline. "
+            "Multi-stage composes with --sweep* (one composite task per sweep "
+            "item, stages run in order), --slurm-config/--pbs-config (array "
+            "workers fan out across items), and --enqueue. It is only "
+            "incompatible with -O/-M and -e (which target a single node).",
         )
 
         # Existing Override args
@@ -313,31 +323,26 @@ class FlexLockRunner:
     def _validate_multiselect(self, args):
         """Reject flags whose meaning is ambiguous with a stage *sequence*.
 
-        Phase 1 keeps multi-stage strictly local + sequential. After-select
-        overrides target *the* selected node (undefined with many), sweeps and
-        HPC backends need a defined cross-stage semantic that isn't wired yet.
-        Root-level ``-o``/``-m``/``-c`` remain valid — that's how you pass a
-        shared anchor like ``pipeline_dir``.
+        After-select overrides (-O/-M) and -e target *the* selected node, which
+        is undefined across many stages. Sweeps, HPC backends, and --enqueue now
+        compose with multi-stage via composite pipeline tasks (each sweep item
+        becomes one composite task whose stages run in order). Root-level
+        ``-o``/``-m``/``-c`` remain valid — that's how you pass a shared anchor
+        like ``pipeline_dir``.
         """
         offending = []
         if args.overrides_after_select:
             offending.append("-O/--overrides-after-select")
         if args.merge_after_select:
             offending.append("-M/--merge-after-select")
-        if args.sweep or args.sweep_file or args.sweep_key:
-            offending.append("--sweep/--sweep-file/--sweep-key")
-        if getattr(args, "slurm_config", None) or getattr(args, "pbs_config", None):
-            offending.append("--slurm-config/--pbs-config")
-        if args.enqueue:
-            offending.append("--enqueue")
         if args.edit_config:
             offending.append("-e/--edit-config")
         if offending:
             raise FlexLockValidationError(
                 "Multi-stage selection (-s with >1 stage) is incompatible with: "
                 + ", ".join(offending)
-                + ". Run these stages one at a time, or pass shared values as "
-                "root-level overrides (-o pipeline_dir=..., -m, -c)."
+                + " (these target a single selected node). Pass shared values as "
+                "root-level overrides (-o pipeline_dir=..., -m, -c) instead."
             )
 
     def _attach_preset(self, args, node_cfg, select):
@@ -381,12 +386,50 @@ class FlexLockRunner:
         freeze_run_refs(node_cfg)
         return node_cfg
 
-    def _run_multi(self, args, root_cfg, base_cfg, selects):
-        """Run a sequence of selected stages in order, locally and blocking.
+    def _build_pipeline_items(self, args, root_cfg, base_cfg, selects):
+        """Build the ``items × stages`` matrix for a multi-stage run.
 
-        Each stage is an independent :meth:`Project.submit` with ``wait=True``,
-        so downstream stages see upstream artifacts on disk (the ``pipeline_dir``
-        anchor pattern). Returns the list of raw stage return values.
+        Each sweep item is merged into the **root** config *before* selection
+        (respecting ``--sweep-target`` as a root dot-path), then every stage is
+        re-selected and re-frozen from that merged root (docs §14g pipeline_dir
+        anchor pattern). No sweep → a single item with no override.
+
+        Returns ``(items, stages)`` where ``items[i]`` is the list of frozen
+        stage configs for sweep item ``i`` and ``stages`` is the list of
+        selected stage keys (for labelling).
+        """
+        from .freeze import freeze_deferred
+
+        sweep_tasks = load_sweep(
+            sweep=args.sweep,
+            sweep_file=args.sweep_file,
+            sweep_key=args.sweep_key,
+            root_cfg=root_cfg,
+        )
+        sweep_items = sweep_tasks or [None]
+
+        items = []
+        for item in sweep_items:
+            if item is None:
+                merged_root = root_cfg
+            else:
+                merged_root = merge_task_into_cfg(root_cfg, item, args.sweep_target)
+            stage_cfgs = []
+            for sel in selects:
+                stage_cfg = self._build_node_cfg(args, merged_root, base_cfg, sel)
+                stage_cfg = freeze_deferred(stage_cfg)
+                stage_cfgs.append(stage_cfg)
+            items.append(stage_cfgs)
+        return items, selects
+
+    def _run_multi(self, args, root_cfg, base_cfg, selects):
+        """Run a sequence of selected stages in order, as a pipeline.
+
+        Each sweep item becomes one composite pipeline task (its stages run in
+        order on one worker); parallelism / HPC array workers fan out across
+        items. Downstream stages see upstream artifacts on disk (the
+        ``pipeline_dir`` anchor pattern). Returns the flat per-stage list of raw
+        results for a single item, or a list of such lists across sweep items.
         """
         from .api import Project
 
@@ -396,39 +439,181 @@ class FlexLockRunner:
         # -O key=@name resolves against the -d module, as -o does.
         proj.override_module = defaults_module(args.defaults)
 
-        results = []
-        for sel in selects:
-            node_cfg = self._build_node_cfg(args, root_cfg, base_cfg, sel)
+        items, stages = self._build_pipeline_items(args, root_cfg, base_cfg, selects)
 
-            # Preview flags iterate over the whole sequence rather than submit.
-            if args.print_config:
-                print(f"# --- stage: {sel} ---")
-                self._print_config_and_docstring(node_cfg)
-                continue
-            if args.dump:
-                print(f"# --- stage: {sel} ---")
-                print(OmegaConf.to_yaml(node_cfg), end="")
-                continue
-
-            logger.info(
-                f"[multi-select] stage '{sel}' → {node_cfg.get('save_dir')}"
-            )
-            outcome = proj.submit(
-                node_cfg,
-                n_jobs=args.n_jobs,
-                smart_run=bool(args.check_exists),
-                debug=debug,
-                print_config=False,
-                dry_run=getattr(args, "dry_run", False),
-                note=getattr(args, "note", None),
-                save_dir_policy=getattr(args, "save_dir_policy", None),
-                force=getattr(args, "force", False),
-            )
-            results.append(outcome)
-
+        # Preview flags iterate over items × stages, then exit.
         if args.print_config or args.dump:
+            multi_item = len(items) > 1
+            for i, stage_cfgs in enumerate(items):
+                for sel, stage_cfg in zip(stages, stage_cfgs):
+                    header = (
+                        f"# --- item {i} / stage: {sel} ---"
+                        if multi_item
+                        else f"# --- stage: {sel} ---"
+                    )
+                    print(header)
+                    if args.print_config:
+                        self._print_config_and_docstring(stage_cfg)
+                    else:
+                        print(OmegaConf.to_yaml(stage_cfg), end="")
             return None
-        return [r.result if hasattr(r, "result") else r for r in results]
+
+        # --check: side-effect-free preflight resolution per stage config.
+        if args.check:
+            errors = []
+            for i, stage_cfgs in enumerate(items):
+                for sel, stage_cfg in zip(stages, stage_cfgs):
+                    for e in proj.check(stage_cfg):
+                        e = dict(e)
+                        e["item"] = i
+                        e["stage"] = sel
+                        errors.append(e)
+            if not errors:
+                print("[flexlock] check OK — all interpolations resolve.")
+                return None
+            print(
+                f"[flexlock] check FAILED — {len(errors)} unresolved "
+                f"interpolation(s):"
+            )
+            for e in errors:
+                print(
+                    f"  - item {e['item']}, stage {e['stage']}, "
+                    f"{e['full_key']}: {e['error']}"
+                )
+            raise SystemExit(1)
+
+        # --enqueue: append one composite-task dict per item and exit.
+        if args.enqueue:
+            n = 0
+            for stage_cfgs in items:
+                task_dict = {
+                    "_stages_": [
+                        OmegaConf.to_container(
+                            stage_cfg, resolve=False, throw_on_missing=False
+                        )
+                        for stage_cfg in stage_cfgs
+                    ]
+                }
+                n = enqueue_to_file(args.enqueue, task_dict)
+            logger.info(
+                f"Enqueued {len(items)} pipeline task(s) → {args.enqueue} "
+                f"({n} task(s) in queue)"
+            )
+            return None
+
+        results = proj.submit_pipeline(
+            items,
+            n_jobs=args.n_jobs,
+            smart_run=bool(args.check_exists),
+            slurm_config=getattr(args, "slurm_config", None),
+            pbs_config=getattr(args, "pbs_config", None),
+            sweep_root=getattr(args, "sweep_root", None),
+            debug=debug,
+            dry_run=getattr(args, "dry_run", False),
+            note=getattr(args, "note", None),
+            save_dir_policy=getattr(args, "save_dir_policy", None),
+            force=getattr(args, "force", False),
+        )
+
+        if results is None:  # dry_run
+            return None
+
+        # Back-compat: a single item returns the flat per-stage list of raw
+        # results (matches the historical _run_multi return); multiple items
+        # return a list of such lists.
+        def _raw(item_results):
+            return [
+                r.result if hasattr(r, "result") else r for r in item_results
+            ]
+
+        if len(results) == 1:
+            return _raw(results[0])
+        return [_raw(item_results) for item_results in results]
+
+    def _run_pipeline_queue(self, args, proj, node_cfg, sweep_tasks, debug):
+        """Dispatch a --sweep-file queue that contains composite pipeline tasks.
+
+        Composite items are used as-is (self-contained, frozen at build time —
+        never re-merge the base config into them). Plain items are normalized by
+        merging into the compiled node config and wrapping as single-stage
+        composites, so the whole queue goes through :meth:`Project.submit_pipeline`
+        uniformly. Returns the per-item raw results (single-stage items unwrap to
+        their stage's raw value).
+        """
+        from .freeze import freeze_deferred
+
+        items = []
+        for t in sweep_tasks:
+            if _is_composite_item(t):
+                stages = t["_stages_"]
+                items.append([
+                    OmegaConf.create(
+                        OmegaConf.to_container(s, resolve=False, throw_on_missing=False)
+                        if OmegaConf.is_config(s)
+                        else s
+                    )
+                    for s in stages
+                ])
+            else:
+                merged = merge_task_into_cfg(node_cfg, t, args.sweep_target)
+                items.append([freeze_deferred(merged)])
+
+        # --check: preflight-resolve every stage config, then exit.
+        if args.check:
+            errors = []
+            for i, stage_cfgs in enumerate(items):
+                for j, stage_cfg in enumerate(stage_cfgs):
+                    for e in proj.check(stage_cfg):
+                        e = dict(e)
+                        e["item"] = i
+                        e["stage"] = j
+                        errors.append(e)
+            if not errors:
+                print("[flexlock] check OK — all interpolations resolve.")
+                return None
+            print(
+                f"[flexlock] check FAILED — {len(errors)} unresolved "
+                f"interpolation(s):"
+            )
+            for e in errors:
+                print(
+                    f"  - item {e['item']}, stage {e['stage']}, "
+                    f"{e['full_key']}: {e['error']}"
+                )
+            raise SystemExit(1)
+
+        # --print-config / --dump: iterate items × stages, then exit.
+        if args.print_config or args.dump:
+            for i, stage_cfgs in enumerate(items):
+                for j, stage_cfg in enumerate(stage_cfgs):
+                    print(f"# --- item {i} / stage {j} ---")
+                    if args.print_config:
+                        self._print_config_and_docstring(stage_cfg)
+                    else:
+                        print(OmegaConf.to_yaml(stage_cfg), end="")
+            return None
+
+        results = proj.submit_pipeline(
+            items,
+            n_jobs=args.n_jobs,
+            smart_run=bool(args.check_exists),
+            slurm_config=getattr(args, "slurm_config", None),
+            pbs_config=getattr(args, "pbs_config", None),
+            sweep_root=getattr(args, "sweep_root", None),
+            debug=debug,
+            dry_run=getattr(args, "dry_run", False),
+            note=getattr(args, "note", None),
+            save_dir_policy=getattr(args, "save_dir_policy", None),
+            force=getattr(args, "force", False),
+        )
+        if results is None:  # dry_run
+            return None
+
+        out = []
+        for item_results in results:
+            raws = [r.result if hasattr(r, "result") else r for r in item_results]
+            out.append(raws[0] if len(raws) == 1 else raws)
+        return out
 
     def _prepare_node(self, cfg, name="exp"):
         """Ensure ``cfg`` has a ``save_dir`` — fall back to ``outputs/<name>/<timestamp>``."""
@@ -541,13 +726,6 @@ class FlexLockRunner:
             print(OmegaConf.to_yaml(node_cfg), end="")
             return None
 
-        # --enqueue: append compiled config to a YAML queue file and exit.
-        if args.enqueue:
-            cfg_dict = OmegaConf.to_container(node_cfg, resolve=False, throw_on_missing=False)
-            n = enqueue_to_file(args.enqueue, cfg_dict)
-            logger.info(f"Enqueued 1 task → {args.enqueue} ({n} task(s) in queue)")
-            return None
-
         # Load the sweep list from whichever source the user picked.
         sweep_tasks = load_sweep(
             sweep=args.sweep,
@@ -556,6 +734,37 @@ class FlexLockRunner:
             root_cfg=root_cfg,
         )
 
+        # --enqueue: append the compiled config(s) to a YAML queue file, exit.
+        # Below load_sweep so a sweep source expands into one queue entry per
+        # item (each item merged at --sweep-target + frozen, mirroring the
+        # submit-time preview); without a sweep, the single compiled node config
+        # is enqueued.
+        if args.enqueue:
+            if sweep_tasks:
+                from .freeze import freeze_deferred
+
+                n = 0
+                for item in sweep_tasks:
+                    item_cfg = merge_task_into_cfg(node_cfg, item, args.sweep_target)
+                    item_cfg = freeze_deferred(item_cfg)
+                    cfg_dict = OmegaConf.to_container(
+                        item_cfg, resolve=False, throw_on_missing=False
+                    )
+                    n = enqueue_to_file(args.enqueue, cfg_dict)
+                logger.info(
+                    f"Enqueued {len(sweep_tasks)} task(s) → {args.enqueue} "
+                    f"({n} task(s) in queue)"
+                )
+            else:
+                cfg_dict = OmegaConf.to_container(
+                    node_cfg, resolve=False, throw_on_missing=False
+                )
+                n = enqueue_to_file(args.enqueue, cfg_dict)
+                logger.info(
+                    f"Enqueued 1 task → {args.enqueue} ({n} task(s) in queue)"
+                )
+            return None
+
         # Honour FLEXLOCK_DEBUG env var as a CLI-side debug toggle.
         debug = args.debug or config.get_env_bool("FLEXLOCK_DEBUG", False)
 
@@ -563,6 +772,18 @@ class FlexLockRunner:
         proj = Project(root_cfg)
         # -O key=@name resolves against the -d module, as -o does.
         proj.override_module = defaults_module(args.defaults)
+
+        # Composite pipeline entries in the queue (Phase 4): a --sweep-file may
+        # contain {"_stages_": [...]} composite tasks (produced by
+        # `-s a b --enqueue`). When at least one is present, route the whole
+        # queue through submit_pipeline — composite items are used as-is (the
+        # base config is never re-merged into them), plain items are normalized
+        # by merging into the compiled node config and wrapping as single-stage
+        # composites.
+        if any(_is_composite_item(t) for t in sweep_tasks):
+            return self._run_pipeline_queue(
+                args, proj, node_cfg, sweep_tasks, debug
+            )
 
         # --check: side-effect-free preflight resolution, then exit.
         if args.check:

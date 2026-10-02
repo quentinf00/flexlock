@@ -85,6 +85,11 @@ def is_run_dir(path) -> bool:
 def materialize(task_snapshot: dict, master: Optional[dict]) -> dict:
     """A task delta completed with the fields it inherits from its master."""
     record = dict(task_snapshot)
+    if "stages" in record:
+        record["stages"] = {
+            path: materialize(stage, master)
+            for path, stage in record["stages"].items()
+        }
     for key in _INHERITED:
         if record.get(key) is None and master and master.get(key) is not None:
             record[key] = master[key]
@@ -101,6 +106,10 @@ def _record_from_db(run_dir, marker: dict) -> Optional[dict]:
     snap = get_task_snapshot(db, task_id)
     if not snap:
         return None
+    if "stages" in snap:
+        snap = snap["stages"].get(str(Path(run_dir).resolve()))
+        if not snap:
+            return None
     return materialize(snap, read_lock(db.parent))
 
 

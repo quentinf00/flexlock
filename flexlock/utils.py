@@ -233,10 +233,16 @@ def collect_task_repos(cfg, tasks, task_to=None) -> Dict:
     """
     repos, _, _ = extract_tracking_info(cfg)
     seen = set()
+    expanded = []
     for task in tasks:
+        if isinstance(task, (dict, DictConfig)) and "_stages_" in task:
+            expanded.extend((stage, None) for stage in task["_stages_"])
+        else:
+            expanded.append((task, task_to))
+    for task, target_path in expanded:
         node = task
-        if task_to and isinstance(task, (dict, DictConfig)):
-            node = OmegaConf.select(OmegaConf.create(task), task_to)
+        if target_path and isinstance(task, (dict, DictConfig)):
+            node = OmegaConf.select(OmegaConf.create(task), target_path)
         if not isinstance(node, (dict, DictConfig)):
             continue
         target = node.get("_target_")
@@ -249,7 +255,7 @@ def collect_task_repos(cfg, tasks, task_to=None) -> Dict:
         seen.add(key)
         try:
             task_repos, _, _ = extract_tracking_info(
-                merge_task_into_cfg(cfg, task, task_to)
+                merge_task_into_cfg(cfg, task, target_path)
             )
         except Exception as exc:
             logger.debug(f"Could not extract repos from task {target}: {exc}")

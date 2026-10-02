@@ -391,6 +391,22 @@ Containment is validated up-front: if a sweep item's `save_dir` falls
 outside the sweep root, you get a `FlexLockValidationError` listing the
 offenders before any work is queued.
 
+### Enqueue a sweep for later (`--sweep` + `--enqueue`)
+
+`--enqueue queue.yaml` normally appends the single compiled config to a queue
+file. Combined with a sweep source it appends **one entry per item**, each
+already merged at `--sweep-target` and frozen (deferred resolvers preserved):
+
+```bash
+flexlock-run -d ... --sweep "0.001,0.01,0.1" --sweep-target lr --enqueue q.yaml
+# q.yaml now has 3 entries; run them later (locally or on HPC) with:
+flexlock-run -d ... --sweep-file q.yaml --n_jobs 3
+```
+
+This is the single-stage counterpart of the multi-stage `--enqueue` batching in
+§14g — there each item is a composite `{_stages_: [...]}` pipeline task instead
+of one plain config.
+
 ### Per-item interpolations
 
 Because relative refs (`${.x}`, `${..x}`) survive node selection and
@@ -717,6 +733,23 @@ Preview the rendered submission script without submitting:
 proj.submit(cfg, slurm_config='configs/slurm_gpu.yaml', dry_run=True)
 # Prints the generated Slurm script plus any validation warnings.
 ```
+
+### Multi-stage pipelines on HPC
+
+A multi-stage selection runs on HPC too: array workers fan out **across sweep
+items**, and each item's stages run in order on the worker that claims it.
+
+```bash
+flexlock-run -d project.pipeline.pipeline_cfg -s train linear_probe \
+    --sweep-target pipeline_dir --sweep results/xp1,results/xp2 \
+    --slurm-config configs/slurm_gpu.yaml
+```
+
+From Python this is `Project.submit_pipeline(items, slurm_config=...)`, where
+`items[i]` is the list of frozen stage configs for item `i`. Because all stages
+of an item share one scheduler job, size the job for the heaviest stage (see the
+one-job-per-item limitation in §14g). `dry_run=True` renders the script without
+queueing anything.
 
 Anything that goes wrong on the backend side — bad YAML, queue
 rejection, task-DB lock contention — is raised as
@@ -1047,21 +1080,62 @@ flexlock-run -d project.pipeline.pipeline_cfg -s linear_probe \
 # run several stages of ONE experiment in order (space- or comma-separated)
 flexlock-run -d project.pipeline.pipeline_cfg -s train linear_probe \
     -o pipeline_dir=results/myxp
+
+# run several stages across several experiments at once (sweep × stages)
+flexlock-run -d project.pipeline.pipeline_cfg -s train linear_probe \
+    --sweep-target pipeline_dir --sweep results/myxp1,results/myxp2 --n_jobs 2
+
+# same, on Slurm — array workers fan out across experiments
+flexlock-run -d project.pipeline.pipeline_cfg -s train linear_probe \
+    --sweep-target pipeline_dir --sweep results/myxp1,results/myxp2 \
+    --slurm-config slurm.yaml
 ```
 
-Passing several stages to `-s` runs them **sequentially and locally**, each as
-its own blocking `submit`, so a downstream stage sees the upstream stage's
-artifacts already on disk (that's the whole ordering contract — stages compose
-through `${pipeline_dir}/<stage>/...` paths, not in-memory wiring). With
-`--check-exists`, stages already completed for this `pipeline_dir` are skipped,
-so re-running the sequence resumes where it stopped.
+Passing several stages to `-s` runs them **in order as a pipeline**. Each sweep
+item becomes one *composite pipeline task*: its stages run sequentially on a
+single worker, so a downstream stage always sees the upstream stage's artifacts
+already on disk (that's the whole ordering contract — stages compose through
+`${pipeline_dir}/<stage>/...` paths, not in-memory wiring). Parallelism and HPC
+array workers fan out **across items**, never within one item. With no sweep,
+that's a single composite task running locally in-process.
 
-Multi-stage selection is deliberately restricted to the simple case: it is
-incompatible with `-O`/`-M` (they target *the* selected node — ambiguous across
-a sequence), with `--sweep*`, and with `--slurm-config`/`--pbs-config`. Pass
-shared values as root-level overrides (`-o pipeline_dir=...`, `-m`, `-c`), and
-run stages one at a time when you need a sweep, a per-stage after-select
-override, or an HPC backend.
+Each sweep item is merged into the **root** config *before* stage selection
+(respecting `--sweep-target` as a root dot-path), then every stage is
+re-selected and re-frozen from that merged root — so `-s train linear_probe
+--sweep-target pipeline_dir --sweep xp1,xp2` builds 2 items × 2 stages, and each
+item's stages land under its own `pipeline_dir`. With `--check-exists`, stages
+already completed for a `pipeline_dir` are skipped, so re-running the sequence
+resumes where it stopped.
+
+Multi-stage composes with `--sweep*`, `--slurm-config`/`--pbs-config`, and
+`--enqueue`. It is only incompatible with `-O`/`-M` and `-e`, which target *the*
+selected node (ambiguous across a sequence) — pass shared values as root-level
+overrides (`-o pipeline_dir=...`, `-m`, `-c`) instead.
+
+**Batching with `--enqueue`.** `-s train linear_probe --enqueue queue.yaml`
+appends one composite `{_stages_: [...]}` entry per sweep item to the queue file
+(deferred resolvers like `${run_lock:}`/`${latest:}` are preserved unresolved).
+Run the whole queue later — including on HPC — with
+`flexlock-run -d ... --sweep-file queue.yaml`; composite entries run as-is (never
+re-merged with the base config), and plain entries in the same file are merged
+into the compiled node config and run as single-stage pipelines.
+
+**Stage records.** Each executed stage keeps its own config, fingerprint,
+lineage, code-drift information, and preset link. By default its directory
+contains a full `run.lock`. With `FLEXLOCK_TASK_RECORD=db`, the shared task row
+stores snapshots keyed by absolute stage directory; the normal record reader
+selects the appropriate stage through its `.flexlock_marker`. Downstream
+`${run_lock:...}` references can read an upstream stage before the whole task
+finishes. Exporting a composite task includes all stage snapshots with the
+master's code and environment information. Compare individual stage
+directories with `flexlock-diff`; a composite task ID names multiple records.
+
+**One job per item (accepted limitation).** All stages of an item run inside one
+scheduler job / worker slot, so per-stage HPC resource configs (e.g. a CPU
+extract stage then a GPU train stage with different `--gres`) are not possible.
+Give the whole pipeline the resources its heaviest stage needs, or split the
+stages into separate submissions. Scheduler-level `--dependency` chaining is a
+possible future enhancement.
 
 **Why it's convenient**
 

@@ -96,7 +96,7 @@ class RunRecord:
             payload["has_result"] = True
         return _atomic_write(self.complete_path, json.dumps(payload))
 
-    def write_error(self, exc: BaseException, *, task_id=None, node=None) -> "Path | None":
+    def write_error(self, exc: BaseException, *, task_id=None, node=None, stage=None) -> "Path | None":
         """Record a ``run.error`` JSON sidecar describing a failed run.
 
         Capturing the failure must *never* mask the original exception, so the
@@ -117,6 +117,8 @@ class RunRecord:
                 payload["task_id"] = task_id
             if node is not None:
                 payload["node"] = node
+            if stage is not None:
+                payload["stage"] = stage
             return _atomic_write(self.error_path, json.dumps(payload, indent=2))
         except Exception as write_exc:  # pragma: no cover - defensive
             logger.warning(f"Could not write {ERROR_NAME} at {self.save_dir}: {write_exc}")
