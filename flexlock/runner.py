@@ -244,7 +244,35 @@ class FlexLockRunner:
             "(also prints validation warnings).",
         )
 
+        backend_group.add_argument(
+            "--after", metavar="JOBID[:JOBID...]",
+            help="Wait for these Slurm/PBS jobs to finish successfully before starting.",
+        )
+        backend_group.add_argument(
+            "--print-job-id", action="store_true",
+            help="Submit without waiting and print only the scheduler job ID on stdout.",
+        )
         return parser
+
+    @staticmethod
+    def _report_job_id(args, results):
+        if not args.print_job_id:
+            return
+
+        def ids(value):
+            if isinstance(value, list):
+                for result in value:
+                    yield from ids(result)
+            elif getattr(value, "job_id", None) is not None:
+                yield str(value.job_id)
+
+        job_ids = set(ids(results))
+        if len(job_ids) != 1:
+            raise FlexLockValidationError(
+                "--print-job-id requires a newly submitted scheduler job; "
+                "the run may already be complete or cached."
+            )
+        print(next(iter(job_ids)))
 
     @staticmethod
     def _flatten_overrides(value):
@@ -511,6 +539,8 @@ class FlexLockRunner:
         results = proj.submit_pipeline(
             items,
             n_jobs=args.n_jobs,
+            after=args.after,
+            wait=not args.print_job_id,
             smart_run=bool(args.check_exists),
             slurm_config=getattr(args, "slurm_config", None),
             pbs_config=getattr(args, "pbs_config", None),
@@ -522,6 +552,7 @@ class FlexLockRunner:
             force=getattr(args, "force", False),
         )
 
+        self._report_job_id(args, results)
         if results is None:  # dry_run
             return None
 
@@ -603,6 +634,8 @@ class FlexLockRunner:
         results = proj.submit_pipeline(
             items,
             n_jobs=args.n_jobs,
+            after=args.after,
+            wait=not args.print_job_id,
             smart_run=bool(args.check_exists),
             slurm_config=getattr(args, "slurm_config", None),
             pbs_config=getattr(args, "pbs_config", None),
@@ -613,6 +646,7 @@ class FlexLockRunner:
             save_dir_policy=getattr(args, "save_dir_policy", None),
             force=getattr(args, "force", False),
         )
+        self._report_job_id(args, results)
         if results is None:  # dry_run
             return None
 
@@ -645,6 +679,22 @@ class FlexLockRunner:
         if args.help:
             self.parser.print_help()
             return None
+
+        from .backends.dependencies import validate_after
+
+        args.after = validate_after(args.after, args.slurm_config, args.pbs_config)
+        if args.after and args.enqueue:
+            raise FlexLockValidationError(
+                "--after applies to scheduler submission; pass it when dequeuing, "
+                "rather than with --enqueue."
+            )
+        if args.print_job_id:
+            if not (args.slurm_config or args.pbs_config):
+                raise FlexLockValidationError("--print-job-id requires a Slurm or PBS backend.")
+            if any((args.dry_run, args.print_config, args.dump, args.check, args.enqueue)):
+                raise FlexLockValidationError(
+                    "--print-job-id cannot be combined with preview or enqueue flags."
+                )
 
         # Build the root config from CLI inputs (defaults + config + merge + overrides).
         root_cfg = self.load_config(args)
@@ -815,6 +865,8 @@ class FlexLockRunner:
             sweep_target=args.sweep_target,
             sweep_root=getattr(args, "sweep_root", None),
             n_jobs=args.n_jobs,
+            after=args.after,
+            wait=not args.print_job_id,
             smart_run=bool(args.check_exists),
             slurm_config=getattr(args, "slurm_config", None),
             pbs_config=getattr(args, "pbs_config", None),
@@ -832,6 +884,7 @@ class FlexLockRunner:
         # Back-compat: the runner historically returned the user function's
         # raw return value (and is consumed by @flexcli as such). Unwrap the
         # ExecutionResult so existing callers keep working.
+        self._report_job_id(args, outcome)
         if outcome is None:
             return None
         if isinstance(outcome, list):

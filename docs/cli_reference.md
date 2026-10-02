@@ -905,3 +905,16 @@ These are file-based equivalents of `-o`/`-O`. Use them when overrides are too m
 - [HPC Integration](./hpc_integration.md) - Detailed HPC setup guide
 - [Debugging](./debugging.md) - Interactive debugging features
 - [Reference](./reference.md) - Environment variables and exceptions
+
+
+### Scheduler job dependencies and ID output
+
+- `--after JOBID[:JOBID...]`: require successful completion of these jobs before
+  starting the Slurm/PBS submission. It also appears in `--dry-run` scripts.
+- `--print-job-id`: submit without waiting and print only the new scheduler ID
+  on stdout. Valid for single runs, sweeps, and composite pipelines; incompatible
+  with previews and `--enqueue`. Cached/completed submissions cannot emit a new ID.
+
+Both require `--slurm-config` or `--pbs-config`. `--after` is a submission option:
+pass it when draining a queue, rather than when creating one. Do not also put a
+scheduler dependency directive in the profile's `startup_lines`.

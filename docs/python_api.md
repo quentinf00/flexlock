@@ -912,3 +912,13 @@ best = max(results, key=lambda r: r.get('accuracy', 0))
 - [HPC Integration](./hpc_integration.md) - Slurm/PBS configuration
 - [Debugging](./debugging.md) - Interactive debugging
 - [Reference](./reference.md) - Environment variables and exceptions
+
+
+### Scheduler dependencies
+
+`Project.submit(..., after=[job_id], wait=False)` and
+`Project.submit_pipeline(..., after=[job_id], wait=False)` accept scheduler
+job dependencies with Slurm or PBS. `after` may also be a colon-separated
+string. Returned `ExecutionResult.job_id` is the newly submitted scheduler ID;
+all submitted sweep items or pipeline stages share that ID. It is `None` for
+local or cached results.

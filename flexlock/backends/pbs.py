@@ -6,6 +6,7 @@ import secrets
 import time
 from .base import Backend, Job, JobEnvironment
 from loguru import logger
+from .dependencies import normalize_after
 
 
 class PBSJob(Job):
@@ -48,6 +49,7 @@ class PBSBackend(Backend):
         configure_logging: bool = True,
         configure_name: bool = True,
         python_exe: str = "python",
+        after=None,
     ):
         self.folder = folder
         self.folder.mkdir(parents=True, exist_ok=True)
@@ -55,10 +57,26 @@ class PBSBackend(Backend):
         self.configure_logging = configure_logging
         self.configure_name = configure_name
         self.python_exe = python_exe
+        self.after = normalize_after(after)
+        if self.after and any(
+            line.lstrip().startswith("#PBS") and "depend=" in line
+            for line in startup_lines
+        ):
+            from ..exceptions import FlexLockValidationError
+
+            raise FlexLockValidationError(
+                "Specify dependencies with after/--after or startup_lines, not both."
+            )
+
+    def render_script(self, pickled_path=None) -> str:
+        """Render the submission script without submitting or pickling."""
+        return self._make_script(Path(pickled_path or "<pickled-task.pkl>"))
 
     def _make_script(self, pickled_path: Path) -> str:
         """Generates the PBS submission script content."""
         lines = ["#!/bin/bash"]
+        if self.after:
+            lines.append(f"#PBS -W depend=afterok:{':'.join(self.after)}")
 
         if self.configure_name:
             lines.extend(

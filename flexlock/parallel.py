@@ -73,6 +73,7 @@ class ParallelExecutor:
         tag: str | None = None,
         note: str | None = None,
         task_record: str | None = None,
+        after=None,
     ):
         """Initializes the ParallelExecutor.
 
@@ -83,6 +84,7 @@ class ParallelExecutor:
             cfg: The base OmegaConf configuration.
             n_jobs: Number of parallel jobs for local execution.
             slurm_config: Path to the Slurm configuration file.
+            after: Scheduler jobs that must finish successfully before this job.
             pbs_config: Path to the PBS configuration file.
             local_workers: Number of local worker processes to spawn.
             isolated: If True, always run in a spawned subprocess even when n_jobs=1.
@@ -98,6 +100,9 @@ class ParallelExecutor:
                 in the task DB only. Stored in the master run.lock so workers
                 attached later follow it.
         """
+        from .backends.dependencies import validate_after
+
+        after = validate_after(after, slurm_config, pbs_config)
         self.func = func
         self.tasks = tasks
         self.task_target = task_target
@@ -149,9 +154,13 @@ class ParallelExecutor:
         self.backend = None
         if slurm_config:
             p = OmegaConf.to_container(OmegaConf.load(slurm_config), resolve=True)
+            if after:
+                p["after"] = after
             self.backend = SlurmBackend(folder=self.save_dir / "slurm_logs", **p)
         elif pbs_config:
             p = OmegaConf.to_container(OmegaConf.load(pbs_config), resolve=True)
+            if after:
+                p["after"] = after
             self.backend = PBSBackend(folder=self.save_dir / "pbs_logs", **p)
 
     def _run_locally(self):

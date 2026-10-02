@@ -345,7 +345,7 @@ Principle: Slurm runs the DAG (`afterok`); FlexLock doesn't become a DAG engine.
 Multi-stage `-s a b` chains stages *inside one job* (same resources, per-item
 chains in sweeps: see branch `pipeline-tasks`); `--after` chains *across jobs*.
 
-### 6a. `--after JOBID[:JOBID...]` and `--print-job-id`
+### 6a. `--after JOBID[:JOBID...]` and `--print-job-id` (implemented on `hpc-chaining`)
 
 - `--after` adds `#SBATCH --dependency=afterok:<ids>` (PBS: `-W depend=afterok:`).
   Valid only with `--slurm-config` / `--pbs-config`.
@@ -381,8 +381,8 @@ with `cfg_h2.init_ckpt_path = "${run:b13_intense_p0.cfg_h1}/checkpoints/best_mod
 
 ### Order
 
-1. Merge `pipeline-tasks` and `env-fingerprint` (conflicts not yet checked).
-2. 6a. 3. 6b. 4. 6c.
+1. Merge `pipeline-tasks` and `env-fingerprint` (done, released in 0.9.0).
+2. 6a (implemented on `hpc-chaining`). 3. 6b (planned). 4. 6c (planned).
 5. Project side (not FlexLock): port the eval/score scripts to stages
    (`p0_rescore.py`'s `RUNS` × product table → presets or a sweep).
 

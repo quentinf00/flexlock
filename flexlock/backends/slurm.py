@@ -7,6 +7,7 @@ import secrets  # Better random for filenames
 import time
 from .base import Backend, Job, JobEnvironment
 from loguru import logger
+from .dependencies import validate_after
 
 
 # Heuristics for recognising environment-activation lines in startup_lines.
@@ -122,12 +123,23 @@ class SlurmBackend(Backend):
         startup_lines: list[str],
         configure_logging: bool = True,
         python_exe="python",
+        after=None,
     ):
         self.folder = folder
         self.folder.mkdir(parents=True, exist_ok=True)
         self.startup_lines = startup_lines
         self.configure_logging = configure_logging
         self.python_exe = python_exe
+        self.after = validate_after(after, True, False)
+        if self.after and any(
+            re.search(r"^\s*#SBATCH\s+.*(?:--dependency(?:[=\s])|-d\s)", line)
+            for line in startup_lines
+        ):
+            from ..exceptions import FlexLockValidationError
+
+            raise FlexLockValidationError(
+                "Specify dependencies with after/--after or startup_lines, not both."
+            )
 
     def render_script(self, pickled_path: "Path | str | None" = None) -> str:
         """Render the would-be Slurm script without submitting.
@@ -140,6 +152,8 @@ class SlurmBackend(Backend):
     def _make_script(self, pickled_path: Path) -> str:
         """Generates the Slurm submission script content."""
         lines = ["#!/bin/bash"]
+        if self.after:
+            lines.append(f"#SBATCH --dependency=afterok:{':'.join(self.after)}")
         # SBATCH directives must all come before any shell commands —
         # Slurm stops parsing directives at the first non-comment, non-blank line.
         if self.configure_logging:

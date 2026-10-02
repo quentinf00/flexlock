@@ -93,7 +93,7 @@ def _coerce_status(s):
 # Real attributes that a result-dict key must never shadow (issue 6).
 _RESERVED_RESULT_KEYS = frozenset(
     {"save_dir", "status", "result", "metrics", "cfg", "error", "get",
-     "raise_on_failure", "is_success"}
+     "raise_on_failure", "is_success", "job_id"}
 )
 
 
@@ -114,6 +114,7 @@ class ExecutionResult:
         result: Any = None,
         cfg: DictConfig = None,
         error: "str | None" = None,
+        job_id: "str | None" = None,
     ):
         """
         Args:
@@ -122,12 +123,14 @@ class ExecutionResult:
             result: The actual return value from the function
             cfg: Configuration used for execution
             error: Error/traceback string for FAILED items (else None)
+            job_id: Scheduler ID for the job submitted by this call, else None.
         """
         self.save_dir = save_dir
         self.status = _coerce_status(status)
         self.result = result
         self.cfg = cfg
         self.error = error
+        self.job_id = str(job_id) if job_id is not None else None
 
     @property
     def metrics(self):
@@ -554,6 +557,7 @@ class Project:
         note: "str | None" = None,
         save_dir_policy: "str | None" = None,
         task_record: "str | None" = None,
+        after=None,
     ) -> "ExecutionResult | List[ExecutionResult] | None":
         """Submit a configuration for execution.
 
@@ -571,6 +575,9 @@ class Project:
             search_dirs: Directories to search for cached runs.
             wait: If True, blocks until completion.
             pbs_config / slurm_config: Path to HPC backend YAML.
+            after: Job IDs (sequence or colon-separated string) that must finish
+                successfully before this Slurm/PBS job starts. Requires an HPC
+                backend. Submitted results expose the scheduler ID as ``job_id``.
             sweep_dir_suffix: If True, append ``_sweep_{i:04d}`` to each
                 sweep item's ``save_dir``.
             match_include / match_exclude: Override git path patterns used
@@ -629,6 +636,9 @@ class Project:
             ``ExecutionResult`` (single), ``List[ExecutionResult]`` (sweep),
             or ``None`` (``print_config=True``).
         """
+        from .backends.dependencies import validate_after
+
+        after = validate_after(after, slurm_config, pbs_config)
         # Resolve config from a key, a DictConfig, or default to self.defaults.
         if config is None:
             config = self.defaults
@@ -739,6 +749,7 @@ class Project:
                 note=note,
                 item_policy=item_policy,
                 task_record=task_record,
+                after=after,
             )
 
         # Single execution path
@@ -758,7 +769,7 @@ class Project:
             if not use_hpc:
                 logger.info("dry_run is a no-op for local execution.")
                 return None
-            self._preview_hpc_script(config, slurm_config, pbs_config)
+            self._preview_hpc_script(config, slurm_config, pbs_config, after=after)
             return None
 
         # Naming / collision-guard policy — after the cache check (a hit never
@@ -794,6 +805,7 @@ class Project:
             )
 
             executor = ParallelExecutor(
+                after=after,
                 func=instantiate,
                 tasks=[config],  # Single task as a list
                 task_target=None,
@@ -823,6 +835,7 @@ class Project:
             return ExecutionResult(
                 save_dir=str(save_dir),
                 status="SUCCESS" if wait else "SUBMITTED",
+                job_id=executor.job.job_id if executor.job is not None else None,
                 result=result_data,
                 cfg=config,
             )
@@ -848,6 +861,7 @@ class Project:
                     {"save_dir": str(save_dir), "_snapshot_": snapshot_resolved}
                 )
                 executor = ParallelExecutor(
+                    after=after,
                     func=instantiate,
                     tasks=[config],
                     task_target=None,
@@ -1024,7 +1038,7 @@ class Project:
         return errors
 
     @staticmethod
-    def _preview_hpc_script(config, slurm_config, pbs_config):
+    def _preview_hpc_script(config, slurm_config, pbs_config, after=None):
         """Render the would-be HPC submission script and print it.
 
         Used by ``submit(..., dry_run=True)``. Loads the backend YAML the
@@ -1046,6 +1060,8 @@ class Project:
                 # Match ParallelExecutor's folder convention so paths in
                 # the preview look like the real submission.
                 params_folder = save_dir / "slurm_logs"
+                if after:
+                    params["after"] = after
                 backend = SlurmBackend(folder=folder, **params)
                 script = backend.render_script()
                 # Rewrite the temp folder path to the would-be real one so
@@ -1066,6 +1082,8 @@ class Project:
                 params = OmegaConf.to_container(
                     OmegaConf.load(pbs_config), resolve=True
                 )
+                if after:
+                    params["after"] = after
                 backend = PBSBackend(folder=folder, **params)
                 # PBS backend may or may not expose render_script — fall
                 # back to printing the YAML if not.
@@ -1191,7 +1209,7 @@ class Project:
         return Path(os.path.commonpath(item_roots)), item_roots
 
     def _collect_pipeline_results(
-        self, indices, queued_items, queued_tasks, db_path, tag
+        self, indices, queued_items, queued_tasks, db_path, tag, job_id=None
     ) -> "list[tuple[int, list[ExecutionResult]]]":
         """Per-stage ExecutionResults for queued pipeline items.
 
@@ -1222,6 +1240,7 @@ class Project:
                             status=Status.SUCCESS,
                             result=record.load_results(),
                             cfg=stage_cfg,
+                            job_id=job_id,
                         )
                     )
                 elif db_status == "failed" and record.error_path.exists():
@@ -1230,6 +1249,7 @@ class Project:
                             save_dir=str(sd),
                             status=Status.FAILED,
                             cfg=stage_cfg,
+                            job_id=job_id,
                             error=row.get("error") if row else None,
                         )
                     )
@@ -1239,12 +1259,14 @@ class Project:
                             save_dir=str(sd),
                             status=Status.INTERRUPTED,
                             cfg=stage_cfg,
+                            job_id=job_id,
                         )
                     )
                 else:
                     stage_results.append(
                         ExecutionResult(
-                            save_dir=str(sd), status=Status.SUBMITTED, cfg=stage_cfg
+                            save_dir=str(sd), status=Status.SUBMITTED, cfg=stage_cfg,
+                            job_id=job_id
                         )
                     )
             out.append((idx, stage_results))
@@ -1268,6 +1290,7 @@ class Project:
         save_dir_policy: "str | None" = None,
         debug: bool = False,
         dry_run: bool = False,
+        after=None,
     ) -> "List[List[ExecutionResult]] | None":
         """Submit composite pipeline tasks: one task per item, stages in order.
 
@@ -1295,6 +1318,8 @@ class Project:
             slurm_config / pbs_config: Path to HPC backend YAML.
             wait: Block until completion (HPC). ``False`` returns SUBMITTED
                 skeleton results.
+            after: Scheduler jobs that must finish successfully before this job
+                starts. Each submitted stage result exposes the same ``job_id``.
             sweep_root: Override the master root hosting the task DB; also
                 opts out of the containment validation.
             tag / note / timeout: As in :meth:`submit`.
@@ -1323,6 +1348,9 @@ class Project:
             validate_policy,
         )
 
+        from .backends.dependencies import validate_after
+
+        after = validate_after(after, slurm_config, pbs_config)
         if not items:
             return []
 
@@ -1350,6 +1378,7 @@ class Project:
                 OmegaConf.create({"save_dir": str(master_root)}),
                 slurm_config,
                 pbs_config,
+                after=after,
             )
             return None
 
@@ -1440,6 +1469,7 @@ class Project:
                     func = debug_on_fail(func)
 
             executor = ParallelExecutor(
+                after=after,
                 func=func,
                 tasks=queued_tasks,
                 task_target=None,
@@ -1459,6 +1489,7 @@ class Project:
                 queued_tasks,
                 executor.db_path,
                 executor.tag,
+                job_id=executor.job.job_id if executor.job is not None else None,
             )
 
         all_results = cached_results + results
@@ -1547,7 +1578,7 @@ class Project:
         return cls().submit(config, **kwargs)
 
     @staticmethod
-    def collect_results(indices, task_configs, db_path, tag) -> list:
+    def collect_results(indices, task_configs, db_path, tag, job_id=None) -> list:
         """Build per-item ExecutionResults from the task DB's terminal state.
 
         Replaces the old blanket ``status="SUCCESS"`` — a task that raised is
@@ -1590,6 +1621,7 @@ class Project:
                         result=result_data,
                         cfg=cfg,
                         error=error,
+                        job_id=job_id,
                     ),
                 )
             )
@@ -1642,6 +1674,7 @@ class Project:
         note: "str | None" = None,
         item_policy: str = "raise",
         task_record: "str | None" = None,
+        after=None,
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -1801,6 +1834,7 @@ class Project:
 
                 # Use ParallelExecutor with backend support
                 executor = ParallelExecutor(
+                    after=after,
                     func=instantiate,  # The function to execute
                     tasks=task_configs,  # List of configs to execute
                     task_target=None,  # Each task is already a complete config
@@ -1820,7 +1854,8 @@ class Project:
                 # Collect real per-task statuses from the task DB (issue 2).
                 results.extend(
                     self.collect_results(
-                        indices, task_configs, executor.db_path, executor.tag
+                        indices, task_configs, executor.db_path, executor.tag,
+                        job_id=executor.job.job_id if executor.job is not None else None,
                     )
                 )
             else:

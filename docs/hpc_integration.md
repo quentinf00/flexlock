@@ -868,3 +868,45 @@ FlexLock makes HPC integration simple:
 5. **Flexible waiting**: Block or continue as needed
 
 Start simple, scale to thousands of cluster jobs! 🚀
+
+
+## Chaining scheduler jobs
+
+`--after JOBID[:JOBID...]` adds an `afterok` dependency to a Slurm or PBS
+submission. Each upstream job must finish successfully before this job starts.
+The dependency appears before shell commands in the rendered script and in
+`--dry-run` output. Use either `--after` or a dependency directive in the
+profile's `startup_lines`; specifying both raises an error.
+
+`--print-job-id` submits without waiting and prints only the scheduler ID on
+stdout, so shell command substitution can capture it. It works for single runs,
+sweeps, and composite pipelines; the whole submitted collection has one job ID.
+It requires an HPC backend and cannot be combined with preview or enqueue flags.
+A cached or already-complete submission has no new job ID and raises an error.
+Pass `--after` when draining an enqueue file, rather than while creating it.
+
+```bash
+train_job=$(flexlock-run -d myproject.configs -s train \
+  --slurm-config slurm/gpu.yaml --print-job-id)
+flexlock-run -d myproject.configs -s evaluate \
+  --slurm-config slurm/cpu.yaml --after "$train_job" --print-job-id
+```
+
+The Python API accepts a list of IDs or a colon-separated string:
+
+```python
+train = project.submit("train", slurm_config="slurm/gpu.yaml", wait=False)
+evaluation = project.submit(
+    "evaluate", slurm_config="slurm/cpu.yaml", after=[train.job_id], wait=False,
+)
+print(evaluation.job_id)
+```
+
+`Project.submit_pipeline(..., after=[...], wait=False)` also supports this;
+every submitted stage result exposes the same `job_id`. Local and cached
+results have `job_id=None`.
+
+Run references `${run:...}` still bind at submission time. For a chain whose
+upstream job has not completed yet, use predetermined artifact paths or the
+existing deferred `${run_lock:...}` resolver. Deferred preset lookup and
+per-stage scheduler profiles are the next planned extensions.
