@@ -84,6 +84,12 @@ def _is_project_frame(filename: str) -> bool:
     try:
         p = Path(filename).resolve()
         cwd = Path.cwd().resolve()
+        # A project-local virtualenv is inside cwd, but its interpreter and
+        # installed dependencies are still external frames.
+        for prefix in {sys.prefix, sys.base_prefix}:
+            root = Path(prefix).resolve()
+            if any(p.is_relative_to(root / lib) for lib in ("lib", "lib64", "Lib")):
+                return False
         return p.is_relative_to(cwd)
     except (OSError, ValueError, RuntimeError):
         return False

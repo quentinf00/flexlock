@@ -103,6 +103,14 @@ class TestFrameFiltering:
         assert not _is_project_frame('<string>')
         assert not _is_project_frame('')
 
+    def test_project_local_venv_is_external(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        prefix = tmp_path / ".venv"
+        monkeypatch.setattr(sys, "prefix", str(prefix))
+        assert _is_project_frame(str(tmp_path / "train.py"))
+        assert not _is_project_frame(str(prefix / "lib/python3.11/os.py"))
+        assert not _is_project_frame(str(prefix / "lib/python3.11/site-packages/pkg.py"))
+
 
 class TestFrameScoring:
     """Test frame scoring heuristic."""
