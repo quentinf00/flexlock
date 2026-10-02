@@ -359,3 +359,124 @@ def test_run_ref_in_sweep_items(down):
          "--sweep-target", ".", "--n_jobs", "2")
     assert "train_a_0000/" in load_record(results / "sw/i0")["config"]["train_dir"] + "/"
     assert load_record(results / "sw/i1")["config"]["train_dir"].endswith("train_a_0001")
+
+
+@pytest.fixture
+def held_scheduler(project, monkeypatch):
+    from unittest.mock import MagicMock
+
+    profile = project / "slurm.yaml"
+    profile.write_text("startup_lines: []\n")
+    backend = MagicMock()
+    backend.submit.return_value.job_id = "9001"
+    monkeypatch.setattr("flexlock.parallel.SlurmBackend", MagicMock(return_value=backend))
+    monkeypatch.setattr("flexlock.worker.time.sleep", lambda _: None)
+    return str(profile)
+
+
+@pytest.mark.parametrize("mode", ["single", "sweep", "pipeline", "cli"])
+@pytest.mark.parametrize("strict", [None, "strict", ",strict"])
+def test_chained_run_binds_on_worker_and_records_lineage(down, held_scheduler, mode, strict):
+    from flexlock.worker import worker_loop
+
+    proj = Project("prespkg.down.infer_a")
+    cfg = proj.get("main")
+    root = down / "results" / "chained"
+    cfg.save_dir = str(root / "stage")
+    if strict:
+        cfg.model = "${run:prespkg.xps.train_a,main," + strict + "}/results.json"
+    # No upstream run exists at submit time. Cache checks must not resolve it.
+    kwargs = dict(slurm_config=held_scheduler, after=[42], wait=False, smart_run=True)
+    if mode == "pipeline":
+        proj.submit_pipeline([[cfg]], sweep_root=str(root), **kwargs)
+    elif mode == "sweep":
+        proj.submit(cfg, sweep=[{"x": 10}, {"x": 11}], sweep_dir_suffix=True,
+                    sweep_root=str(root), **kwargs)
+    elif mode == "cli":
+        config = down / "downstream.yaml"
+        config.write_text(OmegaConf.to_yaml(cfg))
+        _run("-c", str(config), "--slurm-config", held_scheduler,
+             "--after", "42", "--print-job-id")
+        root = Path(cfg.save_dir)
+    else:
+        proj.submit(cfg, **kwargs)
+        root = Path(cfg.save_dir)
+
+    db = root / "run.lock.tasks.db"
+    _train()
+    _train()
+    newest = str(down / "results" / "train_a_0001")
+    worker_loop(instantiate, OmegaConf.create({"save_dir": str(root)}), None, db)
+    dirs = (
+        [root / "stage" / f"sweep_{i:04d}" for i in range(2)]
+        if mode == "sweep" else [Path(cfg.save_dir)]
+    )
+    for stage_dir in dirs:
+        record = load_record(stage_dir)
+        assert record["config"]["model"] == newest + "/results.json"
+        assert newest in record["config"]["_snapshot_"]["prevs"]
+        assert any(v.get("path") == newest for v in record["lineage"].values())
+        assert (stage_dir / "run.complete").exists()
+
+
+def test_chained_mixed_pinned_and_future_refs(down, held_scheduler):
+    from flexlock.worker import worker_loop
+    from flexlock.taskdb import get_all_tasks
+
+    _train()
+    cfg = Project("prespkg.down.infer_a").get("main")
+    root = down / "results" / "mixed"
+    cfg.save_dir = str(root)
+    cfg.model = "${run:xps.train_a,main,0000,strict}/old:${run:xps.train_a,main}/new"
+    Project().submit(cfg, slurm_config=held_scheduler, after=[42], wait=False)
+    pending = get_all_tasks(root / "run.lock.tasks.db")
+    assert "train_a_0000/old:${run:xps.train_a,main}/new" in str(pending)
+    _train()
+    worker_loop(instantiate, OmegaConf.create({"save_dir": str(root)}), None,
+                root / "run.lock.tasks.db")
+    record = load_record(root)
+    old = str(down / "results" / "train_a_0000")
+    new = str(down / "results" / "train_a_0001")
+    assert record["config"]["model"] == old + "/old:" + new + "/new"
+    assert record["config"]["_snapshot_"]["prevs"] == [old, new]
+
+
+def test_chained_nested_run_lock(down, held_scheduler):
+    from flexlock.worker import worker_loop
+
+    cfg = Project("prespkg.down.infer_a").get("main")
+    root = down / "results" / "nested"
+    cfg.save_dir = str(root)
+    cfg.model = "${run_lock:${run:xps.train_a,main},config.x}"
+    cfg._snapshot_ = {"data": {"upstream": "${run:xps.train_a,main}/results.json"}}
+    Project().submit(cfg, slurm_config=held_scheduler, after=[42], wait=False)
+    _train()
+    worker_loop(instantiate, OmegaConf.create({"save_dir": str(root)}), None,
+                root / "run.lock.tasks.db")
+    record = load_record(root)
+    assert record["config"]["model"] == 1
+    assert str(down / "results" / "train_a_0000") in record["config"]["_snapshot_"]["prevs"]
+
+
+def test_chained_save_dir_must_be_known(down, held_scheduler):
+    from flexlock.exceptions import FlexLockValidationError
+
+    cfg = Project("prespkg.down.infer_a").get("main")
+    cfg.save_dir = "${run:xps.train_a,main}/downstream"
+    with pytest.raises(FlexLockValidationError, match="save_dir must be concrete"):
+        Project().submit(cfg, slurm_config=held_scheduler, after=[42], wait=False)
+
+
+def test_chained_missing_upstream_fails_on_worker(down, held_scheduler):
+    from flexlock.worker import worker_loop
+    from flexlock.taskdb import get_failed_tasks
+
+    cfg = Project("prespkg.down.infer_a").get("main")
+    root = down / "results" / "missing"
+    cfg.save_dir = str(root)
+    Project().submit(cfg, slurm_config=held_scheduler, after=[42], wait=False)
+    worker_loop(instantiate, OmegaConf.create({"save_dir": str(root)}), None,
+                root / "run.lock.tasks.db")
+    assert len(get_failed_tasks(root / "run.lock.tasks.db")) == 1
+    assert not (root / "run.complete").exists()
+    assert "no complete run" in (root / "run.error").read_text()

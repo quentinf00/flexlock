@@ -100,6 +100,16 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
         # once, here at stage start on the worker, now that the per-item
         # override has been merged in. Everything else was already frozen
         # to concrete values at submit time.
+        from .presets import freeze_run_refs
+
+        # Bind chained preset references before resolving run_lock and before
+        # fingerprinting/snapshotting, so the selected runs become lineage.
+        raw_save_dir = OmegaConf.to_container(stage_cfg, resolve=False).get(
+            "save_dir", str(db_dir / f"task_{task_id}")
+        )
+        if isinstance(raw_save_dir, str) and "${" not in raw_save_dir:
+            task_save_dir = Path(raw_save_dir)
+        freeze_run_refs(stage_cfg)
         stage_cfg = resolve_deferred(stage_cfg)
 
         repos, data, prevs = extract_tracking_info(stage_cfg)

@@ -481,7 +481,52 @@ def _run_ref_nodes(cfg, out):
             out.append((cfg, key))
 
 
-def freeze_run_refs(cfg) -> list:
+def has_run_refs(cfg) -> bool:
+    """Whether a config still contains live run resolver calls."""
+    targets = []
+    _run_ref_nodes(cfg, targets)
+    return bool(targets)
+
+
+def validate_chained_paths(cfg):
+    """Queue paths and code repositories must be known before submission."""
+    from .exceptions import FlexLockValidationError
+    from .resolvers import defer_unpinned_runs
+
+    with defer_unpinned_runs():
+        for field in ("save_dir", "_target_", "_snapshot_.repos"):
+            value = OmegaConf.select(cfg, field)
+            if OmegaConf.is_config(value):
+                value = OmegaConf.to_container(value, resolve=True)
+            if "${run:" in str(value):
+                raise FlexLockValidationError(
+                    f"{field} must be concrete at submission when using after; "
+                    "use a pinned run reference or a fixed path."
+                )
+
+
+def controller_snapshot(cfg):
+    """Keep future inputs/lineage on the task, not the controller snapshot."""
+    from .resolvers import defer_unpinned_runs
+
+    if "_snapshot_" not in cfg:
+        return {}
+    if not has_run_refs(cfg):
+        return OmegaConf.to_container(cfg._snapshot_, resolve=True)
+    snap = {}
+    with defer_unpinned_runs():
+        for key in cfg._snapshot_:
+            if key in ("data", "prevs"):
+                continue
+            value = cfg._snapshot_[key]
+            snap[key] = (
+                OmegaConf.to_container(value, resolve=True)
+                if OmegaConf.is_config(value) else value
+            )
+    return snap
+
+
+def freeze_run_refs(cfg, *, defer_unpinned=False) -> list:
     """Resolve every ``${run:...}`` in ``cfg`` in place, now, and record lineage.
 
     Called at submit (and by ``--dump``/``--enqueue``) so the run that
@@ -490,8 +535,12 @@ def freeze_run_refs(cfg) -> list:
     in the same value stay frozen call strings, and unrelated interpolations
     (``${.save_dir}/logs``) stay live. The resolved run dirs are appended to
     ``_snapshot_.prevs`` so lineage records them. Returns those dirs.
+
+    With ``defer_unpinned=True``, only explicit pins resolve now; unpinned
+    calls (including ``strict``) remain self-contained interpolations for
+    the worker. Pinned and worker-time bindings both record lineage.
     """
-    from .resolvers import _real_resolvers, _stubbed
+    from .resolvers import _real_resolvers, _stubbed, defer_unpinned_runs
 
     if not isinstance(cfg, DictConfig):
         return []
@@ -500,11 +549,11 @@ def freeze_run_refs(cfg) -> list:
     if not targets:
         return []
     others = tuple(name for name in _real_resolvers() if name != "run")
-    with recording_run_refs() as resolved, _stubbed(others):
+    with recording_run_refs() as resolved, _stubbed(others), defer_unpinned_runs(defer_unpinned):
         for parent, key in targets:
             parent[key] = parent[key]
     if resolved:
-        with open_dict(cfg):
+        with open_dict(cfg), defer_unpinned_runs(defer_unpinned):
             if cfg.get("_snapshot_") is None:
                 cfg["_snapshot_"] = {}
             prevs = list(cfg._snapshot_.get("prevs") or [])

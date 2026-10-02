@@ -353,7 +353,7 @@ chains in sweeps: see branch `pipeline-tasks`); `--after` chains *across jobs*.
   today it is only logged (`parallel.py`), so `$(...)` can't capture it.
 - Python: `Project.submit(..., after=[...])`; the result exposes the job id.
 
-### 6b. Deferred `${run:}` under `--after`
+### 6b. Deferred `${run:}` under `--after` (implemented on `hpc-chaining`)
 
 Phase 3 binds `${run:}` at submit time, so in a chain submitted at once the
 upstream run doesn't exist yet ("no run"). When `--after` is set, leave
@@ -382,7 +382,7 @@ with `cfg_h2.init_ckpt_path = "${run:b13_intense_p0.cfg_h1}/checkpoints/best_mod
 ### Order
 
 1. Merge `pipeline-tasks` and `env-fingerprint` (done, released in 0.9.0).
-2. 6a (implemented on `hpc-chaining`). 3. 6b (planned). 4. 6c (planned).
+2. 6a (implemented on `hpc-chaining`). 3. 6b (implemented on `hpc-chaining`). 4. 6c (planned).
 5. Project side (not FlexLock): port the eval/score scripts to stages
    (`p0_rescore.py`'s `RUNS` × product table → presets or a sweep).
 

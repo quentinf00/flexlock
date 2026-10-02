@@ -254,9 +254,12 @@ def collect_task_repos(cfg, tasks, task_to=None) -> Dict:
             continue
         seen.add(key)
         try:
-            task_repos, _, _ = extract_tracking_info(
-                merge_task_into_cfg(cfg, task, target_path)
-            )
+            merged = merge_task_into_cfg(cfg, task, target_path)
+            # Only repositories belong in the master's code snapshot. Future
+            # task inputs and lineage are resolved and recorded by the worker.
+            from .presets import controller_snapshot
+            merged["_snapshot_"] = controller_snapshot(merged)
+            task_repos, _, _ = extract_tracking_info(merged)
         except Exception as exc:
             logger.debug(f"Could not extract repos from task {target}: {exc}")
             continue

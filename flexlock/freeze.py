@@ -34,7 +34,7 @@ from omegaconf import OmegaConf, DictConfig, ListConfig
 _UNRESOLVED = object()
 
 
-def freeze_deferred(cfg: "DictConfig | ListConfig") -> "DictConfig | ListConfig":
+def freeze_deferred(cfg: "DictConfig | ListConfig", *, defer_runs=False) -> "DictConfig | ListConfig":
     """Eager-resolve every interpolation except the deferred resolvers.
 
     Deep-copies ``cfg`` (detaching it from any parent), then resolves it under
@@ -44,13 +44,17 @@ def freeze_deferred(cfg: "DictConfig | ListConfig") -> "DictConfig | ListConfig"
     self-contained call strings that fire later at stage start. The result is
     a plain config of concrete values plus frozen deferred call strings, safe
     to serialize with ``resolve=False``.
+
+    ``defer_runs=True`` additionally preserves run calls for scheduler chains;
+    call ``freeze_run_refs(..., defer_unpinned=True)`` first to bind pins and
+    record their lineage.
     """
     from .resolvers import deferred_stubbed
 
     detached = OmegaConf.create(
         OmegaConf.to_container(cfg, resolve=False, throw_on_missing=False)
     )
-    with deferred_stubbed():
+    with deferred_stubbed(defer_runs=defer_runs):
         OmegaConf.resolve(detached)
     return detached
 

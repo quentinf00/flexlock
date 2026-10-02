@@ -157,8 +157,8 @@ def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
 def run_resolver(address, select=None, pin=None, strict=None) -> str:
     """``${run:<preset>[,<select>[,<pin>[,strict]]]}`` → newest complete run dir.
 
-    See :func:`flexlock.presets.resolve_run`. Resolved once at submit time by
-    :func:`flexlock.presets.freeze_run_refs`, so the choice is recorded.
+    See :func:`flexlock.presets.resolve_run`. Bound by ``freeze_run_refs`` at
+    submit, or at worker stage start for unpinned scheduler-chain references.
     """
     from .presets import resolve_run
 
@@ -232,13 +232,33 @@ def _stubbed(names):
             OmegaConf.register_new_resolver(name, func, replace=True, **opts)
 
 
-def deferred_stubbed():
+@contextmanager
+def defer_unpinned_runs(enabled=True):
+    """Preserve unpinned run calls while still resolving explicit pins."""
+    if not enabled:
+        yield
+        return
+
+    def resolver(*args):
+        pin = args[2] if len(args) > 2 else None
+        if pin is not None and str(pin).strip().lower() not in ("", "strict"):
+            return run_resolver(*args)
+        return "${run:" + ",".join(_emit_stub_arg(a) for a in args) + "}"
+
+    OmegaConf.register_new_resolver("run", resolver, replace=True, use_cache=False)
+    try:
+        yield
+    finally:
+        OmegaConf.register_new_resolver("run", run_resolver, replace=True, use_cache=False)
+
+
+def deferred_stubbed(defer_runs=False):
     """Stub only the deferred resolvers (``run_lock``/``latest``).
 
     Used by the merge-before-resolve sweep freeze, where ``vinc``/``now`` should
     still fire (they are being retired via ``save_dir_policy``).
     """
-    return _stubbed(DEFERRED_RESOLVERS)
+    return _stubbed(DEFERRED_RESOLVERS + (("run",) if defer_runs else ()))
 
 
 def frozen_resolvers():

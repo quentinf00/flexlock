@@ -911,6 +911,9 @@ These are file-based equivalents of `-o`/`-O`. Use them when overrides are too m
 
 - `--after JOBID[:JOBID...]`: require successful completion of these jobs before
   starting the Slurm/PBS submission. It also appears in `--dry-run` scripts.
+  Unpinned `${run:...}` references bind at worker stage start and record lineage;
+  explicit pins still bind at submission. Output paths and repositories must
+  be known at submission.
 - `--print-job-id`: submit without waiting and print only the new scheduler ID
   on stdout. Valid for single runs, sweeps, and composite pipelines; incompatible
   with previews and `--enqueue`. Cached/completed submissions cannot emit a new ID.

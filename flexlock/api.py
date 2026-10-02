@@ -17,7 +17,12 @@ from .utils import (
     select_and_freeze_root_refs,
 )
 from .freeze import freeze_deferred
-from .presets import freeze_run_refs
+from .presets import (
+    controller_snapshot,
+    freeze_run_refs,
+    has_run_refs,
+    validate_chained_paths,
+)
 from .snapshot import snapshot, RunTracker, record_code_drift
 from .run_record import RunRecord
 from .fingerprint import fingerprint as compute_fingerprint
@@ -578,6 +583,7 @@ class Project:
             after: Job IDs (sequence or colon-separated string) that must finish
                 successfully before this Slurm/PBS job starts. Requires an HPC
                 backend. Submitted results expose the scheduler ID as ``job_id``.
+                Unpinned run references bind on the worker; pins bind at submit.
             sweep_dir_suffix: If True, append ``_sweep_{i:04d}`` to each
                 sweep item's ``save_dir``.
             match_include / match_exclude: Override git path patterns used
@@ -660,9 +666,15 @@ class Project:
             # "@name" sweep values swap in a named config (replace, not merge).
             sweep = [expand_swaps(item, self.override_module) for item in sweep]
 
-        # Fix which run each ${run:...} means now, at submit (a no-op when the
-        # CLI already did it); records the resolved runs as lineage.
-        freeze_run_refs(config)
+        # Bind run references and record lineage; scheduler chains keep
+        # unpinned calls for the worker, where their upstreams are complete.
+        freeze_run_refs(config, defer_unpinned=bool(after))
+        if after:
+            if not sweep:
+                validate_chained_paths(config)
+                config = freeze_deferred(config, defer_runs=True)
+            if has_run_refs(config):
+                smart_run = False
 
         # Bake save_dir to a concrete string exactly once. Done here (not
         # lazily during config reads) so run.lock and run.complete always land
@@ -684,7 +696,8 @@ class Project:
                     # Mirror _submit_sweep exactly (merge → freeze) so the
                     # preview matches what will actually execute.
                     item_cfg = merge_task_into_cfg(config, override, sweep_target)
-                    item_cfg = freeze_deferred(item_cfg)
+                    freeze_run_refs(item_cfg, defer_unpinned=bool(after))
+                    item_cfg = freeze_deferred(item_cfg, defer_runs=bool(after))
                     print(f"# --- sweep item {i} ---")
                     _print_compiled_config(item_cfg)
             else:
@@ -795,9 +808,7 @@ class Project:
             # executor_cfg below is re-rooted, so relative refs (${...key})
             # inside _snapshot_ would no longer reach the stage node.
             if "_snapshot_" in config:
-                snapshot_resolved = OmegaConf.to_container(
-                    config._snapshot_, resolve=True
-                )
+                snapshot_resolved = controller_snapshot(config)
             else:
                 snapshot_resolved = {}
             executor_cfg = OmegaConf.create(
@@ -1320,6 +1331,7 @@ class Project:
                 skeleton results.
             after: Scheduler jobs that must finish successfully before this job
                 starts. Each submitted stage result exposes the same ``job_id``.
+                Unpinned run references bind at stage start; pins bind at submit.
             sweep_root: Override the master root hosting the task DB; also
                 opts out of the containment validation.
             tag / note / timeout: As in :meth:`submit`.
@@ -1353,6 +1365,20 @@ class Project:
         after = validate_after(after, slurm_config, pbs_config)
         if not items:
             return []
+
+        if after:
+            compiled = []
+            for item in items:
+                stages = []
+                for stage in item:
+                    stage = OmegaConf.create(OmegaConf.to_container(stage, resolve=False))
+                    freeze_run_refs(stage, defer_unpinned=True)
+                    validate_chained_paths(stage)
+                    stages.append(freeze_deferred(stage, defer_runs=True))
+                compiled.append(stages)
+            items = compiled
+            if any(has_run_refs(stage) for item in items for stage in item):
+                smart_run = False
 
         validate_policy(save_dir_policy)
         if save_dir_policy in NAMING_POLICIES:
@@ -1712,8 +1738,10 @@ class Project:
             # while preserving deferred resolvers (run_lock/latest) as call
             # strings so they fire once, on the worker, at stage start.
             # ${run:} per item first, so its lineage lands in the item.
-            freeze_run_refs(sweep_cfg)
-            sweep_cfg = freeze_deferred(sweep_cfg)
+            freeze_run_refs(sweep_cfg, defer_unpinned=bool(after))
+            if after:
+                validate_chained_paths(sweep_cfg)
+            sweep_cfg = freeze_deferred(sweep_cfg, defer_runs=bool(after))
             if dir_suffix and "save_dir" in sweep_cfg:
                 # Nest each item under the base save_dir (the sweep root) so
                 # tasks DB and lineage markers stay inside the same tree.
@@ -1740,7 +1768,7 @@ class Project:
 
         # Check each sweep config for cached results
         for i, sweep_cfg in merged_items:
-            if smart_run:
+            if smart_run and not has_run_refs(sweep_cfg):
                 match_dir = self._find_matching_run(
                     sweep_cfg, search_dirs, match_include, match_exclude
                 )
@@ -1819,9 +1847,7 @@ class Project:
                 # Resolve _snapshot_ while base_config still has its parent chain
                 # so that OmegaConf interpolations (e.g. ${...key}) can resolve
                 if "_snapshot_" in base_config:
-                    snapshot_resolved = OmegaConf.to_container(
-                        base_config._snapshot_, resolve=True
-                    )
+                    snapshot_resolved = controller_snapshot(base_config)
                 else:
                     snapshot_resolved = {}
 

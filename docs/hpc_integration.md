@@ -878,6 +878,14 @@ The dependency appears before shell commands in the rendered script and in
 `--dry-run` output. Use either `--after` or a dependency directive in the
 profile's `startup_lines`; specifying both raises an error.
 
+With `--after`, unpinned `${run:preset,select}` references bind at worker stage
+start, after the scheduler dependency succeeds, and record the chosen upstream
+run in lineage. `strict` checks still apply at that point. Explicit pins such
+as `${run:preset,select,0005}` bind at submission. Keep output directories,
+targets, and code repository paths concrete at submission. Automatic cache
+matching is skipped while run references remain deferred; an explicit `skip`
+policy still resumes completed outputs.
+
 `--print-job-id` submits without waiting and prints only the scheduler ID on
 stdout, so shell command substitution can capture it. It works for single runs,
 sweeps, and composite pipelines; the whole submitted collection has one job ID.
@@ -906,7 +914,6 @@ print(evaluation.job_id)
 every submitted stage result exposes the same `job_id`. Local and cached
 results have `job_id=None`.
 
-Run references `${run:...}` still bind at submission time. For a chain whose
-upstream job has not completed yet, use predetermined artifact paths or the
-existing deferred `${run_lock:...}` resolver. Deferred preset lookup and
-per-stage scheduler profiles are the next planned extensions.
+Use `${run:myproject.configs,train}/checkpoints/best.pt` in the downstream
+config to locate the upstream artifact when the dependent worker starts.
+Per-stage scheduler profiles are the next planned extension.

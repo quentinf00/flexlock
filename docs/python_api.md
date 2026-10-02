@@ -230,7 +230,8 @@ When the project was built from an import string
 `flexlock runs` / `flexlock presets`. It never affects caching.
 
 `${run:...}` references are kept as call strings by `get` and resolved by
-`submit`, which records the chosen run in the config and its lineage.
+`submit`, which records the chosen run in the config and its lineage. With
+`after`, unpinned references instead bind at worker stage start.
 
 ```python
 # Get config by key
@@ -922,3 +923,12 @@ job dependencies with Slurm or PBS. `after` may also be a colon-separated
 string. Returned `ExecutionResult.job_id` is the newly submitted scheduler ID;
 all submitted sweep items or pipeline stages share that ID. It is `None` for
 local or cached results.
+
+With `after`, unpinned `${run:preset,select}` references (including `strict`
+references) bind when each worker stage starts. The selected run directories
+are recorded in `_snapshot_.prevs` and lineage before fingerprinting. Explicit
+pins such as `${run:preset,select,0005}` still bind at submission. Automatic
+controller cache matching is skipped for configs with deferred run references;
+explicit `save_dir_policy="skip"` retains its resume behavior. `save_dir`,
+`_target_`, and repository paths must be known at submission; use fixed paths
+or pinned references there. Without `after`, run references bind at submission.

@@ -416,9 +416,11 @@ class FlexLockRunner:
             _b.merge_with(node_cfg)
             node_cfg.merge_with(_b)
 
-        node_cfg = self._prepare_node(node_cfg, name=name or select or "exp")
+        node_cfg = self._prepare_node(
+            node_cfg, name=name or select or "exp", defer_runs=bool(args.after)
+        )
         self._attach_preset(args, node_cfg, select)
-        freeze_run_refs(node_cfg)
+        freeze_run_refs(node_cfg, defer_unpinned=bool(args.after))
         return node_cfg
 
     def _build_pipeline_items(self, args, root_cfg, base_cfg, selects):
@@ -452,7 +454,7 @@ class FlexLockRunner:
             stage_cfgs = []
             for sel in selects:
                 stage_cfg = self._build_node_cfg(args, merged_root, base_cfg, sel)
-                stage_cfg = freeze_deferred(stage_cfg)
+                stage_cfg = freeze_deferred(stage_cfg, defer_runs=bool(args.after))
                 stage_cfgs.append(stage_cfg)
             items.append(stage_cfgs)
         return items, selects
@@ -594,7 +596,8 @@ class FlexLockRunner:
                 ])
             else:
                 merged = merge_task_into_cfg(node_cfg, t, args.sweep_target)
-                items.append([freeze_deferred(merged)])
+                freeze_run_refs(merged, defer_unpinned=bool(args.after))
+                items.append([freeze_deferred(merged, defer_runs=bool(args.after))])
 
         # --check: preflight-resolve every stage config, then exit.
         if args.check:
@@ -656,13 +659,19 @@ class FlexLockRunner:
             out.append(raws[0] if len(raws) == 1 else raws)
         return out
 
-    def _prepare_node(self, cfg, name="exp"):
+    def _prepare_node(self, cfg, name="exp", defer_runs=False):
         """Ensure ``cfg`` has a ``save_dir`` — fall back to ``outputs/<name>/<timestamp>``."""
-        if "save_dir" not in cfg or cfg.save_dir is None:
-            ts = datetime.now().strftime(config.TIMESTAMP_FORMAT)
-            with open_dict(cfg):
-                cfg.save_dir = str(Path("outputs") / name / ts)
-        cfg.save_dir = cfg.save_dir  # Force interpolation resolution
+        from .resolvers import defer_unpinned_runs
+        from .presets import validate_chained_paths
+
+        with defer_unpinned_runs(defer_runs):
+            if "save_dir" not in cfg or cfg.save_dir is None:
+                ts = datetime.now().strftime(config.TIMESTAMP_FORMAT)
+                with open_dict(cfg):
+                    cfg.save_dir = str(Path("outputs") / name / ts)
+            cfg.save_dir = cfg.save_dir  # Force interpolation resolution
+        if defer_runs:
+            validate_chained_paths(cfg)
         return cfg
 
     def run(self, cli_args=None, base_cfg=None):
@@ -741,11 +750,11 @@ class FlexLockRunner:
             node_cfg.merge_with(_b)
 
         # Inject a default save_dir if the selected node doesn't carry one.
-        node_cfg = self._prepare_node(node_cfg)
+        node_cfg = self._prepare_node(node_cfg, defer_runs=bool(args.after))
         self._attach_preset(args, node_cfg, select)
-        # Resolve ${run:...} now so --dump/--enqueue/--edit-config show (and
-        # queue) the concrete run, and a queued job can't pick a newer one.
-        freeze_run_refs(node_cfg)
+        # Bind ordinary/pinned run references now; --after keeps unpinned
+        # references for the worker once the scheduler dependency completes.
+        freeze_run_refs(node_cfg, defer_unpinned=bool(args.after))
 
         # --edit-config / -e: open compiled config in $EDITOR before running.
         if args.edit_config:
