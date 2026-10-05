@@ -19,6 +19,10 @@ class FlexLockExecutionError(FlexLockError):
     pass
 
 
+class WorkerExecutionError(FlexLockExecutionError):
+    """Raised after a worker drains its queue and persists failed task receipts."""
+
+
 class FlexLockSnapshotError(FlexLockError):
     """Raised when there is an error creating or loading snapshots."""
 

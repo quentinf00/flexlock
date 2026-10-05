@@ -917,3 +917,18 @@ results have `job_id=None`.
 Use `${run:myproject.configs,train}/checkpoints/best.pt` in the downstream
 config to locate the upstream artifact when the dependent worker starts.
 Per-stage scheduler profiles are the next planned extension.
+
+### Failures and scheduler dependencies
+
+A worker persists all task outcomes, continues independent items, and exits
+nonzero if any task it executed failed. A composite failure aborts the remaining
+stages in that item; typed results distinguish the failing stage (`FAILED`)
+from unreached stages (`BLOCKED`). Errors remain in the task DB and `run.error`.
+This nonzero process exit lets Slurm/PBS `afterok` dependencies block consumers.
+The synchronous runner exits nonzero before unwrapping failed results.
+
+`--print-job-id` reports scheduler acceptance only. It does not wait for or claim
+successful computation. Python submit methods continue returning typed results;
+use `raise_on_failure()` after waiting. Required-output contracts are checked
+on workers before completion and when completed tasks are reused; see the
+[usage guide](usage_guide.md#required-outputs-and-reuse).

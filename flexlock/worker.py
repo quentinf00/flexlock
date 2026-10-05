@@ -31,6 +31,7 @@ from flexlock import config as _config
 from flexlock.git_utils import code_drift
 from flexlock.presets import link_run
 from flexlock.record import is_task_record, materialize, read_lock
+from .exceptions import WorkerExecutionError
 
 
 def _current_job_id() -> str | None:
@@ -176,7 +177,6 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
         marker_file.write_text(json.dumps({"db": db_str, "task_id": task_id}, indent=2))
 
         result = func(stage_cfg)
-        logger.info(f"Task successful: {stage_cfg}")
 
         record = RunRecord(task_save_dir)
         try:
@@ -184,6 +184,10 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
         except Exception as e:
             logger.warning(f"Could not write results.json at {task_save_dir}: {e}")
 
+        from .outputs import validate_outputs
+
+        validate_outputs(stage_cfg, completing=True)
+        logger.info(f"Task successful: {stage_cfg}")
         record.mark_complete(result=result)
         link_run(task_save_dir, stage_cfg)
         # Record this sweep task in the project-wide index so it's a
@@ -252,6 +256,14 @@ def _run_composite(func, task, db_path, db_dir, master_lock, node, task_id, fini
             and save_dir is not None
             and (Path(save_dir) / "run.complete").exists()
         ):
+            from .outputs import validate_outputs
+
+            try:
+                validate_outputs(stage_cfg, save_dir)
+            except Exception as exc:
+                RunRecord(save_dir).write_error(exc, task_id=task_id, node=node, stage=label)
+                finished.append(dict(task=task, error=f"[{label}] {traceback.format_exc()}"))
+                return
             logger.info(f"[{label}] {save_dir} already complete — skipping")
             stage_results.append(
                 {
@@ -324,6 +336,7 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
     # controller's orphan reconcile (or --reclaim) recovers them, same as a
     # death mid-task today.
     claim_batch = max(1, _config.CLAIM_BATCH)
+    failures = 0
 
     while True:
         batch = claim_next_tasks(
@@ -353,6 +366,13 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
                 )
         finally:
             finish_tasks(db_path, finished)
+            failures += sum(bool(item.get("error")) for item in finished)
+
+    if failures:
+        raise WorkerExecutionError(
+            f"Worker recorded {failures} failed task(s) in {db_path}; "
+            "see task errors and run.error for stage details."
+        )
 
 
 _master_cache: dict = {}

@@ -88,6 +88,11 @@ Examples:
     if n_pending == 0:
         logger.info("No pending tasks in DB — nothing to do."
                     + (f" (tags={tags})" if tags else ""))
+        from flexlock.taskdb import get_status_counts
+
+        counts = get_status_counts(db_path, tags=tags)
+        if counts.get("failed", 0) or counts.get("interrupted", 0):
+            sys.exit(1)
         return
 
     # Tasks stored in the DB are complete configs; pass an empty base cfg and
@@ -137,6 +142,8 @@ Examples:
                 p.start()
             for p in procs:
                 p.join()
+            if any(p.exitcode != 0 for p in procs):
+                sys.exit(1)
 
 
 if __name__ == "__main__":

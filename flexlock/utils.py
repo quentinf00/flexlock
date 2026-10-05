@@ -824,7 +824,7 @@ def instantiate(config, *args, **kwargs):
     # config is a dict — never mutate the caller's object. Copy before
     # stripping the tracking-only "_snapshot_"/"_preset_" keys so the
     # original keeps them.
-    reserved = [k for k in ("_snapshot_", "_preset_") if k in config]
+    reserved = [k for k in ("_snapshot_", "_preset_", "_outputs_") if k in config]
     if reserved:
         if isinstance(config, DictConfig):
             config = config.copy()

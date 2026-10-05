@@ -104,6 +104,7 @@ class RunRecord:
         swallowed, and the caller re-raises the user's exception unchanged.
         """
         try:
+            self.complete_path.unlink(missing_ok=True)
             payload = {
                 "version": ERROR_VERSION,
                 "exc_type": type(exc).__name__,

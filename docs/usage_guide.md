@@ -1253,6 +1253,41 @@ use `myproject.defaults.defaults` or `myproject/defaults.py`.
 
 ---
 
+## Required outputs and reuse
+
+Declare outputs on each runnable stage. Paths are relative to its `save_dir`;
+absolute paths are also accepted.
+
+```yaml
+_outputs_:
+  predictions:
+    path: predictions.json
+    sha256: false
+    validator:
+      _target_: myproject.validation.check_predictions
+      expected_count: 32
+```
+
+The validator receives `path` plus its declared arguments. It should raise with
+a useful explanation or return `False` when a schema, count or coverage check
+fails. Other return values indicate success. A list of required paths is the
+short form: `_outputs_: [predictions.json, metrics.json]`.
+
+FlexLock validates outputs before writing `run.complete` and before cache,
+skip, pipeline-resume or completed-task-DB reuse. A failure rejects reuse;
+it does not silently rerun or delete scientific outputs. Worker failures retain
+`run.error` and a failed task receipt, and abort downstream stages in that item.
+Projects must declare the outputs they require; legacy configs without an
+output contract keep their existing behavior.
+
+Existence checks do not hash contents. Set `sha256: true` for individual files
+that need content verification; `run.outputs.json` stores the completion hash.
+Reuse requires that baseline and recomputes the hash. Large directories should
+use project validators or a small manifest file rather than whole-tree hashing.
+Contracts remain in the recorded configuration and fingerprint but are not
+passed to the stage function. These checks describe artifact health; scientific
+acceptance remains a separate project decision.
+
 ## See also
 
 - [CLI Reference](./cli_reference.md)

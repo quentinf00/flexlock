@@ -351,14 +351,14 @@ def test_run_ref_in_sweep_items(down):
     results = down / "results"
     sweep = results / "sweep.yaml"
     sweep.write_text(
-        f"- {{train_dir: '${{run:xps.train_a,main,0000}}', "
+        f"- {{model: '${{run:xps.train_a,main,0000}}/results.json', "
         f"save_dir: {results}/sw/i0}}\n"
-        f"- {{train_dir: '${{run:xps.train_a,main}}', save_dir: {results}/sw/i1}}\n"
+        f"- {{model: '${{run:xps.train_a,main}}/results.json', save_dir: {results}/sw/i1}}\n"
     )
     _run("-d", "prespkg.down.infer_a", "-s", "main", "--sweep-file", str(sweep),
          "--sweep-target", ".", "--n_jobs", "2")
-    assert "train_a_0000/" in load_record(results / "sw/i0")["config"]["train_dir"] + "/"
-    assert load_record(results / "sw/i1")["config"]["train_dir"].endswith("train_a_0001")
+    assert "train_a_0000/" in load_record(results / "sw/i0")["config"]["model"]
+    assert load_record(results / "sw/i1")["config"]["model"].endswith("train_a_0001/results.json")
 
 
 @pytest.fixture
@@ -475,8 +475,10 @@ def test_chained_missing_upstream_fails_on_worker(down, held_scheduler):
     root = down / "results" / "missing"
     cfg.save_dir = str(root)
     Project().submit(cfg, slurm_config=held_scheduler, after=[42], wait=False)
-    worker_loop(instantiate, OmegaConf.create({"save_dir": str(root)}), None,
-                root / "run.lock.tasks.db")
+    from flexlock.exceptions import WorkerExecutionError
+    with pytest.raises(WorkerExecutionError, match="1 failed task"):
+        worker_loop(instantiate, OmegaConf.create({"save_dir": str(root)}), None,
+                    root / "run.lock.tasks.db")
     assert len(get_failed_tasks(root / "run.lock.tasks.db")) == 1
     assert not (root / "run.complete").exists()
     assert "no complete run" in (root / "run.error").read_text()

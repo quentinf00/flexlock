@@ -135,7 +135,9 @@ def test_composite_failure_aborts_remaining_stages(tmp_path):
     db_path = tmp_path / "run.lock.tasks.db"
     queue_tasks(db_path, [task])
 
-    _run_worker(db_path)
+    from flexlock.exceptions import WorkerExecutionError
+    with pytest.raises(WorkerExecutionError, match="1 failed task"):
+        _run_worker(db_path)
 
     # Stage a completed; b failed; c never ran.
     assert _read_order(root) == ["a", "b"]
@@ -335,7 +337,7 @@ def test_submit_pipeline_failure_result_shape(tmp_path):
     results = Project().submit_pipeline([item])
 
     statuses = [r.status for r in results[0]]
-    assert statuses == ["SUCCESS", "FAILED", "SUBMITTED"]
+    assert statuses == ["SUCCESS", "FAILED", "BLOCKED"]
     assert "[stage 2/3 mid]" in results[0][1].error
 
 

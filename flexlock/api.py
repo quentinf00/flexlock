@@ -81,6 +81,7 @@ class Status(str, Enum):
     INTERRUPTED = "INTERRUPTED"
     SUBMITTED = "SUBMITTED"
     SKIPPED = "SKIPPED"
+    BLOCKED = "BLOCKED"
 
     def __str__(self) -> str:
         return self.value
@@ -173,7 +174,7 @@ class ExecutionResult:
 
     def raise_on_failure(self) -> "ExecutionResult":
         """Raise if the run did not succeed; return self otherwise (chainable)."""
-        if self.status in (Status.FAILED, Status.INTERRUPTED):
+        if self.status in (Status.FAILED, Status.INTERRUPTED, Status.BLOCKED):
             raise FlexLockExecutionError(
                 f"Run at {self.save_dir} ended {self.status}: {self.error}"
             )
@@ -438,7 +439,12 @@ class Project:
         Returns:
             True if matching run exists, False otherwise
         """
-        return self._find_matching_run(cfg, search_dirs) is not None
+        match = self._find_matching_run(cfg, search_dirs)
+        if match is not None:
+            from .outputs import validate_outputs
+
+            validate_outputs(cfg, match)
+        return match is not None
 
     def get_result(
         self, cfg: DictConfig, search_dirs: List[str] = None
@@ -465,6 +471,9 @@ class Project:
 
     def _load_cached_result(self, match_dir: Path, cfg: DictConfig) -> ExecutionResult:
         """Build a CACHED ExecutionResult from an existing run directory."""
+        from .outputs import validate_outputs
+
+        validate_outputs(cfg, match_dir)
         result_data = None
 
         # Try results.json
@@ -959,6 +968,13 @@ class Project:
                         f"Could not save results to {record.results_path}: {e}"
                     )
                 record_code_drift(save_dir)
+                from .outputs import validate_outputs
+
+                try:
+                    validate_outputs(config, completing=True)
+                except Exception as exc:
+                    record.write_error(exc)
+                    raise
                 record.mark_complete(result=result)
                 from .presets import link_run
 
@@ -1228,7 +1244,8 @@ class Project:
         classified from its dir: ``run.complete`` → SUCCESS (a stage that ran
         before a later failure stays SUCCESS), the failing stage (``run.error``
         present on a failed row) → FAILED with the row's error, unreached
-        stages → SUBMITTED (or INTERRUPTED when the row was interrupted).
+        stages → BLOCKED on failure (or INTERRUPTED on interruption), otherwise
+        SUBMITTED while execution is still pending.
         """
         from .taskdb import get_all_tasks, _hash_task
 
@@ -1271,6 +1288,13 @@ class Project:
                             status=Status.INTERRUPTED,
                             cfg=stage_cfg,
                             job_id=job_id,
+                        )
+                    )
+                elif db_status == "failed":
+                    stage_results.append(
+                        ExecutionResult(
+                            save_dir=str(sd), status=Status.BLOCKED, cfg=stage_cfg,
+                            job_id=job_id, error=row.get("error"),
                         )
                     )
                 else:
@@ -1425,6 +1449,14 @@ class Project:
         # Stage-level resume on the worker: requested via smart_run/check-exists
         # or the 'skip' guard policy.
         skip_complete = bool(smart_run) or item_policy == "skip"
+        if skip_complete:
+            from .outputs import validate_outputs
+
+            for item in items:
+                for stage_cfg in item:
+                    sd = stage_cfg.get("save_dir")
+                    if sd and (Path(sd) / "run.complete").exists():
+                        validate_outputs(stage_cfg, sd)
 
         # Driver-side cache check: items whose every stage cache-hits return
         # CACHED without queueing. Partial hits queue with stage-level resume.

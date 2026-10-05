@@ -16,6 +16,7 @@ from typing import Any, List
 from flexlock.snapshot import snapshot
 from flexlock.utils import extract_tracking_info, collect_task_repos
 from flexlock import config
+from flexlock.exceptions import WorkerExecutionError
 
 
 def load_tasks(tasks: str, tasks_key: str, cfg: DictConfig) -> List[Any]:
@@ -166,8 +167,13 @@ class ParallelExecutor:
     def _run_locally(self):
         num_workers = self.local_workers or self.n_jobs
         if num_workers == 1 and not self.isolated:
-            worker_loop(self.func, self.cfg, self.task_target, self.db_path,
-                        tags=[self.tag])
+            try:
+                worker_loop(self.func, self.cfg, self.task_target, self.db_path,
+                            tags=[self.tag])
+            except WorkerExecutionError:
+                # The controller returns typed results from the persisted DB;
+                # standalone/scheduler workers let this exception exit nonzero.
+                pass
         else:
             # Use 'spawn' instead of the default 'fork' to avoid inheriting
             # GPU/CUDA contexts and threading locks from the parent process.
@@ -325,12 +331,33 @@ class ParallelExecutor:
             bool: True if tasks completed successfully (or not waiting), False on timeout/failure
         """
         from flexlock.taskdb import dump_to_yaml
+        from flexlock.taskdb import get_all_tasks
+        from flexlock.outputs import validate_outputs
+        from flexlock.utils import merge_task_into_cfg
+
+        # Already-done DB rows are reused without being claimed by a worker.
+        # Validate their resolved receipts before taking that shortcut.
+        for row in get_all_tasks(self.db_path, status="done", tags=[self.tag]):
+            receipt = row.get("snapshot") or {}
+            if "stages" in receipt:
+                stages = [s["config"] for s in receipt["stages"].values()]
+            elif "config" in receipt:
+                stages = [receipt["config"]]
+            elif "_stages_" in row["task"]:
+                stages = row["task"]["_stages_"]
+            else:
+                stages = [merge_task_into_cfg(self.cfg, row["task"], self.task_target)]
+            for stage in stages:
+                validate_outputs(OmegaConf.create(stage))
 
         if pending_count(self.db_path, tags=[self.tag]) == 0:
             logger.info("All tasks already completed.")
             dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks",
                          tags=[self.tag])
-            return True
+            from flexlock.taskdb import get_status_counts
+
+            counts = get_status_counts(self.db_path, tags=[self.tag])
+            return not any(counts.get(s, 0) for s in ("failed", "interrupted", "running"))
 
         # 1. Prepare Root Directory
         root_dir = Path(self.cfg.save_dir)  # e.g., outputs/sweep_name

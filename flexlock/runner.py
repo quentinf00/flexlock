@@ -31,6 +31,17 @@ def _is_composite_item(task) -> bool:
     return isinstance(task, (dict, DictConfig)) and "_stages_" in task
 
 
+def _raise_on_failure(outcome):
+    """Check execution envelopes before compatibility payload unwrapping."""
+    from .api import ExecutionResult
+
+    if isinstance(outcome, ExecutionResult):
+        outcome.raise_on_failure()
+    elif isinstance(outcome, list):
+        for item in outcome:
+            _raise_on_failure(item)
+
+
 class FlexLockRunner:
     def __init__(self):
         self.parser = self._build_parser()
@@ -555,6 +566,7 @@ class FlexLockRunner:
         )
 
         self._report_job_id(args, results)
+        _raise_on_failure(results)
         if results is None:  # dry_run
             return None
 
@@ -650,6 +662,7 @@ class FlexLockRunner:
             force=getattr(args, "force", False),
         )
         self._report_job_id(args, results)
+        _raise_on_failure(results)
         if results is None:  # dry_run
             return None
 
@@ -894,6 +907,7 @@ class FlexLockRunner:
         # raw return value (and is consumed by @flexcli as such). Unwrap the
         # ExecutionResult so existing callers keep working.
         self._report_job_id(args, outcome)
+        _raise_on_failure(outcome)
         if outcome is None:
             return None
         if isinstance(outcome, list):
