@@ -4,12 +4,15 @@ Date: 2026-10-06. Status: accepted direction and staged implementation plan.
 M0's root-anchor CLI fix is implemented and validated. Review drafts and executable
 examples are available. M1's three reviewed record corrections and an explicit
 future-input snapshot correction are implemented in the isolated branch, validated
-by 202 compatibility cases and a 33-case focused executor follow-up. M1 guard/hash
-work and the remaining phases are planned work, not deployed guarantees or authorization to launch production jobs.
+by 202 compatibility cases and a 33-case focused executor follow-up. The next isolated
+patch preserves colliding producer identities, binds campaign coverage to frozen input
+bytes, and adds controller/queue destination guards. M1 directory-hash work and the
+remaining phases stay open. No production deployment or live-job authorization is implied.
 
 Review companions: [workflow guidelines](workflow_guidelines.md) with executable
 configuration/campaign/chain examples, and [Slurm submission proposal](slurm_submission_workflow.md).
-Prepare-without-submit is proposed after M1 guards/M2 bindings; --after remains.
+Backend materialization is proposed after M1 guards/M2 bindings; a managed prepared-launch
+lifecycle is deferred. --after remains.
 
 [Milestone evidence](../reports/2026-10-06-workflow-guidelines-record-contracts/report.md)
 records implementation scope and passing checks. Remaining M1/M2 work stays open.
@@ -76,7 +79,10 @@ queue/backend construction; collects terminal outcomes by requested task ID acro
 tags, rejecting active rows owned by another tag inside the queue transaction; and
 requires a readable authoritative record for cache hits. No record schema or task
 identity format changes. 202 compatibility cases and 33 focused follow-up cases
-pass. Remaining M1 work below is still open. Deprecating orchestration does not permit compatibility paths to lie.
+pass. The follow-up guard uses controller locks and pending/running queue reservations
+before force/cleanup/dispatch; held jobs reserve their products. Direct queue mutation
+remains under the one-controller rule. Directory hashing remains open. Deprecating
+orchestration does not permit compatibility paths to lie.
 
 Smallest same-root composite remedy: reject repeated resolved stage directories
 within an item. Stable stage IDs can be an optional later enhancement if consumers
@@ -87,7 +93,9 @@ Guard destination records before dispatch, including submitted-but-not-started
 work. A check followed by an unprotected later write is insufficient for simultaneous
 submitters: use a narrow atomic launch claim or explicitly refuse that use. --force
 is intentional replacement, not an undocumented way to seize an active writer.
-Define what previous record/error is discarded or retained and show the destination.
+Force replaces the current record and does not archive old evidence; products remain
+for in-place rewriting. Preserve evidence or use a fresh path for historical bindings.
+Old index fingerprints must not resolve to a replacement record.
 One-controller queue guidance remains until a stronger ownership protocol is tested.
 
 The current large-directory hash-cache test accepts stale hashes after nested file
@@ -156,7 +164,10 @@ transitive dependency completeness. Full source evidence and filtered diff can c
 Use the real pilot manifests/records as examples without retrospectively inventing
 historical identity. Existing bounded scientific results are not production adoption.
 A thousand-item benchmark is required to assess the original file-listing pain;
-small correctness tests alone do not demonstrate scalability.
+small correctness tests alone do not demonstrate scalability. Measure repository
+fingerprinting even with smart_run=False: source provenance still costs work. Separate
+configuration/queue serialization, source capture, input hashing and scheduler calls
+before choosing amortization or removing optional cache policy.
 
 ## Rollout and stop rules
 

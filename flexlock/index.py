@@ -298,6 +298,11 @@ def verify_and_resolve(base, row: IndexRow) -> Optional[Path]:
         prune(resolve_index_path(base), row.fingerprint)
         return None
 
+    # Explicit in-place replacement invalidates old fingerprint -> path rows.
+    if record.get('fingerprint') and record['fingerprint'] != row.fingerprint:
+        prune(resolve_index_path(base), row.fingerprint)
+        return None
+
     if row.location_kind == LOCATION_RUN_LOCK:
         if save_dir and RunRecord(save_dir).is_complete:
             return save_dir

@@ -2,6 +2,7 @@
 import hashlib
 import json
 from pathlib import Path
+from examples.slimmer_workflows.bindings import require_product
 
 
 def prepare(output_path, save_dir):
@@ -9,13 +10,16 @@ def prepare(output_path, save_dir):
     return {'output_path': output_path}
 
 
-def train(input_path, checkpoint_path, save_dir, multiplier=2):
+def train(input_path, checkpoint_path, save_dir, producer_record, multiplier=2):
+    require_product(producer_record, 'output_path', input_path)
     values = json.loads(Path(input_path).read_text())
     Path(checkpoint_path).write_text(json.dumps({'multiplier': multiplier, 'count': len(values)}))
     return {'checkpoint_path': checkpoint_path}
 
 
-def assess(input_path, checkpoint_path, report_path, save_dir):
+def assess(input_path, checkpoint_path, report_path, save_dir, dataset_record, model_record):
+    require_product(dataset_record, 'output_path', input_path)
+    require_product(model_record, 'checkpoint_path', checkpoint_path)
     values = json.loads(Path(input_path).read_text())
     model = json.loads(Path(checkpoint_path).read_text())
     result = {'count': len(values), 'total': sum(values) * model['multiplier']}

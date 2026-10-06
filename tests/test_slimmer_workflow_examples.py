@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 from flexlock.record import load_record
 from flexlock.runner import FlexLockRunner
+from flexlock.exceptions import FlexLockValidationError
 from examples.slimmer_workflows import campaign, orchestrate
 
 
@@ -146,3 +147,22 @@ def test_coverage_uses_recorded_identity_and_can_check_current_bytes_separately(
     rows[0]['sha256'] = hashlib.sha256(source.read_bytes()).hexdigest()
     manifest.write_text(json.dumps(rows))
     assert any('recorded input identity' in issue for issue in campaign.check_coverage(manifest, root)['issues'])
+
+
+@pytest.mark.parametrize('damage', ['incomplete', 'corrupt', 'wrong_selection'])
+def test_project_binding_rejects_unacceptable_producer(tmp_path, monkeypatch, damage):
+    from examples.slimmer_workflows.bindings import require_product
+    monkeypatch.setenv('FLEXLOCK_INDEX', str(tmp_path/'.flexlock/index.db'))
+    FlexLockRunner().run(['-d', 'examples.slimmer_workflows.cfgmod.cfg', '-s', 'prepare',
+                         '-o', f'runs_root={tmp_path}', 'run=binding001'])
+    directory = tmp_path/'baseline/linear/binding001/prepare'
+    product = directory/'dataset.json'
+    assert require_product(directory, 'output_path', product) == product
+    if damage == 'incomplete':
+        (directory/'run.complete').unlink()
+    elif damage == 'corrupt':
+        product.write_text('[999]')
+    else:
+        product = tmp_path/'unrelated.json'
+    with pytest.raises((ValueError, FlexLockValidationError)):
+        require_product(directory, 'output_path', product)

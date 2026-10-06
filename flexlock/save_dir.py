@@ -92,14 +92,16 @@ def resolve_save_dir(cfg: DictConfig) -> None:
 
 
 def is_occupied(save_dir: "str | Path") -> bool:
-    """True when ``save_dir`` holds a ``run.lock`` (a previous run lives here)."""
-    return (Path(save_dir) / LOCK_NAME).exists()
+    """True when a directory holds a run.lock or a DB-backed task marker."""
+    from .record import MARKER_NAME
+    directory = Path(save_dir)
+    return (directory / LOCK_NAME).exists() or (directory / MARKER_NAME).exists()
 
 
 def is_complete(save_dir: "str | Path") -> bool:
-    """True when ``save_dir`` holds both ``run.lock`` and ``run.complete``."""
+    """True when a directory holds a record/marker and run.complete."""
     d = Path(save_dir)
-    return (d / LOCK_NAME).exists() and (d / COMPLETE_MARKER).exists()
+    return is_occupied(d) and (d / COMPLETE_MARKER).exists()
 
 
 def validate_policy(policy: "str | None") -> None:
@@ -116,6 +118,9 @@ def validate_policy(policy: "str | None") -> None:
 def clean_run_dir(save_dir: "str | Path") -> None:
     """Delete the contents of an occupied run directory (keep the dir itself)."""
     for entry in Path(save_dir).iterdir():
+        from .destination_guard import CONTROLLER_LOCK
+        if entry.name == CONTROLLER_LOCK:
+            continue  # Keep the locked inode stable while cleaning.
         if entry.is_dir() and not entry.is_symlink():
             shutil.rmtree(entry)
         else:

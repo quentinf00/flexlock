@@ -1,0 +1,95 @@
+"""Controller exclusion and queue-backed destination reservations.
+
+No scheduler inference: pending work stays reserved until its queue is resolved.
+Workers attach to existing queues independently of this controller guard.
+"""
+from contextlib import contextmanager, ExitStack
+from pathlib import Path
+import fcntl
+import json
+import sqlite3
+import yaml
+
+from .exceptions import FlexLockValidationError
+
+CONTROLLER_LOCK = '.flexlock-controller.lock'
+QUEUE_POINTER = '.flexlock-queue.json'
+
+
+def task_destinations(task):
+    """Concrete stage paths in an already compiled queue entry."""
+    if not hasattr(task, 'get'):
+        return set()
+    stages = task.get('_stages_', [task])
+    return {str(Path(stage['save_dir']).resolve()) for stage in stages
+            if stage.get('save_dir') and '${' not in str(stage['save_dir'])}
+
+
+def reserve_queue(paths, db_path):
+    """Point products at their authoritative queue before scheduler submission."""
+    for path in paths:
+        directory = Path(path)
+        directory.mkdir(parents=True, exist_ok=True)
+        target = directory / QUEUE_POINTER
+        temporary = target.with_suffix('.tmp')
+        temporary.write_text(json.dumps({'task_db': str(Path(db_path).resolve())}))
+        temporary.replace(target)
+
+
+def _active_rows(db):
+    # Do not open/create a task DB through the mutating taskdb connection cache.
+    if not db.exists():
+        return []
+    try:
+        with sqlite3.connect(db.resolve().as_uri() + '?mode=ro', uri=True) as conn:
+            return conn.execute("SELECT task_info FROM tasks WHERE status IN ('pending', 'running')").fetchall()
+    except sqlite3.Error as exc:
+        raise FlexLockValidationError(f'Cannot establish destination ownership from {db}: {exc}') from exc
+
+
+@contextmanager
+def guard_destinations(paths, db_dir=None):
+    """Hold controller locks across preflight, mutations and launch/execution.
+
+    A pending/running queue row prevents a new controller from reusing its product
+    directory, even before run.lock exists. Force never bypasses this reservation.
+    """
+    products = {str(Path(path).resolve()) for path in paths}
+    master = str(Path(db_dir).resolve()) if db_dir is not None else None
+    locks = products | ({master} if master else set())
+    with ExitStack() as stack:
+        for path in sorted(locks):
+            directory = Path(path)
+            directory.mkdir(parents=True, exist_ok=True)
+            stream = stack.enter_context((directory / CONTROLLER_LOCK).open('a+'))
+            try:
+                fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as exc:
+                raise FlexLockValidationError(f'Destination {path} is owned by another controller; refusing before submission.') from exc
+        databases = {Path(master) / 'run.lock.tasks.db'} if master else set()
+        for path in products:
+            pointer = Path(path) / QUEUE_POINTER
+            if pointer.exists():
+                try:
+                    referenced = Path(json.loads(pointer.read_text())['task_db'])
+                    if not referenced.exists():
+                        raise FlexLockValidationError(f'Destination reservation references missing queue {referenced}; ownership is unknown')
+                    databases.add(referenced)
+                except (ValueError, KeyError, TypeError) as exc:
+                    raise FlexLockValidationError(f'Unreadable destination reservation {pointer}') from exc
+            # Legacy products carry a marker, or their queue lives in an ancestor.
+            from .record import read_marker, marker_db
+            marker = read_marker(path)
+            if marker:
+                databases.add(marker_db(path, marker))
+            databases.update(parent / 'run.lock.tasks.db' for parent in [Path(path), *Path(path).parents]
+                             if (parent / 'run.lock.tasks.db').exists())
+        for db in databases:
+            for (raw,) in _active_rows(db):
+                task = yaml.safe_load(raw)
+                destinations = task_destinations(task)
+                if (master and db.resolve() == (Path(master) / 'run.lock.tasks.db').resolve()) or destinations & products or not destinations:
+                    raise FlexLockValidationError(
+                        f'Destination has pending/running work in {db}; refusing before submission even with --force. '
+                        'Inspect the queue/scheduler and use workers to continue that queue.')
+        yield

@@ -272,6 +272,16 @@ def test_submit_hpc_resolves_relative_snapshot_refs(snapshot, expected, tmp_path
     # Stub the executor so nothing is actually submitted; capture its cfg.
     with patch("flexlock.parallel.ParallelExecutor") as mock_exec:
         mock_exec.return_value.run.return_value = True
+        # Build the authoritative queue inside construction, after controller
+        # preflight; creating it beforehand would model an already-pending run.
+        from flexlock.taskdb import queue_tasks
+        instance = mock_exec.return_value
+        instance.db_path = tmp_path / 'out/run.lock.tasks.db'
+        instance.tag = 'stub'
+        def construct(**kwargs):
+            queue_tasks(instance.db_path, kwargs['tasks'], tag='stub')
+            return instance
+        mock_exec.side_effect = construct
         # Must not raise InterpolationKeyError.
         project.submit(config, slurm_config="unused.yaml", smart_run=False)
 

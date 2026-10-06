@@ -82,8 +82,13 @@ cfg = dict(
 Put the concrete producer in one root anchor and read related facts from its record.
 Avoid duplicating dataset path, normalization and model settings in every consumer.
 A small project helper can expose a dataset/checkpoint binding when several values
-belong together. It should require a named record, check its schema and return plain
-values/config nodes; it should not search for a replacement silently.
+belong together. The executable [acceptance helper](../examples/slimmer_workflows/bindings.py)
+requires a named completed record and declared output integrity. A standalone
+producer needs a done queue row; a composite producer needs the selected stage
+record and its completion evidence, since later stages can still be running. Train/assess call it at consumer start. run_lock remains a reader and can
+read failed records; using those records as accepted products is a separate decision.
+The helper returns plain paths and never searches for a replacement. Real projects
+also validate grid/mask/model schema and compatibility.
 Facts describing a checkpoint should be validated against the checkpoint contents.
 A record is not proof of compatibility between grids, masks or model architectures.
 
@@ -165,11 +170,11 @@ Avoid automatic cache checks in the fresh recipe: CLI caching is opt-in; Python
 Project.submit currently defaults smart_run=True, so pass smart_run=False.
 
 Choose a fresh directory by default. --force is intentional in-place re-execution,
-not ordinary pipeline continuation. The current implementation removes completion
-markers but does not archive all old evidence or protect every queued destination.
-The migration must establish refusal before scheduler submission and define force
-against active work; guidelines do not replace that guard. Retain old records until
-that contract is implemented. An immutable code checkout/environment avoids source
+not ordinary pipeline continuation. The isolated controller now checks all destinations
+before invalidating markers or dispatching. Pending/running queue rows reserve paths;
+force cannot seize them, including held jobs. Force replaces current records and keeps
+products for in-place rewriting; it does not archive old evidence. Use a fresh run or
+copy evidence first when downstream historical references need to remain valid. An immutable code checkout/environment avoids source
 drift between submission and execution; pickling a function does not freeze imports.
 
 ## File-list campaign with project coverage checks
@@ -237,6 +242,10 @@ validates required output contracts, and distinguishes produced, explicitly empt
 excluded-with-reason, failed, interrupted and missing/pending items. A directory or
 scheduler exit code alone is insufficient. The toy helper reports unresolved cases
 as issues; use flexlock items/status for detailed failed/pending classification.
+Queue entries carry the frozen input SHA256. Processing hashes and parses the same
+bytes and refuses a changed input. Coverage checks the recorded expectation and
+product's input identity against the manifest. It does not substitute today's file
+for historical evidence. Add --check-current-inputs to check current bytes separately.
 Real SAR reducers additionally validate region/date/partition coverage and payload
 schema. SST comparison checks matched platform/date membership and model semantics.
 
@@ -321,7 +330,10 @@ python -m examples.slimmer_workflows.orchestrate \
 
 This command submits real jobs. Review the config/resource profiles before use.
 If training submission fails, preparation remains submitted; the ledger preserves
-its ID. Inspect it and launch only the missing stages. Submission is not completion.
+its ID. This small example ledger is best-effort: a crash after acceptance but before
+writing the ID leaves an ambiguous launch. Inspect the scheduler before retrying; a
+missing ledger entry does not prove no job was accepted. Launch only verified missing
+stages. Submission is not completion.
 Blocked downstream jobs need inspection/cancellation if the producer fails.
 For chosen already-complete preparation, omit its launch and dependency, validate
 its record/product, and pass its explicit path to training. Do not add old completed
@@ -330,10 +342,10 @@ job IDs indefinitely: scheduler dependency lookup has a retention window.
 ## Slurm configuration and proposed prepare/submit workflow
 
 See the separate [Slurm proposal](slurm_submission_workflow.md). Keep --after and
-profiles; support held jobs through Slurm directives today. A future prepare-job
-operation would materialize a launch bundle without calling sbatch; its destination
-claims and manual-launch bookkeeping must satisfy the core guard contract first.
-This proposal adds no pipeline compiler and does not mirror every sbatch flag.
+profiles; support held jobs through Slurm directives today. Next extract a backend
+materialization seam returning a real payload, script and submission argv. Defer a
+public managed prepared-launch lifecycle. Raw manual export is advanced project use
+with explicit limits; no new pipeline compiler or sbatch option catalogue is needed.
 
 ## Review and implementation order
 
@@ -341,5 +353,5 @@ Review these patterns now; implement M1 record/guard contracts and M2 accurate
 producer bindings against them. Keep cache/resume policy optional, retain historical
 readers and exercise the recipes locally/fake-backend before isolated SAR/SST adoption.
 The toy computations exercise plumbing, not scientific acceptance. The draft does
-not declare large data identity, simultaneous controllers or prepared submissions
-safe before their corresponding acceptance checks exist.
+not establish large data identity or prepared-submission safety. Controller collision
+checks cover the supported Project paths; advanced queue mutation requires one controller.

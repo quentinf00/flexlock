@@ -1,17 +1,13 @@
-# Slurm submission workflow — proposal for review
+# Slurm submission workflow
 
-2026-10-06. Current API described below is available in the isolated checkout.
-Prepared-launch commands are design sketches, not implemented flags.
+2026-10-06. Profiles, --after and --print-job-id are available in the isolated
+checkout. The backend preparation seam below is proposed, not implemented.
 [Workflow recipes](workflow_guidelines.md) and [migration plan](slimmer_core_migration.md).
 
-Keep two ordinary inputs: a computation config and a Slurm profile. Keep --after as
-a narrow afterok convenience and --print-job-id for small project scripts. Expose
-scheduler-specific options through Slurm rather than duplicating its entire CLI.
-
-## Current profiles, dependencies and held jobs
+## Ordinary use: computation config plus resource profile
 
 ```yaml
-# slurm/cpu.yaml — adapt partition/environment paths to your cluster
+# slurm/cpu.yaml — adapt paths and partition to your cluster
 startup_lines:
   - '#SBATCH --partition=cpu'
   - '#SBATCH --cpus-per-task=4'
@@ -22,133 +18,89 @@ python_exe: /shared/envs/myproject/bin/python
 ```
 
 A GPU profile changes partition, GPU request, memory and environment. A bounded
-CPU pool profile adds #SBATCH --array=0-7. Put all #SBATCH lines before shell
-commands: directives after a shell command are ignored. The example allocates
-resources only; it does not arrange distributed training processes.
+CPU pool can add #SBATCH --array=0-7. Put directives before shell commands. These
+requests allocate resources; distributed training processes need project setup.
 
-For held jobs today, add '#SBATCH --hold' among the profile directives, then submit
-with --print-job-id (or Python wait=False). Review with scontrol show job JOBID and
-release with scontrol release JOBID. A hold affects eligibility, not success or data
-binding. Held jobs still occupy a destination and must count as active launches.
-[Slurm hold behavior](https://slurm.schedmd.com/sbatch.html#OPT_hold),
-[release command](https://slurm.schedmd.com/scontrol.html#OPT_release).
+Keep --after JOBID[:JOBID...] as an afterok convenience and --print-job-id for
+small scripts. Dependencies express scheduler ordering. Explicit producer paths
+express artifact selection. A failed producer blocks the consumer; SUBMITTED
+means acceptance, not completion. Old completed artifacts should be validated
+without relying on indefinitely retained scheduler IDs.
+[Slurm dependencies](https://slurm.schedmd.com/sbatch.html#OPT_dependency).
 
---after JOBID[:JOBID...] remains. It means successful completion of these scheduler
-jobs, not inference about artifacts. Use the corresponding explicit producer paths.
-Conflicting dependency directives in the profile are rejected when using --after.
-The current unpinned run/newest lookup under --after is compatibility behavior;
-the slimmer-core recipe uses a concrete producer, including a predetermined future
-path. A failed producer blocks the downstream allocation; inspect/cancel it rather
-than treating SUBMITTED as success. Slurm's dependency lookup retention window also
-means very old successful jobs should be represented by validated artifacts, without
-reusing their scheduler IDs. [Dependency semantics](https://slurm.schedmd.com/sbatch.html#OPT_dependency).
+To hold a job today, put '#SBATCH --hold' among the profile directives. Inspect
+with scontrol show job JOBID and release with scontrol release JOBID. Pending
+queue entries reserve destinations even while the scheduler holds a job.
+[Hold](https://slurm.schedmd.com/sbatch.html#OPT_hold),
+[release](https://slurm.schedmd.com/scontrol.html#OPT_release).
 
-## Distinguish preview, preparation and submission
+## Destination guard in the supported controller path
 
-| Operation | Local writes | Scheduler call | Meaning |
-|---|---|---|---|
-| Existing --print-config / --dry-run | No launch queue/payload written | None | Inspect configuration or a script with a placeholder payload |
-| Proposed --prepare-job BUNDLE | Compiled config, queue/task pickle, real script, manifest and destination claims | None | Ready-to-submit invocation; not a submitted job |
-| Existing normal submission | Same materialization, then launch | sbatch | Scheduler accepted a job; ID recorded; completion separate |
+Project submission holds POSIX advisory locks on all concrete product directories
+and the queue root during controller work. Checks precede marker invalidation,
+cleanup, queue writes and backend submission. Queue rows in pending/running state
+reserve products before workers write run.lock; products point to their queue even
+when it lives elsewhere. --force, overwrite and unsafe cannot bypass active rows.
+Unknown ownership from a missing referenced queue is refused.
 
-An existing dry-run script names a placeholder pickle. Copying its stdout to a file
-and calling sbatch is therefore not a runnable export. --enqueue exports computation
-entries; it also does not materialize a Slurm launch.
+Existing workers may drain the queue, including multiple workers in a pool. A new
+controller must not replace the same destinations or rewrite an active queue root
+(even for disjoint new products), since that would replace its master provenance.
+Use flexlock-worker to continue unchanged queued computation. Before recovery,
+inspect queue and scheduler state; canceled or failed submissions can leave pending
+rows. The guard does not infer their safety from a missing job ID or auto-expire them.
+Queue mutation/reclaim is an explicit maintenance operation after old workers stop.
+Completed task rows do not prove every scheduler allocation or pool worker has exited.
+Stop prior workers before forced queue reuse; the guard tracks queue activity, not
+the full scheduler allocation lifecycle.
 
-The proposed prepare operation should use the same path as normal submission, with
-normal submit implemented as prepare then submit. Avoid another serialization or
-record format. A prepared launch is ordinary invocation/queue membership plus a
-scheduler script; it is not a general execution plan or a pipeline object hierarchy.
+Locks require cooperating controllers and a filesystem supporting flock. Direct
+ParallelExecutor/queue manipulation is advanced use under the one-controller rule.
+The library cannot prevent external programs from editing products or records.
 
-This split adds a real lifecycle: retained payloads, claims and submission metadata.
-For occasional holds, the existing profile directive is simpler. Implement preparation
-when inspection/custom manual launching warrants that cost; do not make it mandatory
-for ordinary users or extend it into a general pipeline management API.
+Force intentionally replaces the current record and invalidates completion; it
+keeps existing products for the callable to overwrite and does not archive evidence.
+Sweep/pipeline force also resets their queue and result projections. Copy evidence
+or choose a fresh run before replacement when historical references must remain valid.
+Overwrite cleans occupied directories. Keep immutable producer paths for consumers.
 
-A bundle contains task.pkl (or the existing worker payload), job.slurm, the existing
-queue and compiled configuration, and a small submission manifest: absolute paths,
-working directory, interpreter/environment, source/input identity, dependency IDs,
-script/payload digests, destination claims and an argv list for sbatch. The printable
-command is correctly shell-quoted; programmatic callers use argv, never eval.
-Pickling preserves callable configuration, not a frozen installed environment/code.
-Do not mark task computation complete, submitted or cached just because preparation
-succeeded; prepared queue entries remain pending until workers execute them.
+## Next seam: materialize a runnable backend invocation
 
-Proposed CLI shape:
+The existing --dry-run previews a script with a placeholder payload. Its output is
+not a runnable export. --print-config and --dry-run remain side-effect-free previews.
+
+The next bounded change should extract backend materialization: serialize the
+existing worker payload, write the real scheduler script, and return their absolute
+paths plus an sbatch argv list and working directory. Normal backend submit then
+uses that result. Keep existing payload/queue formats; add no mandatory launch object
+or pipeline compiler. Test with fake sbatch and actual local payload execution.
+
+An advanced caller could print a shell-quoted command and insert one-off Slurm
+arguments before the script path:
 
 ```bash
-# PROPOSED, not available yet
-flexlock-run -d myproject.configs.run.cfg -s train \
-  --slurm-config slurm/gpu.yaml --after 12345 --prepare-job /shared/launches/train001
-# Prints a real command, with a fixed working directory and absolute script path:
-sbatch --parsable --chdir=/shared/checkouts/myproject-pinned /shared/launches/train001/job.slurm
-# One-off scheduler options go BEFORE the script path:
+# Illustrative output of the future backend seam; no new CLI flag exists yet.
 sbatch --parsable --hold --time=02:00:00 \
   --chdir=/shared/checkouts/myproject-pinned /shared/launches/train001/job.slurm
 ```
 
-Slurm command-line options override environment/script settings. Record the actual
-command and the scheduler's accepted settings, not just the profile defaults.
---parsable can return ID;cluster, so machine parsing must preserve/handle that form.
-[Option precedence and ID output](https://slurm.schedmd.com/sbatch.html).
+Command-line options override script/environment settings. Record actual arguments;
+changes to dependencies, working directory, exports or array membership affect the
+invocation, beyond resource tuning. Programmatic callers use argv rather than eval.
+[Slurm options and parsable output](https://slurm.schedmd.com/sbatch.html).
+Pickling a callable does not freeze its imported code/environment.
 
-## What a raw manual sbatch call gives up
+## Explicit limits of manual export
 
-Manual sbatch is useful, but FlexLock cannot observe the call or learn its job ID
-until someone reports it (or the worker starts). A held job can remain invisible to
-the controller for days. A printed command alone cannot provide reliable queued-job
-tracking, final scheduler parameters or submit-time failure bookkeeping.
+Raw sbatch is project-owned advanced use. FlexLock cannot observe acceptance, the
+job ID, actual scheduler settings or repeat submissions. Do not claim that exporting
+a script guarantees one submission. A crash between scheduler acceptance and
+recording the ID creates uncertainty: inspect scheduler state before retrying.
+Preparation success is not scheduler acceptance or computation completion.
 
-Prefer one small bundle submission helper, rather than an argument per Slurm option:
-proposed `flexlock-submit BUNDLE -- --hold --time=02:00:00`. It verifies digests and
-claims, invokes sbatch with an argv list, and records the returned scheduler ID and
-actual arguments. Exact command/API naming is still open. A backend prepare() method
-and its submit() wrapper should share this path.
-
-Raw manual submission remains possible, with an explicit project launch ledger and
-a proposed attach/record-ID operation; until attached, the library must expose its
-scheduler state as unknown. Avoid inventing a job ID at preparation. Capture stderr
-on failed submissions and retain the bundle for diagnosis. If attaching after a
-manual launch fails, inspect the accepted job before retrying any submission.
-
-Do not promise that arbitrary appended options preserve the invocation contract:
-changing chdir/export/interpreter, replacing dependencies or adding an array changes
-execution. The helper should reject contradictory generated dependency settings
-and repeated bundle submissions. Reviewed resource/hold/account options are the
-normal escape hatch; more advanced raw Slurm use is project-owned and must retain
-the actual settings. No need for --hold as another top-level FlexLock flag initially.
-
-## Destination claims and delayed launch
-
-Preparation should check and claim destinations before returning the command.
-Otherwise another launch can occupy them between export and manual submission,
-forcing a worker-time collision. Claims survive while a job is held or the bundle
-is awaiting submission. Discarding an unsubmitted bundle explicitly releases its
-claims; do not auto-expire one whose submission status is unknown.
-
-The helper checks claims before sbatch; default refusal applies to occupied records
-and active/prepared launches. --force must not steal a pending/running/held writer.
-A prepared bundle is submitted once unless an explicit continuation/recovery policy
-is used. Array workers may share one launch; accidental resubmission is different.
-Record these distinctions without implementing a general distributed ownership
-framework. Start with one controller per campaign root and narrow atomic claims.
-
-Freeze ordinary existing producer choices at preparation. An explicit future path
-can be read at consumer start, with its required afterok relationship. If dependency
-IDs are not known yet, prepare the downstream after producer submission or use the
-submission helper to attach validated dependencies and record them; never substitute
-a newest run. Preparing a whole graph is unnecessary for this feature.
-
-## Implementation placement and acceptance
-
-M1 establishes guard/active-launch contracts. M2 establishes concrete upstream
-bindings. Then add the preparation split as a bounded backend change, before wider
-adoption. Current draft/examples do not implement it or claim its guarantees.
-
-Acceptance must show: no sbatch invocation during prepare; runnable payload/script;
-normal submit shares preparation; shell/path quoting and cwd independence; accurate
-held/submitted states; rejection before sbatch on destination collisions; failed
-submission does not claim acceptance; digest mismatch/repeat launch refusal; manual
-ID attachment; dependency conflicts; array worker draining; explicit disposal; source
-drift detection or immutable checkout. Use fake sbatch and local worker execution
-first. Retain existing side-effect-free preview behavior.
+Defer managed bundle claims, attach/record-ID/dispose commands, automatic recovery
+and a public prepared-launch lifecycle. These would add coordination obligations
+that are unnecessary for ordinary profile-based submission and occasional holds.
+The materialization seam should be useful and testable before considering a public
+CLI export. Any future managed delayed-launch feature needs its own concrete
+ownership contract and acceptance evidence.

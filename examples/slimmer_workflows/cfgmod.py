@@ -16,15 +16,17 @@ cfg = dict(
     train=py2cfg(train,
         save_dir='${run_dir}/train', checkpoint_path='${run_dir}/train/model.json',
         input_path='${run_lock:${upstream_run},config.output_path}', multiplier=2,
+        producer_record='${upstream_run}',
         _snapshot_=dict(repos={}, prevs=['${upstream_run}'], data=dict(dataset='${run_lock:${upstream_run},config.output_path}')),
         _outputs_=dict(model=dict(path='model.json', sha256=True))),
     assess=py2cfg(assess,
         save_dir='${run_dir}/assess', report_path='${run_dir}/assess/report.json',
         input_path='${run_lock:${upstream_run},config.output_path}',
         checkpoint_path='${run_lock:${training_run},config.checkpoint_path}',
+        dataset_record='${upstream_run}', model_record='${training_run}',
         _snapshot_=dict(repos={}, prevs=['${upstream_run}', '${training_run}'],
             data=dict(dataset='${run_lock:${upstream_run},config.output_path}', model='${run_lock:${training_run},config.checkpoint_path}')),
         _outputs_=dict(report=dict(path='report.json', sha256=True))),
 )
-# Demo declares no repo snapshot. Real projects should declare their code checkout
-# and immutable input identities explicitly; see the accompanying guidelines.
+# Target repositories can be discovered automatically, even with repos={}. Real
+# projects should declare source/environment and immutable input identities explicitly.

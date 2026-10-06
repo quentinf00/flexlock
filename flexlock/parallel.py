@@ -204,7 +204,14 @@ class ParallelExecutor:
                     f"consider using a per-sweep subdirectory to avoid DB collisions."
                 )
 
+        from .destination_guard import reserve_queue, task_destinations
+        from .utils import merge_task_into_cfg
+        destinations = set()
+        for task in tasks:
+            compiled = merge_task_into_cfg(cfg, task, task_target)
+            destinations.update(task_destinations(compiled))
         queue_tasks(self.db_path, tasks, tag=self.tag)
+        reserve_queue(destinations, self.db_path)
         logger.info(f"Queued {len(tasks)} tasks (tag={self.tag!r})")
 
         # ----- backend -----

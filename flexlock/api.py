@@ -729,14 +729,6 @@ class Project:
             return None
 
         if force:
-            # Invalidate the single-run cache marker. For sweeps the per-item
-            # markers and task DB are reset inside _submit_sweep (2.4).
-            if not sweep:
-                save_dir = Path(config.get("save_dir", "outputs/job"))
-                marker = save_dir / "run.complete"
-                if marker.exists():
-                    logger.info(f"Force flag enabled: invalidating cache at {save_dir}")
-                    marker.unlink()
             smart_run = False
 
         # Handle sweep execution
@@ -758,7 +750,7 @@ class Project:
             from .save_dir import NAMING_POLICIES, validate_policy
 
             validate_policy(save_dir_policy)
-            if save_dir_policy in NAMING_POLICIES:
+            if save_dir_policy in NAMING_POLICIES and not dry_run:
                 apply_save_dir_policy(config, save_dir_policy, force=force)
                 # Items are fresh under the freshly named root; keep the
                 # default guard as a backstop.
@@ -787,6 +779,7 @@ class Project:
                 item_policy=item_policy,
                 task_record=task_record,
                 after=after,
+                dry_run=dry_run,
             )
 
         # Single execution path
@@ -809,198 +802,204 @@ class Project:
             self._preview_hpc_script(config, slurm_config, pbs_config, after=after)
             return None
 
-        # Naming / collision-guard policy — after the cache check (a hit never
-        # claims or cleans anything) and after the previews (no side effects).
-        if apply_save_dir_policy(config, save_dir_policy, force=force) == SKIP:
-            match_dir = Path(str(config.save_dir))
-            logger.info(f"save_dir_policy='skip': reusing result from {match_dir}")
-            return self._load_cached_result(match_dir, config)
+        from .save_dir import NAMING_POLICIES
+        from .destination_guard import guard_destinations
+        guard_policy = save_dir_policy
+        if save_dir_policy in NAMING_POLICIES:
+            apply_save_dir_policy(config, save_dir_policy)
+            guard_policy = "raise"
+        destination = config.get("save_dir", "outputs/job")
+        guarded_destination = destination if "save_dir" in config or use_hpc or isolated else None
+        with guard_destinations(
+            [guarded_destination] if guarded_destination is not None else [],
+            db_dir=guarded_destination,
+        ):
+            # Naming / collision-guard policy — after the cache check (a hit never
+            # claims or cleans anything) and after the previews (no side effects).
+            if apply_save_dir_policy(config, guard_policy, force=force) == SKIP:
+                match_dir = Path(str(config.save_dir))
+                logger.info(f"save_dir_policy='skip': reusing result from {match_dir}")
+                return self._load_cached_result(match_dir, config)
 
-        if use_hpc:
-            # Execute via HPC backend
-            logger.info(f"Submitting to HPC backend...")
+            if force and "save_dir" in config:
+                (Path(config.save_dir) / "run.complete").unlink(missing_ok=True)
 
-            # Use ParallelExecutor with a single task
-            from .parallel import ParallelExecutor
+            if use_hpc:
+                # Execute via HPC backend
+                logger.info(f"Submitting to HPC backend...")
 
-            save_dir = config.get("save_dir", "outputs/job")
-            if force:
-                # The executor queues with INSERT OR IGNORE: a 'done' row left
-                # by the previous run would make run() a no-op.
-                _reset_task_db(Path(str(save_dir)))
-            # Resolve _snapshot_ while config still has its parent chain: the
-            # executor_cfg below is re-rooted, so relative refs (${...key})
-            # inside _snapshot_ would no longer reach the stage node.
-            if "_snapshot_" in config:
-                snapshot_resolved = controller_snapshot(config, defer_inputs=bool(after))
-            else:
-                snapshot_resolved = {}
-            executor_cfg = OmegaConf.create(
-                {"save_dir": str(save_dir), "_snapshot_": snapshot_resolved}
-            )
-
-            executor = ParallelExecutor(
-                after=after,
-                func=instantiate,
-                tasks=[config],  # Single task as a list
-                task_target=None,
-                cfg=executor_cfg,
-                n_jobs=flexlock_config.DEFAULT_N_JOBS,
-                pbs_config=pbs_config,
-                slurm_config=slurm_config,
-                local_workers=None,
-                tag=tag,
-                note=note,
-                task_record="dir",
-            )
-
-            # Run with wait parameter (executor handles waiting)
-            success = executor.run(
-                wait=wait, timeout=flexlock_config.DEFAULT_TIMEOUT if wait else None
-            )
-
-            # Load result
-            result_data = None
-            if "save_dir" in config:
-                results_file = Path(config.save_dir) / "results.json"
-                if results_file.exists():
-                    with open(results_file, "r") as f:
-                        result_data = json.load(f)
-
-            return ExecutionResult(
-                save_dir=str(save_dir),
-                status="SUCCESS" if wait else "SUBMITTED",
-                job_id=executor.job.job_id if executor.job is not None else None,
-                result=result_data,
-                cfg=config,
-            )
-
-        else:
-            # Local execution
-            if isolated:
-                # Run in an isolated spawned subprocess so that any GPU/CUDA
-                # context initialised inside the task stays in the child and
-                # never leaks into the parent (which may later fork workers).
+                # Use ParallelExecutor with a single task
                 from .parallel import ParallelExecutor
 
                 save_dir = config.get("save_dir", "outputs/job")
                 if force:
+                    # The executor queues with INSERT OR IGNORE: a 'done' row left
+                    # by the previous run would make run() a no-op.
                     _reset_task_db(Path(str(save_dir)))
+                # Resolve _snapshot_ while config still has its parent chain: the
+                # executor_cfg below is re-rooted, so relative refs (${...key})
+                # inside _snapshot_ would no longer reach the stage node.
                 if "_snapshot_" in config:
-                    snapshot_resolved = OmegaConf.to_container(
-                        config._snapshot_, resolve=True
-                    )
+                    snapshot_resolved = controller_snapshot(config, defer_inputs=bool(after))
                 else:
                     snapshot_resolved = {}
                 executor_cfg = OmegaConf.create(
                     {"save_dir": str(save_dir), "_snapshot_": snapshot_resolved}
                 )
+
                 executor = ParallelExecutor(
                     after=after,
                     func=instantiate,
-                    tasks=[config],
+                    tasks=[config],  # Single task as a list
                     task_target=None,
                     cfg=executor_cfg,
-                    n_jobs=1,
-                    isolated=True,
+                    n_jobs=flexlock_config.DEFAULT_N_JOBS,
+                    pbs_config=pbs_config,
+                    slurm_config=slurm_config,
+                    local_workers=None,
                     tag=tag,
                     note=note,
                     task_record="dir",
                 )
-                executor.run(wait=True)
-                result_data = None
-                if "save_dir" in config:
-                    results_file = Path(save_dir) / "results.json"
-                    if results_file.exists():
-                        with open(results_file, "r") as f:
-                            result_data = json.load(f)
-                return ExecutionResult(
-                    save_dir=str(save_dir),
-                    status="SUCCESS",
-                    result=result_data,
-                    cfg=config,
+
+                # Run with wait parameter (executor handles waiting)
+                success = executor.run(
+                    wait=wait, timeout=flexlock_config.DEFAULT_TIMEOUT if wait else None
                 )
 
-            # Extract tracking info
-            repos, data, prevs = extract_tracking_info(config)
+                return self.collect_results(
+                    [0], [config], executor.db_path, executor.tag,
+                    job_id=executor.job.job_id if executor.job is not None else None,
+                )[0][1]
 
-            # Single deferred-resolution point (local single-run path): fire
-            # the deferred resolvers (run_lock/latest) once and detach into a
-            # plain config. Re-wrapping prevents instantiate()'s internal
-            # config.copy() — a fresh instance with an empty resolver cache —
-            # from re-firing anything after snapshot() has run.
-            try:
-                from .resolvers import resolve_deferred
+            else:
+                # Local execution
+                if isolated:
+                    # Run in an isolated spawned subprocess so that any GPU/CUDA
+                    # context initialised inside the task stays in the child and
+                    # never leaks into the parent (which may later fork workers).
+                    from .parallel import ParallelExecutor
 
-                config = resolve_deferred(config)
-            except Exception as exc:
-                logger.warning(f"Could not fully resolve config before execution: {exc}")
-
-            # Compute the fingerprint once (index key), stored in run.lock so
-            # `flexlock reindex` can rebuild the index from disk.
-            run_fp = None
-            if "save_dir" in config:
-                try:
-                    run_fp = compute_fingerprint(config, repos=repos, data=data)
-                except Exception as exc:
-                    logger.warning(f"Could not compute run fingerprint: {exc}")
-
-            # Create snapshot before execution
-            if "save_dir" in config:
-                snapshot(
-                    config, repos=repos, data=data, prevs=prevs,
-                    fingerprint=run_fp, note=note,
-                )
-
-            # Execute the function
-            logger.info(f"Executing configuration...")
-            run_func = instantiate
-            if debug:
-                from .debug import debug_on_fail
-
-                run_func = debug_on_fail(run_func)
-            try:
-                result = run_func(config)
-            except Exception as exc:
-                # Record a failure sidecar next to run.lock so triage doesn't
-                # need to re-run. The user's exception still propagates unwrapped
-                # (docs §12); write_error never raises. KeyboardInterrupt is
-                # deliberately not caught — a bare run.lock is the interrupted
-                # signature.
-                if "save_dir" in config:
-                    RunRecord(config.save_dir).write_error(exc)
-                    record_code_drift(config.save_dir)
-                raise
-
-            # Save results if save_dir is specified
-            save_dir = config.get("save_dir", ".")
-            if "save_dir" in config:
-                record = RunRecord(save_dir)
-                try:
-                    record.write_results(result)
-                except Exception as e:
-                    logger.warning(
-                        f"Could not save results to {record.results_path}: {e}"
+                    save_dir = config.get("save_dir", "outputs/job")
+                    if force:
+                        _reset_task_db(Path(str(save_dir)))
+                    if "_snapshot_" in config:
+                        snapshot_resolved = OmegaConf.to_container(
+                            config._snapshot_, resolve=True
+                        )
+                    else:
+                        snapshot_resolved = {}
+                    executor_cfg = OmegaConf.create(
+                        {"save_dir": str(save_dir), "_snapshot_": snapshot_resolved}
                     )
-                record_code_drift(save_dir)
-                from .outputs import validate_outputs
+                    executor = ParallelExecutor(
+                        after=after,
+                        func=instantiate,
+                        tasks=[config],
+                        task_target=None,
+                        cfg=executor_cfg,
+                        n_jobs=1,
+                        isolated=True,
+                        tag=tag,
+                        note=note,
+                        task_record="dir",
+                    )
+                    executor.run(wait=True)
+                    return self.collect_results(
+                        [0], [config], executor.db_path, executor.tag,
+                    )[0][1]
 
+                # A direct local replacement becomes the authoritative run.
+                # Old worker markers/queues must not redirect readers to its predecessor.
+                if "save_dir" in config:
+                    from .destination_guard import QUEUE_POINTER
+                    from .record import MARKER_NAME
+                    directory = Path(config.save_dir)
+                    if (directory / "run.lock.tasks.db").exists():
+                        _reset_task_db(directory)
+                    (directory / MARKER_NAME).unlink(missing_ok=True)
+                    (directory / QUEUE_POINTER).unlink(missing_ok=True)
+
+                # Extract tracking info
+                repos, data, prevs = extract_tracking_info(config)
+
+                # Single deferred-resolution point (local single-run path): fire
+                # the deferred resolvers (run_lock/latest) once and detach into a
+                # plain config. Re-wrapping prevents instantiate()'s internal
+                # config.copy() — a fresh instance with an empty resolver cache —
+                # from re-firing anything after snapshot() has run.
                 try:
-                    validate_outputs(config, completing=True)
+                    from .resolvers import resolve_deferred
+
+                    config = resolve_deferred(config)
                 except Exception as exc:
-                    record.write_error(exc)
+                    logger.warning(f"Could not fully resolve config before execution: {exc}")
+
+                # Compute the fingerprint once (index key), stored in run.lock so
+                # `flexlock reindex` can rebuild the index from disk.
+                run_fp = None
+                if "save_dir" in config:
+                    try:
+                        run_fp = compute_fingerprint(config, repos=repos, data=data)
+                    except Exception as exc:
+                        logger.warning(f"Could not compute run fingerprint: {exc}")
+
+                # Create snapshot before execution
+                if "save_dir" in config:
+                    snapshot(
+                        config, repos=repos, data=data, prevs=prevs,
+                        fingerprint=run_fp, note=note,
+                    )
+
+                # Execute the function
+                logger.info(f"Executing configuration...")
+                run_func = instantiate
+                if debug:
+                    from .debug import debug_on_fail
+
+                    run_func = debug_on_fail(run_func)
+                try:
+                    result = run_func(config)
+                except Exception as exc:
+                    # Record a failure sidecar next to run.lock so triage doesn't
+                    # need to re-run. The user's exception still propagates unwrapped
+                    # (docs §12); write_error never raises. KeyboardInterrupt is
+                    # deliberately not caught — a bare run.lock is the interrupted
+                    # signature.
+                    if "save_dir" in config:
+                        RunRecord(config.save_dir).write_error(exc)
+                        record_code_drift(config.save_dir)
                     raise
-                record.mark_complete(result=result)
-                from .presets import link_run
 
-                link_run(save_dir, config)
-                # Record the completed run in the project-wide index (2.2).
-                if run_fp:
-                    index.record_run_lock(save_dir, run_fp)
+                # Save results if save_dir is specified
+                save_dir = config.get("save_dir", ".")
+                if "save_dir" in config:
+                    record = RunRecord(save_dir)
+                    try:
+                        record.write_results(result)
+                    except Exception as e:
+                        logger.warning(
+                            f"Could not save results to {record.results_path}: {e}"
+                        )
+                    record_code_drift(save_dir)
+                    from .outputs import validate_outputs
 
-            return ExecutionResult(
-                save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config
-            )
+                    try:
+                        validate_outputs(config, completing=True)
+                    except Exception as exc:
+                        record.write_error(exc)
+                        raise
+                    record.mark_complete(result=result)
+                    from .presets import link_run
+
+                    link_run(save_dir, config)
+                    # Record the completed run in the project-wide index (2.2).
+                    if run_fp:
+                        index.record_run_lock(save_dir, run_fp)
+
+                return ExecutionResult(
+                    save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config
+                )
 
     def check(
         self,
@@ -1464,128 +1463,131 @@ class Project:
             )
             return None
 
-        # force: reset every stage's completion markers and the task DB so the
-        # pending_count==0 resume short-circuit can't kick in.
-        if force:
-            for item in items:
-                for sd in self._pipeline_stage_dirs(item):
-                    d = Path(sd)
-                    (d / "run.complete").unlink(missing_ok=True)
-                    (d / "results.json").unlink(missing_ok=True)
-            _reset_task_db(master_root)
-            logger.info(
-                f"Force flag enabled: reset pipeline task DB under {master_root}"
-            )
-            smart_run = False
+        from .destination_guard import guard_destinations
+        destinations = [sd for item in items for sd in self._pipeline_stage_dirs(item)]
+        with guard_destinations(destinations, db_dir=master_root):
+            # force: reset every stage's completion markers and the task DB so the
+            # pending_count==0 resume short-circuit can't kick in.
+            if force:
+                for item in items:
+                    for sd in self._pipeline_stage_dirs(item):
+                        d = Path(sd)
+                        (d / "run.complete").unlink(missing_ok=True)
+                        (d / "results.json").unlink(missing_ok=True)
+                _reset_task_db(master_root)
+                logger.info(
+                    f"Force flag enabled: reset pipeline task DB under {master_root}"
+                )
+                smart_run = False
 
-        # Stage-level resume on the worker: requested via smart_run/check-exists
-        # or the 'skip' guard policy.
-        skip_complete = bool(smart_run) or item_policy == "skip"
-        if skip_complete:
-            from .outputs import validate_outputs
+            # Stage-level resume on the worker: requested via smart_run/check-exists
+            # or the 'skip' guard policy.
+            skip_complete = bool(smart_run) or item_policy == "skip"
+            if skip_complete:
+                from .outputs import validate_outputs
 
-            for item in items:
-                for stage_cfg in item:
-                    sd = stage_cfg.get("save_dir")
-                    if sd and (Path(sd) / "run.complete").exists():
-                        validate_outputs(stage_cfg, sd)
+                for item in items:
+                    for stage_cfg in item:
+                        sd = stage_cfg.get("save_dir")
+                        if sd and (Path(sd) / "run.complete").exists():
+                            validate_outputs(stage_cfg, sd)
 
-        # Driver-side cache check: items whose every stage cache-hits return
-        # CACHED without queueing. Partial hits queue with stage-level resume.
-        cached_results: list = []
-        to_queue: list = []  # (index, item)
-        for i, item in enumerate(items):
-            if smart_run:
-                matches = [
-                    self._find_matching_run(stage_cfg, search_dirs)
-                    for stage_cfg in item
-                ]
-                if all(m is not None for m in matches):
-                    logger.info(f"Pipeline item {i}: all stages cached — skipping")
-                    cached_results.append(
-                        (i, [
-                            self._load_cached_result(m, stage_cfg)
-                            for m, stage_cfg in zip(matches, item)
-                        ])
-                    )
-                    continue
-            to_queue.append((i, item))
-
-        # Collision guard, per stage dir, driver-side, before queueing.
-        if item_policy != "unsafe":
-            for i, item in to_queue:
-                for sd in self._pipeline_stage_dirs(item):
-                    if not is_occupied(sd):
-                        continue
-                    if item_policy == "overwrite":
-                        clean_run_dir(sd)
-                    elif item_policy == "skip":
-                        pass  # worker resumes past complete stages
-                    elif force:
-                        pass  # explicit in-place rerun
-                    else:
-                        raise occupied_error(str(sd), sweep_item=i)
-
-        results: list = []
-        if to_queue:
-            # Serialize each item as a self-contained composite task dict.
-            queued_tasks = []
-            for _, item in to_queue:
-                task_dict = {
-                    "_stages_": [
-                        OmegaConf.to_container(
-                            stage, resolve=False, throw_on_missing=False
-                        )
-                        for stage in item
+            # Driver-side cache check: items whose every stage cache-hits return
+            # CACHED without queueing. Partial hits queue with stage-level resume.
+            cached_results: list = []
+            to_queue: list = []  # (index, item)
+            for i, item in enumerate(items):
+                if smart_run:
+                    matches = [
+                        self._find_matching_run(stage_cfg, search_dirs)
+                        for stage_cfg in item
                     ]
-                }
-                if skip_complete:
-                    task_dict["_skip_complete_"] = True
-                queued_tasks.append(task_dict)
+                    if all(m is not None for m in matches):
+                        logger.info(f"Pipeline item {i}: all stages cached — skipping")
+                        cached_results.append(
+                            (i, [
+                                self._load_cached_result(m, stage_cfg)
+                                for m, stage_cfg in zip(matches, item)
+                            ])
+                        )
+                        continue
+                to_queue.append((i, item))
 
-            executor_cfg = OmegaConf.create(
-                {"save_dir": str(master_root), "_snapshot_": {}}
-            )
-            func = instantiate
-            if debug:
-                if use_hpc or n_jobs > 1:
-                    logger.warning(
-                        "debug=True is ignored for parallel/HPC pipeline "
-                        "execution (post-mortem PDB needs an in-process run)."
-                    )
-                else:
-                    from .debug import debug_on_fail
+            # Collision guard, per stage dir, driver-side, before queueing.
+            if item_policy != "unsafe":
+                for i, item in to_queue:
+                    for sd in self._pipeline_stage_dirs(item):
+                        if not is_occupied(sd):
+                            continue
+                        if item_policy == "overwrite":
+                            clean_run_dir(sd)
+                        elif item_policy == "skip":
+                            pass  # worker resumes past complete stages
+                        elif force:
+                            pass  # explicit in-place rerun
+                        else:
+                            raise occupied_error(str(sd), sweep_item=i)
 
-                    func = debug_on_fail(func)
+            results: list = []
+            if to_queue:
+                # Serialize each item as a self-contained composite task dict.
+                queued_tasks = []
+                for _, item in to_queue:
+                    task_dict = {
+                        "_stages_": [
+                            OmegaConf.to_container(
+                                stage, resolve=False, throw_on_missing=False
+                            )
+                            for stage in item
+                        ]
+                    }
+                    if skip_complete:
+                        task_dict["_skip_complete_"] = True
+                    queued_tasks.append(task_dict)
 
-            executor = ParallelExecutor(
-                after=after,
-                func=func,
-                tasks=queued_tasks,
-                task_target=None,
-                cfg=executor_cfg,
-                n_jobs=n_jobs,
-                pbs_config=pbs_config,
-                slurm_config=slurm_config,
-                local_workers=n_jobs if not use_hpc else None,
-                tag=tag,
-                note=note,
-                task_record=task_record,
-            )
-            executor.run(wait=wait, timeout=timeout)
+                executor_cfg = OmegaConf.create(
+                    {"save_dir": str(master_root), "_snapshot_": {}}
+                )
+                func = instantiate
+                if debug:
+                    if use_hpc or n_jobs > 1:
+                        logger.warning(
+                            "debug=True is ignored for parallel/HPC pipeline "
+                            "execution (post-mortem PDB needs an in-process run)."
+                        )
+                    else:
+                        from .debug import debug_on_fail
 
-            results = self._collect_pipeline_results(
-                [i for i, _ in to_queue],
-                [item for _, item in to_queue],
-                queued_tasks,
-                executor.db_path,
-                executor.tag,
-                job_id=executor.job.job_id if executor.job is not None else None,
-            )
+                        func = debug_on_fail(func)
 
-        all_results = cached_results + results
-        all_results.sort(key=lambda x: x[0])
-        return [item_results for _, item_results in all_results]
+                executor = ParallelExecutor(
+                    after=after,
+                    func=func,
+                    tasks=queued_tasks,
+                    task_target=None,
+                    cfg=executor_cfg,
+                    n_jobs=n_jobs,
+                    pbs_config=pbs_config,
+                    slurm_config=slurm_config,
+                    local_workers=n_jobs if not use_hpc else None,
+                    tag=tag,
+                    note=note,
+                    task_record=task_record,
+                )
+                executor.run(wait=wait, timeout=timeout)
+
+                results = self._collect_pipeline_results(
+                    [i for i, _ in to_queue],
+                    [item for _, item in to_queue],
+                    queued_tasks,
+                    executor.db_path,
+                    executor.tag,
+                    job_id=executor.job.job_id if executor.job is not None else None,
+                )
+
+            all_results = cached_results + results
+            all_results.sort(key=lambda x: x[0])
+            return [item_results for _, item_results in all_results]
 
     def submit_chained(
         self,
@@ -1727,9 +1729,10 @@ class Project:
         """Directory that hosts the sweep's task DB (mirrors the parallel path)."""
         if sweep_root is not None:
             return Path(sweep_root)
+        roots = {str(cfg.save_dir) for _, cfg in merged_items if cfg.get("save_dir")}
         for _, cfg in merged_items:
             if "save_dir" in cfg:
-                return Path(cfg.save_dir).parent
+                return Path(cfg.save_dir) if len(roots) == 1 else Path(cfg.save_dir).parent
         return None
 
     def _reset_sweep_for_force(self, merged_items, sweep_root) -> None:
@@ -1770,6 +1773,7 @@ class Project:
         item_policy: str = "raise",
         task_record: "str | None" = None,
         after=None,
+        dry_run=False,
     ) -> List[ExecutionResult]:
         """
         Execute a parameter sweep.
@@ -1827,155 +1831,166 @@ class Project:
         # relative path. Surface a clear error before we queue anything.
         self._validate_sweep_save_dirs(base_config, merged_items, sweep_root=sweep_root)
 
-        # Force: reset the per-item completion markers *and* the task DB so every
-        # item re-executes. Unlinking only the base marker (the old behaviour)
-        # missed both the per-item markers and the DB's pending_count==0
-        # resume short-circuit, so a forced sweep silently re-used cached
-        # tasks (issue 15).
-        if force:
-            self._reset_sweep_for_force(merged_items, sweep_root)
+        if dry_run:
+            if pbs_config or slurm_config:
+                self._preview_hpc_script(
+                    OmegaConf.create(dict(save_dir=str(self._sweep_db_dir(merged_items, sweep_root)))),
+                    slurm_config, pbs_config, after=after)
+            return None
 
-        # Check each sweep config for cached results
-        for i, sweep_cfg in merged_items:
-            if smart_run and not has_run_refs(sweep_cfg):
-                match_dir = self._find_matching_run(
-                    sweep_cfg, search_dirs, match_include, match_exclude
-                )
-                if match_dir:
-                    logger.info(f"Sweep {i}: Using cached result from {match_dir}")
-                    cached_results.append((i, self.get_result(sweep_cfg, search_dirs)))
-                    continue
+        from .destination_guard import guard_destinations
+        db_dir = self._sweep_db_dir(merged_items, sweep_root)
+        destinations = [cfg.save_dir for _, cfg in merged_items if cfg.get("save_dir")]
+        with guard_destinations(destinations, db_dir=db_dir):
+            # Force: reset the per-item completion markers *and* the task DB so every
+            # item re-executes. Unlinking only the base marker (the old behaviour)
+            # missed both the per-item markers and the DB's pending_count==0
+            # resume short-circuit, so a forced sweep silently re-used cached
+            # tasks (issue 15).
+            if force:
+                self._reset_sweep_for_force(merged_items, sweep_root)
 
-            configs_to_run.append((i, sweep_cfg))
+            # Check each sweep config for cached results
+            for i, sweep_cfg in merged_items:
+                if smart_run and not has_run_refs(sweep_cfg):
+                    match_dir = self._find_matching_run(
+                        sweep_cfg, search_dirs, match_include, match_exclude
+                    )
+                    if match_dir:
+                        logger.info(f"Sweep {i}: Using cached result from {match_dir}")
+                        cached_results.append((i, self.get_result(sweep_cfg, search_dirs)))
+                        continue
 
-        # Collision guard, per item, after the cache check (a cache hit never
-        # trips the guard). Applied here — before anything is queued — so a
-        # refusal aborts the whole sweep up front. Items whose save_dir is
-        # occupied by a previous run are handled per `item_policy`; items of
-        # *this* sweep sharing one save_dir don't trip it (nothing is occupied
-        # until execution starts).
-        if item_policy != "unsafe":
-            from .record import MARKER_NAME, read_lock, is_task_record
-            from .save_dir import clean_run_dir, is_complete, is_occupied, occupied_error
+                configs_to_run.append((i, sweep_cfg))
 
-            still_to_run = []
-            for i, sweep_cfg in configs_to_run:
-                item_dir = sweep_cfg.get("save_dir")
-                # A dir with a .flexlock_marker belongs to a sweep task: it is
-                # managed by its task DB (resume via the DB, as before task
-                # dirs carried a run.lock), not by the collision guard.
-                if (
-                    item_dir is None
-                    or not is_occupied(item_dir)
-                    or ((Path(item_dir) / MARKER_NAME).exists() and n_jobs > 1)
-                    or ((Path(item_dir) / 'run.lock.tasks.db').exists()
-                        and not is_task_record(read_lock(item_dir)))
-                ):
-                    still_to_run.append((i, sweep_cfg))
-                elif item_policy == "overwrite":
-                    clean_run_dir(item_dir)
-                    still_to_run.append((i, sweep_cfg))
-                elif item_policy == "skip":
-                    # Resume: reuse complete items, rerun crashed ones in place.
-                    if is_complete(item_dir):
-                        logger.info(f"Sweep {i}: skip — reusing {item_dir}")
-                        cached_results.append(
-                            (i, self._load_cached_result(Path(item_dir), sweep_cfg))
-                        )
-                    else:
-                        from .record import marker_db, read_marker
-                        from .taskdb import reset_completed_task
-                        marker = read_marker(item_dir)
-                        if marker:
-                            reset_completed_task(marker_db(item_dir, marker), marker['task_id'])
+            # Collision guard, per item, after the cache check (a cache hit never
+            # trips the guard). Applied here — before anything is queued — so a
+            # refusal aborts the whole sweep up front. Items whose save_dir is
+            # occupied by a previous run are handled per `item_policy`; items of
+            # *this* sweep sharing one save_dir don't trip it (nothing is occupied
+            # until execution starts).
+            if item_policy != "unsafe":
+                from .record import MARKER_NAME, read_lock, is_task_record
+                from .save_dir import clean_run_dir, is_complete, is_occupied, occupied_error
+
+                still_to_run = []
+                for i, sweep_cfg in configs_to_run:
+                    item_dir = sweep_cfg.get("save_dir")
+                    # A dir with a .flexlock_marker belongs to a sweep task: it is
+                    # managed by its task DB (resume via the DB, as before task
+                    # dirs carried a run.lock), not by the collision guard.
+                    if (
+                        item_dir is None
+                        or not is_occupied(item_dir)
+                        or ((Path(item_dir) / MARKER_NAME).exists() and n_jobs > 1)
+                        or ((Path(item_dir) / 'run.lock.tasks.db').exists()
+                            and not is_task_record(read_lock(item_dir)))
+                    ):
                         still_to_run.append((i, sweep_cfg))
-                elif force:
-                    still_to_run.append((i, sweep_cfg))
-                else:
-                    raise occupied_error(str(item_dir), sweep_item=i)
-            configs_to_run = still_to_run
+                    elif item_policy == "overwrite":
+                        clean_run_dir(item_dir)
+                        still_to_run.append((i, sweep_cfg))
+                    elif item_policy == "skip":
+                        # Resume: reuse complete items, rerun crashed ones in place.
+                        if is_complete(item_dir):
+                            logger.info(f"Sweep {i}: skip — reusing {item_dir}")
+                            cached_results.append(
+                                (i, self._load_cached_result(Path(item_dir), sweep_cfg))
+                            )
+                        else:
+                            from .record import marker_db, read_marker
+                            from .taskdb import reset_completed_task
+                            marker = read_marker(item_dir)
+                            if marker:
+                                reset_completed_task(marker_db(item_dir, marker), marker['task_id'])
+                            still_to_run.append((i, sweep_cfg))
+                    elif force:
+                        still_to_run.append((i, sweep_cfg))
+                    else:
+                        raise occupied_error(str(item_dir), sweep_item=i)
+                configs_to_run = still_to_run
 
-        # Execute remaining configs
-        if configs_to_run:
-            # Decide whether to use HPC backend or local execution
-            use_hpc = pbs_config is not None or slurm_config is not None
+            # Execute remaining configs
+            if configs_to_run:
+                # Decide whether to use HPC backend or local execution
+                use_hpc = pbs_config is not None or slurm_config is not None
 
-            # Serial and parallel sweeps share the same queue and per-item records.
-            # Parallel execution using ParallelExecutor (local or HPC)
-            logger.info(
-                f"Executing {len(configs_to_run)} sweep configs with ParallelExecutor"
-            )
-
-            # Extract just configs for parallel execution
-            task_configs = [cfg for _, cfg in configs_to_run]
-            indices = [i for i, _ in configs_to_run]
-
-            # Prepare a common save_dir for the sweep master (tasks DB lives here).
-            if sweep_root is not None:
-                sweep_save_dir = Path(sweep_root)
-            elif "save_dir" in task_configs[0]:
-                roots = {str(cfg.save_dir) for _, cfg in merged_items}
-                sweep_save_dir = (Path(task_configs[0].save_dir) if len(roots) == 1
-                                  else Path(task_configs[0].save_dir).parent)
-            else:
-                sweep_save_dir = Path("outputs/sweep")
-
-            # Create a wrapper config that ParallelExecutor can work with
-            # The task configs are what ParallelExecutor will execute
-            # Resolve _snapshot_ while base_config still has its parent chain
-            # so that OmegaConf interpolations (e.g. ${...key}) can resolve
-            if "_snapshot_" in base_config:
-                snapshot_resolved = controller_snapshot(base_config, defer_inputs=bool(after))
-            else:
-                snapshot_resolved = {}
-
-            executor_cfg = OmegaConf.create(
-                {
-                    "save_dir": str(sweep_save_dir),
-                    "_snapshot_": snapshot_resolved,
-                }
-            )
-
-            func = instantiate
-            if debug:
-                # Serial debug wraps the same queue callable.
-                if use_hpc or n_jobs > 1:
-                    logger.warning('debug=True is ignored for parallel/HPC sweeps')
-                else:
-                    from .debug import debug_on_fail
-                    func = debug_on_fail(func)
-
-            # Use ParallelExecutor with backend support
-            from .parallel import _default_tag
-            campaign_tag = tag or _default_tag([cfg for _, cfg in merged_items], sweep_save_dir)
-            executor = ParallelExecutor(
-                after=after,
-                func=func,
-                tasks=task_configs,  # List of configs to execute
-                task_target=None,  # Each task is already a complete config
-                cfg=executor_cfg,  # Master config for tracking
-                n_jobs=n_jobs,
-                pbs_config=pbs_config,
-                slurm_config=slurm_config,
-                local_workers=n_jobs if not use_hpc else None,
-                tag=campaign_tag,
-                note=note,
-                task_record=task_record,
-            )
-
-            # Run the sweep (executor handles waiting based on wait parameter)
-            success = executor.run(wait=wait, timeout=timeout)
-
-            # Collect real per-task statuses from the task DB (issue 2).
-            results.extend(
-                self.collect_results(
-                    indices, task_configs, executor.db_path, executor.tag,
-                    job_id=executor.job.job_id if executor.job is not None else None,
+                # Serial and parallel sweeps share the same queue and per-item records.
+                # Parallel execution using ParallelExecutor (local or HPC)
+                logger.info(
+                    f"Executing {len(configs_to_run)} sweep configs with ParallelExecutor"
                 )
-            )
 
-        # Combine cached and new results, sorted by index
-        all_results = cached_results + results
-        all_results.sort(key=lambda x: x[0])
+                # Extract just configs for parallel execution
+                task_configs = [cfg for _, cfg in configs_to_run]
+                indices = [i for i, _ in configs_to_run]
 
-        return [result for _, result in all_results]
+                # Prepare a common save_dir for the sweep master (tasks DB lives here).
+                if sweep_root is not None:
+                    sweep_save_dir = Path(sweep_root)
+                elif "save_dir" in task_configs[0]:
+                    roots = {str(cfg.save_dir) for _, cfg in merged_items}
+                    sweep_save_dir = (Path(task_configs[0].save_dir) if len(roots) == 1
+                                      else Path(task_configs[0].save_dir).parent)
+                else:
+                    sweep_save_dir = Path("outputs/sweep")
+
+                # Create a wrapper config that ParallelExecutor can work with
+                # The task configs are what ParallelExecutor will execute
+                # Resolve _snapshot_ while base_config still has its parent chain
+                # so that OmegaConf interpolations (e.g. ${...key}) can resolve
+                if "_snapshot_" in base_config:
+                    snapshot_resolved = controller_snapshot(base_config, defer_inputs=bool(after))
+                else:
+                    snapshot_resolved = {}
+
+                executor_cfg = OmegaConf.create(
+                    {
+                        "save_dir": str(sweep_save_dir),
+                        "_snapshot_": snapshot_resolved,
+                    }
+                )
+
+                func = instantiate
+                if debug:
+                    # Serial debug wraps the same queue callable.
+                    if use_hpc or n_jobs > 1:
+                        logger.warning('debug=True is ignored for parallel/HPC sweeps')
+                    else:
+                        from .debug import debug_on_fail
+                        func = debug_on_fail(func)
+
+                # Use ParallelExecutor with backend support
+                from .parallel import _default_tag
+                campaign_tag = tag or _default_tag([cfg for _, cfg in merged_items], sweep_save_dir)
+                executor = ParallelExecutor(
+                    after=after,
+                    func=func,
+                    tasks=task_configs,  # List of configs to execute
+                    task_target=None,  # Each task is already a complete config
+                    cfg=executor_cfg,  # Master config for tracking
+                    n_jobs=n_jobs,
+                    pbs_config=pbs_config,
+                    slurm_config=slurm_config,
+                    local_workers=n_jobs if not use_hpc else None,
+                    tag=campaign_tag,
+                    note=note,
+                    task_record=task_record,
+                )
+
+                # Run the sweep (executor handles waiting based on wait parameter)
+                success = executor.run(wait=wait, timeout=timeout)
+
+                # Collect real per-task statuses from the task DB (issue 2).
+                results.extend(
+                    self.collect_results(
+                        indices, task_configs, executor.db_path, executor.tag,
+                        job_id=executor.job.job_id if executor.job is not None else None,
+                    )
+                )
+
+            # Combine cached and new results, sorted by index
+            all_results = cached_results + results
+            all_results.sort(key=lambda x: x[0])
+
+            return [result for _, result in all_results]
