@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "artifacts": [
+    {
+      "path": "environment.json",
+      "sha256": "6efcc9857b029c764fe44ed6cf33781024020568316fa7d10932881faa578573"
+    },
+    {
+      "path": "final-accounting.txt",
+      "sha256": "d279f9ef57674f456c8a1a154921932f3cc6eb0adf8ececad4b5811104cb1b7c"
+    },
+    {
+      "path": "foundation-tests.xml",
+      "sha256": "58e31abe44252c93de6bffb3b65a7e5e5c0cc7ed9839390d02fef3c0ce0f21ef"
+    },
+    {
+      "path": "recipe-tests.xml",
+      "sha256": "25c86a319587e2128910ab97ae6e6b7c3dd0717ea0dbcc2373dab0d97637daf7"
+    },
+    {
+      "path": "report.md",
+      "sha256": "7be4f90ab1d4ea6b02f3cc8ad912baf49958c54fa52620d22672929e9f532cf6"
+    },
+    {
+      "path": "slurm-acceptance.json",
+      "sha256": "74221cfdfd8b8b39659094d2c5abfcad89bd2c2bb89958c514723efef0be1899"
+    }
+  ]
+}

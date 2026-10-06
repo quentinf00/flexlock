@@ -14,3 +14,6 @@ doc/_build
 docs/_build
 docs/_build
 outputs
+
+# Isolated scheduler acceptance runtime artifacts
+acceptance-runs/

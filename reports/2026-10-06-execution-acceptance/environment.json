@@ -1,0 +1,15 @@
+{
+  "python": "3.11.14 | packaged by conda-forge | (main, Jan 26 2026, 23:48:32) [GCC 14.3.0]",
+  "executable": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+  "flexlock_import": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/__init__.py",
+  "sst_import": "/ontap/user/qfebvre/sst-workflow-pilot/sst_ml_mapping/__init__.py",
+  "packages": {
+    "cloudpickle": "3.1.2",
+    "omegaconf": "2.3.1",
+    "pytest": "8.4.2",
+    "GitPython": "3.1.46",
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "xarray": "2026.2.0"
+  }
+}

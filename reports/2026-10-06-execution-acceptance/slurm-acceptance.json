@@ -1,0 +1,13 @@
+{
+  "jobs": {
+    "producer": "444993",
+    "consumer": "444994"
+  },
+  "producer_accounting": "444993|FAILED|1:0\n444993.batch|FAILED|1:0\n444993.extern|COMPLETED|0:0\n",
+  "producer_queue": "",
+  "consumer_queue": "PENDING|DependencyNeverSatisfied\n",
+  "consumer_accounting": "444994|PENDING|0:0\n",
+  "task_status": "failed",
+  "passed": true,
+  "consumer_executed": false
+}
