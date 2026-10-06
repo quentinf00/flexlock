@@ -63,7 +63,7 @@ def _digest(path):
     return h.hexdigest()
 
 
-def validate_outputs(cfg, save_dir=None, *, completing=False):
+def validate_outputs(cfg, save_dir=None, *, completing=False, record_dir=None):
     """Raise on unhealthy outputs; persist checksums only on completion.
 
     Existing runs without contracts keep their original behavior. A checksum
@@ -75,7 +75,8 @@ def validate_outputs(cfg, save_dir=None, *, completing=False):
     if not contracts:
         return
     previous = {}
-    manifest_path = save_dir / MANIFEST
+    # Shared product roots have independent per-item completion baselines.
+    manifest_path = Path(record_dir) / MANIFEST if record_dir is not None else save_dir / MANIFEST
     if not completing and manifest_path.exists():
         try:
             previous = json.loads(manifest_path.read_text())["outputs"]

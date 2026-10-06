@@ -1122,12 +1122,14 @@ into the compiled node config and run as single-stage pipelines.
 
 **Stage records.** Each executed stage keeps its own config, fingerprint,
 lineage, code-drift information, and preset link. By default its directory
-contains a full `run.lock`. With `FLEXLOCK_TASK_RECORD=db`, the shared task row
+contains a full `run.lock`. Shared product roots use separate item receipts;
+see [project registry and logical items](project_registry_items.md). With
+`FLEXLOCK_TASK_RECORD=db`, the shared task row
 stores snapshots keyed by absolute stage directory; the normal record reader
 selects the appropriate stage through its `.flexlock_marker`. Downstream
 `${run_lock:...}` references can read an upstream stage before the whole task
 finishes. Exporting a composite task includes all stage snapshots with the
-master's code and environment information. Compare individual stage
+item's recorded code and environment information. Compare individual stage
 directories with `flexlock-diff`; a composite task ID names multiple records.
 
 **One job per item (accepted limitation).** All stages of an item run inside one

@@ -221,6 +221,15 @@ def _write_txn(db_path: Path, op):
             delay = min(delay * 2, _config.DB_RETRY_MAX_BACKOFF)
 
 
+def reset_completed_task(db_path: Path, task_id: str) -> None:
+    """Requeue a done item whose completion receipt is missing under skip policy."""
+    def op(connection):
+        connection.execute(
+            "UPDATE tasks SET status='pending', node=NULL, job_id=NULL, ts_start=NULL, "
+            "ts_end=NULL WHERE task_id=? AND status='done'", (task_id,))
+    _write_txn(db_path, op)
+
+
 def reset_db(db_path: Path) -> None:
     """Delete a task DB (and its WAL/SHM files) so its tasks are re-queued.
 

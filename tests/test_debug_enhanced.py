@@ -68,6 +68,16 @@ class TestFrameFiltering:
         stdlib_path = str(Path(sys.prefix) / 'lib' / 'python3.10' / 'os.py')
         assert _is_boring_frame(stdlib_path)
 
+    def test_stdlib_under_symlinked_prefix(self, tmp_path, monkeypatch):
+        real = tmp_path / 'python'
+        real.mkdir()
+        alias = tmp_path / 'python-alias'
+        alias.symlink_to(real, target_is_directory=True)
+        monkeypatch.setattr(sys, 'prefix', str(alias))
+        assert _is_boring_frame(str(alias/'lib/os.py'))
+        assert _is_boring_frame(str(real/'lib/os.py'))
+        assert not _is_boring_frame(str(tmp_path/'python-other/lib/os.py'))
+
     def test_is_boring_frame_site_packages(self):
         """Test that site-packages frames are considered boring."""
         site_packages_path = '/usr/lib/python3.10/site-packages/numpy/core/numeric.py'

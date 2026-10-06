@@ -7,8 +7,8 @@ fingerprint, lineage, ...) lives in one of three places:
   ``task_record="dir"`` (the default). A task's file carries ``task_id``.
 * the task DB (``<sweep_root>/run.lock.tasks.db``): sweep tasks run with
   ``task_record="db"``. The task dir holds only a ``.flexlock_marker``
-  pointing at the DB row, and the row stores a *delta*: the code state
-  (``repos``/``env``) and ``note`` live in the sweep master's ``run.lock``.
+  pointing at the DB row. New rows retain their own code state and note;
+  historical delta rows inherit these fields from the recorded master.
 * a sweep master ``run.lock`` next to ``run.lock.tasks.db``: a stub
   describing the whole sweep, not a single run.
 
@@ -90,27 +90,87 @@ def materialize(task_snapshot: dict, master: Optional[dict]) -> dict:
             path: materialize(stage, master)
             for path, stage in record["stages"].items()
         }
-    for key in _INHERITED:
+    for key in _INHERITED if record.get('record_version', 1) < 2 else ():
         if record.get(key) is None and master and master.get(key) is not None:
             record[key] = master[key]
     return record
 
 
 def _record_from_db(run_dir, marker: dict) -> Optional[dict]:
-    from .taskdb import get_task_snapshot
-
     db = marker_db(run_dir, marker)
     task_id = marker.get("task_id")
     if not task_id or not db.exists():
         return None
-    snap = get_task_snapshot(db, task_id)
+    item = load_task_record(db, task_id)
+    snap = item.get('snapshot') if item else None
     if not snap:
         return None
     if "stages" in snap:
-        snap = snap["stages"].get(str(Path(run_dir).resolve()))
+        stages = snap['stages']
+        snap = stages.get(str(Path(run_dir).resolve())) or next(
+            (s for s in stages.values() if s.get('record_dir') == str(Path(run_dir).resolve())), None)
         if not snap:
             return None
     return materialize(snap, read_lock(db.parent))
+
+
+def list_task_records(db_path, tags=None, check_outputs=False, *, _task_id=None) -> list:
+    """Read logical items without database migration or changing lifecycle state.
+
+    The database is authoritative for status/result; directories carry artifact
+    contracts. Unknown fields in historical schemas remain absent/None.
+    """
+    import sqlite3
+    from urllib.parse import quote
+
+    db = Path(db_path).resolve()
+    with sqlite3.connect(f'file:{quote(str(db))}?mode=ro', uri=True) as conn:
+        conn.row_factory = sqlite3.Row
+        columns = {row[1] for row in conn.execute('PRAGMA table_info(tasks)')}
+        if 'task_id' not in columns:
+            raise ValueError(f'No task table in {db}')
+        sql = 'SELECT * FROM tasks' + (' WHERE task_id=?' if _task_id is not None else '') + ' ORDER BY task_id'
+        records = [dict(row) for row in conn.execute(sql, (_task_id,) if _task_id is not None else ())]
+    master = read_lock(db.parent) or {}
+    selected = {tags} if isinstance(tags, str) else set(tags or [])
+    result = []
+    for row in records:
+        if selected and row.get('tag') not in selected:
+            continue
+        task = yaml.load(row.get('task_info') or '{}', Loader=_Loader)
+        payload = yaml.load(row['result_info'], Loader=_Loader) if row.get('result_info') is not None else None
+        snapshot = json.loads(row['snapshot']) if row.get('snapshot') else {}
+        snapshot = materialize(snapshot, master)
+        cfg = snapshot.get('config') or (task if isinstance(task, dict) else {})
+        save_dir = cfg.get('save_dir')
+        record_dir = snapshot.get('record_dir') or save_dir
+        entry = dict(task_id=row['task_id'], database=str(db), tag=row.get('tag'),
+                     status=row['status'], result=payload, error=row.get('error'),
+                     node=row.get('node'), job_id=row.get('job_id'),
+                     ts_start=row.get('ts_start'), ts_end=row.get('ts_end'),
+                     save_dir=save_dir, record_dir=record_dir, config=cfg,
+                     task=task, snapshot=snapshot,
+                     task_record=snapshot.get('task_record', master.get('task_record', 'legacy')),
+                     artifact_health='not-checked')
+        if check_outputs and row['status'] == 'done':
+            from .outputs import validate_outputs
+            stages = snapshot.get('stages', {}).values() if 'stages' in snapshot else [snapshot]
+            try:
+                declared = False
+                for stage in stages:
+                    stage_cfg = stage.get('config') or cfg
+                    declared |= bool(stage_cfg.get('_outputs_'))
+                    validate_outputs(stage_cfg, record_dir=stage.get('record_dir'))
+                entry['artifact_health'] = 'valid' if declared else 'undeclared'
+            except Exception as exc:
+                entry.update(artifact_health='invalid', artifact_error=str(exc))
+        result.append(entry)
+    return result
+
+
+def load_task_record(db_path, task_id) -> Optional[dict]:
+    """Read a specific logical item, including shared-root items, by DB identity."""
+    return next(iter(list_task_records(db_path, _task_id=task_id)), None)
 
 
 def is_task_record(lock: Optional[dict]) -> bool:

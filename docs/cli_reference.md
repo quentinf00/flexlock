@@ -4,6 +4,19 @@
 
 Unified CLI for listing, tagging, and cleaning up experiment runs.
 
+### `flexlock init`, `doctor`, and `items`
+
+```bash
+flexlock init /path/to/project
+flexlock doctor /path/to/project/results --format json
+flexlock items outputs/campaign/run.lock.tasks.db --check-outputs
+```
+
+Initialize a project registry, inspect its effective index/search roots, and read
+every logical campaign item in serial or parallel execution. `doctor` and item
+inspection leave records unchanged. See [registry and item contracts](project_registry_items.md)
+for shared product roots, directory/database receipts and compatibility limits.
+
 ### `flexlock ls` — List Runs
 
 List all runs (directories containing `run.lock`) under a given path.

@@ -420,7 +420,7 @@ def _no_run_message(address, select, pin, strict) -> str:
     hint = f" Recorded presets with a similar name: {', '.join(known[:10])}." if known else ""
     return (
         f"${{run:}}: no complete run of preset {wanted} under "
-        f"{[str(r) for r in presets_roots()] or 'any .flexlock/'}.{hint} Only "
+        f"{list(dict.fromkeys([str(presets_dir_for(Path.cwd())), *map(str, presets_roots())]))}.{hint} Only "
         f"runs launched with flexlock-run -d/-s (or Project('mod.attr').get) "
         f"are recorded."
     )

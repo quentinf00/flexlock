@@ -99,7 +99,7 @@ def _coerce_status(s):
 # Real attributes that a result-dict key must never shadow (issue 6).
 _RESERVED_RESULT_KEYS = frozenset(
     {"save_dir", "status", "result", "metrics", "cfg", "error", "get",
-     "raise_on_failure", "is_success", "job_id"}
+     "raise_on_failure", "is_success", "job_id", "task_id", "task_db", "record_dir"}
 )
 
 
@@ -121,6 +121,9 @@ class ExecutionResult:
         cfg: DictConfig = None,
         error: "str | None" = None,
         job_id: "str | None" = None,
+        task_id: "str | None" = None,
+        task_db: "str | None" = None,
+        record_dir: "str | None" = None,
     ):
         """
         Args:
@@ -137,6 +140,9 @@ class ExecutionResult:
         self.cfg = cfg
         self.error = error
         self.job_id = str(job_id) if job_id is not None else None
+        self.task_id = task_id
+        self.task_db = str(task_db) if task_db is not None else None
+        self.record_dir = str(record_dir) if record_dir is not None else save_dir
 
     @property
     def metrics(self):
@@ -441,9 +447,7 @@ class Project:
         """
         match = self._find_matching_run(cfg, search_dirs)
         if match is not None:
-            from .outputs import validate_outputs
-
-            validate_outputs(cfg, match)
+            self._load_cached_result(match, cfg)
         return match is not None
 
     def get_result(
@@ -472,8 +476,11 @@ class Project:
     def _load_cached_result(self, match_dir: Path, cfg: DictConfig) -> ExecutionResult:
         """Build a CACHED ExecutionResult from an existing run directory."""
         from .outputs import validate_outputs
+        from .record import load_record, read_marker, marker_db
 
-        validate_outputs(cfg, match_dir)
+        record = load_record(match_dir) or {}
+        product_dir = record.get('config', {}).get('save_dir', str(match_dir)) if record.get('record_dir') else str(match_dir)
+        validate_outputs(cfg, product_dir, record_dir=match_dir)
         result_data = None
 
         # Try results.json
@@ -491,7 +498,9 @@ class Project:
                 result_data = lock_data.get("result", {})
 
         return ExecutionResult(
-            save_dir=str(match_dir), status="CACHED", result=result_data, cfg=cfg
+            save_dir=str(product_dir), status="CACHED", result=result_data, cfg=cfg,
+            record_dir=str(match_dir), task_id=record.get('task_id') or (read_marker(match_dir) or {}).get('task_id'),
+            task_db=str(marker_db(match_dir, read_marker(match_dir))) if read_marker(match_dir) else None,
         )
 
     def run_stage(
@@ -623,8 +632,8 @@ class Project:
             note: Free-text intent recorded as a top-level ``note:`` key in
                 ``run.lock`` (sibling of ``timestamp``/``config``). Never enters
                 the fingerprint, so it can't perturb caching. For sweeps the note
-                lands on the master ``run.lock`` only; sweep items inherit it for
-                display via their ``.flexlock_marker`` → master lookup.
+                is retained in each new item snapshot as well as the master,
+                so later campaign appends cannot change earlier item notes.
             save_dir_policy: What to do when ``config.save_dir`` is already
                 occupied by a previous run (contains ``run.lock``), applied
                 once at submit time, after the ``smart_run`` cache check:
@@ -1247,11 +1256,12 @@ class Project:
         stages → BLOCKED on failure (or INTERRUPTED on interruption), otherwise
         SUBMITTED while execution is still pending.
         """
-        from .taskdb import get_all_tasks, _hash_task
+        from .taskdb import _hash_task
+        from .record import list_task_records
 
         by_id = {
             t["task_id"]: t
-            for t in get_all_tasks(db_path, tags=[tag] if tag else None)
+            for t in list_task_records(db_path, tags=[tag] if tag else None)
         }
         out = []
         for idx, item, task_dict in zip(indices, queued_items, queued_tasks):
@@ -1260,7 +1270,9 @@ class Project:
             stage_results = []
             for stage_cfg in item:
                 sd = Path(str(stage_cfg.get("save_dir")))
-                record = RunRecord(sd)
+                snapshot = (row or {}).get('snapshot', {}).get('stages', {}).get(str(sd.resolve()), {})
+                record_dir = snapshot.get('record_dir', str(sd))
+                record = RunRecord(record_dir)
                 if record.complete_path.exists():
                     stage_results.append(
                         ExecutionResult(
@@ -1304,6 +1316,11 @@ class Project:
                             job_id=job_id
                         )
                     )
+            for result in stage_results:
+                result.task_id = _hash_task(task_dict)
+                result.task_db = str(db_path)
+                snapshot = (row or {}).get('snapshot', {}).get('stages', {}).get(str(Path(result.save_dir).resolve()), {})
+                result.record_dir = snapshot.get('record_dir', result.save_dir)
             out.append((idx, stage_results))
         return out
 
@@ -1325,6 +1342,7 @@ class Project:
         save_dir_policy: "str | None" = None,
         debug: bool = False,
         dry_run: bool = False,
+        task_record: "str | None" = None,
         after=None,
     ) -> "List[List[ExecutionResult]] | None":
         """Submit composite pipeline tasks: one task per item, stages in order.
@@ -1538,6 +1556,7 @@ class Project:
                 local_workers=n_jobs if not use_hpc else None,
                 tag=tag,
                 note=note,
+                task_record=task_record,
             )
             executor.run(wait=wait, timeout=timeout)
 
@@ -1643,11 +1662,12 @@ class Project:
         now reported as ``FAILED`` with its traceback, so a sweep result set
         faithfully reflects what happened (issue 2).
         """
-        from .taskdb import get_all_tasks, _hash_task
+        from .taskdb import _hash_task
+        from .record import list_task_records
 
         by_id = {
             t["task_id"]: t
-            for t in get_all_tasks(db_path, tags=[tag] if tag else None)
+            for t in list_task_records(db_path, tags=[tag] if tag else None)
         }
         status_map = {
             "done": "SUCCESS",
@@ -1664,9 +1684,10 @@ class Project:
             result_data = None
             error = None
             if status == "SUCCESS":
-                result_data = RunRecord(save_dir).load_results()
-                if result_data is None and row:
-                    result_data = row.get("result") or None
+                # DB payload belongs to this item; shared-root results.json does not.
+                result_data = row.get('result') if row else None
+                if row and row.get('save_dir'):
+                    save_dir = row['save_dir']
             elif status == "FAILED":
                 error = row.get("error") if row else None
 
@@ -1680,6 +1701,8 @@ class Project:
                         cfg=cfg,
                         error=error,
                         job_id=job_id,
+                        task_id=_hash_task(cfg), task_db=str(db_path),
+                        record_dir=row.get('record_dir') if row else None,
                     ),
                 )
             )
@@ -1818,7 +1841,7 @@ class Project:
         # *this* sweep sharing one save_dir don't trip it (nothing is occupied
         # until execution starts).
         if item_policy != "unsafe":
-            from .record import MARKER_NAME
+            from .record import MARKER_NAME, read_lock, is_task_record
             from .save_dir import clean_run_dir, is_complete, is_occupied, occupied_error
 
             still_to_run = []
@@ -1830,7 +1853,9 @@ class Project:
                 if (
                     item_dir is None
                     or not is_occupied(item_dir)
-                    or (Path(item_dir) / MARKER_NAME).exists()
+                    or ((Path(item_dir) / MARKER_NAME).exists() and n_jobs > 1)
+                    or ((Path(item_dir) / 'run.lock.tasks.db').exists()
+                        and not is_task_record(read_lock(item_dir)))
                 ):
                     still_to_run.append((i, sweep_cfg))
                 elif item_policy == "overwrite":
@@ -1844,6 +1869,11 @@ class Project:
                             (i, self._load_cached_result(Path(item_dir), sweep_cfg))
                         )
                     else:
+                        from .record import marker_db, read_marker
+                        from .taskdb import reset_completed_task
+                        marker = read_marker(item_dir)
+                        if marker:
+                            reset_completed_task(marker_db(item_dir, marker), marker['task_id'])
                         still_to_run.append((i, sweep_cfg))
                 elif force:
                     still_to_run.append((i, sweep_cfg))
@@ -1856,82 +1886,79 @@ class Project:
             # Decide whether to use HPC backend or local execution
             use_hpc = pbs_config is not None or slurm_config is not None
 
-            if use_hpc or (n_jobs > 1 and len(configs_to_run) > 1):
-                # Parallel execution using ParallelExecutor (local or HPC)
-                logger.info(
-                    f"Executing {len(configs_to_run)} sweep configs with ParallelExecutor"
-                )
+            # Serial and parallel sweeps share the same queue and per-item records.
+            # Parallel execution using ParallelExecutor (local or HPC)
+            logger.info(
+                f"Executing {len(configs_to_run)} sweep configs with ParallelExecutor"
+            )
 
-                # Extract just configs for parallel execution
-                task_configs = [cfg for _, cfg in configs_to_run]
-                indices = [i for i, _ in configs_to_run]
+            # Extract just configs for parallel execution
+            task_configs = [cfg for _, cfg in configs_to_run]
+            indices = [i for i, _ in configs_to_run]
 
-                # Prepare a common save_dir for the sweep master (tasks DB lives here).
-                if sweep_root is not None:
-                    sweep_save_dir = Path(sweep_root)
-                elif "save_dir" in task_configs[0]:
-                    sweep_save_dir = Path(task_configs[0].save_dir).parent
-                else:
-                    sweep_save_dir = Path("outputs/sweep")
-
-                # Create a wrapper config that ParallelExecutor can work with
-                # The task configs are what ParallelExecutor will execute
-                # Resolve _snapshot_ while base_config still has its parent chain
-                # so that OmegaConf interpolations (e.g. ${...key}) can resolve
-                if "_snapshot_" in base_config:
-                    snapshot_resolved = controller_snapshot(base_config)
-                else:
-                    snapshot_resolved = {}
-
-                executor_cfg = OmegaConf.create(
-                    {
-                        "save_dir": str(sweep_save_dir),
-                        "_snapshot_": snapshot_resolved,
-                    }
-                )
-
-                # Use ParallelExecutor with backend support
-                executor = ParallelExecutor(
-                    after=after,
-                    func=instantiate,  # The function to execute
-                    tasks=task_configs,  # List of configs to execute
-                    task_target=None,  # Each task is already a complete config
-                    cfg=executor_cfg,  # Master config for tracking
-                    n_jobs=n_jobs,
-                    pbs_config=pbs_config,
-                    slurm_config=slurm_config,
-                    local_workers=n_jobs if not use_hpc else None,
-                    tag=tag,
-                    note=note,
-                    task_record=task_record,
-                )
-
-                # Run the sweep (executor handles waiting based on wait parameter)
-                success = executor.run(wait=wait, timeout=timeout)
-
-                # Collect real per-task statuses from the task DB (issue 2).
-                results.extend(
-                    self.collect_results(
-                        indices, task_configs, executor.db_path, executor.tag,
-                        job_id=executor.job.job_id if executor.job is not None else None,
-                    )
-                )
+            # Prepare a common save_dir for the sweep master (tasks DB lives here).
+            if sweep_root is not None:
+                sweep_save_dir = Path(sweep_root)
+            elif "save_dir" in task_configs[0]:
+                roots = {str(cfg.save_dir) for _, cfg in merged_items}
+                sweep_save_dir = (Path(task_configs[0].save_dir) if len(roots) == 1
+                                  else Path(task_configs[0].save_dir).parent)
             else:
-                # Sequential execution (no backend, n_jobs=1)
-                for i, cfg in configs_to_run:
-                    logger.info(f"Executing sweep {i}/{len(sweep)}")
-                    # Guard already applied above — run items unguarded so
-                    # same-save_dir items of one sweep behave as before.
-                    result = self.submit(
-                        cfg,
-                        sweep=None,
-                        smart_run=False,
-                        wait=True,
-                        debug=debug,
-                        force=force,
-                        save_dir_policy="unsafe",
-                    )
-                    results.append((i, result))
+                sweep_save_dir = Path("outputs/sweep")
+
+            # Create a wrapper config that ParallelExecutor can work with
+            # The task configs are what ParallelExecutor will execute
+            # Resolve _snapshot_ while base_config still has its parent chain
+            # so that OmegaConf interpolations (e.g. ${...key}) can resolve
+            if "_snapshot_" in base_config:
+                snapshot_resolved = controller_snapshot(base_config)
+            else:
+                snapshot_resolved = {}
+
+            executor_cfg = OmegaConf.create(
+                {
+                    "save_dir": str(sweep_save_dir),
+                    "_snapshot_": snapshot_resolved,
+                }
+            )
+
+            func = instantiate
+            if debug:
+                # Serial debug wraps the same queue callable.
+                if use_hpc or n_jobs > 1:
+                    logger.warning('debug=True is ignored for parallel/HPC sweeps')
+                else:
+                    from .debug import debug_on_fail
+                    func = debug_on_fail(func)
+
+            # Use ParallelExecutor with backend support
+            from .parallel import _default_tag
+            campaign_tag = tag or _default_tag([cfg for _, cfg in merged_items], sweep_save_dir)
+            executor = ParallelExecutor(
+                after=after,
+                func=func,
+                tasks=task_configs,  # List of configs to execute
+                task_target=None,  # Each task is already a complete config
+                cfg=executor_cfg,  # Master config for tracking
+                n_jobs=n_jobs,
+                pbs_config=pbs_config,
+                slurm_config=slurm_config,
+                local_workers=n_jobs if not use_hpc else None,
+                tag=campaign_tag,
+                note=note,
+                task_record=task_record,
+            )
+
+            # Run the sweep (executor handles waiting based on wait parameter)
+            success = executor.run(wait=wait, timeout=timeout)
+
+            # Collect real per-task statuses from the task DB (issue 2).
+            results.extend(
+                self.collect_results(
+                    indices, task_configs, executor.db_path, executor.tag,
+                    job_id=executor.job.job_id if executor.job is not None else None,
+                )
+            )
 
         # Combine cached and new results, sorted by index
         all_results = cached_results + results

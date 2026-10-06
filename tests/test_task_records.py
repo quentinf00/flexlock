@@ -114,12 +114,18 @@ def test_single_task_in_master_dir(recpkg, tmp_path, mode):
         assert "task_id" not in lock  # master stub stays; record is in the DB
 
 
-def test_shared_save_dir_keeps_first_record_only(recpkg, tmp_path):
+def test_shared_save_dir_keeps_every_item_record(recpkg, tmp_path):
     root = tmp_path / "sweep"
     shared = root / "shared"
     _drain(root, [_task(shared, 1), _task(shared, 2)], "dir")
-    lock = read_lock(shared)
-    assert lock["config"]["x"] in (1, 2)  # one task owns the file, not clobbered
+    from flexlock.record import list_task_records
+
+    records = list_task_records(root/'run.lock.tasks.db')
+    assert sorted(r['config']['x'] for r in records) == [1, 2]
+    assert len({r['record_dir'] for r in records}) == 2
+    for record in records:
+        _assert_full(load_record(record['record_dir']), record['config']['x'])
+    assert read_lock(shared) is None
 
 
 # ── the reader ──

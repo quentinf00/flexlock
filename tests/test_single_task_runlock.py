@@ -168,6 +168,15 @@ def test_sweep_master_keeps_placeholder_and_items_have_no_lock(tmp_path, monkeyp
 
 def _make_legacy_placeholder(run_dir: Path):
     """Rewrite a fixed run dir back into the pre-fix on-disk shape."""
+    import sqlite3
+    import json
+    with sqlite3.connect(run_dir / 'run.lock.tasks.db') as connection:
+        for task_id, raw in connection.execute('SELECT task_id, snapshot FROM tasks').fetchall():
+            snapshot = json.loads(raw)
+            snapshot.pop('record_version', None)
+            snapshot.pop('note', None)
+            connection.execute('UPDATE tasks SET snapshot=? WHERE task_id=?',
+                               (json.dumps(snapshot), task_id))
     (run_dir / "run.lock").write_text(
         yaml.safe_dump(
             {"timestamp": "t", "note": "n",

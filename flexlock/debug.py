@@ -54,7 +54,7 @@ def _is_boring_frame(filename: str) -> bool:
     path_str = str(p)
 
     # Skip stdlib
-    if path_str.startswith(sys.prefix):
+    if p.is_relative_to(Path(sys.prefix).resolve()):
         # But don't skip if it's in site-packages (that's checked next)
         if "site-packages" not in path_str:
             return True

@@ -52,6 +52,41 @@ def _default_tag(tasks, save_dir) -> str:
     return hashlib.sha1(f"{task_ids}{save_dir}".encode()).hexdigest()[:12]
 
 
+def _shared_product_roots(cfg, tasks, task_target):
+    """Find roots reused by distinct items and reject declared output collisions."""
+    from collections import Counter
+    from .utils import merge_task_into_cfg
+    from .outputs import _contracts
+    from .exceptions import FlexLockValidationError
+
+    stages = []
+    for task in tasks:
+        item = merge_task_into_cfg(cfg, task, task_target)
+        raw_stages = item.get('_stages_', [item])
+        for raw in raw_stages:
+            # Composite stages resolve their own root references on the worker.
+            # Detach them here too; ${item} must not bind to the wrapper root.
+            stage = OmegaConf.create(OmegaConf.to_container(raw, resolve=False)
+                                     if OmegaConf.is_config(raw) else raw)
+            sd = OmegaConf.to_container(stage, resolve=False).get('save_dir')
+            if sd and '${' not in str(sd):
+                stages.append((str(Path(sd).resolve()), stage))
+    counts = Counter(sd for sd, _ in stages)
+    shared = sorted(sd for sd, count in counts.items() if count > 1)
+    outputs = []
+    for sd, stage in stages:
+        if sd not in shared:
+            continue
+        for path, _ in _contracts(stage, sd).values():
+            resolved = path.resolve()
+            if any(resolved == previous or resolved in previous.parents or previous in resolved.parents
+                   for previous in outputs):
+                raise FlexLockValidationError(f'Shared-root items declare overlapping output {resolved}; '
+                                              'give each item disjoint products')
+            outputs.append(resolved)
+    return shared
+
+
 class ParallelExecutor:
     """Manages the execution of tasks in parallel using a centralized task queue.
 
@@ -121,6 +156,20 @@ class ParallelExecutor:
 
         self.save_dir = Path(cfg.save_dir)
         self.db_path = self.save_dir / "run.lock.tasks.db"
+
+        # A cached prefix can leave only one new item to enqueue. Include the
+        # existing DB so appending it does not turn its shared root into a
+        # single-run receipt directory or overwrite the campaign master.
+        all_tasks = {_taskdb_hash_task(task): task for task in tasks}
+        if self.db_path.exists():
+            from .record import list_task_records
+            for row in list_task_records(self.db_path):
+                if row['status'] == 'done':
+                    all_tasks.setdefault(row['task_id'], row['task'])
+        self.shared_save_dirs = _shared_product_roots(cfg, list(all_tasks.values()), task_target)
+        from .record import read_lock
+        previous = read_lock(self.save_dir) or {}
+        self.shared_save_dirs = sorted(set(self.shared_save_dirs) | set(previous.get('shared_save_dirs', [])))
 
         self.tag = tag if tag is not None else _default_tag(tasks, self.save_dir)
 
@@ -331,24 +380,26 @@ class ParallelExecutor:
             bool: True if tasks completed successfully (or not waiting), False on timeout/failure
         """
         from flexlock.taskdb import dump_to_yaml
-        from flexlock.taskdb import get_all_tasks
+        from flexlock.record import list_task_records
         from flexlock.outputs import validate_outputs
         from flexlock.utils import merge_task_into_cfg
 
         # Already-done DB rows are reused without being claimed by a worker.
         # Validate their resolved receipts before taking that shortcut.
-        for row in get_all_tasks(self.db_path, status="done", tags=[self.tag]):
+        for row in list_task_records(self.db_path, tags=[self.tag]):
+            if row['status'] != 'done':
+                continue
             receipt = row.get("snapshot") or {}
             if "stages" in receipt:
-                stages = [s["config"] for s in receipt["stages"].values()]
+                stages = list(receipt["stages"].values())
             elif "config" in receipt:
-                stages = [receipt["config"]]
+                stages = [receipt]
             elif "_stages_" in row["task"]:
-                stages = row["task"]["_stages_"]
+                stages = [{'config': s} for s in row["task"]["_stages_"]]
             else:
-                stages = [merge_task_into_cfg(self.cfg, row["task"], self.task_target)]
+                stages = [{'config': merge_task_into_cfg(self.cfg, row["task"], self.task_target)}]
             for stage in stages:
-                validate_outputs(OmegaConf.create(stage))
+                validate_outputs(OmegaConf.create(stage['config']), record_dir=stage.get('record_dir'))
 
         if pending_count(self.db_path, tags=[self.tag]) == 0:
             logger.info("All tasks already completed.")
@@ -373,7 +424,7 @@ class ParallelExecutor:
         repos = collect_task_repos(self.cfg, self.tasks, self.task_target)
         snapshot(
             self.cfg, repos=repos, data=data, save_path=root_dir, note=self.note,
-            meta={"task_record": self.task_record},
+            meta={"task_record": self.task_record, "shared_save_dirs": self.shared_save_dirs},
         )
 
         # 3. Populate SQLite DB

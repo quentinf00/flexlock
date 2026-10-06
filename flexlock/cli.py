@@ -933,12 +933,65 @@ def cmd_skills(args):
         print("Nothing written.")
 
 
+def cmd_init(args):
+    from .registry import initialize
+
+    try:
+        info = initialize(args.path or '.')
+    except (ValueError, OSError) as exc:
+        print(f'Error: {exc}', file=sys.stderr)
+        sys.exit(1)
+    print(json.dumps(info, indent=2) if args.format == 'json' else
+          f"Initialized project registry at {info['index_path']}")
+
+
+def cmd_doctor(args):
+    from .registry import diagnose
+
+    info = diagnose(args.path or '.')
+    if args.format == 'json':
+        print(json.dumps(info, indent=2))
+    else:
+        print(f"Index: {info['index_path']} ({info['source']})")
+        print(f"Preset search roots: {', '.join(info['presets_roots'])}")
+        for diagnostic in info['diagnostics']:
+            print(diagnostic)
+
+
+def cmd_items(args):
+    from .record import list_task_records
+
+    records = list_task_records(args.database, tags=args.tag, check_outputs=args.check_outputs)
+    if args.format == 'json':
+        print(json.dumps(records, indent=2, default=str))
+    else:
+        for record in records:
+            print(f"{record['task_id']}  {record['status']:12s}  "
+                  f"{record.get('save_dir') or '-'}  receipt={record.get('record_dir') or '-'}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="flexlock",
         description="FlexLock experiment management CLI",
     )
     subparsers = parser.add_subparsers(dest="command")
+
+    for name, handler, help_text in [
+        ('init', cmd_init, 'Initialize a project registry (does not migrate nested indexes)'),
+        ('doctor', cmd_doctor, 'Inspect effective registry and preset search roots'),
+    ]:
+        command = subparsers.add_parser(name, help=help_text)
+        command.add_argument('path', nargs='?')
+        command.add_argument('--format', choices=['text', 'json'], default='text')
+        command.set_defaults(func=handler)
+
+    items = subparsers.add_parser('items', help='Inspect every logical item in a task database')
+    items.add_argument('database', help='Path to run.lock.tasks.db')
+    items.add_argument('--tag', action='append', help='Filter by campaign tag (repeatable)')
+    items.add_argument('--check-outputs', action='store_true', help='Check declared output contracts')
+    items.add_argument('--format', choices=['text', 'json'], default='json')
+    items.set_defaults(func=cmd_items)
 
     # ls
     ls_parser = subparsers.add_parser("ls", help="List runs in results directories")

@@ -563,6 +563,7 @@ class FlexLockRunner:
             note=getattr(args, "note", None),
             save_dir_policy=getattr(args, "save_dir_policy", None),
             force=getattr(args, "force", False),
+            task_record=getattr(args, "task_record", None),
         )
 
         self._report_job_id(args, results)
@@ -660,6 +661,7 @@ class FlexLockRunner:
             note=getattr(args, "note", None),
             save_dir_policy=getattr(args, "save_dir_policy", None),
             force=getattr(args, "force", False),
+            task_record=getattr(args, "task_record", None),
         )
         self._report_job_id(args, results)
         _raise_on_failure(results)

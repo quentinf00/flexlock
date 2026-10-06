@@ -10,6 +10,7 @@ authoritative view of worker state (see ``ParallelExecutor``).
 """
 
 import json
+import hashlib
 import os
 import random
 import time
@@ -86,14 +87,25 @@ def _store_stage_snapshot(db_path, task_id, snapshot_data, snapshots=None):
     if snapshots is not None:
         save_dir = Path(snapshot_data["config"]["save_dir"]).resolve()
         snapshots[str(save_dir)] = snapshot_data
-        snapshot_data = {"stages": snapshots}
+        snapshot_data = {"stages": snapshots, 'task_record': snapshot_data.get('task_record')}
     update_task_snapshot(db_path, task_id, snapshot_data)
+
+
+def stage_record_dir(save_dir, db_dir, master, task_id):
+    """Separate lifecycle files from products only when items share their root."""
+    product_dir = Path(save_dir)
+    if str(product_dir.resolve()) not in master.get('shared_save_dirs', []):
+        return product_dir
+    stage_id = hashlib.sha256(str(product_dir.resolve()).encode()).hexdigest()[:16]
+    # A nested .flexlock/ would accidentally claim a new project index scope.
+    return Path(db_dir) / '.flexlock-items' / task_id / stage_id
 
 
 def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
                stage=None, snapshots=None):
     """Execute a stage with the same provenance and records as a plain task."""
     task_save_dir = None
+    receipt_dir = None
     snapshot_data = None
     lock_record = None
     try:
@@ -129,6 +141,8 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
             task_fp = None
 
         master = _master(master_lock)
+        receipt_dir = stage_record_dir(task_save_dir, db_dir, master, task_id)
+        receipt_dir.mkdir(parents=True, exist_ok=True)
         # The master normally records every stage's repositories. A legacy
         # master may lack a repository discovered on the worker.
         missing_repos = set(repos) - set(master.get("repos") or {})
@@ -149,6 +163,12 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
             )
 
         if snapshot_data:
+            # Appending another campaign can replace the master. Retain the
+            # source/env/note actually used by this item in its DB snapshot.
+            snapshot_data = materialize(snapshot_data, master)
+            snapshot_data.update(record_version=2, task_record=master.get('task_record', 'legacy'))
+            if receipt_dir != task_save_dir:
+                snapshot_data['record_dir'] = str(receipt_dir.resolve())
             _store_stage_snapshot(db_path, task_id, snapshot_data, snapshots)
 
         # task_record="dir": the task dir gets its own full run.lock (the
@@ -156,11 +176,11 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
         master = _master(master_lock)
         lock_record = None
         if snapshot_data and master.get("task_record") == "dir":
-            if _owns_lock(task_save_dir, master_lock, task_id):
+            if _owns_lock(receipt_dir, master_lock, task_id):
                 lock_record = _task_lock_record(
-                    snapshot_data, master, master_lock, task_id, task_save_dir
+                    snapshot_data, master, master_lock, task_id, receipt_dir
                 )
-                RunRecord(task_save_dir).write_lock(lock_record)
+                RunRecord(receipt_dir).write_lock(lock_record)
             else:
                 logger.warning(
                     f"{task_save_dir} already holds another run's run.lock; "
@@ -168,17 +188,18 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
                     f"Give sweep items distinct save_dirs to get one per task."
                 )
 
-        marker_file = task_save_dir / ".flexlock_marker"
+        marker_file = receipt_dir / ".flexlock_marker"
         db_abs = db_path.resolve()
         try:
-            db_str = str(db_abs.relative_to(task_save_dir.parent.resolve()))
+            db_str = str(db_abs.relative_to(receipt_dir.parent.resolve()))
         except ValueError:
             db_str = str(db_abs)
-        marker_file.write_text(json.dumps({"db": db_str, "task_id": task_id}, indent=2))
+        from .run_record import _atomic_write
+        _atomic_write(marker_file, json.dumps({"db": db_str, "task_id": task_id}, indent=2))
 
         result = func(stage_cfg)
 
-        record = RunRecord(task_save_dir)
+        record = RunRecord(receipt_dir)
         try:
             record.write_results(result)
         except Exception as e:
@@ -186,21 +207,21 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
 
         from .outputs import validate_outputs
 
-        validate_outputs(stage_cfg, completing=True)
+        validate_outputs(stage_cfg, completing=True, record_dir=receipt_dir)
         logger.info(f"Task successful: {stage_cfg}")
         record.mark_complete(result=result)
-        link_run(task_save_dir, stage_cfg)
+        link_run(receipt_dir, stage_cfg)
         # Record this sweep task in the project-wide index so it's a
         # first-class cache entry (issue 1).
         if task_fp:
-            index.record_task(task_save_dir, db_path, task_id, task_fp)
+            index.record_task(receipt_dir, db_path, task_id, task_fp)
         return task_save_dir, result
 
     except KeyboardInterrupt:
         raise
     except Exception as e:
         if task_save_dir is not None:
-            RunRecord(task_save_dir).write_error(
+            RunRecord(receipt_dir or task_save_dir).write_error(
                 e, task_id=task_id, node=node, stage=stage
             )
         raise
@@ -209,7 +230,7 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
         if drifted:
             _store_stage_snapshot(db_path, task_id, drifted, snapshots)
             if lock_record is not None:
-                RunRecord(task_save_dir).write_lock(
+                RunRecord(receipt_dir).write_lock(
                     dict(lock_record, code_drift=drifted["code_drift"])
                 )
 
@@ -250,25 +271,26 @@ def _run_composite(func, task, db_path, db_dir, master_lock, node, task_id, fini
         save_dir = stage_cfg.get("save_dir")
         stage_name = Path(save_dir).name if save_dir else f"stage_{i}"
         label = f"stage {i + 1}/{n} {stage_name}"
+        receipt_dir = stage_record_dir(save_dir, db_dir, _master(master_lock), task_id) if save_dir else None
 
         if (
             skip_complete
             and save_dir is not None
-            and (Path(save_dir) / "run.complete").exists()
+            and (receipt_dir / "run.complete").exists()
         ):
             from .outputs import validate_outputs
 
             try:
-                validate_outputs(stage_cfg, save_dir)
+                validate_outputs(stage_cfg, save_dir, record_dir=receipt_dir)
             except Exception as exc:
-                RunRecord(save_dir).write_error(exc, task_id=task_id, node=node, stage=label)
+                RunRecord(receipt_dir).write_error(exc, task_id=task_id, node=node, stage=label)
                 finished.append(dict(task=task, error=f"[{label}] {traceback.format_exc()}"))
                 return
             logger.info(f"[{label}] {save_dir} already complete — skipping")
             stage_results.append(
                 {
                     "save_dir": str(save_dir),
-                    "result": RunRecord(save_dir).load_results(),
+                    "result": RunRecord(receipt_dir).load_results(),
                     "skipped": True,
                 }
             )
