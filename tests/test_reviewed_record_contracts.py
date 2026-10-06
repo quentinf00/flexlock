@@ -89,3 +89,19 @@ def test_missing_authoritative_database_rejects_cache_receipt(tmp_path, monkeypa
     with pytest.raises(ValueError, match='No matching run'):
         Project().get_result(proposed, search_dirs=[str(tmp_path)])
     assert not db.exists()
+
+
+@pytest.mark.parametrize('status', ['failed', 'interrupted'])
+def test_executor_does_not_hide_prior_terminal_failure_under_other_tag(tmp_path, status):
+    from flexlock.parallel import ParallelExecutor
+    from flexlock.taskdb import finish_task
+    task = dict(item=1)
+    db = tmp_path/'run.lock.tasks.db'
+    queue_tasks(db, [task], tag='original')
+    finish_task(db, task, error='retained failure', status=status)
+    fn = MagicMock()
+    executor = ParallelExecutor(func=fn, tasks=[task], task_target=None,
+                               cfg=OmegaConf.create(dict(save_dir=str(tmp_path))), tag='requested')
+    assert executor.run() is False
+    fn.assert_not_called()
+    assert list_task_records(db)[0]['status'] == status

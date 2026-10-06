@@ -395,8 +395,11 @@ class ParallelExecutor:
         # Already-done DB rows are reused without being claimed by a worker.
         # Validate their resolved receipts before taking that shortcut.
         requested_ids = {_taskdb_hash_task(task) for task in self.tasks}
-        for row in list_task_records(self.db_path):
-            if row['task_id'] not in requested_ids or row['status'] != 'done':
+        requested_rows = [row for row in list_task_records(self.db_path)
+                          if row['task_id'] in requested_ids]
+        prior_failure = any(row['status'] in ('failed', 'interrupted') for row in requested_rows)
+        for row in requested_rows:
+            if row['status'] != 'done':
                 continue
             receipt = row.get("snapshot") or {}
             if "stages" in receipt:
@@ -417,7 +420,9 @@ class ParallelExecutor:
             from flexlock.taskdb import get_status_counts
 
             counts = get_status_counts(self.db_path, tags=[self.tag])
-            return not any(counts.get(s, 0) for s in ("failed", "interrupted", "running"))
+            return not prior_failure and not any(
+                counts.get(s, 0) for s in ("failed", "interrupted", "running")
+            )
 
         # 1. Prepare Root Directory
         root_dir = Path(self.cfg.save_dir)  # e.g., outputs/sweep_name
@@ -488,4 +493,4 @@ class ParallelExecutor:
             dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks",
                          tags=[self.tag])
 
-        return success
+        return success and not prior_failure
