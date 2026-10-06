@@ -505,13 +505,17 @@ def validate_chained_paths(cfg):
                 )
 
 
-def controller_snapshot(cfg):
-    """Keep future inputs/lineage on the task, not the controller snapshot."""
+def controller_snapshot(cfg, *, defer_inputs=False):
+    """Keep future inputs/lineage on the task, not the controller snapshot.
+
+    ``defer_inputs`` also handles explicit promised paths with no run/newest
+    resolver. The consumer records their data/lineage when its worker starts.
+    """
     from .resolvers import defer_unpinned_runs
 
     if "_snapshot_" not in cfg:
         return {}
-    if not has_run_refs(cfg):
+    if not defer_inputs and not has_run_refs(cfg):
         return OmegaConf.to_container(cfg._snapshot_, resolve=True)
     snap = {}
     with defer_unpinned_runs():

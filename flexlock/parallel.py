@@ -63,6 +63,7 @@ def _shared_product_roots(cfg, tasks, task_target):
     for task in tasks:
         item = merge_task_into_cfg(cfg, task, task_target)
         raw_stages = item.get('_stages_', [item])
+        item_dirs = set()
         for raw in raw_stages:
             # Composite stages resolve their own root references on the worker.
             # Detach them here too; ${item} must not bind to the wrapper root.
@@ -70,7 +71,14 @@ def _shared_product_roots(cfg, tasks, task_target):
                                      if OmegaConf.is_config(raw) else raw)
             sd = OmegaConf.to_container(stage, resolve=False).get('save_dir')
             if sd and '${' not in str(sd):
-                stages.append((str(Path(sd).resolve()), stage))
+                resolved = str(Path(sd).resolve())
+                if resolved in item_dirs:
+                    raise FlexLockValidationError(
+                        f"Pipeline stages within one item need distinct save_dir paths; "
+                        f"repeated {resolved!r}."
+                    )
+                item_dirs.add(resolved)
+                stages.append((resolved, stage))
     counts = Counter(sd for sd, _ in stages)
     shared = sorted(sd for sd, count in counts.items() if count > 1)
     outputs = []
@@ -386,8 +394,9 @@ class ParallelExecutor:
 
         # Already-done DB rows are reused without being claimed by a worker.
         # Validate their resolved receipts before taking that shortcut.
-        for row in list_task_records(self.db_path, tags=[self.tag]):
-            if row['status'] != 'done':
+        requested_ids = {_taskdb_hash_task(task) for task in self.tasks}
+        for row in list_task_records(self.db_path):
+            if row['task_id'] not in requested_ids or row['status'] != 'done':
                 continue
             receipt = row.get("snapshot") or {}
             if "stages" in receipt:

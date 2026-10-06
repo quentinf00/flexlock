@@ -73,3 +73,39 @@ def test_resource_chain_records_acceptance_and_exact_dependencies(tmp_path, monk
     if not fail_train:
         assert commands[2][-2:] == ['--after', '101:102']
         assert commands[2][commands[2].index('--slurm-config')+1] == 'cpu.yaml'
+
+
+def test_future_producer_chain_compiles_before_any_worker_runs(tmp_path, monkeypatch):
+    from unittest.mock import MagicMock
+    from flexlock.record import list_task_records
+    monkeypatch.setenv('FLEXLOCK_INDEX', str(tmp_path/'.flexlock/index.db'))
+    monkeypatch.setattr('flexlock.worker.time.sleep', lambda _: None)
+    payloads = []
+    instances = []
+    def make_backend(**params):
+        backend = MagicMock()
+        def accept(fn, *args, **kwargs):
+            payloads.append((fn, args, kwargs))
+            return SimpleNamespace(job_id=str(700+len(payloads)))
+        backend.submit.side_effect = accept
+        instances.append(params)
+        return backend
+    monkeypatch.setattr('flexlock.parallel.SlurmBackend', make_backend)
+    profile = tmp_path/'profile.yaml';profile.write_text('startup_lines: []\n')
+    base = ['-d', 'examples.slimmer_workflows.cfgmod.cfg', '-o', f'runs_root={tmp_path}', 'run=future001',
+            '--slurm-config', str(profile), '--print-job-id']
+    FlexLockRunner().run(base + ['-s', 'prepare'])
+    FlexLockRunner().run(base + ['-s', 'train', '--after', '701'])
+    FlexLockRunner().run(base + ['-s', 'assess', '--after', '701:702'])
+    root = tmp_path/'baseline/linear/future001'
+    assert not (root/'prepare/dataset.json').exists()
+    task = list_task_records(root/'train/run.lock.tasks.db')[0]['task']
+    assert task['input_path'] == '${run_lock:'+str(root/'prepare')+',config.output_path}'
+    assert instances[1]['after'] == ['701'] and instances[2]['after'] == ['701', '702']
+    # Simulate afterok ordering: the same payloads then execute in dependency order.
+    for fn, args, kwargs in payloads:
+        fn(*args, **kwargs)
+    assert json.loads((root/'assess/report.json').read_text()) == {'count': 3, 'total': 12}
+    assert load_record(root/'train')['config']['input_path'] == str(root/'prepare/dataset.json')
+    assert 'dataset' in load_record(root/'train')['data']
+    assert {'dataset', 'model'} == set(load_record(root/'assess')['data'])

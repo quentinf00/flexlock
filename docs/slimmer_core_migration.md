@@ -1,8 +1,11 @@
 # Migration toward a smaller FlexLock core
 
 Date: 2026-10-06. Status: accepted direction and staged implementation plan.
-Only the root-anchor CLI fix is implemented in this change. Later phases are
-planned work, not deployed guarantees or authorization to launch production jobs.
+M0's root-anchor CLI fix is implemented and validated. Review drafts and executable
+examples are available. M1's three reviewed record corrections and an explicit
+future-input snapshot correction are implemented in the isolated branch, with
+compatibility validation underway. M1 guard/hash work and the remaining phases
+are planned work, not deployed guarantees or authorization to launch production jobs.
 
 Review companions: [workflow guidelines](workflow_guidelines.md) with executable
 configuration/campaign/chain examples, and [Slurm submission proposal](slurm_submission_workflow.md).
@@ -65,7 +68,12 @@ The independent review reproduced three defects in cbdcc65: repeated save_dir
 stages overwrite each other's record/result projection; cross-tag dedup returns
 SUBMITTED for completed synchronous work; a missing authoritative DB still yields
 CACHED with a wrong product path. Keep those reproductions, then fix or reject the
-cases. Deprecating orchestration does not permit exposed compatibility paths to lie.
+cases. The isolated corrective patch rejects repeated resolved stage roots before
+queue/backend construction; collects terminal outcomes by requested task ID across
+tags, rejecting active rows owned by another tag inside the queue transaction; and
+requires a readable authoritative record for cache hits. No record schema or task
+identity format changes. Compatibility validation is underway. Remaining M1 work
+below is still open. Deprecating orchestration does not permit compatibility paths to lie.
 
 Smallest same-root composite remedy: reject repeated resolved stage directories
 within an item. Stable stage IDs can be an optional later enhancement if consumers
@@ -95,6 +103,10 @@ and producer reference must be intentionally paired by the workflow.
 Newest/preset lookup stays a discovery convenience that can be selected once.
 Unpinned worker-time newest lookup under --after is not a producer-bound guarantee;
 move it to named compatibility/advanced behavior or reject it in the supported recipe.
+The executable future-producer example also found controller hashing of nonexistent
+promised data. With after, the isolated patch keeps declared data/prevs on the task
+and records them on the consumer worker; code repository evidence remains at the
+controller. This is a bounded prerequisite, not completion of the M2 binding policy.
 A bare run_lock argument read should have a lineage/reference record, independently
 of whether the user also declares _snapshot_.data. Preserve the concrete request and
 binding. Missing records/required fields fail; explicitly supplied optional defaults

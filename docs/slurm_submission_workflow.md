@@ -60,6 +60,11 @@ normal submit implemented as prepare then submit. Avoid another serialization or
 record format. A prepared launch is ordinary invocation/queue membership plus a
 scheduler script; it is not a general execution plan or a pipeline object hierarchy.
 
+This split adds a real lifecycle: retained payloads, claims and submission metadata.
+For occasional holds, the existing profile directive is simpler. Implement preparation
+when inspection/custom manual launching warrants that cost; do not make it mandatory
+for ordinary users or extend it into a general pipeline management API.
+
 A bundle contains task.pkl (or the existing worker payload), job.slurm, the existing
 queue and compiled configuration, and a small submission manifest: absolute paths,
 working directory, interpreter/environment, source/input identity, dependency IDs,

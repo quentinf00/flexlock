@@ -478,7 +478,13 @@ class Project:
         from .outputs import validate_outputs
         from .record import load_record, read_marker, marker_db
 
-        record = load_record(match_dir) or {}
+        record = load_record(match_dir)
+        if not record or not isinstance(record.get('config'), dict):
+            from .exceptions import FlexLockValidationError
+            raise FlexLockValidationError(
+                f"Cached run at {match_dir} has no readable authoritative record; "
+                "its completion marker/results alone are insufficient."
+            )
         product_dir = record.get('config', {}).get('save_dir', str(match_dir)) if record.get('record_dir') else str(match_dir)
         validate_outputs(cfg, product_dir, record_dir=match_dir)
         result_data = None
@@ -826,7 +832,7 @@ class Project:
             # executor_cfg below is re-rooted, so relative refs (${...key})
             # inside _snapshot_ would no longer reach the stage node.
             if "_snapshot_" in config:
-                snapshot_resolved = controller_snapshot(config)
+                snapshot_resolved = controller_snapshot(config, defer_inputs=bool(after))
             else:
                 snapshot_resolved = {}
             executor_cfg = OmegaConf.create(
@@ -1188,6 +1194,7 @@ class Project:
         from .exceptions import FlexLockValidationError
 
         dirs = []
+        seen = set()
         for j, stage in enumerate(item):
             sd = stage.get("save_dir") if hasattr(stage, "get") else None
             if sd is None:
@@ -1196,6 +1203,13 @@ class Project:
                     f"composite pipeline task needs a concrete save_dir (the "
                     f"task DB and lineage markers are anchored to it)."
                 )
+            resolved = str(Path(sd).resolve())
+            if resolved in seen:
+                raise FlexLockValidationError(
+                    f"Pipeline stages within one item need distinct save_dir paths; "
+                    f"stage {j} repeats {resolved!r}."
+                )
+            seen.add(resolved)
             dirs.append(str(sd))
         return dirs
 
@@ -1261,7 +1275,7 @@ class Project:
 
         by_id = {
             t["task_id"]: t
-            for t in list_task_records(db_path, tags=[tag] if tag else None)
+            for t in list_task_records(db_path)
         }
         out = []
         for idx, item, task_dict in zip(indices, queued_items, queued_tasks):
@@ -1667,7 +1681,7 @@ class Project:
 
         by_id = {
             t["task_id"]: t
-            for t in list_task_records(db_path, tags=[tag] if tag else None)
+            for t in list_task_records(db_path)
         }
         status_map = {
             "done": "SUCCESS",
@@ -1911,7 +1925,7 @@ class Project:
             # Resolve _snapshot_ while base_config still has its parent chain
             # so that OmegaConf interpolations (e.g. ${...key}) can resolve
             if "_snapshot_" in base_config:
-                snapshot_resolved = controller_snapshot(base_config)
+                snapshot_resolved = controller_snapshot(base_config, defer_inputs=bool(after))
             else:
                 snapshot_resolved = {}
 

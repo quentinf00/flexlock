@@ -102,14 +102,21 @@ def test_task_location_first_class(tmp_path, monkeypatch):
     monkeypatch.delenv("FLEXLOCK_INDEX", raising=False)
     sweep_root = tmp_path / "sweep"
     task_dir = sweep_root / "sweep_0001"
-    # A task dir carries run.complete + results.json but no run.lock.
+    # A DB-mode task has a readable authoritative row plus marker/results.
+    from flexlock.taskdb import queue_tasks, finish_task, update_task_snapshot, _hash_task
+    import json
+    task = {'save_dir': str(task_dir)}
+    task_id = _hash_task(task)
     rec = RunRecord(task_dir)
     rec.write_results({"acc": 0.5})
     rec.mark_complete(result={"acc": 0.5})
     db_path = sweep_root / "run.lock.tasks.db"
-    db_path.write_text("")  # placeholder
+    queue_tasks(db_path, [task])
+    update_task_snapshot(db_path, task_id, {'config': task, 'fingerprint': 'fp-task'})
+    finish_task(db_path, task, result={'acc': 0.5})
+    (task_dir / '.flexlock_marker').write_text(json.dumps({'db': str(db_path), 'task_id': task_id}))
 
-    index.record_task(task_dir, db_path, "task123", "fp-task")
+    index.record_task(task_dir, db_path, task_id, "fp-task")
     row = index.lookup(sweep_root, "fp-task")
     assert row is not None
     assert row.location_kind == LOCATION_TASK

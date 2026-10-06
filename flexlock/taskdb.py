@@ -257,12 +257,26 @@ def queue_tasks(db_path: Path, tasks: List[Any], tag: str | None = None) -> None
 
     Note: ``task_id`` is a content hash of the task dict. If two sweeps queue
     an *identical* task dict they share one row; ``INSERT OR IGNORE`` keeps the
-    first tag. That only happens when the work is truly identical, which is
-    acceptable.
+    first tag. Terminal outcomes are retrieved by requested task identity,
+    independently of tag. An active identical task owned by another tag is
+    rejected rather than returned as a new submission with no worker.
     """
     rows = [(_hash_task(t), _to_yaml(t), tag) for t in tasks]
 
     def op(c):
+        # Check inside the write transaction, before inserting any new rows.
+        # Do not steal an active row from a worker scoped to its original tag.
+        from .exceptions import FlexLockValidationError
+        for task_id, _, _ in rows:
+            existing = c.execute(
+                "SELECT tag, status FROM tasks WHERE task_id=?", (task_id,)
+            ).fetchone()
+            if existing and existing[0] != tag and existing[1] in ('pending', 'running'):
+                raise FlexLockValidationError(
+                    f"Task {task_id} is {existing[1]} under another tag "
+                    f"({existing[0]!r}); continue the original queue instead of "
+                    "submitting it as new work."
+                )
         c.executemany(
             "INSERT OR IGNORE INTO tasks (task_id, task_info, tag) VALUES (?, ?, ?)",
             rows,

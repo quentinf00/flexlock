@@ -49,6 +49,9 @@ do not introduce config groups/defaults/store registration solely for organizati
 Python imports and shallow dictionaries often suffice. Share constructors and
 algorithm defaults; keep concrete producer choices in the run binding layer.
 Resource profiles describe allocations/environment, rather than scientific variants.
+An arm label does not automatically select a model or loss: the arm config must
+apply that choice explicitly, for example by importing its model node. The toy
+config's arm is a path label, not a hidden variant switch.
 The tree above is optional and need not match existing project paths.
 
 ## Python configuration and explicit upstream arguments
@@ -86,7 +89,10 @@ A record is not proof of compatibility between grids, masks or model architectur
 
 The resolver is run_lock; recorded callable arguments are below config. Keep the
 explicit prevs declaration during migration: direct run_lock reads do not yet provide
-all automatic lineage guarantees planned in M2. Hash files/manifests deliberately.
+all automatic lineage guarantees planned in M2. Today run_lock fields are read at
+worker/stage execution, even for a named existing producer; retain producer records
+and products unchanged. Freezing existing field values/identity at preparation and
+reporting intervening changes remains M2 work. Hash files/manifests deliberately.
 For huge datasets, document immutable version/manifest identity and its assumptions;
 do not claim a weak directory metadata cache verifies all nested content changes.
 
@@ -121,8 +127,22 @@ The CLI also accepts --sweep 'upstream_run=A,upstream_run=B', or --sweep A,B
 include output/run changes in dictionary items or apply an explicit naming scheme.
 Bare stage arguments retain stage scope; main.x/train.x explicitly addresses the
 selected stage through the root. Root-only anchors apply before stage selection.
-@ node replacement remains useful for model/data variants; the selected concrete
-upstream should remain visible in the run config. See [CLI scope](cli_reference.md).
+@ node replacement remains useful for model/data variants. For a project stage
+that accepts a model config, expose the alternatives as module attributes:
+
+```python
+# myproject/configs/runs/seed3.py
+from myproject.configs.models import small, wide
+# cfg['train'] uses small by default; wide remains available to @ lookup.
+```
+
+```bash
+flexlock-run -d myproject.configs.runs.seed3.cfg -s train \
+  -o arm=wide run=seed3-wide -O model=@wide
+```
+
+The selected concrete upstream should remain visible in the run config. See
+[CLI scope](cli_reference.md).
 
 ## Fresh local/debug execution, then Slurm
 
@@ -168,6 +188,26 @@ or new records, without requiring a FlexLock artifact class.
   {"item_id": "file003", "disposition": "excluded", "reason": "outside agreed date range"}
 ]
 ```
+
+Generate the listing once, then retain it rather than rerun glob at each stage:
+
+```python
+import hashlib, json
+from pathlib import Path
+
+paths = sorted(Path('/shared/input').glob('*.json'))
+rows = [dict(item_id=f'file{i:06d}', input_path=str(path.resolve()),
+             sha256=hashlib.sha256(path.read_bytes()).hexdigest(), disposition='process')
+        for i, path in enumerate(paths)]
+with open('manifests/files-v1.json', 'x') as stream:
+    json.dump(rows, stream, indent=2)
+```
+
+This small-file example reads the inputs to hash them. A domain-specific immutable
+manifest can avoid repeated scans of huge inputs. IDs assigned from an enumeration
+are stable only within this frozen listing; a delta listing must retain existing IDs
+and allocate new ones, or use project IDs/content-based identifiers. Make exclusions
+explicit before exporting the queue, instead of dropping files without a trace.
 
 [Project helper example](../examples/slimmer_workflows/campaign.py) exports one YAML
 list of complete configs in a single pass. It avoids thousands of individual CLI
@@ -223,6 +263,24 @@ For model continuation, start a new run pointing to a named checkpoint. Applicat
 code restores weights/optimizer/RNG state and describes continuation semantics.
 For stage reuse after a source change, document why the selected preparation remains
 acceptable and run only the unfinished/new stage. FlexLock does not judge equivalence.
+
+## Frozen reassessment
+
+Select both preparation and training records explicitly and give assessment a fresh
+run label. In the toy configuration:
+
+```bash
+flexlock-run -d examples.slimmer_workflows.cfgmod.cfg -s assess \
+  -o upstream_run=/shared/runs/baseline/linear/chosen/prepare \
+     training_run=/shared/runs/baseline/linear/chosen/train \
+     runs_root=/shared/reassessments run=protocol-v2
+```
+
+For SAR, bind the chosen preparation/dataset record and document its continued
+suitability. For SST, bind the checkpoint/training config and prepared data, then
+validate legacy/native inference conventions and the matched comparison cohort.
+No preparation or training is relaunched by selecting only assessment. Retain the
+protocol/cohort manifest and its coverage report with the new assessment record.
 
 ## Multiple stages in one allocation
 

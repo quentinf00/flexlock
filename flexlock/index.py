@@ -288,8 +288,15 @@ def verify_and_resolve(base, row: IndexRow) -> Optional[Path]:
     self-heals to a miss.
     """
     from .run_record import RunRecord
+    from .record import load_record
 
     save_dir = Path(row.save_dir) if row.save_dir else None
+    # The index is derived. Markers and results cannot replace a missing
+    # authoritative directory/DB record, especially for shared-root receipts.
+    record = load_record(save_dir) if save_dir else None
+    if not record or not isinstance(record.get('config'), dict):
+        prune(resolve_index_path(base), row.fingerprint)
+        return None
 
     if row.location_kind == LOCATION_RUN_LOCK:
         if save_dir and RunRecord(save_dir).is_complete:
