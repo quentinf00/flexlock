@@ -1,0 +1,15 @@
+{
+  "implementation_commit": "ebc6d92c8e7e2ca658eb92600815562276262d6b",
+  "date": "2026-10-06",
+  "counts": {
+    "tests": 218,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "new_regression_cases": 11,
+  "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+  "PYTHONPATH": "/ontap/user/qfebvre/flexlock-execution-validation",
+  "command": "python -m pytest -q --tb=short tests/test_root_anchor_sweep.py tests/test_runner.py tests/test_node_selection.py tests/test_sweep_semantics.py tests/test_swaps.py tests/test_submit_params.py tests/test_dump_enqueue.py tests/test_multistage_config.py tests/test_pipeline_tasks.py tests/test_presets.py tests/test_hpc_dependencies.py --junitxml=/tmp/flexlock-root-anchor-final-compatibility.xml",
+  "scope": "Targeted CLI/execution compatibility set; not a full-suite rerun. Slurm backend mocked; no live jobs or production upgrades."
+}
