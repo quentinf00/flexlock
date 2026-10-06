@@ -976,3 +976,11 @@ These are file-based equivalents of `-o`/`-O`. Use them when overrides are too m
 Both require `--slurm-config` or `--pbs-config`. `--after` is a submission option:
 pass it when draining a queue, rather than when creating one. Do not also put a
 scheduler dependency directive in the profile's `startup_lines`.
+
+### Smaller-core workflow review draft
+
+[Workflow guidelines](workflow_guidelines.md) cover explicit upstream config anchors,
+track/arm/run organization, coverage gates and CPU/GPU stage coordination.
+[Slurm submission proposal](slurm_submission_workflow.md) distinguishes existing
+preview/profile/after/held-job behavior from proposed prepared launch bundles.
+The proposed --prepare-job and bundle submission helper are not implemented.

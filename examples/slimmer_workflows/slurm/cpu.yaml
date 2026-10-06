@@ -1,0 +1,8 @@
+# Template only: replace partition, checkout and interpreter paths.
+startup_lines:
+  - '#SBATCH --partition=cpu'
+  - '#SBATCH --cpus-per-task=4'
+  - '#SBATCH --mem=16G'
+  - '#SBATCH --time=01:00:00'
+  - 'cd /shared/checkouts/myproject-pinned'
+python_exe: /shared/envs/myproject/bin/python

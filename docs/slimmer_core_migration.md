@@ -4,6 +4,10 @@ Date: 2026-10-06. Status: accepted direction and staged implementation plan.
 Only the root-anchor CLI fix is implemented in this change. Later phases are
 planned work, not deployed guarantees or authorization to launch production jobs.
 
+Review companions: [workflow guidelines](workflow_guidelines.md) with executable
+configuration/campaign/chain examples, and [Slurm submission proposal](slurm_submission_workflow.md).
+Prepare-without-submit is proposed after M1 guards/M2 bindings; --after remains.
+
 ## Target and compatibility boundary
 
 Flex: Python configuration, py2cfg, preset/node loading, @ replacement, overrides.
