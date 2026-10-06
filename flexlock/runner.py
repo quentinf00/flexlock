@@ -470,6 +470,67 @@ class FlexLockRunner:
             items.append(stage_cfgs)
         return items, selects
 
+    @staticmethod
+    def _root_sweep_key(root_cfg, select, key):
+        """Root-only anchors and explicitly selected-node paths precede selection.
+
+        Bare stage arguments retain their existing scope, including names also
+        present at the root. A qualified ``main.x`` always addresses the root.
+        """
+        if key == select or key.startswith(select + "."):
+            return True
+        first = key.split(".", 1)[0]
+        stage = OmegaConf.select(root_cfg, select)
+        return stage is not None and first in root_cfg and first not in stage
+
+    def _is_root_anchor_sweep(self, args, root_cfg, select, tasks):
+        if not select or not tasks or any(_is_composite_item(t) for t in tasks):
+            return False
+        if args.sweep_target not in (None, "."):
+            return self._root_sweep_key(root_cfg, select, args.sweep_target)
+        if args.sweep_target == ".":
+            return False  # explicit selected-node scope
+        return any(isinstance(t, dict) and any(
+            self._root_sweep_key(root_cfg, select, key) for key in t
+        ) for t in tasks)
+
+    def _build_root_anchor_sweep(self, args, root_cfg, base_cfg, select, tasks):
+        """Compile root-anchor items into ordinary self-contained stage configs."""
+        from .freeze import freeze_deferred
+        from .utils import expand_swaps
+
+        module = defaults_module(args.defaults)
+        compiled = []
+        for item in tasks:
+            item = expand_swaps(item, module)
+            if args.sweep_target:
+                merged = merge_task_into_cfg(root_cfg, item, args.sweep_target)
+            else:
+                if not isinstance(item, dict):
+                    raise FlexLockValidationError(
+                        "Root-anchor sweeps require dictionary items or --sweep-target; "
+                        "repeat the key in --sweep 'upstream_run=A,upstream_run=B'."
+                    )
+                root_item, stage_item = {}, {}
+                for key, value in item.items():
+                    destination = (
+                        root_item if self._root_sweep_key(root_cfg, select, key)
+                        else stage_item
+                    )
+                    destination[key] = value
+                merged = merge_task_into_cfg(root_cfg, root_item, None)
+                merged = merge_task_into_cfg(merged, stage_item, select)
+            node = self._build_node_cfg(args, merged, base_cfg, select)
+            if args.merge_after_select:
+                node.merge_with(OmegaConf.load(args.merge_after_select))
+            apply_overrides(node, args.overrides_after_select, module=module)
+            freeze_run_refs(node, defer_unpinned=bool(args.after))
+            compiled.append(OmegaConf.to_container(
+                freeze_deferred(node, defer_runs=bool(args.after)), resolve=False,
+                throw_on_missing=False,
+            ))
+        return compiled
+
     def _run_multi(self, args, root_cfg, base_cfg, selects):
         """Run a sequence of selected stages in order, as a pipeline.
 
@@ -731,45 +792,67 @@ class FlexLockRunner:
             return self._run_multi(args, root_cfg, base_cfg, selects)
         select = selects[0]
 
-        # Selection happens at the node level — freezes root-scope refs.
-        if select:
-            try:
-                node_cfg = select_and_freeze_root_refs(root_cfg, select)
-            except KeyError as e:
+        # Root anchors must be swept before selection freezes their references.
+        # Stage-only sweeps and already-compiled queues keep their existing scope.
+        sweep_tasks = load_sweep(
+            sweep=args.sweep, sweep_file=args.sweep_file,
+            sweep_key=args.sweep_key, root_cfg=root_cfg,
+        )
+        root_anchor_sweep = self._is_root_anchor_sweep(args, root_cfg, select, sweep_tasks)
+        if root_anchor_sweep:
+            if args.edit_config:
                 raise FlexLockValidationError(
-                    f"Selection '{select}' returned None."
-                ) from e
-            # Warn when a -o key also exists in the selected subtree — the
-            # override landed on the root, not the stage. Root-only anchors
-            # (params, pipeline_dir, …) are intentional and stay silent.
-            if args.overrides:
-                _missing = object()
-                for kv in args.overrides:
-                    key = kv.split("=", 1)[0]
-                    if OmegaConf.select(node_cfg, key, default=_missing) is not _missing:
-                        logger.warning(
-                            f"'-o {kv}' was applied to the root config, but key '{key}' "
-                            f"also exists in the selected node '{select}' — "
-                            f"your override did NOT reach the stage. "
-                            f"Use '-O {kv}' to override the stage directly. "
-                            f"See docs/cli_reference.md § Configuration Overrides."
-                        )
+                    "--edit-config cannot edit root-anchor sweep configurations; "
+                    "edit the preset or sweep file, or inspect with --print-config."
+                )
+            sweep_tasks = self._build_root_anchor_sweep(
+                args, root_cfg, base_cfg, select, sweep_tasks,
+            )
+            node_cfg = OmegaConf.create({})
+            # These operations have already been applied to each compiled item.
+            args.sweep_target = None
+            args.overrides_after_select = []
+            args.merge_after_select = None
         else:
-            node_cfg = root_cfg
+            # Selection happens at the node level — freezes root-scope refs.
+            if select:
+                try:
+                    node_cfg = select_and_freeze_root_refs(root_cfg, select)
+                except KeyError as e:
+                    raise FlexLockValidationError(
+                        f"Selection '{select}' returned None."
+                    ) from e
+                # Warn when a -o key also exists in the selected subtree — the
+                # override landed on the root, not the stage. Root-only anchors
+                # (params, pipeline_dir, …) are intentional and stay silent.
+                if args.overrides:
+                    _missing = object()
+                    for kv in args.overrides:
+                        key = kv.split("=", 1)[0]
+                        if OmegaConf.select(node_cfg, key, default=_missing) is not _missing:
+                            logger.warning(
+                                f"'-o {kv}' was applied to the root config, but key '{key}' "
+                                f"also exists in the selected node '{select}' — "
+                                f"your override did NOT reach the stage. "
+                                f"Use '-O {kv}' to override the stage directly. "
+                                f"See docs/cli_reference.md § Configuration Overrides."
+                            )
+            else:
+                node_cfg = root_cfg
 
-        # @flexcli decorator may inject a base_cfg — preserve the existing
-        # mutual-merge semantics so global keys keep their root pointers.
-        if base_cfg is not None:
-            _b = base_cfg.copy()
-            _b.merge_with(node_cfg)
-            node_cfg.merge_with(_b)
+            # @flexcli decorator may inject a base_cfg — preserve the existing
+            # mutual-merge semantics so global keys keep their root pointers.
+            if base_cfg is not None:
+                _b = base_cfg.copy()
+                _b.merge_with(node_cfg)
+                node_cfg.merge_with(_b)
 
-        # Inject a default save_dir if the selected node doesn't carry one.
-        node_cfg = self._prepare_node(node_cfg, defer_runs=bool(args.after))
-        self._attach_preset(args, node_cfg, select)
-        # Bind ordinary/pinned run references now; --after keeps unpinned
-        # references for the worker once the scheduler dependency completes.
-        freeze_run_refs(node_cfg, defer_unpinned=bool(args.after))
+            # Inject a default save_dir if the selected node doesn't carry one.
+            node_cfg = self._prepare_node(node_cfg, defer_runs=bool(args.after))
+            self._attach_preset(args, node_cfg, select)
+            # Bind ordinary/pinned run references now; --after keeps unpinned
+            # references for the worker once the scheduler dependency completes.
+            freeze_run_refs(node_cfg, defer_unpinned=bool(args.after))
 
         # --edit-config / -e: open compiled config in $EDITOR before running.
         if args.edit_config:
@@ -804,16 +887,9 @@ class FlexLockRunner:
 
         # --dump: emit clean YAML (no decorative headers) and exit.
         if args.dump:
-            print(OmegaConf.to_yaml(node_cfg), end="")
+            dump_cfg = OmegaConf.create(sweep_tasks) if root_anchor_sweep else node_cfg
+            print(OmegaConf.to_yaml(dump_cfg), end="")
             return None
-
-        # Load the sweep list from whichever source the user picked.
-        sweep_tasks = load_sweep(
-            sweep=args.sweep,
-            sweep_file=args.sweep_file,
-            sweep_key=args.sweep_key,
-            root_cfg=root_cfg,
-        )
 
         # --enqueue: append the compiled config(s) to a YAML queue file, exit.
         # Below load_sweep so a sweep source expands into one queue entry per

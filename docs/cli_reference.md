@@ -528,6 +528,48 @@ flexlock-run -d defaults --sweep "0.001,0.01,0.1" --sweep-target optimizer.lr
 - **With `--sweep-target`:** Sweep values are set at the specified path
 - **Without `--sweep-target`:** Sweep values (must be dicts) are merged at root
 
+### Sweeping an upstream root anchor with `-s`
+
+Root-only anchors are expanded before selecting the callable. For example:
+
+```python
+cfg = dict(
+    upstream_run="/path/to/A",
+    main=py2cfg(stage,
+        input="${run_lock:${upstream_run},config.output_path}",
+        save_dir="outputs/downstream",
+    ),
+)
+```
+
+```bash
+flexlock-run -d cfgmod.cfg -s main -o upstream_run=/path/to/B
+flexlock-run -d cfgmod.cfg -s main \
+  --sweep '/path/to/A,/path/to/B' --sweep-target upstream_run \
+  -O 'save_dir=outputs/downstream/${input}'
+```
+
+The second command binds each input to its own upstream record. Choose disjoint
+output paths appropriate to your inputs; the naming expression above is illustrative.
+Dictionary sweeps use repeated keys, e.g.
+`--sweep 'upstream_run=/path/to/A,upstream_run=/path/to/B'`.
+The spelling `upstream_run=A,B` does not mean two key-value entries.
+
+For a selected stage, bare keys already present in that stage keep their existing
+stage scope. Root-only keys such as `upstream_run` change the root before selection;
+qualified paths such as `main.scale` explicitly change that node in the root.
+Mixed dictionaries can change both root anchors and stage arguments. If a name
+exists in both places, a bare key keeps stage scope. `--sweep-target .` explicitly
+uses the selected-node scope.
+
+Root-anchor compilation also applies to `--sweep-file` and `--sweep-key`.
+`--print-config`, `--check`, enqueue and execution use the same item bindings.
+For these sweeps `--dump` exports a YAML list of compiled stage configs, suitable
+for `--sweep-file`. Apply `-M`/`-O` to each selected item after its sweep changes.
+Interactive `--edit-config` is rejected for root-anchor sweeps; edit the preset
+or item file instead. An already detached Python `Project.get()` config retains
+its existing frozen-root semantics.
+
 ---
 
 ## Execution Control
