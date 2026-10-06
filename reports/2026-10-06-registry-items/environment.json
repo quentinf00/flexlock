@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-06",
+  "source_checkout": "/ontap/user/qfebvre/flexlock-execution-validation",
+  "source_commit": "cbdcc65276765d069ee289c4d75dac6083ad62bd",
+  "base_commit": "7250c2130df43fc8e49aea8adeb09326baac75c7",
+  "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+  "pythonpath": "/ontap/user/qfebvre/flexlock-execution-validation",
+  "production_upgrade": false,
+  "sst_read_only_output_validation": "passed"
+}

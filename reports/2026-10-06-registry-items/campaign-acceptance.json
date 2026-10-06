@@ -1,0 +1,372 @@
+{
+  "passed": true,
+  "source_head": "cbdcc65276765d069ee289c4d75dac6083ad62bd",
+  "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+  "registry": {
+    "start": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006",
+    "index_path": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/.flexlock/index.db",
+    "index_exists": true,
+    "source": "project-directory",
+    "project": {
+      "version": 1,
+      "project_id": "7f2a6fc1f56c4148b1c1d4d7fac075a0"
+    },
+    "presets_roots": [
+      "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/.flexlock/presets"
+    ],
+    "diagnostics": []
+  },
+  "serial_then_append": [
+    {
+      "task_id": "822914c1d8a78f0aa2062583fa34996bc47e5641",
+      "status": "CACHED",
+      "product_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+      "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/.flexlock-items/822914c1d8a78f0aa2062583fa34996bc47e5641/ac7eaf50d2ebfc9c",
+      "database": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/run.lock.tasks.db",
+      "result": {
+        "item": 1
+      }
+    },
+    {
+      "task_id": "e78ad54b306177d8bab710560cbb73c1130dce2d",
+      "status": "CACHED",
+      "product_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+      "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/.flexlock-items/e78ad54b306177d8bab710560cbb73c1130dce2d/ac7eaf50d2ebfc9c",
+      "database": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/run.lock.tasks.db",
+      "result": {
+        "item": 2
+      }
+    },
+    {
+      "task_id": "c27587210c05234685b3116eea052b5fc03ba0b6",
+      "status": "SUCCESS",
+      "product_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+      "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/.flexlock-items/c27587210c05234685b3116eea052b5fc03ba0b6/ac7eaf50d2ebfc9c",
+      "database": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/run.lock.tasks.db",
+      "result": {
+        "item": 3
+      }
+    }
+  ],
+  "parallel": [
+    {
+      "task_id": "ce8e847cd2655e0ff6465b0d92b47e24ecbefd14",
+      "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/parallel-campaign/.flexlock-items/ce8e847cd2655e0ff6465b0d92b47e24ecbefd14/44c0e9b3983bd05e",
+      "result": {
+        "item": 1
+      }
+    },
+    {
+      "task_id": "0fb14308d87b371cc0eb88472bb80f754d2cc87c",
+      "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/parallel-campaign/.flexlock-items/0fb14308d87b371cc0eb88472bb80f754d2cc87c/44c0e9b3983bd05e",
+      "result": {
+        "item": 2
+      }
+    }
+  ],
+  "failure": [
+    {
+      "task_id": "ae90809f0ef8998c42b818e95064c79928218a80",
+      "status": "FAILED",
+      "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/failure-campaign/.flexlock-items/ae90809f0ef8998c42b818e95064c79928218a80/a34658ef3529b230"
+    },
+    {
+      "task_id": "f631216d5938b1d698aee3fe4b8247e991508e20",
+      "status": "SUCCESS",
+      "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/failure-campaign/.flexlock-items/f631216d5938b1d698aee3fe4b8247e991508e20/a34658ef3529b230"
+    }
+  ],
+  "logical_items": [
+    {
+      "task_id": "822914c1d8a78f0aa2062583fa34996bc47e5641",
+      "database": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/run.lock.tasks.db",
+      "tag": "bf7588b07a34",
+      "status": "done",
+      "result": {
+        "item": 1
+      },
+      "error": null,
+      "node": "compute-118-39",
+      "job_id": "393684",
+      "ts_start": "2026-10-06 08:56:10",
+      "ts_end": "2026-10-06 08:56:10",
+      "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+      "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/.flexlock-items/822914c1d8a78f0aa2062583fa34996bc47e5641/ac7eaf50d2ebfc9c",
+      "config": {
+        "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+        "_snapshot_": {
+          "repos": {
+            "flexlock": "/ontap/user/qfebvre/flexlock-execution-validation"
+          }
+        },
+        "_target_": "tests.test_registry_items.produce",
+        "item": 1,
+        "fail": false,
+        "_outputs_": {
+          "chunk": {
+            "path": "chunk_1.json",
+            "sha256": true
+          }
+        }
+      },
+      "task": {
+        "_target_": "tests.test_registry_items.produce",
+        "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+        "item": 1,
+        "fail": false,
+        "_snapshot_": {
+          "repos": {
+            "flexlock": "/ontap/user/qfebvre/flexlock-execution-validation"
+          }
+        },
+        "_outputs_": {
+          "chunk": {
+            "path": "chunk_1.json",
+            "sha256": true
+          }
+        }
+      },
+      "snapshot": {
+        "timestamp": "2026-10-06T10:56:10.419010",
+        "parent": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/run.lock",
+        "fingerprint": "e76eb3a3fbabb22622d08a11b9b990a684ffa79d81e996fa42d5e1e6cdad6cd1",
+        "config": {
+          "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+          "_snapshot_": {
+            "repos": {
+              "flexlock": "/ontap/user/qfebvre/flexlock-execution-validation"
+            }
+          },
+          "_target_": "tests.test_registry_items.produce",
+          "item": 1,
+          "fail": false,
+          "_outputs_": {
+            "chunk": {
+              "path": "chunk_1.json",
+              "sha256": true
+            }
+          }
+        },
+        "repos": {
+          "flexlock": {
+            "commit": "dac3876982ea362d20de0e7aa51a899be1465fea",
+            "tree": "772c566875c8d0bcd0568dc85bcb1ce9d1564651",
+            "is_dirty": false,
+            "path": "/ontap/user/qfebvre/flexlock-execution-validation"
+          },
+          "tests": {
+            "commit": "dac3876982ea362d20de0e7aa51a899be1465fea",
+            "tree": "772c566875c8d0bcd0568dc85bcb1ce9d1564651",
+            "is_dirty": false,
+            "module": "tests",
+            "path": "/ontap/user/qfebvre/flexlock-execution-validation"
+          }
+        },
+        "env": {
+          "flexlock/pixi.lock": "0c13f479a9b136232de4e4f83e56fc3fd19bbbd0ab3840110fcf0e6749d4d22c",
+          "tests/pixi.lock": "0c13f479a9b136232de4e4f83e56fc3fd19bbbd0ab3840110fcf0e6749d4d22c"
+        },
+        "note": "T5 serial acceptance",
+        "record_version": 2,
+        "task_record": "db",
+        "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/.flexlock-items/822914c1d8a78f0aa2062583fa34996bc47e5641/ac7eaf50d2ebfc9c"
+      },
+      "task_record": "db",
+      "artifact_health": "valid"
+    },
+    {
+      "task_id": "c27587210c05234685b3116eea052b5fc03ba0b6",
+      "database": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/run.lock.tasks.db",
+      "tag": "aa465412403e",
+      "status": "done",
+      "result": {
+        "item": 3
+      },
+      "error": null,
+      "node": "compute-118-39",
+      "job_id": "393684",
+      "ts_start": "2026-10-06 08:56:16",
+      "ts_end": "2026-10-06 08:56:16",
+      "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+      "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/.flexlock-items/c27587210c05234685b3116eea052b5fc03ba0b6/ac7eaf50d2ebfc9c",
+      "config": {
+        "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+        "_snapshot_": {
+          "repos": {
+            "flexlock": "/ontap/user/qfebvre/flexlock-execution-validation"
+          }
+        },
+        "_target_": "tests.test_registry_items.produce",
+        "item": 3,
+        "fail": false,
+        "_outputs_": {
+          "chunk": {
+            "path": "chunk_3.json",
+            "sha256": true
+          }
+        }
+      },
+      "task": {
+        "_target_": "tests.test_registry_items.produce",
+        "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+        "item": 3,
+        "fail": false,
+        "_snapshot_": {
+          "repos": {
+            "flexlock": "/ontap/user/qfebvre/flexlock-execution-validation"
+          }
+        },
+        "_outputs_": {
+          "chunk": {
+            "path": "chunk_3.json",
+            "sha256": true
+          }
+        }
+      },
+      "snapshot": {
+        "timestamp": "2026-10-06T10:56:16.423568",
+        "parent": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/run.lock",
+        "fingerprint": "9caa6e51b38e7d4ad7286fab2679a10ced0ba2468f83059d85dfacc15db3d6c8",
+        "config": {
+          "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+          "_snapshot_": {
+            "repos": {
+              "flexlock": "/ontap/user/qfebvre/flexlock-execution-validation"
+            }
+          },
+          "_target_": "tests.test_registry_items.produce",
+          "item": 3,
+          "fail": false,
+          "_outputs_": {
+            "chunk": {
+              "path": "chunk_3.json",
+              "sha256": true
+            }
+          }
+        },
+        "repos": {
+          "flexlock": {
+            "commit": "387af04498e958ad991595960cba09fcbdacc17a",
+            "tree": "772c566875c8d0bcd0568dc85bcb1ce9d1564651",
+            "is_dirty": false,
+            "path": "/ontap/user/qfebvre/flexlock-execution-validation"
+          },
+          "tests": {
+            "commit": "387af04498e958ad991595960cba09fcbdacc17a",
+            "tree": "772c566875c8d0bcd0568dc85bcb1ce9d1564651",
+            "is_dirty": false,
+            "module": "tests",
+            "path": "/ontap/user/qfebvre/flexlock-execution-validation"
+          }
+        },
+        "env": {
+          "flexlock/pixi.lock": "0c13f479a9b136232de4e4f83e56fc3fd19bbbd0ab3840110fcf0e6749d4d22c",
+          "tests/pixi.lock": "0c13f479a9b136232de4e4f83e56fc3fd19bbbd0ab3840110fcf0e6749d4d22c"
+        },
+        "note": "T5 append acceptance",
+        "record_version": 2,
+        "task_record": "db",
+        "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/.flexlock-items/c27587210c05234685b3116eea052b5fc03ba0b6/ac7eaf50d2ebfc9c"
+      },
+      "task_record": "db",
+      "artifact_health": "valid"
+    },
+    {
+      "task_id": "e78ad54b306177d8bab710560cbb73c1130dce2d",
+      "database": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/run.lock.tasks.db",
+      "tag": "bf7588b07a34",
+      "status": "done",
+      "result": {
+        "item": 2
+      },
+      "error": null,
+      "node": "compute-118-39",
+      "job_id": "393684",
+      "ts_start": "2026-10-06 08:56:10",
+      "ts_end": "2026-10-06 08:56:11",
+      "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+      "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/.flexlock-items/e78ad54b306177d8bab710560cbb73c1130dce2d/ac7eaf50d2ebfc9c",
+      "config": {
+        "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+        "_snapshot_": {
+          "repos": {
+            "flexlock": "/ontap/user/qfebvre/flexlock-execution-validation"
+          }
+        },
+        "_target_": "tests.test_registry_items.produce",
+        "item": 2,
+        "fail": false,
+        "_outputs_": {
+          "chunk": {
+            "path": "chunk_2.json",
+            "sha256": true
+          }
+        }
+      },
+      "task": {
+        "_target_": "tests.test_registry_items.produce",
+        "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+        "item": 2,
+        "fail": false,
+        "_snapshot_": {
+          "repos": {
+            "flexlock": "/ontap/user/qfebvre/flexlock-execution-validation"
+          }
+        },
+        "_outputs_": {
+          "chunk": {
+            "path": "chunk_2.json",
+            "sha256": true
+          }
+        }
+      },
+      "snapshot": {
+        "timestamp": "2026-10-06T10:56:10.909981",
+        "parent": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/run.lock",
+        "fingerprint": "7f6b9a75c575effd904252409657cdd2ad6f73b2905adcf6efc81ffe34ea2e18",
+        "config": {
+          "save_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products",
+          "_snapshot_": {
+            "repos": {
+              "flexlock": "/ontap/user/qfebvre/flexlock-execution-validation"
+            }
+          },
+          "_target_": "tests.test_registry_items.produce",
+          "item": 2,
+          "fail": false,
+          "_outputs_": {
+            "chunk": {
+              "path": "chunk_2.json",
+              "sha256": true
+            }
+          }
+        },
+        "repos": {
+          "flexlock": {
+            "commit": "dac3876982ea362d20de0e7aa51a899be1465fea",
+            "tree": "772c566875c8d0bcd0568dc85bcb1ce9d1564651",
+            "is_dirty": false,
+            "path": "/ontap/user/qfebvre/flexlock-execution-validation"
+          },
+          "tests": {
+            "commit": "dac3876982ea362d20de0e7aa51a899be1465fea",
+            "tree": "772c566875c8d0bcd0568dc85bcb1ce9d1564651",
+            "is_dirty": false,
+            "module": "tests",
+            "path": "/ontap/user/qfebvre/flexlock-execution-validation"
+          }
+        },
+        "env": {
+          "flexlock/pixi.lock": "0c13f479a9b136232de4e4f83e56fc3fd19bbbd0ab3840110fcf0e6749d4d22c",
+          "tests/pixi.lock": "0c13f479a9b136232de4e4f83e56fc3fd19bbbd0ab3840110fcf0e6749d4d22c"
+        },
+        "note": "T5 serial acceptance",
+        "record_version": 2,
+        "task_record": "db",
+        "record_dir": "/ontap/user/qfebvre/flexlock-execution-validation/acceptance-runs/registry-items-final-20261006/products/.flexlock-items/e78ad54b306177d8bab710560cbb73c1130dce2d/ac7eaf50d2ebfc9c"
+      },
+      "task_record": "db",
+      "artifact_health": "valid"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "artifacts": [
+    {
+      "path": "campaign-acceptance.json",
+      "sha256": "a594e8cbad4328c02298ab7621b04bbd9af588d9dc8f7187119b497c8cbaeeb1"
+    },
+    {
+      "path": "environment.json",
+      "sha256": "283cd482600990217d58e13438d72ee7e8515b506fb554b36e8b651f812b7e05"
+    },
+    {
+      "path": "final-accounting.txt",
+      "sha256": "0442ff13d0e5390d36c362e31f4736a37902ac00472900eaece285f1ed84ff70"
+    },
+    {
+      "path": "full-suite.xml",
+      "sha256": "43e82f476ff3bf63fcb953bf83fe10513eab96594013733b9b85d59e73f86093"
+    },
+    {
+      "path": "report.md",
+      "sha256": "39acdee634fde978d83ad6602eed043be08e1aedc41d5fb03a60bf7845e38efb"
+    },
+    {
+      "path": "slurm-acceptance.json",
+      "sha256": "8c2eeb9b2a4a56025220ece222ab599d355526e869c1c628e7efed21296ffde3"
+    }
+  ]
+}

@@ -41,7 +41,21 @@ of consumer execution, then cancels the blocked consumer. The first attempt
 Local bootstrap acceptance passed, but live scheduler failure acceptance remains
 pending. Evidence: `/jobscratch/qfebvre/flexlock-p0-slurm-20261004/acceptance.json`.
 
-Next: explicit project registry and uniform item/status contracts, then pure
+At the original integration milestone, next work was explicit project registry
+and uniform item/status contracts, then pure
 planning and one launch/resume kernel beneath compatibility wrappers. Scheduler
 profiles remain useful; automatic heterogeneous graph compilation stays a
 separate experimental feature until its evidence contracts are demonstrated.
+
+## Isolated T5 extension — 2026-10-06
+
+Commit `cbdcc65` in the execution-validation branch implements explicit registry
+initialization/diagnostics and uniform logical item receipts, including shared
+product roots and append-preserved source/env/note. See
+[contracts](project_registry_items.md) and
+[final report](../reports/2026-10-06-registry-items/report.md).
+The final full suite passed 751 tests with one expected failure; fresh campaign
+and live Slurm 463136/463137 acceptance passed. The consumer never executed and
+was cancelled. Earlier integration test evidence above remains historical.
+No production dependency upgrade or upstream merge is implied. Next: T6
+documentation adoption and T7 compiler/kernel/API and consumer migration.
