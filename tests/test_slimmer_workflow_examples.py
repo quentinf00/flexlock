@@ -109,3 +109,40 @@ def test_future_producer_chain_compiles_before_any_worker_runs(tmp_path, monkeyp
     assert load_record(root/'train')['config']['input_path'] == str(root/'prepare/dataset.json')
     assert 'dataset' in load_record(root/'train')['data']
     assert {'dataset', 'model'} == set(load_record(root/'assess')['data'])
+
+
+def test_campaign_rejects_mutated_then_restored_input(tmp_path, monkeypatch):
+    monkeypatch.setenv('FLEXLOCK_INDEX', str(tmp_path/'.flexlock/index.db'))
+    monkeypatch.setattr('flexlock.worker.time.sleep', lambda _: None)
+    source = tmp_path/'input.json';original = b'[1,2]';source.write_bytes(original)
+    manifest = tmp_path/'manifest.json'
+    manifest.write_text(json.dumps([dict(item_id='one', input_path=str(source),
+        sha256=hashlib.sha256(original).hexdigest(), disposition='process')]))
+    root = tmp_path/'campaign';queue = tmp_path/'queue.yaml'
+    campaign.export_queue(manifest, root, queue)
+    source.write_text('[100,200]')
+    from flexlock.exceptions import FlexLockExecutionError
+    with pytest.raises(FlexLockExecutionError):
+        FlexLockRunner().run(['--sweep-file', str(queue), '--sweep-root', str(root)])
+    source.write_bytes(original)
+    assert campaign.check_coverage(manifest, root)['issues']
+    assert not (root/'items/one/product.json').exists()
+
+
+def test_coverage_uses_recorded_identity_and_can_check_current_bytes_separately(tmp_path, monkeypatch):
+    monkeypatch.setenv('FLEXLOCK_INDEX', str(tmp_path/'.flexlock/index.db'))
+    monkeypatch.setattr('flexlock.worker.time.sleep', lambda _: None)
+    source = tmp_path/'input.json';source.write_text('[1,2]')
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    rows = [dict(item_id='one', input_path=str(source), sha256=digest, disposition='process')]
+    manifest = tmp_path/'manifest.json';manifest.write_text(json.dumps(rows))
+    root = tmp_path/'campaign';queue = tmp_path/'queue.yaml'
+    campaign.export_queue(manifest, root, queue)
+    FlexLockRunner().run(['--sweep-file', str(queue), '--sweep-root', str(root)])
+    source.write_text('[100,200]')
+    assert not campaign.check_coverage(manifest, root)['issues']
+    assert campaign.check_coverage(manifest, root, check_current_inputs=True)['issues']
+    # Relabeling a different cohort cannot make an earlier product acceptable.
+    rows[0]['sha256'] = hashlib.sha256(source.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(rows))
+    assert any('recorded input identity' in issue for issue in campaign.check_coverage(manifest, root)['issues'])

@@ -64,6 +64,7 @@ class RunTracker:
         self.save_dir = Path(save_dir)
         self.parent_lock = Path(parent_lock) if parent_lock else None
         self.data = {"timestamp": datetime.now().isoformat()}
+        self._lineage_by_path = {}
 
         # Free-text intent recorded alongside run metadata (sibling of
         # timestamp/config). It never enters the fingerprint, so it can't
@@ -108,10 +109,20 @@ class RunTracker:
 
     def add_lineage(self, name: str, path: str, info: dict):
         """Add lineage information from upstream FlexLock runs."""
-        if "lineage" not in self.data:
-            self.data["lineage"] = {}
+        from collections import Counter
 
-        self.data["lineage"][name] = {"path": path, "info": info}
+        canonical = str(Path(path).resolve())
+        label = self._lineage_by_path.get(canonical, (name, None))[0]
+        self._lineage_by_path[canonical] = (label, info)
+        counts = Counter(label for label, _ in self._lineage_by_path.values())
+        lineage = {
+            label if counts[label] == 1 else producer:
+                {"path": producer, "info": details}
+            for producer, (label, details) in self._lineage_by_path.items()
+        }
+        if len(lineage) != len(self._lineage_by_path):
+            raise ValueError("Explicit lineage labels collide with producer paths")
+        self.data["lineage"] = lineage
 
     def finalize(self, config):
         """

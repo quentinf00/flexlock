@@ -37,6 +37,7 @@ def export_queue(manifest, root, queue):
         if hashlib.sha256(source.read_bytes()).hexdigest() != row['sha256']:
             raise ValueError(f"Input changed: {source}")
         config = py2cfg(process, item_id=row['item_id'], input_path=str(source),
+            expected_sha256=row['sha256'],
             save_dir=str(Path(root).resolve() / 'items' / row['item_id']),
             _snapshot_=dict(repos={}, data=dict(input=str(source), manifest=str(Path(manifest).resolve()))),
             _outputs_=dict(product=dict(path='product.json', sha256=True)))
@@ -46,7 +47,7 @@ def export_queue(manifest, root, queue):
         yaml.safe_dump(configs, stream, sort_keys=False)
 
 
-def check_coverage(manifest, root):
+def check_coverage(manifest, root, *, check_current_inputs=False):
     rows = read_manifest(manifest)
     root = Path(root).resolve()
     expected = {row['item_id'] for row in rows if row['disposition'] == 'process'}
@@ -67,6 +68,8 @@ def check_coverage(manifest, root):
                 raise ValueError('missing/wrong invocation record')
             if Path(record['config']['input_path']).resolve() != Path(row['input_path']).resolve():
                 raise ValueError('wrong input binding')
+            if record['config'].get('expected_sha256') != row['sha256']:
+                raise ValueError('recorded input identity differs from frozen manifest')
             product = directory / 'product.json'
             from flexlock.outputs import validate_outputs
             validate_outputs(OmegaConf.create(record['config']), record_dir=directory)
@@ -75,10 +78,10 @@ def check_coverage(manifest, root):
                 raise ValueError('wrong product identity/outcome')
             if payload['count'] < 0 or (payload['outcome'] == 'empty') != (payload['count'] == 0):
                 raise ValueError('inconsistent coverage payload')
-            # This toy validator checks current input bytes against frozen membership.
-            # Real projects should compare recorded manifest identities and schemas.
-            if hashlib.sha256(Path(row['input_path']).read_bytes()).hexdigest() != row['sha256']:
-                raise ValueError('input identity changed')
+            if payload.get('input_sha256') != row['sha256']:
+                raise ValueError('processed input identity differs from frozen manifest')
+            if check_current_inputs and hashlib.sha256(Path(row['input_path']).read_bytes()).hexdigest() != row['sha256']:
+                raise ValueError('current input identity changed')
             summary[payload['outcome']].append(item)
         except (OSError, ValueError, KeyError, TypeError, FlexLockError) as exc:
             issues.append(f'{item}: {exc}')
@@ -89,11 +92,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['export', 'check'])
     parser.add_argument('manifest'); parser.add_argument('root'); parser.add_argument('output')
+    parser.add_argument('--check-current-inputs', action='store_true')
     args = parser.parse_args()
     if args.action == 'export':
         export_queue(args.manifest, args.root, args.output)
     else:
-        summary = check_coverage(args.manifest, args.root)
+        summary = check_coverage(args.manifest, args.root, check_current_inputs=args.check_current_inputs)
         with Path(args.output).open('x') as stream:
             json.dump(summary, stream, indent=2)
         if summary['issues']:

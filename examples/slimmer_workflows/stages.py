@@ -1,4 +1,5 @@
 """Tiny stand-ins for project computations; no scientific validity claimed."""
+import hashlib
 import json
 from pathlib import Path
 
@@ -22,9 +23,16 @@ def assess(input_path, checkpoint_path, report_path, save_dir):
     return result
 
 
-def process(item_id, input_path, save_dir):
-    values = json.loads(Path(input_path).read_text())
-    payload = {'item_id': item_id, 'outcome': 'produced' if values else 'empty',
+def process(item_id, input_path, expected_sha256, save_dir):
+    # Hash and parse the same bytes, so changing a path between separate reads
+    # cannot make the identity check describe different input from computation.
+    raw = Path(input_path).read_bytes()
+    actual = hashlib.sha256(raw).hexdigest()
+    if actual != expected_sha256:
+        raise ValueError(f"Input identity differs from frozen manifest: {input_path}")
+    values = json.loads(raw)
+    payload = {'item_id': item_id, 'input_sha256': actual,
+               'outcome': 'produced' if values else 'empty',
                'count': len(values), 'total': sum(values)}
     Path(save_dir, 'product.json').write_text(json.dumps(payload))
     return payload

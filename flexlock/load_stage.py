@@ -14,21 +14,29 @@ def load_stage_from_path(path: str) -> dict:
     Returns:
         dict: A flattened, deduplicated dictionary of all ancestor runs.
     """
+    from collections import Counter
+
     all_stages = {}
     _load_and_flatten_recursively(Path(path).as_posix(), path, all_stages)
-    return all_stages
+    names = Counter(Path(producer).name for producer in all_stages)
+    return {
+        Path(producer).name if names[Path(producer).name] == 1 else producer: data
+        for producer, data in all_stages.items()
+    }
 
 
 def _load_and_flatten_recursively(
-    stage_key: str, stage_path_str: str, all_stages: dict
+    stage_key: str, stage_path_str: str, all_stages: dict, seen=None
 ):
     """
     Recursively loads a stage and its ancestors, adding them to the all_stages dict.
     """
     # Use the canonical path as the key to prevent duplicates
-    canonical_key = Path(stage_path_str).resolve().name
-    if canonical_key in all_stages:
+    canonical_key = str(Path(stage_path_str).resolve())
+    seen = set() if seen is None else seen
+    if canonical_key in seen:
         return
+    seen.add(canonical_key)
 
     from .record import load_record
 
@@ -50,7 +58,7 @@ def _load_and_flatten_recursively(
                 raise ValueError(
                     f"Could not find path in nested stage '{nested_key}' from '{stage_key}'"
                 )
-            _load_and_flatten_recursively(nested_key, nested_path, all_stages)
+            _load_and_flatten_recursively(nested_key, nested_path, all_stages, seen)
 
     # Add the current stage's data (without its own lineage) to the dict
     stage_data.pop("lineage", None)
