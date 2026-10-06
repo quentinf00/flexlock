@@ -4,8 +4,8 @@ Date: 2026-10-06. Status: accepted direction and staged implementation plan.
 M0's root-anchor CLI fix is implemented and validated. Review drafts and executable
 examples are available. M1's three reviewed record corrections and an explicit
 future-input snapshot correction are implemented in the isolated branch, validated
-by 202 compatibility cases and a 33-case focused executor follow-up. The next isolated
-patch preserves colliding producer identities, binds campaign coverage to frozen input
+by 202 compatibility cases and a 33-case focused executor follow-up. The isolated review
+follow-up preserves colliding producer identities, binds campaign coverage to frozen input
 bytes, and adds controller/queue destination guards. M1 directory-hash work and the
 remaining phases stay open. No production deployment or live-job authorization is implied.
 
@@ -15,7 +15,9 @@ Backend materialization is proposed after M1 guards/M2 bindings; a managed prepa
 lifecycle is deferred. --after remains.
 
 [Milestone evidence](../reports/2026-10-06-workflow-guidelines-record-contracts/report.md)
-records implementation scope and passing checks. Remaining M1/M2 work stays open.
+records implementation scope and passing checks. The [independent-review follow-up](../reports/2026-10-06-independent-review-followup/report.md)
+records lineage/coverage/guard changes and 249 compatibility plus 35 overlapping
+focused checks. Remaining M1 directory identity and M2 bindings stay open.
 
 ## Target and compatibility boundary
 

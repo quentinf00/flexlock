@@ -1,0 +1,52 @@
+{
+  "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+  "version": "3.11.14 | packaged by conda-forge | (main, Jan 26 2026, 23:48:32) [GCC 14.3.0]",
+  "flexlock_module": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/__init__.py",
+  "base_commit": "23fb1420e9638a615b0c30af76ae0b19cadd9ecc",
+  "packages": {
+    "pytest": "8.4.2",
+    "omegaconf": "2.3.1",
+    "PyYAML": "6.0.3"
+  },
+  "files": {
+    "docs/slimmer_core_migration.md": "0a482a78d7ae6063ddeb313a82e9610d588923c78b942f6caefd636c5a92bee1",
+    "docs/slurm_submission_workflow.md": "89d7c63f8fe792ee2fc0a3e8ea8ae6afb08851c4553eaba1928e6212fc1b6086",
+    "docs/workflow_guidelines.md": "f4fdcd6858a57a8488b2289f04feba9d1ac148a140c271ac642400aa174e7db0",
+    "examples/slimmer_workflows/README.md": "3440504462702be63cddee5863e60e0fd909e0e33350e06b92b789bf04457c9d",
+    "examples/slimmer_workflows/bindings.py": "9224ecd6d37c933949a6d6d09de80bb76d9a9044ae60e43196295567611a8788",
+    "examples/slimmer_workflows/cfgmod.py": "49fcffc42f75e9b7ed2d0847b61c091b83f6731c01622f1dcb38d0f05f428120",
+    "examples/slimmer_workflows/stages.py": "eccfb825267311fde1449f208ad9be1965e3ad74fbd6e527f0e68d7e4ee8d399",
+    "flexlock/api.py": "5eba67d257c2f08462edc83577f276384482bbc33290f46541b572d1f70eaeb2",
+    "flexlock/destination_guard.py": "4d8602aee25e1999ac1f8f3265179d1cfe3400150a9b7f1f31f8c33a03f1158a",
+    "flexlock/index.py": "5d82c53c643fad6b024d7e98501c9da75f227984baa1080a0eb54ee2dea87d1b",
+    "flexlock/parallel.py": "0fbb183429ad9d0538833ac22f0bae0664f3219cd7372d63886d9692b7175fd3",
+    "flexlock/save_dir.py": "9df86b80fdbc90b1b31db8d2a241d6ec8e19431128b4995745ee98503af8ae3b",
+    "tests/test_api.py": "4095e9a80cd2ea33be23e28f5b945ba3b339b3cf29018a403a9945f022d53b91",
+    "tests/test_destination_guard.py": "228c9d4a85ead1e7479676dfeae4b1fcbc34be5c28eab1e309354befae46b90b",
+    "tests/test_slimmer_workflow_examples.py": "7a0214cf4ca80602dd667db4da4b7b0672a212783f3dfd64c8f5ca34dc33e997"
+  },
+  "implementation_commit": "3d86340a6508b913d72cf9c340fd13bda6e53ab4",
+  "validation": {
+    "compatibility": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "249",
+      "time": "179.239",
+      "timestamp": "2026-10-06T17:57:25.924421+02:00",
+      "hostname": "compute-118-39"
+    },
+    "followup": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "35",
+      "time": "16.636",
+      "timestamp": "2026-10-06T18:01:11.012077+02:00",
+      "hostname": "compute-118-39"
+    },
+    "scope": "Selected compatibility tests; 249 cases then 35 overlapping focused cases after the no-save_dir follow-up. 250 distinct cases, not a full-suite run."
+  }
+}

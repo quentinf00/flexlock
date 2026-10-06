@@ -349,8 +349,9 @@ with explicit limits; no new pipeline compiler or sbatch option catalogue is nee
 
 ## Review and implementation order
 
-Review these patterns now; implement M1 record/guard contracts and M2 accurate
-producer bindings against them. Keep cache/resume policy optional, retain historical
+Review these patterns now; finish M1 directory identity and M2 accurate producer
+bindings against them. The isolated controller/queue guard is implemented and tested;
+its limits are explicit in the Slurm workflow. Keep cache/resume policy optional, retain historical
 readers and exercise the recipes locally/fake-backend before isolated SAR/SST adoption.
 The toy computations exercise plumbing, not scientific acceptance. The draft does
 not establish large data identity or prepared-submission safety. Controller collision
