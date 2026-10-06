@@ -984,3 +984,8 @@ track/arm/run organization, coverage gates and CPU/GPU stage coordination.
 [Slurm submission proposal](slurm_submission_workflow.md) distinguishes existing
 preview/profile/after/held-job behavior from proposed prepared launch bundles.
 The proposed --prepare-job and bundle submission helper are not implemented.
+
+With --after, declared _snapshot_.data and prevs for explicit future producers
+are captured by the consumer worker once its dependency succeeds. The controller
+still captures code repository evidence. Keep producer paths concrete and existing
+producer records/products unchanged; remaining binding/change policies are in M2.

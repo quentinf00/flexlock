@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-06",
+  "draft_commit": "66c3492",
+  "suites": [
+    {
+      "artifact": "compatibility.xml",
+      "counts": {
+        "tests": 202,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "implementation_commit": "7edb3a8777ac4a06ff761177b7f903142f61e8b8"
+    },
+    {
+      "artifact": "outcomes-followup.xml",
+      "counts": {
+        "tests": 33,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "implementation_commit": "d587889e7e1202de7cb17c0997dc84b727e13669"
+    }
+  ],
+  "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+  "PYTHONPATH": "/ontap/user/qfebvre/flexlock-execution-validation",
+  "compatibility_modules": [
+    "test_reviewed_record_contracts",
+    "test_slimmer_workflow_examples",
+    "test_registry_items",
+    "test_index",
+    "test_parallel",
+    "test_pipeline_tasks",
+    "test_sweep_semantics",
+    "test_workflow_integrity",
+    "test_task_records",
+    "test_run_record",
+    "test_workflow_adoption_recipe",
+    "test_root_anchor_sweep",
+    "test_hpc_dependencies",
+    "test_api",
+    "test_save_dir_guard"
+  ],
+  "followup_modules": [
+    "test_reviewed_record_contracts",
+    "test_slimmer_workflow_examples",
+    "test_parallel"
+  ],
+  "pytest_arguments": [
+    "-q",
+    "--tb=short"
+  ],
+  "scope": "Targeted compatibility and focused follow-up, not full suite. No live scheduler jobs, production upgrades or scientific runs.",
+  "workflow_regression_cases": 5,
+  "record_regression_cases": 9
+}
