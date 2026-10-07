@@ -1,0 +1,1433 @@
+[
+  {
+    "variant": "config",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 0.7805534610524774,
+    "minimum": 0.7670842211227864,
+    "maximum": 0.8330699920188636
+  },
+  {
+    "variant": "config",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 0,
+    "minimum": 0,
+    "maximum": 0
+  },
+  {
+    "variant": "config",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 0,
+    "minimum": 0,
+    "maximum": 0
+  },
+  {
+    "variant": "config",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 73156,
+    "minimum": 72088,
+    "maximum": 73508
+  },
+  {
+    "variant": "config",
+    "count": 100,
+    "metric": "phase:py2cfg_generate",
+    "repeats": 3,
+    "median": 0.20327077992260456,
+    "minimum": 0.1998633579351008,
+    "maximum": 0.204263020073995
+  },
+  {
+    "variant": "config",
+    "count": 100,
+    "metric": "phase:hydra_zen_builds_generate",
+    "repeats": 3,
+    "median": 0.07466514990665019,
+    "minimum": 0.07406031992286444,
+    "maximum": 0.07496998785063624
+  },
+  {
+    "variant": "config",
+    "count": 100,
+    "metric": "phase:hydra_zen_deferred_store",
+    "repeats": 3,
+    "median": 0.0005057521630078554,
+    "minimum": 0.000499070156365633,
+    "maximum": 0.0005075759254395962
+  },
+  {
+    "variant": "config",
+    "count": 100,
+    "metric": "phase:hydra_zen_materialize_store",
+    "repeats": 3,
+    "median": 0.3178165790159255,
+    "minimum": 0.3108647351618856,
+    "maximum": 0.3259016948286444
+  },
+  {
+    "variant": "config",
+    "count": 100,
+    "metric": "phase:flexlock_omegaconf_materialize",
+    "repeats": 3,
+    "median": 0.18293452402576804,
+    "minimum": 0.17770981695502996,
+    "maximum": 0.23266636999323964
+  },
+  {
+    "variant": "queue-1",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 2.196837075985968,
+    "minimum": 2.1283887948375195,
+    "maximum": 2.253329084953293
+  },
+  {
+    "variant": "queue-1",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 1,
+    "minimum": 1,
+    "maximum": 1
+  },
+  {
+    "variant": "queue-1",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 73728,
+    "minimum": 73728,
+    "maximum": 73728
+  },
+  {
+    "variant": "queue-1",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 65404,
+    "minimum": 65040,
+    "maximum": 67388
+  },
+  {
+    "variant": "queue-1",
+    "count": 100,
+    "metric": "phase:queue_serialize_insert",
+    "repeats": 3,
+    "median": 0.08682391792535782,
+    "minimum": 0.08317542704753578,
+    "maximum": 0.09382812585681677
+  },
+  {
+    "variant": "queue-1",
+    "count": 100,
+    "metric": "phase:queue_claim_finish",
+    "repeats": 3,
+    "median": 2.1099090869538486,
+    "minimum": 2.0302021300885826,
+    "maximum": 2.1621605600230396
+  },
+  {
+    "variant": "queue-16",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 0.5971000208519399,
+    "minimum": 0.5749110630713403,
+    "maximum": 0.6061457369942218
+  },
+  {
+    "variant": "queue-16",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 1,
+    "minimum": 1,
+    "maximum": 1
+  },
+  {
+    "variant": "queue-16",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 73728,
+    "minimum": 73728,
+    "maximum": 73728
+  },
+  {
+    "variant": "queue-16",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 67552,
+    "minimum": 67384,
+    "maximum": 68560
+  },
+  {
+    "variant": "queue-16",
+    "count": 100,
+    "metric": "phase:queue_serialize_insert",
+    "repeats": 3,
+    "median": 0.08980421908199787,
+    "minimum": 0.08906210702843964,
+    "maximum": 0.0910960000474006
+  },
+  {
+    "variant": "queue-16",
+    "count": 100,
+    "metric": "phase:queue_claim_finish",
+    "repeats": 3,
+    "median": 0.5025959371123463,
+    "minimum": 0.481076535070315,
+    "maximum": 0.5109760269988328
+  },
+  {
+    "variant": "hydra-slurm",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 9.837317012948915,
+    "minimum": 7.797166760079563,
+    "maximum": 10.531787720974535
+  },
+  {
+    "variant": "hydra-slurm",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 103,
+    "minimum": 103,
+    "maximum": 103
+  },
+  {
+    "variant": "hydra-slurm",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 4837002,
+    "minimum": 4837002,
+    "maximum": 4837002
+  },
+  {
+    "variant": "hydra-slurm",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 78244,
+    "minimum": 77480,
+    "maximum": 79292
+  },
+  {
+    "variant": "hydra-slurm",
+    "count": 100,
+    "metric": "phase:prepare_submit",
+    "repeats": 3,
+    "median": 9.834869403857738,
+    "minimum": 7.794296683045104,
+    "maximum": 10.529009534046054
+  },
+  {
+    "variant": "flexlock-slurm",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 3.662785900058225,
+    "minimum": 3.4476542200427502,
+    "maximum": 3.7830001360271126
+  },
+  {
+    "variant": "flexlock-slurm",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 207,
+    "minimum": 207,
+    "maximum": 207
+  },
+  {
+    "variant": "flexlock-slurm",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 108243,
+    "minimum": 108243,
+    "maximum": 108243
+  },
+  {
+    "variant": "flexlock-slurm",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 80696,
+    "minimum": 79824,
+    "maximum": 80792
+  },
+  {
+    "variant": "flexlock-slurm",
+    "count": 100,
+    "metric": "phase:prepare_submit",
+    "repeats": 3,
+    "median": 3.6534184280317277,
+    "minimum": 3.4381561398040503,
+    "maximum": 3.774503882974386
+  },
+  {
+    "variant": "hydra-local",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 16.06501392601058,
+    "minimum": 14.811685987981036,
+    "maximum": 16.787405002163723
+  },
+  {
+    "variant": "hydra-local",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 401,
+    "minimum": 401,
+    "maximum": 401
+  },
+  {
+    "variant": "hydra-local",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 337502,
+    "minimum": 337502,
+    "maximum": 337502
+  },
+  {
+    "variant": "hydra-local",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 79872,
+    "minimum": 79192,
+    "maximum": 79876
+  },
+  {
+    "variant": "hydra-local",
+    "count": 100,
+    "metric": "phase:multirun",
+    "repeats": 3,
+    "median": 16.062291242182255,
+    "minimum": 14.808774532051757,
+    "maximum": 16.784624360967427
+  },
+  {
+    "variant": "flexlock-local",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 12.371172469807789,
+    "minimum": 11.323468474904075,
+    "maximum": 12.382581430952996
+  },
+  {
+    "variant": "flexlock-local",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 705,
+    "minimum": 705,
+    "maximum": 705
+  },
+  {
+    "variant": "flexlock-local",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 445919,
+    "minimum": 445919,
+    "maximum": 445919
+  },
+  {
+    "variant": "flexlock-local",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 79536,
+    "minimum": 78996,
+    "maximum": 79680
+  },
+  {
+    "variant": "flexlock-local",
+    "count": 100,
+    "metric": "phase:submit_and_run",
+    "repeats": 3,
+    "median": 12.363344924058765,
+    "minimum": 11.31649067508988,
+    "maximum": 12.37374944286421
+  },
+  {
+    "variant": "config",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 7.792788708815351,
+    "minimum": 6.0802457991521806,
+    "maximum": 9.158971212105826
+  },
+  {
+    "variant": "config",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 0,
+    "minimum": 0,
+    "maximum": 0
+  },
+  {
+    "variant": "config",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 0,
+    "minimum": 0,
+    "maximum": 0
+  },
+  {
+    "variant": "config",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 149136,
+    "minimum": 148536,
+    "maximum": 149812
+  },
+  {
+    "variant": "config",
+    "count": 1000,
+    "metric": "phase:py2cfg_generate",
+    "repeats": 3,
+    "median": 2.2287003719247878,
+    "minimum": 2.172598614823073,
+    "maximum": 2.4666065629571676
+  },
+  {
+    "variant": "config",
+    "count": 1000,
+    "metric": "phase:hydra_zen_builds_generate",
+    "repeats": 3,
+    "median": 0.6546182469464839,
+    "minimum": 0.5262583249714226,
+    "maximum": 0.7578466660343111
+  },
+  {
+    "variant": "config",
+    "count": 1000,
+    "metric": "phase:hydra_zen_deferred_store",
+    "repeats": 3,
+    "median": 0.0031100879423320293,
+    "minimum": 0.0022987741976976395,
+    "maximum": 0.004030711017549038
+  },
+  {
+    "variant": "config",
+    "count": 1000,
+    "metric": "phase:hydra_zen_materialize_store",
+    "repeats": 3,
+    "median": 3.241316555067897,
+    "minimum": 2.367775989929214,
+    "maximum": 4.14872506307438
+  },
+  {
+    "variant": "config",
+    "count": 1000,
+    "metric": "phase:flexlock_omegaconf_materialize",
+    "repeats": 3,
+    "median": 1.664967826101929,
+    "minimum": 1.0112754839938134,
+    "maximum": 1.781659787055105
+  },
+  {
+    "variant": "queue-1",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 20.743686239933595,
+    "minimum": 20.373883191961795,
+    "maximum": 21.835394287016243
+  },
+  {
+    "variant": "queue-1",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 1,
+    "minimum": 1,
+    "maximum": 1
+  },
+  {
+    "variant": "queue-1",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 589824,
+    "minimum": 589824,
+    "maximum": 589824
+  },
+  {
+    "variant": "queue-1",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 67468,
+    "minimum": 66440,
+    "maximum": 67868
+  },
+  {
+    "variant": "queue-1",
+    "count": 1000,
+    "metric": "phase:queue_serialize_insert",
+    "repeats": 3,
+    "median": 0.588809201028198,
+    "minimum": 0.572924522915855,
+    "maximum": 0.8889670828357339
+  },
+  {
+    "variant": "queue-1",
+    "count": 1000,
+    "metric": "phase:queue_claim_finish",
+    "repeats": 3,
+    "median": 20.16158768814057,
+    "minimum": 19.777002940885723,
+    "maximum": 20.936981019796804
+  },
+  {
+    "variant": "queue-16",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 5.717285522958264,
+    "minimum": 5.676547468872741,
+    "maximum": 5.751463196007535
+  },
+  {
+    "variant": "queue-16",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 1,
+    "minimum": 1,
+    "maximum": 1
+  },
+  {
+    "variant": "queue-16",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 589824,
+    "minimum": 589824,
+    "maximum": 589824
+  },
+  {
+    "variant": "queue-16",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 73812,
+    "minimum": 73584,
+    "maximum": 74868
+  },
+  {
+    "variant": "queue-16",
+    "count": 1000,
+    "metric": "phase:queue_serialize_insert",
+    "repeats": 3,
+    "median": 0.6737360241822898,
+    "minimum": 0.6655136740300804,
+    "maximum": 0.6897618789225817
+  },
+  {
+    "variant": "queue-16",
+    "count": 1000,
+    "metric": "phase:queue_claim_finish",
+    "repeats": 3,
+    "median": 5.019516847096384,
+    "minimum": 5.002960989950225,
+    "maximum": 5.069812312023714
+  },
+  {
+    "variant": "hydra-slurm",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 75.08200197899714,
+    "minimum": 73.85848778905347,
+    "maximum": 88.96623109607026
+  },
+  {
+    "variant": "hydra-slurm",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 1003,
+    "minimum": 1003,
+    "maximum": 1003
+  },
+  {
+    "variant": "hydra-slurm",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 48324462,
+    "minimum": 48324462,
+    "maximum": 48324462
+  },
+  {
+    "variant": "hydra-slurm",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 180996,
+    "minimum": 180336,
+    "maximum": 181256
+  },
+  {
+    "variant": "hydra-slurm",
+    "count": 1000,
+    "metric": "phase:prepare_submit",
+    "repeats": 3,
+    "median": 75.079595846124,
+    "minimum": 73.85572260105982,
+    "maximum": 88.96362875611521
+  },
+  {
+    "variant": "flexlock-slurm",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 32.03792656282894,
+    "minimum": 30.5209324399475,
+    "maximum": 32.49909728905186
+  },
+  {
+    "variant": "flexlock-slurm",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 2007,
+    "minimum": 2007,
+    "maximum": 2007
+  },
+  {
+    "variant": "flexlock-slurm",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 906775,
+    "minimum": 902679,
+    "maximum": 906775
+  },
+  {
+    "variant": "flexlock-slurm",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 136636,
+    "minimum": 136200,
+    "maximum": 137096
+  },
+  {
+    "variant": "flexlock-slurm",
+    "count": 1000,
+    "metric": "phase:prepare_submit",
+    "repeats": 3,
+    "median": 32.02428006893024,
+    "minimum": 30.50914850505069,
+    "maximum": 32.48338165599853
+  },
+  {
+    "variant": "hydra-local",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 151.72729499894194,
+    "minimum": 146.6437469481025,
+    "maximum": 164.1734041001182
+  },
+  {
+    "variant": "hydra-local",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 4001,
+    "minimum": 4001,
+    "maximum": 4001
+  },
+  {
+    "variant": "hydra-local",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 3357306,
+    "minimum": 3357306,
+    "maximum": 3357306
+  },
+  {
+    "variant": "hydra-local",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 173344,
+    "minimum": 173056,
+    "maximum": 174776
+  },
+  {
+    "variant": "hydra-local",
+    "count": 1000,
+    "metric": "phase:multirun",
+    "repeats": 3,
+    "median": 151.72457448812202,
+    "minimum": 146.64106659404933,
+    "maximum": 164.17061700695194
+  },
+  {
+    "variant": "flexlock-local",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 3,
+    "median": 104.12991314707324,
+    "minimum": 104.09037146996707,
+    "maximum": 124.75686590909027
+  },
+  {
+    "variant": "flexlock-local",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 3,
+    "median": 7005,
+    "minimum": 7005,
+    "maximum": 7005
+  },
+  {
+    "variant": "flexlock-local",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 3,
+    "median": 4186372,
+    "minimum": 4186372,
+    "maximum": 4190468
+  },
+  {
+    "variant": "flexlock-local",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 3,
+    "median": 141288,
+    "minimum": 139632,
+    "maximum": 143280
+  },
+  {
+    "variant": "flexlock-local",
+    "count": 1000,
+    "metric": "phase:submit_and_run",
+    "repeats": 3,
+    "median": 104.12104772706516,
+    "minimum": 104.08005106798373,
+    "maximum": 124.74490801407956
+  },
+  {
+    "variant": "identity",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 113.49451630399562,
+    "minimum": 113.49451630399562,
+    "maximum": 113.49451630399562
+  },
+  {
+    "variant": "identity",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 1,
+    "minimum": 1,
+    "maximum": 1
+  },
+  {
+    "variant": "identity",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 99,
+    "minimum": 99,
+    "maximum": 99
+  },
+  {
+    "variant": "identity",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 79460,
+    "minimum": 79460,
+    "maximum": 79460
+  },
+  {
+    "variant": "identity",
+    "count": 1000,
+    "metric": "phase:bind_record_per_item",
+    "repeats": 1,
+    "median": 3.9447593740187585,
+    "minimum": 3.9447593740187585,
+    "maximum": 3.9447593740187585
+  },
+  {
+    "variant": "identity",
+    "count": 1000,
+    "metric": "phase:verify_record_per_item",
+    "repeats": 1,
+    "median": 2.2195022080559283,
+    "minimum": 2.2195022080559283,
+    "maximum": 2.2195022080559283
+  },
+  {
+    "variant": "identity",
+    "count": 1000,
+    "metric": "phase:hash_directory_paths_and_bytes",
+    "repeats": 1,
+    "median": 0.8341762640047818,
+    "minimum": 0.8341762640047818,
+    "maximum": 0.8341762640047818
+  },
+  {
+    "variant": "identity",
+    "count": 1000,
+    "metric": "phase:hash_individual_files",
+    "repeats": 1,
+    "median": 0.715713043930009,
+    "minimum": 0.715713043930009,
+    "maximum": 0.715713043930009
+  },
+  {
+    "variant": "identity",
+    "count": 1000,
+    "metric": "phase:source_fingerprint_per_item",
+    "repeats": 1,
+    "median": 105.59791918913834,
+    "minimum": 105.59791918913834,
+    "maximum": 105.59791918913834
+  },
+  {
+    "variant": "identity",
+    "count": 1000,
+    "metric": "phase:source_snapshot_once",
+    "repeats": 1,
+    "median": 0.17090099398046732,
+    "minimum": 0.17090099398046732,
+    "maximum": 0.17090099398046732
+  },
+  {
+    "variant": "tracked-local",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 452.3832478628028,
+    "minimum": 452.3832478628028,
+    "maximum": 452.3832478628028
+  },
+  {
+    "variant": "tracked-local",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 7008,
+    "minimum": 7008,
+    "maximum": 7008
+  },
+  {
+    "variant": "tracked-local",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 11365794,
+    "minimum": 11365794,
+    "maximum": 11365794
+  },
+  {
+    "variant": "tracked-local",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 163452,
+    "minimum": 163452,
+    "maximum": 163452
+  },
+  {
+    "variant": "tracked-local",
+    "count": 1000,
+    "metric": "phase:submit_and_run",
+    "repeats": 1,
+    "median": 452.3713583161589,
+    "minimum": 452.3713583161589,
+    "maximum": 452.3713583161589
+  },
+  {
+    "variant": "source-submit",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 36.266589344944805,
+    "minimum": 36.266589344944805,
+    "maximum": 36.266589344944805
+  },
+  {
+    "variant": "source-submit",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 2007,
+    "minimum": 2007,
+    "maximum": 2007
+  },
+  {
+    "variant": "source-submit",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 1031903,
+    "minimum": 1031903,
+    "maximum": 1031903
+  },
+  {
+    "variant": "source-submit",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 151964,
+    "minimum": 151964,
+    "maximum": 151964
+  },
+  {
+    "variant": "source-submit",
+    "count": 1000,
+    "metric": "phase:prepare_submit",
+    "repeats": 1,
+    "median": 36.25176417292096,
+    "minimum": 36.25176417292096,
+    "maximum": 36.25176417292096
+  },
+  {
+    "variant": "cache-miss-submit",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 495.4925594890956,
+    "minimum": 495.4925594890956,
+    "maximum": 495.4925594890956
+  },
+  {
+    "variant": "cache-miss-submit",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 2007,
+    "minimum": 2007,
+    "maximum": 2007
+  },
+  {
+    "variant": "cache-miss-submit",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 899719,
+    "minimum": 899719,
+    "maximum": 899719
+  },
+  {
+    "variant": "cache-miss-submit",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 138824,
+    "minimum": 138824,
+    "maximum": 138824
+  },
+  {
+    "variant": "cache-miss-submit",
+    "count": 1000,
+    "metric": "phase:prepare_submit",
+    "repeats": 1,
+    "median": 495.48197667114437,
+    "minimum": 495.48197667114437,
+    "maximum": 495.48197667114437
+  },
+  {
+    "variant": "batch16-local",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 91.012849210063,
+    "minimum": 91.012849210063,
+    "maximum": 91.012849210063
+  },
+  {
+    "variant": "batch16-local",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 7005,
+    "minimum": 7005,
+    "maximum": 7005
+  },
+  {
+    "variant": "batch16-local",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 4149265,
+    "minimum": 4149265,
+    "maximum": 4149265
+  },
+  {
+    "variant": "batch16-local",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 137936,
+    "minimum": 137936,
+    "maximum": 137936
+  },
+  {
+    "variant": "batch16-local",
+    "count": 1000,
+    "metric": "phase:submit_and_run",
+    "repeats": 1,
+    "median": 91.00213235407136,
+    "minimum": 91.00213235407136,
+    "maximum": 91.00213235407136
+  },
+  {
+    "variant": "db-submit",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 28.22521519009024,
+    "minimum": 28.22521519009024,
+    "maximum": 28.22521519009024
+  },
+  {
+    "variant": "db-submit",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 2007,
+    "minimum": 2007,
+    "maximum": 2007
+  },
+  {
+    "variant": "db-submit",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 891654,
+    "minimum": 891654,
+    "maximum": 891654
+  },
+  {
+    "variant": "db-submit",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 138512,
+    "minimum": 138512,
+    "maximum": 138512
+  },
+  {
+    "variant": "db-submit",
+    "count": 1000,
+    "metric": "phase:prepare_submit",
+    "repeats": 1,
+    "median": 28.21509070903994,
+    "minimum": 28.21509070903994,
+    "maximum": 28.21509070903994
+  },
+  {
+    "variant": "tmp-queue1",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 6.960810991004109,
+    "minimum": 6.960810991004109,
+    "maximum": 6.960810991004109
+  },
+  {
+    "variant": "tmp-queue1",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 1,
+    "minimum": 1,
+    "maximum": 1
+  },
+  {
+    "variant": "tmp-queue1",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 589824,
+    "minimum": 589824,
+    "maximum": 589824
+  },
+  {
+    "variant": "tmp-queue1",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 65252,
+    "minimum": 65252,
+    "maximum": 65252
+  },
+  {
+    "variant": "tmp-queue1",
+    "count": 1000,
+    "metric": "phase:queue_serialize_insert",
+    "repeats": 1,
+    "median": 0.8638863537926227,
+    "minimum": 0.8638863537926227,
+    "maximum": 0.8638863537926227
+  },
+  {
+    "variant": "tmp-queue1",
+    "count": 1000,
+    "metric": "phase:queue_claim_finish",
+    "repeats": 1,
+    "median": 6.090756430057809,
+    "minimum": 6.090756430057809,
+    "maximum": 6.090756430057809
+  },
+  {
+    "variant": "tmp-queue16",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 4.308293231995776,
+    "minimum": 4.308293231995776,
+    "maximum": 4.308293231995776
+  },
+  {
+    "variant": "tmp-queue16",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 1,
+    "minimum": 1,
+    "maximum": 1
+  },
+  {
+    "variant": "tmp-queue16",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 569344,
+    "minimum": 569344,
+    "maximum": 569344
+  },
+  {
+    "variant": "tmp-queue16",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 74676,
+    "minimum": 74676,
+    "maximum": 74676
+  },
+  {
+    "variant": "tmp-queue16",
+    "count": 1000,
+    "metric": "phase:queue_serialize_insert",
+    "repeats": 1,
+    "median": 0.672694840002805,
+    "minimum": 0.672694840002805,
+    "maximum": 0.672694840002805
+  },
+  {
+    "variant": "tmp-queue16",
+    "count": 1000,
+    "metric": "phase:queue_claim_finish",
+    "repeats": 1,
+    "median": 3.6306934780441225,
+    "minimum": 3.6306934780441225,
+    "maximum": 3.6306934780441225
+  },
+  {
+    "variant": "profile-flexlock-local",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 20.299399439943954,
+    "minimum": 20.299399439943954,
+    "maximum": 20.299399439943954
+  },
+  {
+    "variant": "profile-flexlock-local",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 705,
+    "minimum": 705,
+    "maximum": 705
+  },
+  {
+    "variant": "profile-flexlock-local",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 445618,
+    "minimum": 445618,
+    "maximum": 445618
+  },
+  {
+    "variant": "profile-flexlock-local",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 80856,
+    "minimum": 80856,
+    "maximum": 80856
+  },
+  {
+    "variant": "profile-flexlock-local",
+    "count": 100,
+    "metric": "phase:submit_and_run",
+    "repeats": 1,
+    "median": 20.291196458041668,
+    "minimum": 20.291196458041668,
+    "maximum": 20.291196458041668
+  },
+  {
+    "variant": "profile-flexlock-submit",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 6.544851602055132,
+    "minimum": 6.544851602055132,
+    "maximum": 6.544851602055132
+  },
+  {
+    "variant": "profile-flexlock-submit",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 207,
+    "minimum": 207,
+    "maximum": 207
+  },
+  {
+    "variant": "profile-flexlock-submit",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 108243,
+    "minimum": 108243,
+    "maximum": 108243
+  },
+  {
+    "variant": "profile-flexlock-submit",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 80752,
+    "minimum": 80752,
+    "maximum": 80752
+  },
+  {
+    "variant": "profile-flexlock-submit",
+    "count": 100,
+    "metric": "phase:prepare_submit",
+    "repeats": 1,
+    "median": 6.534027904970571,
+    "minimum": 6.534027904970571,
+    "maximum": 6.534027904970571
+  },
+  {
+    "variant": "profile-hydra-local",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 29.018393258098513,
+    "minimum": 29.018393258098513,
+    "maximum": 29.018393258098513
+  },
+  {
+    "variant": "profile-hydra-local",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 401,
+    "minimum": 401,
+    "maximum": 401
+  },
+  {
+    "variant": "profile-hydra-local",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 337200,
+    "minimum": 337200,
+    "maximum": 337200
+  },
+  {
+    "variant": "profile-hydra-local",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 80760,
+    "minimum": 80760,
+    "maximum": 80760
+  },
+  {
+    "variant": "profile-hydra-local",
+    "count": 100,
+    "metric": "phase:multirun",
+    "repeats": 1,
+    "median": 29.010056156897917,
+    "minimum": 29.010056156897917,
+    "maximum": 29.010056156897917
+  },
+  {
+    "variant": "profile-tracked-local",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 62.867759897140786,
+    "minimum": 62.867759897140786,
+    "maximum": 62.867759897140786
+  },
+  {
+    "variant": "profile-tracked-local",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 708,
+    "minimum": 708,
+    "maximum": 708
+  },
+  {
+    "variant": "profile-tracked-local",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 1649492,
+    "minimum": 1649492,
+    "maximum": 1649492
+  },
+  {
+    "variant": "profile-tracked-local",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 86032,
+    "minimum": 86032,
+    "maximum": 86032
+  },
+  {
+    "variant": "profile-tracked-local",
+    "count": 100,
+    "metric": "phase:submit_and_run",
+    "repeats": 1,
+    "median": 62.85869140806608,
+    "minimum": 62.85869140806608,
+    "maximum": 62.85869140806608
+  },
+  {
+    "variant": "cache-index-only-submit",
+    "count": 1000,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 31.777046212926507,
+    "minimum": 31.777046212926507,
+    "maximum": 31.777046212926507
+  },
+  {
+    "variant": "cache-index-only-submit",
+    "count": 1000,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 2007,
+    "minimum": 2007,
+    "maximum": 2007
+  },
+  {
+    "variant": "cache-index-only-submit",
+    "count": 1000,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 905767,
+    "minimum": 905767,
+    "maximum": 905767
+  },
+  {
+    "variant": "cache-index-only-submit",
+    "count": 1000,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 142104,
+    "minimum": 142104,
+    "maximum": 142104
+  },
+  {
+    "variant": "cache-index-only-submit",
+    "count": 1000,
+    "metric": "phase:prepare_submit",
+    "repeats": 1,
+    "median": 31.765267496928573,
+    "minimum": 31.765267496928573,
+    "maximum": 31.765267496928573
+  },
+  {
+    "variant": "profile-cache-submit",
+    "count": 100,
+    "metric": "seconds",
+    "repeats": 1,
+    "median": 13.03828081395477,
+    "minimum": 13.03828081395477,
+    "maximum": 13.03828081395477
+  },
+  {
+    "variant": "profile-cache-submit",
+    "count": 100,
+    "metric": "artifact_files",
+    "repeats": 1,
+    "median": 207,
+    "minimum": 207,
+    "maximum": 207
+  },
+  {
+    "variant": "profile-cache-submit",
+    "count": 100,
+    "metric": "artifact_bytes",
+    "repeats": 1,
+    "median": 107919,
+    "minimum": 107919,
+    "maximum": 107919
+  },
+  {
+    "variant": "profile-cache-submit",
+    "count": 100,
+    "metric": "peak_rss_kib",
+    "repeats": 1,
+    "median": 83860,
+    "minimum": 83860,
+    "maximum": 83860
+  },
+  {
+    "variant": "profile-cache-submit",
+    "count": 100,
+    "metric": "phase:prepare_submit",
+    "repeats": 1,
+    "median": 13.029366833157837,
+    "minimum": 13.029366833157837,
+    "maximum": 13.029366833157837
+  }
+]

@@ -1,0 +1,43 @@
+Wed Oct  7 16:13:46 2026    /ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-tracked-local/profile.pstats
+
+         59890037 function calls (58442501 primitive calls) in 62.794 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1495 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   62.858   62.858 api.py:562(submit)
+        1    0.004    0.004   62.848   62.848 api.py:1762(_submit_sweep)
+        1    0.000    0.000   53.779   53.779 parallel.py:385(run)
+        1    0.000    0.000   51.887   51.887 parallel.py:231(_run_locally)
+        1    0.002    0.002   51.887   51.887 worker.py:318(worker_loop)
+      100    0.002    0.000   47.946    0.479 worker.py:478(_run_one_task)
+      100    0.014    0.000   46.769    0.468 worker.py:104(_run_stage)
+      100    0.000    0.000   24.551    0.246 worker.py:436(_with_drift)
+      100    0.022    0.000   24.551    0.246 worker.py:423(_task_code_drift)
+      100    0.276    0.003   24.525    0.245 git_utils.py:223(code_drift)
+    66716    0.162    0.000   21.727    0.000 pathlib.py:981(resolve)
+    66716    0.128    0.000   19.098    0.000 <frozen posixpath>:412(realpath)
+170716/66716    2.790    0.000   18.367    0.000 <frozen posixpath>:421(_joinrealpath)
+      100    0.003    0.000   12.803    0.128 fingerprint.py:167(fingerprint)
+      100    0.000    0.000   11.955    0.120 fingerprint.py:189(<dictcomp>)
+      100    0.002    0.000   11.955    0.120 fingerprint.py:108(_repo_tree)
+      100    0.003    0.000   11.953    0.120 git_utils.py:98(create_shadow_tree)
+  1340420   10.342    0.000   10.342    0.000 {built-in method posix.lstat}
+41352/10712    0.326    0.000    8.501    0.001 basecontainer.py:524(_set_item_impl)
+21849/10312    0.031    0.000    8.450    0.001 dictconfig.py:316(__set_impl)
+21748/10211    0.015    0.000    8.445    0.001 dictconfig.py:306(__setitem__)
+      509    0.015    0.000    8.366    0.016 cmd.py:1540(_call_process)
+      508    0.002    0.000    8.365    0.016 cmd.py:1003(<lambda>)
+      509    0.016    0.000    8.338    0.016 cmd.py:1096(execute)
+      101    0.003    0.000    7.597    0.075 base.py:935(is_dirty)
+11023/5503    0.057    0.000    7.135    0.001 dictconfig.py:62(__init__)
+11023/5503    0.010    0.000    6.932    0.001 dictconfig.py:641(_set_value)
+11023/5503    0.077    0.000    6.926    0.001 dictconfig.py:649(_set_value_impl)
+     1003    0.001    0.000    6.805    0.007 omegaconf.py:172(create)
+     1003    0.013    0.000    6.803    0.007 omegaconf.py:818(_create_impl)
+      407    0.003    0.000    6.681    0.016 subprocess.py:1165(communicate)
+      407    0.016    0.000    6.678    0.016 subprocess.py:2062(_communicate)
+37151/6511    0.099    0.000    6.328    0.001 basecontainer.py:622(_wrap_value_and_set)
+37151/6511    0.036    0.000    6.295    0.001 omegaconf.py:1091(_maybe_wrap)
+37151/6511    0.153    0.000    6.282    0.001 omegaconf.py:994(_node_wrap)

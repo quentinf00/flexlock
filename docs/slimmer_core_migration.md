@@ -204,6 +204,18 @@ fingerprinting even with smart_run=False: source provenance still costs work. Se
 configuration/queue serialization, source capture, input hashing and scheduler calls
 before choosing amortization or removing optional cache policy.
 
+The [bounded thousand-item comparison with Hydra](../reports/2026-10-07-thousand-items-hydra/report.md)
+is complete: 56 cases passed and 8,900 local product identities/checksums were
+verified. On NFS, reduced-provenance FlexLock medians were 104 seconds locally
+and 32 seconds for mocked submission, versus native Hydra's 152 and 75 seconds.
+One explicitly tracked FlexLock sample took 452 seconds; repeated module-path
+drift checks and source fingerprints require attention. Default legacy cache
+miss fallback took 495 seconds, versus 32 seconds for index-only lookup. These
+are different provenance contracts, not feature-equivalent speed claims.
+Optimize measured repetition while preserving guards; retain optional policy
+compatibility until isolated consumers have working replacements. Real scheduler
+load, multi-worker contention and scientific adoption remain unmeasured.
+
 ## Rollout and stop rules
 
 T7 implements this plan. T6 can migrate invariants and source routing independently,

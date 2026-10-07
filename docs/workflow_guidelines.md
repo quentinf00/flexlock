@@ -206,6 +206,12 @@ invalid. Declare required outputs when practical. An empty successful result
 should have an explicit empty outcome, not masquerade as a missing product.
 Avoid automatic cache checks in the fresh recipe: CLI caching is opt-in; Python
 Project.submit currently defaults smart_run=True, so pass smart_run=False.
+The [thousand-item measurements](../reports/2026-10-07-thousand-items-hydra/report.md)
+show why this matters for fresh file-list campaigns: legacy fallback can repeat
+a directory traversal for each cache miss. Claim batching can reduce queue
+overhead, but choose it against task duration, load balancing and recovery needs.
+Source tracking also has a substantial per-item cost in the current implementation;
+keep its scope explicit and retain evidence when deciding what to reuse.
 
 Choose a fresh directory by default. --force is intentional in-place re-execution,
 not ordinary pipeline continuation. The isolated controller now checks all destinations

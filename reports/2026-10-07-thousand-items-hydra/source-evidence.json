@@ -1,0 +1,60 @@
+{
+  "source_revision": "9ab83a30ec977d6d63d5945e803b15e6951d3464",
+  "python_version": "Python 3.11.14",
+  "files": [
+    {
+      "path": "/ontap/user/qfebvre/flexlock-execution-validation/benchmarks/thousand_items/__init__.py",
+      "sha256": "bb13f26322f35b72d333f29eb8fea68832b3a71f0cd66d80c464c8902a9cb073",
+      "bytes": 67
+    },
+    {
+      "path": "/ontap/user/qfebvre/flexlock-execution-validation/benchmarks/thousand_items/task.py",
+      "sha256": "1dd84603079c247857ff1c38367e9f373aa21c0c54f3a6b149d5aca7aeaa35bd",
+      "bytes": 490
+    },
+    {
+      "path": "/ontap/user/qfebvre/flexlock-execution-validation/benchmarks/thousand_items/measure.py",
+      "sha256": "93348ccdc156b16f55f200006d981aaaa2519f7005181299d8c092098ad73a5a",
+      "bytes": 12717
+    },
+    {
+      "path": "/ontap/user/qfebvre/flexlock-execution-validation/benchmarks/thousand_items/matrix.py",
+      "sha256": "015056b323b1dd31056fc2fe5117c66d213059b402253f3d5d25c4d533acbcdf",
+      "bytes": 3880
+    },
+    {
+      "path": "/ontap/user/qfebvre/flexlock-execution-validation/benchmarks/__init__.py",
+      "sha256": "6280a0ca0e01c71763097a240ca592c272277d9c88afdc9c6a3194aa8a3f72a5",
+      "bytes": 53
+    },
+    {
+      "path": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-07-thousand-items-hydra/supplemental_driver.py",
+      "sha256": "7b443d133513951f82bcebd17f8f8b2a8d03c3ac214240eb6bb58fae3b692dcb",
+      "bytes": 2309
+    },
+    {
+      "path": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-07-thousand-items-hydra/diagnostics_driver.py",
+      "sha256": "65273ab43df3515772a9c38b4b7273d3765edd6f09375e4447e11ded87e431d7",
+      "bytes": 1526
+    },
+    {
+      "path": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-07-thousand-items-hydra/analyze.py",
+      "sha256": "73b27a49248f92b2cacc60a384e0e8e0736993729ac6529cc788a3ddf8087a70",
+      "bytes": 5849
+    },
+    {
+      "path": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra_plugins/hydra_submitit_launcher/submitit_launcher.py",
+      "sha256": "53b5460b0bc9f08db9f324a379bdd0598a285dce535d8d9b9665f873d44e51d3",
+      "bytes": 5008
+    },
+    {
+      "path": "/ontap/user/qfebvre/flexlock-benchmark-deps/submitit/slurm/slurm.py",
+      "sha256": "75fc1dcc388b66871cdd249c30a07fc3dc7f91a4aa8517d21acc7ff05a346c18",
+      "bytes": 21691
+    }
+  ],
+  "filesystems": {
+    "/ontap/user/qfebvre": "ontap.local:/export/user/qfebvre nfs4   /ontap/user/qfebvre",
+    "/tmp": "/dev/sda2[/tmp] ext4   /tmp"
+  }
+}

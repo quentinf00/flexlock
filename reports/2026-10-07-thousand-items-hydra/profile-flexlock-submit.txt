@@ -1,0 +1,43 @@
+Wed Oct  7 16:11:52 2026    /ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-flexlock-submit/profile.pstats
+
+         13881907 function calls (13399151 primitive calls) in 6.518 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1160 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    6.534    6.534 api.py:562(submit)
+        1    0.002    0.002    6.523    6.523 api.py:1762(_submit_sweep)
+7128/4717    0.008    0.000    2.960    0.001 dictconfig.py:316(__set_impl)
+7027/4616    0.004    0.000    2.952    0.001 dictconfig.py:306(__setitem__)
+17530/4717    0.111    0.000    2.949    0.001 basecontainer.py:524(_set_item_impl)
+2915/1709    0.013    0.000    2.439    0.001 dictconfig.py:62(__init__)
+      504    0.000    0.000    2.394    0.005 omegaconf.py:172(create)
+      504    0.004    0.000    2.394    0.005 omegaconf.py:818(_create_impl)
+2915/1709    0.002    0.000    2.388    0.001 dictconfig.py:641(_set_value)
+2915/1709    0.017    0.000    2.387    0.001 dictconfig.py:649(_set_value_impl)
+        1    0.000    0.000    2.182    2.182 parallel.py:106(__init__)
+15721/2908    0.034    0.000    2.155    0.001 basecontainer.py:622(_wrap_value_and_set)
+15721/2908    0.013    0.000    2.144    0.001 omegaconf.py:1091(_maybe_wrap)
+15721/2908    0.053    0.000    2.139    0.001 omegaconf.py:994(_node_wrap)
+     1404    0.004    0.000    1.628    0.001 listconfig.py:46(__init__)
+     1404    0.001    0.000    1.610    0.001 listconfig.py:610(_set_value)
+     1404    0.011    0.000    1.609    0.001 listconfig.py:620(_set_value_impl)
+    10402    0.014    0.000    1.558    0.000 listconfig.py:293(append)
+      100    0.002    0.000    1.443    0.014 resolvers.py:328(bind_existing_run_locks)
+      301    0.001    0.000    1.368    0.005 utils.py:748(merge_task_into_cfg)
+      301    0.002    0.000    1.367    0.005 omegaconf.py:250(merge)
+        1    0.001    0.001    1.082    1.082 parallel.py:55(_shared_product_roots)
+251955/2009    0.309    0.000    0.957    0.000 copy.py:128(deepcopy)
+      100    0.001    0.000    0.937    0.009 freeze.py:37(freeze_deferred)
+      301    0.000    0.000    0.893    0.003 basecontainer.py:483(merge_with)
+  703/301    0.004    0.000    0.893    0.003 basecontainer.py:494(_merge_with)
+ 1204/502    0.007    0.000    0.851    0.002 dictconfig.py:113(__deepcopy__)
+  703/301    0.016    0.000    0.809    0.003 basecontainer.py:306(_map_merge)
+    24649    0.039    0.000    0.797    0.000 nodes.py:128(__init__)
+        2    0.001    0.001    0.775    0.388 record.py:117(list_task_records)
+      202    0.002    0.000    0.752    0.004 __init__.py:74(load)
+      202    0.000    0.000    0.747    0.004 constructor.py:47(get_single_data)
+    56769    0.020    0.000    0.739    0.000 {built-in method builtins.next}
+    10937    0.009    0.000    0.731    0.000 nodes.py:159(__deepcopy__)
+2576669/2564017    0.392    0.000    0.724    0.000 {built-in method builtins.isinstance}

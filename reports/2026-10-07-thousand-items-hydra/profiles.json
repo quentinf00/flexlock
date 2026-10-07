@@ -1,0 +1,1992 @@
+{
+  "profile-cache-submit": {
+    "raw_profile": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-cache-submit/profile.pstats",
+    "sha256": "cdb892672ab370753cf56af8421c2180feae6ddd7e1c3983629d081aef96a771",
+    "total_calls": 15482566,
+    "primitive_calls": 14937988,
+    "profile_seconds": 13.03141492899999,
+    "top_cumulative": [
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 562,
+        "function": "submit",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 9.1e-05,
+        "cumulative_seconds": 13.028882309
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 1762,
+        "function": "_submit_sweep",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.002797734,
+        "cumulative_seconds": 13.007086771
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 315,
+        "function": "_find_matching_run",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0025700000000000002,
+        "cumulative_seconds": 5.148073462
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 394,
+        "function": "_glob_scan_match",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.000694963,
+        "cumulative_seconds": 4.728544473
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/record.py",
+        "line": 214,
+        "function": "iter_run_dirs",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0005754040000000001,
+        "cumulative_seconds": 4.589939639000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/pathlib.py",
+        "line": 956,
+        "function": "rglob",
+        "primitive_calls": 200,
+        "total_calls": 200,
+        "self_seconds": 0.0013360420000000002,
+        "cumulative_seconds": 4.586654342
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/pathlib.py",
+        "line": 402,
+        "function": "_select_from",
+        "primitive_calls": 200,
+        "total_calls": 200,
+        "self_seconds": 0.026717338,
+        "cumulative_seconds": 4.579952575
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/pathlib.py",
+        "line": 383,
+        "function": "_iterate_directories",
+        "primitive_calls": 20400,
+        "total_calls": 60400,
+        "self_seconds": 0.31607162,
+        "cumulative_seconds": 4.085670676
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/pathlib.py",
+        "line": 934,
+        "function": "_scandir",
+        "primitive_calls": 20200,
+        "total_calls": 20200,
+        "self_seconds": 0.014374767,
+        "cumulative_seconds": 3.7067593070000004
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method posix.scandir>",
+        "primitive_calls": 20200,
+        "total_calls": 20200,
+        "self_seconds": 3.630756637,
+        "cumulative_seconds": 3.6923845400000004
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 316,
+        "function": "__set_impl",
+        "primitive_calls": 4717,
+        "total_calls": 7128,
+        "self_seconds": 0.010040490000000001,
+        "cumulative_seconds": 3.534610933
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 306,
+        "function": "__setitem__",
+        "primitive_calls": 4616,
+        "total_calls": 7027,
+        "self_seconds": 0.004575967,
+        "cumulative_seconds": 3.5264887180000004
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 524,
+        "function": "_set_item_impl",
+        "primitive_calls": 4717,
+        "total_calls": 17530,
+        "self_seconds": 0.128874808,
+        "cumulative_seconds": 3.521770721
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py",
+        "line": 106,
+        "function": "__init__",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.000321441,
+        "cumulative_seconds": 2.880678839
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 62,
+        "function": "__init__",
+        "primitive_calls": 1709,
+        "total_calls": 2915,
+        "self_seconds": 0.014662185000000001,
+        "cumulative_seconds": 2.787703676
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172,
+        "function": "create",
+        "primitive_calls": 504,
+        "total_calls": 504,
+        "self_seconds": 0.000501784,
+        "cumulative_seconds": 2.729727012
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 818,
+        "function": "_create_impl",
+        "primitive_calls": 504,
+        "total_calls": 504,
+        "self_seconds": 0.004867851,
+        "cumulative_seconds": 2.7292252280000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 641,
+        "function": "_set_value",
+        "primitive_calls": 1709,
+        "total_calls": 2915,
+        "self_seconds": 0.0027524370000000004,
+        "cumulative_seconds": 2.726784834
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 649,
+        "function": "_set_value_impl",
+        "primitive_calls": 1709,
+        "total_calls": 2915,
+        "self_seconds": 0.019228084000000003,
+        "cumulative_seconds": 2.725179047
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 622,
+        "function": "_wrap_value_and_set",
+        "primitive_calls": 2908,
+        "total_calls": 15721,
+        "self_seconds": 0.038067793,
+        "cumulative_seconds": 2.462020749
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 1091,
+        "function": "_maybe_wrap",
+        "primitive_calls": 2908,
+        "total_calls": 15721,
+        "self_seconds": 0.013926423,
+        "cumulative_seconds": 2.4488419820000003
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 994,
+        "function": "_node_wrap",
+        "primitive_calls": 2908,
+        "total_calls": 15721,
+        "self_seconds": 0.061316446000000004,
+        "cumulative_seconds": 2.443776784
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/record.py",
+        "line": 217,
+        "function": "<setcomp>",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.000115408,
+        "cumulative_seconds": 2.321601492
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/record.py",
+        "line": 218,
+        "function": "<setcomp>",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.000127716,
+        "cumulative_seconds": 2.2652959740000003
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 46,
+        "function": "__init__",
+        "primitive_calls": 1404,
+        "total_calls": 1404,
+        "self_seconds": 0.005181515,
+        "cumulative_seconds": 1.860564115
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 610,
+        "function": "_set_value",
+        "primitive_calls": 1404,
+        "total_calls": 1404,
+        "self_seconds": 0.001472456,
+        "cumulative_seconds": 1.8396331780000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 620,
+        "function": "_set_value_impl",
+        "primitive_calls": 1404,
+        "total_calls": 1404,
+        "self_seconds": 0.011807494,
+        "cumulative_seconds": 1.838160722
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 293,
+        "function": "append",
+        "primitive_calls": 10402,
+        "total_calls": 10402,
+        "self_seconds": 0.015748665000000002,
+        "cumulative_seconds": 1.779784626
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py",
+        "line": 748,
+        "function": "merge_task_into_cfg",
+        "primitive_calls": 301,
+        "total_calls": 301,
+        "self_seconds": 0.000826516,
+        "cumulative_seconds": 1.749977676
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 250,
+        "function": "merge",
+        "primitive_calls": 301,
+        "total_calls": 301,
+        "self_seconds": 0.002673608,
+        "cumulative_seconds": 1.7484002230000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py",
+        "line": 55,
+        "function": "_shared_product_roots",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.0014276030000000002,
+        "cumulative_seconds": 1.629512896
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/resolvers.py",
+        "line": 328,
+        "function": "bind_existing_run_locks",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0016403260000000001,
+        "cumulative_seconds": 1.4900078790000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 483,
+        "function": "merge_with",
+        "primitive_calls": 301,
+        "total_calls": 301,
+        "self_seconds": 0.000341228,
+        "cumulative_seconds": 1.223502482
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 494,
+        "function": "_merge_with",
+        "primitive_calls": 301,
+        "total_calls": 703,
+        "self_seconds": 0.0049003810000000005,
+        "cumulative_seconds": 1.223161254
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/copy.py",
+        "line": 128,
+        "function": "deepcopy",
+        "primitive_calls": 2009,
+        "total_calls": 251955,
+        "self_seconds": 0.387349906,
+        "cumulative_seconds": 1.2053617110000001
+      }
+    ],
+    "selected": [
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 315,
+        "function": "_find_matching_run",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0025700000000000002,
+        "cumulative_seconds": 5.148073462
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 394,
+        "function": "_glob_scan_match",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.000694963,
+        "cumulative_seconds": 4.728544473
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/record.py",
+        "line": 214,
+        "function": "iter_run_dirs",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0005754040000000001,
+        "cumulative_seconds": 4.589939639000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172,
+        "function": "create",
+        "primitive_calls": 504,
+        "total_calls": 504,
+        "self_seconds": 0.000501784,
+        "cumulative_seconds": 2.729727012
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 769,
+        "function": "resolve",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.00023488600000000001,
+        "cumulative_seconds": 0.23752387300000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/fingerprint.py",
+        "line": 167,
+        "function": "fingerprint",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0009054610000000001,
+        "cumulative_seconds": 0.112542628
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/pathlib.py",
+        "line": 981,
+        "function": "resolve",
+        "primitive_calls": 508,
+        "total_calls": 508,
+        "self_seconds": 0.0013071460000000001,
+        "cumulative_seconds": 0.06370755
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/yaml/resolver.py",
+        "line": 143,
+        "function": "resolve",
+        "primitive_calls": 20658,
+        "total_calls": 20658,
+        "self_seconds": 0.026368631,
+        "cumulative_seconds": 0.039845807000000004
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/CommonTokenFactory.py",
+        "line": 46,
+        "function": "create",
+        "primitive_calls": 900,
+        "total_calls": 900,
+        "self_seconds": 0.0010302710000000001,
+        "cumulative_seconds": 0.0038461520000000003
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/PredictionContext.py",
+        "line": 111,
+        "function": "create",
+        "primitive_calls": 58,
+        "total_calls": 58,
+        "self_seconds": 5.5112000000000004e-05,
+        "cumulative_seconds": 0.00022042100000000002
+      }
+    ]
+  },
+  "profile-flexlock-local": {
+    "raw_profile": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-flexlock-local/profile.pstats",
+    "sha256": "cbc99ee2c69ff88715a7b82ef21d0b5aff2a60cdc41c95908cf4a5eb062a3a42",
+    "total_calls": 25587316,
+    "primitive_calls": 24666908,
+    "profile_seconds": 20.285487861999957,
+    "top_cumulative": [
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 562,
+        "function": "submit",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 9.0908e-05,
+        "cumulative_seconds": 20.290723246000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 1762,
+        "function": "_submit_sweep",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.0026895540000000003,
+        "cumulative_seconds": 20.281470146
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py",
+        "line": 385,
+        "function": "run",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.000154351,
+        "cumulative_seconds": 12.56493088
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py",
+        "line": 231,
+        "function": "_run_locally",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 1.1340000000000002e-05,
+        "cumulative_seconds": 11.82909774
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py",
+        "line": 318,
+        "function": "worker_loop",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.000964271,
+        "cumulative_seconds": 11.829086400000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py",
+        "line": 478,
+        "function": "_run_one_task",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.00115751,
+        "cumulative_seconds": 8.622387918000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py",
+        "line": 104,
+        "function": "_run_stage",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.009324288,
+        "cumulative_seconds": 7.827094531
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 316,
+        "function": "__set_impl",
+        "primitive_calls": 8116,
+        "total_calls": 13027,
+        "self_seconds": 0.018898122,
+        "cumulative_seconds": 6.546478803
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 306,
+        "function": "__setitem__",
+        "primitive_calls": 8015,
+        "total_calls": 12926,
+        "self_seconds": 0.008809321,
+        "cumulative_seconds": 6.540208453
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 524,
+        "function": "_set_item_impl",
+        "primitive_calls": 8116,
+        "total_calls": 31227,
+        "self_seconds": 0.24259112600000002,
+        "cumulative_seconds": 6.521791509000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 62,
+        "function": "__init__",
+        "primitive_calls": 3208,
+        "total_calls": 5414,
+        "self_seconds": 0.030126848,
+        "cumulative_seconds": 5.446170019
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172,
+        "function": "create",
+        "primitive_calls": 1003,
+        "total_calls": 1003,
+        "self_seconds": 0.001060793,
+        "cumulative_seconds": 5.334593132
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 818,
+        "function": "_create_impl",
+        "primitive_calls": 1003,
+        "total_calls": 1003,
+        "self_seconds": 0.011520803000000001,
+        "cumulative_seconds": 5.3335323390000005
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 641,
+        "function": "_set_value",
+        "primitive_calls": 3208,
+        "total_calls": 5414,
+        "self_seconds": 0.0056136450000000004,
+        "cumulative_seconds": 5.317979656
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 649,
+        "function": "_set_value_impl",
+        "primitive_calls": 3208,
+        "total_calls": 5414,
+        "self_seconds": 0.039634894000000004,
+        "cumulative_seconds": 5.314604099
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 622,
+        "function": "_wrap_value_and_set",
+        "primitive_calls": 5507,
+        "total_calls": 28618,
+        "self_seconds": 0.07394002100000001,
+        "cumulative_seconds": 4.77037094
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 1091,
+        "function": "_maybe_wrap",
+        "primitive_calls": 5507,
+        "total_calls": 28618,
+        "self_seconds": 0.027816643000000002,
+        "cumulative_seconds": 4.743299213
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 994,
+        "function": "_node_wrap",
+        "primitive_calls": 5507,
+        "total_calls": 28618,
+        "self_seconds": 0.119283444,
+        "cumulative_seconds": 4.73287595
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 46,
+        "function": "__init__",
+        "primitive_calls": 2603,
+        "total_calls": 2603,
+        "self_seconds": 0.010409213,
+        "cumulative_seconds": 3.4752168350000003
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 610,
+        "function": "_set_value",
+        "primitive_calls": 2603,
+        "total_calls": 2603,
+        "self_seconds": 0.002898059,
+        "cumulative_seconds": 3.432992973
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 620,
+        "function": "_set_value_impl",
+        "primitive_calls": 2603,
+        "total_calls": 2603,
+        "self_seconds": 0.023029511000000003,
+        "cumulative_seconds": 3.430094914
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 293,
+        "function": "append",
+        "primitive_calls": 18200,
+        "total_calls": 18200,
+        "self_seconds": 0.030597097,
+        "cumulative_seconds": 3.3193526060000003
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py",
+        "line": 106,
+        "function": "__init__",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.000308654,
+        "cumulative_seconds": 3.0125573730000004
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py",
+        "line": 748,
+        "function": "merge_task_into_cfg",
+        "primitive_calls": 401,
+        "total_calls": 401,
+        "self_seconds": 0.00114297,
+        "cumulative_seconds": 2.555886548
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 250,
+        "function": "merge",
+        "primitive_calls": 401,
+        "total_calls": 401,
+        "self_seconds": 0.0037345000000000004,
+        "cumulative_seconds": 2.553766179
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/copy.py",
+        "line": 128,
+        "function": "deepcopy",
+        "primitive_calls": 3109,
+        "total_calls": 487855,
+        "self_seconds": 0.7746687170000001,
+        "cumulative_seconds": 2.481713654
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/taskdb.py",
+        "line": 185,
+        "function": "_write_txn",
+        "primitive_calls": 303,
+        "total_calls": 303,
+        "self_seconds": 0.003425214,
+        "cumulative_seconds": 2.381121321
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 113,
+        "function": "__deepcopy__",
+        "primitive_calls": 902,
+        "total_calls": 2204,
+        "self_seconds": 0.018679782000000002,
+        "cumulative_seconds": 2.2600900050000003
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/taskdb.py",
+        "line": 288,
+        "function": "claim_next_tasks",
+        "primitive_calls": 101,
+        "total_calls": 101,
+        "self_seconds": 0.000397834,
+        "cumulative_seconds": 2.120379346
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 483,
+        "function": "merge_with",
+        "primitive_calls": 401,
+        "total_calls": 401,
+        "self_seconds": 0.0004908040000000001,
+        "cumulative_seconds": 1.908055566
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 494,
+        "function": "_merge_with",
+        "primitive_calls": 401,
+        "total_calls": 1003,
+        "self_seconds": 0.007308318,
+        "cumulative_seconds": 1.907564762
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/nodes.py",
+        "line": 159,
+        "function": "__deepcopy__",
+        "primitive_calls": 21237,
+        "total_calls": 21237,
+        "self_seconds": 0.024151978,
+        "cumulative_seconds": 1.903298079
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/nodes.py",
+        "line": 128,
+        "function": "__init__",
+        "primitive_calls": 46247,
+        "total_calls": 46247,
+        "self_seconds": 0.08767090500000001,
+        "cumulative_seconds": 1.8661744120000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/yaml/__init__.py",
+        "line": 74,
+        "function": "load",
+        "primitive_calls": 602,
+        "total_calls": 602,
+        "self_seconds": 0.004311385,
+        "cumulative_seconds": 1.8072127530000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/yaml/constructor.py",
+        "line": 47,
+        "function": "get_single_data",
+        "primitive_calls": 602,
+        "total_calls": 602,
+        "self_seconds": 0.0009533250000000001,
+        "cumulative_seconds": 1.789710012
+      }
+    ],
+    "selected": [
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172,
+        "function": "create",
+        "primitive_calls": 1003,
+        "total_calls": 1003,
+        "self_seconds": 0.001060793,
+        "cumulative_seconds": 5.334593132
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/pathlib.py",
+        "line": 981,
+        "function": "resolve",
+        "primitive_calls": 1512,
+        "total_calls": 1512,
+        "self_seconds": 0.005031219,
+        "cumulative_seconds": 0.444224037
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 769,
+        "function": "resolve",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.00025591300000000003,
+        "cumulative_seconds": 0.25018608200000003
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/fingerprint.py",
+        "line": 167,
+        "function": "fingerprint",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0006917760000000001,
+        "cumulative_seconds": 0.116804133
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/yaml/resolver.py",
+        "line": 143,
+        "function": "resolve",
+        "primitive_calls": 44673,
+        "total_calls": 44673,
+        "self_seconds": 0.05619364600000001,
+        "cumulative_seconds": 0.083584448
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/CommonTokenFactory.py",
+        "line": 46,
+        "function": "create",
+        "primitive_calls": 900,
+        "total_calls": 900,
+        "self_seconds": 0.00112296,
+        "cumulative_seconds": 0.004199951
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/PredictionContext.py",
+        "line": 111,
+        "function": "create",
+        "primitive_calls": 58,
+        "total_calls": 58,
+        "self_seconds": 5.2386e-05,
+        "cumulative_seconds": 0.00022360400000000002
+      }
+    ]
+  },
+  "profile-flexlock-submit": {
+    "raw_profile": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-flexlock-submit/profile.pstats",
+    "sha256": "dd5516320d04f9c0ff5026be6093b16a59873e39379f8d13244adf9c33a551de",
+    "total_calls": 13881907,
+    "primitive_calls": 13399151,
+    "profile_seconds": 6.517972312999999,
+    "top_cumulative": [
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 562,
+        "function": "submit",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.000121509,
+        "cumulative_seconds": 6.533510130000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 1762,
+        "function": "_submit_sweep",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.0022374910000000003,
+        "cumulative_seconds": 6.522581667000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 316,
+        "function": "__set_impl",
+        "primitive_calls": 4717,
+        "total_calls": 7128,
+        "self_seconds": 0.008315532,
+        "cumulative_seconds": 2.960325724
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 306,
+        "function": "__setitem__",
+        "primitive_calls": 4616,
+        "total_calls": 7027,
+        "self_seconds": 0.00416791,
+        "cumulative_seconds": 2.9521457680000003
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 524,
+        "function": "_set_item_impl",
+        "primitive_calls": 4717,
+        "total_calls": 17530,
+        "self_seconds": 0.111362974,
+        "cumulative_seconds": 2.9493321910000003
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 62,
+        "function": "__init__",
+        "primitive_calls": 1709,
+        "total_calls": 2915,
+        "self_seconds": 0.012706906,
+        "cumulative_seconds": 2.439323301
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172,
+        "function": "create",
+        "primitive_calls": 504,
+        "total_calls": 504,
+        "self_seconds": 0.000455937,
+        "cumulative_seconds": 2.3940757350000004
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 818,
+        "function": "_create_impl",
+        "primitive_calls": 504,
+        "total_calls": 504,
+        "self_seconds": 0.004328817,
+        "cumulative_seconds": 2.393619798
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 641,
+        "function": "_set_value",
+        "primitive_calls": 1709,
+        "total_calls": 2915,
+        "self_seconds": 0.0023903680000000004,
+        "cumulative_seconds": 2.388126648
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 649,
+        "function": "_set_value_impl",
+        "primitive_calls": 1709,
+        "total_calls": 2915,
+        "self_seconds": 0.016816748,
+        "cumulative_seconds": 2.38675281
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py",
+        "line": 106,
+        "function": "__init__",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.000240742,
+        "cumulative_seconds": 2.18150383
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 622,
+        "function": "_wrap_value_and_set",
+        "primitive_calls": 2908,
+        "total_calls": 15721,
+        "self_seconds": 0.034074114,
+        "cumulative_seconds": 2.155382084
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 1091,
+        "function": "_maybe_wrap",
+        "primitive_calls": 2908,
+        "total_calls": 15721,
+        "self_seconds": 0.012623179,
+        "cumulative_seconds": 2.143580977
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 994,
+        "function": "_node_wrap",
+        "primitive_calls": 2908,
+        "total_calls": 15721,
+        "self_seconds": 0.052840563,
+        "cumulative_seconds": 2.139031815
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 46,
+        "function": "__init__",
+        "primitive_calls": 1404,
+        "total_calls": 1404,
+        "self_seconds": 0.004475321,
+        "cumulative_seconds": 1.627825553
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 610,
+        "function": "_set_value",
+        "primitive_calls": 1404,
+        "total_calls": 1404,
+        "self_seconds": 0.001232281,
+        "cumulative_seconds": 1.6098630950000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 620,
+        "function": "_set_value_impl",
+        "primitive_calls": 1404,
+        "total_calls": 1404,
+        "self_seconds": 0.010525235,
+        "cumulative_seconds": 1.608630814
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/listconfig.py",
+        "line": 293,
+        "function": "append",
+        "primitive_calls": 10402,
+        "total_calls": 10402,
+        "self_seconds": 0.01414105,
+        "cumulative_seconds": 1.558349122
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/resolvers.py",
+        "line": 328,
+        "function": "bind_existing_run_locks",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0016290800000000002,
+        "cumulative_seconds": 1.442863478
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py",
+        "line": 748,
+        "function": "merge_task_into_cfg",
+        "primitive_calls": 301,
+        "total_calls": 301,
+        "self_seconds": 0.000646641,
+        "cumulative_seconds": 1.368148728
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 250,
+        "function": "merge",
+        "primitive_calls": 301,
+        "total_calls": 301,
+        "self_seconds": 0.002252493,
+        "cumulative_seconds": 1.36685242
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py",
+        "line": 55,
+        "function": "_shared_product_roots",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.0009858100000000002,
+        "cumulative_seconds": 1.081831169
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/copy.py",
+        "line": 128,
+        "function": "deepcopy",
+        "primitive_calls": 2009,
+        "total_calls": 251955,
+        "self_seconds": 0.30861375700000004,
+        "cumulative_seconds": 0.9573526000000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/freeze.py",
+        "line": 37,
+        "function": "freeze_deferred",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0007518090000000001,
+        "cumulative_seconds": 0.93698515
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 483,
+        "function": "merge_with",
+        "primitive_calls": 301,
+        "total_calls": 301,
+        "self_seconds": 0.00027312800000000003,
+        "cumulative_seconds": 0.8934920820000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 494,
+        "function": "_merge_with",
+        "primitive_calls": 301,
+        "total_calls": 703,
+        "self_seconds": 0.0037560360000000004,
+        "cumulative_seconds": 0.8932189540000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 113,
+        "function": "__deepcopy__",
+        "primitive_calls": 502,
+        "total_calls": 1204,
+        "self_seconds": 0.007400980000000001,
+        "cumulative_seconds": 0.8513561140000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 306,
+        "function": "_map_merge",
+        "primitive_calls": 301,
+        "total_calls": 703,
+        "self_seconds": 0.015500883000000002,
+        "cumulative_seconds": 0.8089119330000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/nodes.py",
+        "line": 128,
+        "function": "__init__",
+        "primitive_calls": 24649,
+        "total_calls": 24649,
+        "self_seconds": 0.038831474000000005,
+        "cumulative_seconds": 0.797061169
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/record.py",
+        "line": 117,
+        "function": "list_task_records",
+        "primitive_calls": 2,
+        "total_calls": 2,
+        "self_seconds": 0.001491921,
+        "cumulative_seconds": 0.775320109
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/yaml/__init__.py",
+        "line": 74,
+        "function": "load",
+        "primitive_calls": 202,
+        "total_calls": 202,
+        "self_seconds": 0.001524584,
+        "cumulative_seconds": 0.7521222430000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/yaml/constructor.py",
+        "line": 47,
+        "function": "get_single_data",
+        "primitive_calls": 202,
+        "total_calls": 202,
+        "self_seconds": 0.00020491900000000002,
+        "cumulative_seconds": 0.7472864330000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.next>",
+        "primitive_calls": 56769,
+        "total_calls": 56769,
+        "self_seconds": 0.020157103000000003,
+        "cumulative_seconds": 0.739452635
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/nodes.py",
+        "line": 159,
+        "function": "__deepcopy__",
+        "primitive_calls": 10937,
+        "total_calls": 10937,
+        "self_seconds": 0.009058328000000001,
+        "cumulative_seconds": 0.730633121
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.isinstance>",
+        "primitive_calls": 2564017,
+        "total_calls": 2576669,
+        "self_seconds": 0.39150466100000003,
+        "cumulative_seconds": 0.7239118440000001
+      }
+    ],
+    "selected": [
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172,
+        "function": "create",
+        "primitive_calls": 504,
+        "total_calls": 504,
+        "self_seconds": 0.000455937,
+        "cumulative_seconds": 2.3940757350000004
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 769,
+        "function": "resolve",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.00023085800000000002,
+        "cumulative_seconds": 0.227041557
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/pathlib.py",
+        "line": 981,
+        "function": "resolve",
+        "primitive_calls": 508,
+        "total_calls": 508,
+        "self_seconds": 0.0010545320000000002,
+        "cumulative_seconds": 0.082394331
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/yaml/resolver.py",
+        "line": 143,
+        "function": "resolve",
+        "primitive_calls": 20658,
+        "total_calls": 20658,
+        "self_seconds": 0.019917825,
+        "cumulative_seconds": 0.02943213
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/CommonTokenFactory.py",
+        "line": 46,
+        "function": "create",
+        "primitive_calls": 900,
+        "total_calls": 900,
+        "self_seconds": 0.000979518,
+        "cumulative_seconds": 0.003769385
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/PredictionContext.py",
+        "line": 111,
+        "function": "create",
+        "primitive_calls": 58,
+        "total_calls": 58,
+        "self_seconds": 4.9629e-05,
+        "cumulative_seconds": 0.00021830500000000002
+      }
+    ]
+  },
+  "profile-hydra-local": {
+    "raw_profile": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-hydra-local/profile.pstats",
+    "sha256": "3ad0a78f4cfa0becbd0222bd961cee1d0e72259fba63433c118d3384a4378717",
+    "total_calls": 65187206,
+    "primitive_calls": 61871015,
+    "profile_seconds": 28.924526424000035,
+    "top_cumulative": [
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/main.py",
+        "line": 80,
+        "function": "decorated_main",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 2.5927e-05,
+        "cumulative_seconds": 29.010047410000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/utils.py",
+        "line": 306,
+        "function": "_run_hydra",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 4.6136e-05,
+        "cumulative_seconds": 29.007897052
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/utils.py",
+        "line": 218,
+        "function": "run_and_report",
+        "primitive_calls": 3,
+        "total_calls": 3,
+        "self_seconds": 6.814e-06,
+        "cumulative_seconds": 28.718455461
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/utils.py",
+        "line": 430,
+        "function": "_run_app",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 4.0856e-05,
+        "cumulative_seconds": 28.717706655
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/utils.py",
+        "line": 466,
+        "function": "<lambda>",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 8.736e-06,
+        "cumulative_seconds": 28.717663394000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/hydra.py",
+        "line": 136,
+        "function": "multirun",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 3.4433e-05,
+        "cumulative_seconds": 28.717654658
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/core_plugins/basic_sweeper.py",
+        "line": 147,
+        "function": "sweep",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 9.374200000000001e-05,
+        "cumulative_seconds": 28.553416575000004
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/config_loader_impl.py",
+        "line": 133,
+        "function": "load_configuration",
+        "primitive_calls": 202,
+        "total_calls": 202,
+        "self_seconds": 0.002219322,
+        "cumulative_seconds": 22.209445552000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/config_loader_impl.py",
+        "line": 233,
+        "function": "_load_configuration_impl",
+        "primitive_calls": 202,
+        "total_calls": 202,
+        "self_seconds": 0.016773075000000002,
+        "cumulative_seconds": 22.20722623
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/config_loader_impl.py",
+        "line": 312,
+        "function": "load_sweep_config",
+        "primitive_calls": 200,
+        "total_calls": 200,
+        "self_seconds": 0.001774565,
+        "cumulative_seconds": 21.86682293
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/core_plugins/basic_launcher.py",
+        "line": 51,
+        "function": "launch",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.0017092960000000001,
+        "cumulative_seconds": 16.833418442000003
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/plugins/sweeper.py",
+        "line": 48,
+        "function": "validate_batch_is_legal",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.000146501,
+        "cumulative_seconds": 11.696800109000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/copy.py",
+        "line": 128,
+        "function": "deepcopy",
+        "primitive_calls": 7004,
+        "total_calls": 2493789,
+        "self_seconds": 2.666839148,
+        "cumulative_seconds": 9.048866314000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 113,
+        "function": "__deepcopy__",
+        "primitive_calls": 4546,
+        "total_calls": 29706,
+        "self_seconds": 0.16352571500000002,
+        "cumulative_seconds": 8.607201928
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/defaults_list.py",
+        "line": 729,
+        "function": "create_defaults_list",
+        "primitive_calls": 202,
+        "total_calls": 202,
+        "self_seconds": 0.001005755,
+        "cumulative_seconds": 8.293574551
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/config_loader_impl.py",
+        "line": 532,
+        "function": "_compose_config_from_defaults_list",
+        "primitive_calls": 202,
+        "total_calls": 202,
+        "self_seconds": 0.0043464440000000005,
+        "cumulative_seconds": 8.190096095000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/defaults_list.py",
+        "line": 706,
+        "function": "_create_defaults_list",
+        "primitive_calls": 202,
+        "total_calls": 202,
+        "self_seconds": 0.000567966,
+        "cumulative_seconds": 8.185587239
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/defaults_list.py",
+        "line": 348,
+        "function": "_create_defaults_tree",
+        "primitive_calls": 202,
+        "total_calls": 202,
+        "self_seconds": 0.000296252,
+        "cumulative_seconds": 8.027868512000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/defaults_list.py",
+        "line": 445,
+        "function": "_create_defaults_tree_impl",
+        "primitive_calls": 202,
+        "total_calls": 2424,
+        "self_seconds": 0.035571594000000005,
+        "cumulative_seconds": 8.027572260000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/defaults_list.py",
+        "line": 267,
+        "function": "_expand_virtual_root",
+        "primitive_calls": 202,
+        "total_calls": 202,
+        "self_seconds": 0.001680236,
+        "cumulative_seconds": 8.027232013
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 524,
+        "function": "_set_item_impl",
+        "primitive_calls": 35766,
+        "total_calls": 40239,
+        "self_seconds": 0.262103065,
+        "cumulative_seconds": 7.701577220000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 316,
+        "function": "__set_impl",
+        "primitive_calls": 31753,
+        "total_calls": 33978,
+        "self_seconds": 0.036563036,
+        "cumulative_seconds": 6.930287993
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/core/utils.py",
+        "line": 99,
+        "function": "run_job",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.009137619000000001,
+        "cumulative_seconds": 6.584103426
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/copy.py",
+        "line": 259,
+        "function": "_reconstruct",
+        "primitive_calls": 92634,
+        "total_calls": 245253,
+        "self_seconds": 0.540304569,
+        "cumulative_seconds": 5.761002097
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/config_repository.py",
+        "line": 343,
+        "function": "load_config",
+        "primitive_calls": 6464,
+        "total_calls": 6464,
+        "self_seconds": 0.0070848330000000004,
+        "cumulative_seconds": 5.4605989
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/config_repository.py",
+        "line": 85,
+        "function": "load_config",
+        "primitive_calls": 2222,
+        "total_calls": 2222,
+        "self_seconds": 0.009632237,
+        "cumulative_seconds": 5.453514067
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 62,
+        "function": "__init__",
+        "primitive_calls": 34300,
+        "total_calls": 40121,
+        "self_seconds": 0.14583981000000001,
+        "cumulative_seconds": 5.365274022
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 483,
+        "function": "merge_with",
+        "primitive_calls": 2022,
+        "total_calls": 2022,
+        "self_seconds": 0.001884196,
+        "cumulative_seconds": 5.285540711
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 494,
+        "function": "_merge_with",
+        "primitive_calls": 2022,
+        "total_calls": 4850,
+        "self_seconds": 0.026798761,
+        "cumulative_seconds": 5.2836565150000006
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/copy.py",
+        "line": 227,
+        "function": "_deepcopy_dict",
+        "primitive_calls": 91016,
+        "total_calls": 239604,
+        "self_seconds": 0.601454299,
+        "cumulative_seconds": 5.114032368
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/defaults_list.py",
+        "line": 516,
+        "function": "add_child",
+        "primitive_calls": 1818,
+        "total_calls": 1818,
+        "self_seconds": 0.0036125600000000003,
+        "cumulative_seconds": 4.974259057
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/defaults_list.py",
+        "line": 257,
+        "function": "update_package_header",
+        "primitive_calls": 2222,
+        "total_calls": 2222,
+        "self_seconds": 0.004634351,
+        "cumulative_seconds": 4.881374192
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 306,
+        "function": "_map_merge",
+        "primitive_calls": 2022,
+        "total_calls": 4850,
+        "self_seconds": 0.092530916,
+        "cumulative_seconds": 4.857505613000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 641,
+        "function": "_set_value",
+        "primitive_calls": 34300,
+        "total_calls": 40121,
+        "self_seconds": 0.028079558,
+        "cumulative_seconds": 4.458412602
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 649,
+        "function": "_set_value_impl",
+        "primitive_calls": 34300,
+        "total_calls": 40121,
+        "self_seconds": 0.12863117300000002,
+        "cumulative_seconds": 4.434177074
+      }
+    ],
+    "selected": [
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/config_loader_impl.py",
+        "line": 312,
+        "function": "load_sweep_config",
+        "primitive_calls": 200,
+        "total_calls": 200,
+        "self_seconds": 0.001774565,
+        "cumulative_seconds": 21.86682293
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172,
+        "function": "create",
+        "primitive_calls": 7984,
+        "total_calls": 7988,
+        "self_seconds": 0.006947668000000001,
+        "cumulative_seconds": 2.864319912
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 769,
+        "function": "resolve",
+        "primitive_calls": 102,
+        "total_calls": 102,
+        "self_seconds": 0.00022039300000000002,
+        "cumulative_seconds": 0.25342669300000004
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/CommonTokenFactory.py",
+        "line": 46,
+        "function": "create",
+        "primitive_calls": 38067,
+        "total_calls": 38067,
+        "self_seconds": 0.028936277000000003,
+        "cumulative_seconds": 0.116800335
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/core/override_parser/overrides_parser.py",
+        "line": 38,
+        "function": "create",
+        "primitive_calls": 203,
+        "total_calls": 203,
+        "self_seconds": 0.000346975,
+        "cumulative_seconds": 0.066329145
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/yaml/resolver.py",
+        "line": 143,
+        "function": "resolve",
+        "primitive_calls": 46658,
+        "total_calls": 46658,
+        "self_seconds": 0.034805438,
+        "cumulative_seconds": 0.045528032
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/importlib/resources/_common.py",
+        "line": 42,
+        "function": "resolve",
+        "primitive_calls": 5047,
+        "total_calls": 5047,
+        "self_seconds": 0.004534995,
+        "cumulative_seconds": 0.026873461
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/PredictionContext.py",
+        "line": 111,
+        "function": "create",
+        "primitive_calls": 654,
+        "total_calls": 654,
+        "self_seconds": 0.000609912,
+        "cumulative_seconds": 0.00259953
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-benchmark-deps/hydra/_internal/sources_registry.py",
+        "line": 26,
+        "function": "resolve",
+        "primitive_calls": 2,
+        "total_calls": 2,
+        "self_seconds": 1.1630000000000001e-06,
+        "cumulative_seconds": 1.1630000000000001e-06
+      }
+    ]
+  },
+  "profile-tracked-local": {
+    "raw_profile": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-tracked-local/profile.pstats",
+    "sha256": "64fea7c5664a3e6181ebc6291c747c2c27da36cea37960de25ec573b3bbde9bd",
+    "total_calls": 59890037,
+    "primitive_calls": 58442501,
+    "profile_seconds": 62.79393728299991,
+    "top_cumulative": [
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 562,
+        "function": "submit",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 8.7081e-05,
+        "cumulative_seconds": 62.858245677000006
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 1762,
+        "function": "_submit_sweep",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.0041774970000000005,
+        "cumulative_seconds": 62.848332106
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py",
+        "line": 385,
+        "function": "run",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.00017246,
+        "cumulative_seconds": 53.778665544000006
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py",
+        "line": 231,
+        "function": "_run_locally",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 1.563e-05,
+        "cumulative_seconds": 51.887342052
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py",
+        "line": 318,
+        "function": "worker_loop",
+        "primitive_calls": 1,
+        "total_calls": 1,
+        "self_seconds": 0.0015604890000000002,
+        "cumulative_seconds": 51.887326422
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py",
+        "line": 478,
+        "function": "_run_one_task",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.002307004,
+        "cumulative_seconds": 47.945979444
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py",
+        "line": 104,
+        "function": "_run_stage",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.014313532,
+        "cumulative_seconds": 46.769390920000006
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py",
+        "line": 436,
+        "function": "_with_drift",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.000385418,
+        "cumulative_seconds": 24.551487396000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py",
+        "line": 423,
+        "function": "_task_code_drift",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.022464768000000003,
+        "cumulative_seconds": 24.551101978000002
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/git_utils.py",
+        "line": 223,
+        "function": "code_drift",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.276211082,
+        "cumulative_seconds": 24.525306807
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/pathlib.py",
+        "line": 981,
+        "function": "resolve",
+        "primitive_calls": 66716,
+        "total_calls": 66716,
+        "self_seconds": 0.16238401000000002,
+        "cumulative_seconds": 21.727009541
+      },
+      {
+        "file": "<frozen posixpath>",
+        "line": 412,
+        "function": "realpath",
+        "primitive_calls": 66716,
+        "total_calls": 66716,
+        "self_seconds": 0.127525895,
+        "cumulative_seconds": 19.098037916000003
+      },
+      {
+        "file": "<frozen posixpath>",
+        "line": 421,
+        "function": "_joinrealpath",
+        "primitive_calls": 66716,
+        "total_calls": 170716,
+        "self_seconds": 2.7896124340000004,
+        "cumulative_seconds": 18.36742039
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/fingerprint.py",
+        "line": 167,
+        "function": "fingerprint",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0026831510000000004,
+        "cumulative_seconds": 12.803209227
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/fingerprint.py",
+        "line": 189,
+        "function": "<dictcomp>",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.00046150900000000003,
+        "cumulative_seconds": 11.955280449
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/fingerprint.py",
+        "line": 108,
+        "function": "_repo_tree",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0020527740000000003,
+        "cumulative_seconds": 11.954818940000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/git_utils.py",
+        "line": 98,
+        "function": "create_shadow_tree",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0028374800000000003,
+        "cumulative_seconds": 11.952734000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method posix.lstat>",
+        "primitive_calls": 1340420,
+        "total_calls": 1340420,
+        "self_seconds": 10.341628723000001,
+        "cumulative_seconds": 10.341628723000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 524,
+        "function": "_set_item_impl",
+        "primitive_calls": 10712,
+        "total_calls": 41352,
+        "self_seconds": 0.325908666,
+        "cumulative_seconds": 8.501174652000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 316,
+        "function": "__set_impl",
+        "primitive_calls": 10312,
+        "total_calls": 21849,
+        "self_seconds": 0.030665964,
+        "cumulative_seconds": 8.449778902
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 306,
+        "function": "__setitem__",
+        "primitive_calls": 10211,
+        "total_calls": 21748,
+        "self_seconds": 0.014976834000000001,
+        "cumulative_seconds": 8.445232456000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/git/cmd.py",
+        "line": 1540,
+        "function": "_call_process",
+        "primitive_calls": 509,
+        "total_calls": 509,
+        "self_seconds": 0.014863688000000002,
+        "cumulative_seconds": 8.365651418
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/git/cmd.py",
+        "line": 1003,
+        "function": "<lambda>",
+        "primitive_calls": 508,
+        "total_calls": 508,
+        "self_seconds": 0.0023282980000000003,
+        "cumulative_seconds": 8.365342810000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/git/cmd.py",
+        "line": 1096,
+        "function": "execute",
+        "primitive_calls": 509,
+        "total_calls": 509,
+        "self_seconds": 0.01631656,
+        "cumulative_seconds": 8.337668525
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/git/repo/base.py",
+        "line": 935,
+        "function": "is_dirty",
+        "primitive_calls": 101,
+        "total_calls": 101,
+        "self_seconds": 0.0032311090000000002,
+        "cumulative_seconds": 7.597427880000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 62,
+        "function": "__init__",
+        "primitive_calls": 5503,
+        "total_calls": 11023,
+        "self_seconds": 0.056813906000000004,
+        "cumulative_seconds": 7.135152144
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 641,
+        "function": "_set_value",
+        "primitive_calls": 5503,
+        "total_calls": 11023,
+        "self_seconds": 0.010398952000000001,
+        "cumulative_seconds": 6.931682698
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/dictconfig.py",
+        "line": 649,
+        "function": "_set_value_impl",
+        "primitive_calls": 5503,
+        "total_calls": 11023,
+        "self_seconds": 0.07740583200000001,
+        "cumulative_seconds": 6.926400771000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172,
+        "function": "create",
+        "primitive_calls": 1003,
+        "total_calls": 1003,
+        "self_seconds": 0.001463897,
+        "cumulative_seconds": 6.804695702
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 818,
+        "function": "_create_impl",
+        "primitive_calls": 1003,
+        "total_calls": 1003,
+        "self_seconds": 0.013389815000000001,
+        "cumulative_seconds": 6.803231805
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/subprocess.py",
+        "line": 1165,
+        "function": "communicate",
+        "primitive_calls": 407,
+        "total_calls": 407,
+        "self_seconds": 0.0029305000000000004,
+        "cumulative_seconds": 6.681299312
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/subprocess.py",
+        "line": 2062,
+        "function": "_communicate",
+        "primitive_calls": 407,
+        "total_calls": 407,
+        "self_seconds": 0.016331703,
+        "cumulative_seconds": 6.677648615000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py",
+        "line": 622,
+        "function": "_wrap_value_and_set",
+        "primitive_calls": 6511,
+        "total_calls": 37151,
+        "self_seconds": 0.098603245,
+        "cumulative_seconds": 6.327750144
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 1091,
+        "function": "_maybe_wrap",
+        "primitive_calls": 6511,
+        "total_calls": 37151,
+        "self_seconds": 0.035533623,
+        "cumulative_seconds": 6.295071320000001
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 994,
+        "function": "_node_wrap",
+        "primitive_calls": 6511,
+        "total_calls": 37151,
+        "self_seconds": 0.153312382,
+        "cumulative_seconds": 6.282452744
+      }
+    ],
+    "selected": [
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/git_utils.py",
+        "line": 223,
+        "function": "code_drift",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.276211082,
+        "cumulative_seconds": 24.525306807
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/pathlib.py",
+        "line": 981,
+        "function": "resolve",
+        "primitive_calls": 66716,
+        "total_calls": 66716,
+        "self_seconds": 0.16238401000000002,
+        "cumulative_seconds": 21.727009541
+      },
+      {
+        "file": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/fingerprint.py",
+        "line": 167,
+        "function": "fingerprint",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.0026831510000000004,
+        "cumulative_seconds": 12.803209227
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172,
+        "function": "create",
+        "primitive_calls": 1003,
+        "total_calls": 1003,
+        "self_seconds": 0.001463897,
+        "cumulative_seconds": 6.804695702
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 769,
+        "function": "resolve",
+        "primitive_calls": 100,
+        "total_calls": 100,
+        "self_seconds": 0.00026782600000000003,
+        "cumulative_seconds": 0.36760885000000004
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/yaml/resolver.py",
+        "line": 143,
+        "function": "resolve",
+        "primitive_calls": 61090,
+        "total_calls": 61090,
+        "self_seconds": 0.07108850800000001,
+        "cumulative_seconds": 0.102592239
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/CommonTokenFactory.py",
+        "line": 46,
+        "function": "create",
+        "primitive_calls": 1616,
+        "total_calls": 1616,
+        "self_seconds": 0.00195845,
+        "cumulative_seconds": 0.0073304500000000005
+      },
+      {
+        "file": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/PredictionContext.py",
+        "line": 111,
+        "function": "create",
+        "primitive_calls": 66,
+        "total_calls": 66,
+        "self_seconds": 5.9797000000000004e-05,
+        "cumulative_seconds": 0.00025487700000000003
+      }
+    ]
+  }
+}

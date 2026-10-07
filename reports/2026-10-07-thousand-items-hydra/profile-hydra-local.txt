@@ -1,0 +1,43 @@
+Wed Oct  7 16:12:22 2026    /ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-hydra-local/profile.pstats
+
+         65187206 function calls (61871015 primitive calls) in 28.925 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1629 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   29.010   29.010 main.py:80(decorated_main)
+        1    0.000    0.000   29.008   29.008 utils.py:306(_run_hydra)
+        3    0.000    0.000   28.718    9.573 utils.py:218(run_and_report)
+        1    0.000    0.000   28.718   28.718 utils.py:430(_run_app)
+        1    0.000    0.000   28.718   28.718 utils.py:466(<lambda>)
+        1    0.000    0.000   28.718   28.718 hydra.py:136(multirun)
+        1    0.000    0.000   28.553   28.553 basic_sweeper.py:147(sweep)
+      202    0.002    0.000   22.209    0.110 config_loader_impl.py:133(load_configuration)
+      202    0.017    0.000   22.207    0.110 config_loader_impl.py:233(_load_configuration_impl)
+      200    0.002    0.000   21.867    0.109 config_loader_impl.py:312(load_sweep_config)
+        1    0.002    0.002   16.833   16.833 basic_launcher.py:51(launch)
+        1    0.000    0.000   11.697   11.697 sweeper.py:48(validate_batch_is_legal)
+2493789/7004    2.667    0.000    9.049    0.001 copy.py:128(deepcopy)
+29706/4546    0.164    0.000    8.607    0.002 dictconfig.py:113(__deepcopy__)
+      202    0.001    0.000    8.294    0.041 defaults_list.py:729(create_defaults_list)
+      202    0.004    0.000    8.190    0.041 config_loader_impl.py:532(_compose_config_from_defaults_list)
+      202    0.001    0.000    8.186    0.041 defaults_list.py:706(_create_defaults_list)
+      202    0.000    0.000    8.028    0.040 defaults_list.py:348(_create_defaults_tree)
+ 2424/202    0.036    0.000    8.028    0.040 defaults_list.py:445(_create_defaults_tree_impl)
+      202    0.002    0.000    8.027    0.040 defaults_list.py:267(_expand_virtual_root)
+40239/35766    0.262    0.000    7.702    0.000 basecontainer.py:524(_set_item_impl)
+33978/31753    0.037    0.000    6.930    0.000 dictconfig.py:316(__set_impl)
+      100    0.009    0.000    6.584    0.066 utils.py:99(run_job)
+245253/92634    0.540    0.000    5.761    0.000 copy.py:259(_reconstruct)
+     6464    0.007    0.000    5.461    0.001 config_repository.py:343(load_config)
+     2222    0.010    0.000    5.454    0.002 config_repository.py:85(load_config)
+40121/34300    0.146    0.000    5.365    0.000 dictconfig.py:62(__init__)
+     2022    0.002    0.000    5.286    0.003 basecontainer.py:483(merge_with)
+4850/2022    0.027    0.000    5.284    0.003 basecontainer.py:494(_merge_with)
+239604/91016    0.601    0.000    5.114    0.000 copy.py:227(_deepcopy_dict)
+     1818    0.004    0.000    4.974    0.003 defaults_list.py:516(add_child)
+     2222    0.005    0.000    4.881    0.002 defaults_list.py:257(update_package_header)
+4850/2022    0.093    0.000    4.858    0.002 basecontainer.py:306(_map_merge)
+40121/34300    0.028    0.000    4.458    0.000 dictconfig.py:641(_set_value)
+40121/34300    0.129    0.000    4.434    0.000 dictconfig.py:649(_set_value_impl)

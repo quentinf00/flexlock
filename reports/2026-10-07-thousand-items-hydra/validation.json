@@ -1,0 +1,230 @@
+[
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-slurm-n100-r0",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-99%4",
+    "pickles": 100,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-slurm-n100-r0",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-local-n100-r0",
+    "products": 100,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-local-n100-r0",
+    "products": 100,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-slurm-n100-r1",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-99%4",
+    "pickles": 100,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-slurm-n100-r1",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-local-n100-r1",
+    "products": 100,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-local-n100-r1",
+    "products": 100,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-slurm-n100-r2",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-99%4",
+    "pickles": 100,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-slurm-n100-r2",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-local-n100-r2",
+    "products": 100,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-local-n100-r2",
+    "products": 100,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-slurm-n1000-r0",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-999%4",
+    "pickles": 1000,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-slurm-n1000-r0",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-local-n1000-r0",
+    "products": 1000,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-local-n1000-r0",
+    "products": 1000,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-slurm-n1000-r1",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-999%4",
+    "pickles": 1000,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-slurm-n1000-r1",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-local-n1000-r1",
+    "products": 1000,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-local-n1000-r1",
+    "products": 1000,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-slurm-n1000-r2",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-999%4",
+    "pickles": 1000,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-slurm-n1000-r2",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/hydra-local-n1000-r2",
+    "products": 1000,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/nfs-primary/flexlock-local-n1000-r2",
+    "products": 1000,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/tracked-local",
+    "products": 1000,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/source-submit",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/cache-miss-submit",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/batch16-local",
+    "products": 1000,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/db-submit",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-flexlock-local",
+    "products": 100,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-flexlock-submit",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-hydra-local",
+    "products": 100,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-tracked-local",
+    "products": 100,
+    "exact_membership": true,
+    "sha256_matches_inputs": true
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/cache-index-only-submit",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  },
+  {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-cache-submit",
+    "scheduler_calls": 1,
+    "array_directive": "--array=0-3",
+    "pickles": 1,
+    "worker_products": 0
+  }
+]

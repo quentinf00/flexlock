@@ -1,0 +1,43 @@
+Wed Oct  7 16:14:37 2026    /ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-cache-submit/profile.pstats
+
+         15482566 function calls (14937988 primitive calls) in 13.031 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1293 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   13.029   13.029 api.py:562(submit)
+        1    0.003    0.003   13.007   13.007 api.py:1762(_submit_sweep)
+      100    0.003    0.000    5.148    0.051 api.py:315(_find_matching_run)
+      100    0.001    0.000    4.729    0.047 api.py:394(_glob_scan_match)
+      100    0.001    0.000    4.590    0.046 record.py:214(iter_run_dirs)
+      200    0.001    0.000    4.587    0.023 pathlib.py:956(rglob)
+      200    0.027    0.000    4.580    0.023 pathlib.py:402(_select_from)
+60400/20400    0.316    0.000    4.086    0.000 pathlib.py:383(_iterate_directories)
+    20200    0.014    0.000    3.707    0.000 pathlib.py:934(_scandir)
+    20200    3.631    0.000    3.692    0.000 {built-in method posix.scandir}
+7128/4717    0.010    0.000    3.535    0.001 dictconfig.py:316(__set_impl)
+7027/4616    0.005    0.000    3.526    0.001 dictconfig.py:306(__setitem__)
+17530/4717    0.129    0.000    3.522    0.001 basecontainer.py:524(_set_item_impl)
+        1    0.000    0.000    2.881    2.881 parallel.py:106(__init__)
+2915/1709    0.015    0.000    2.788    0.002 dictconfig.py:62(__init__)
+      504    0.001    0.000    2.730    0.005 omegaconf.py:172(create)
+      504    0.005    0.000    2.729    0.005 omegaconf.py:818(_create_impl)
+2915/1709    0.003    0.000    2.727    0.002 dictconfig.py:641(_set_value)
+2915/1709    0.019    0.000    2.725    0.002 dictconfig.py:649(_set_value_impl)
+15721/2908    0.038    0.000    2.462    0.001 basecontainer.py:622(_wrap_value_and_set)
+15721/2908    0.014    0.000    2.449    0.001 omegaconf.py:1091(_maybe_wrap)
+15721/2908    0.061    0.000    2.444    0.001 omegaconf.py:994(_node_wrap)
+      100    0.000    0.000    2.322    0.023 record.py:217(<setcomp>)
+      100    0.000    0.000    2.265    0.023 record.py:218(<setcomp>)
+     1404    0.005    0.000    1.861    0.001 listconfig.py:46(__init__)
+     1404    0.001    0.000    1.840    0.001 listconfig.py:610(_set_value)
+     1404    0.012    0.000    1.838    0.001 listconfig.py:620(_set_value_impl)
+    10402    0.016    0.000    1.780    0.000 listconfig.py:293(append)
+      301    0.001    0.000    1.750    0.006 utils.py:748(merge_task_into_cfg)
+      301    0.003    0.000    1.748    0.006 omegaconf.py:250(merge)
+        1    0.001    0.001    1.630    1.630 parallel.py:55(_shared_product_roots)
+      100    0.002    0.000    1.490    0.015 resolvers.py:328(bind_existing_run_locks)
+      301    0.000    0.000    1.224    0.004 basecontainer.py:483(merge_with)
+  703/301    0.005    0.000    1.223    0.004 basecontainer.py:494(_merge_with)
+251955/2009    0.387    0.000    1.205    0.001 copy.py:128(deepcopy)
