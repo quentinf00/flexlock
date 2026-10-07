@@ -17,7 +17,9 @@ lifecycle is deferred. --after remains.
 [Milestone evidence](../reports/2026-10-06-workflow-guidelines-record-contracts/report.md)
 records implementation scope and passing checks. The [independent-review follow-up](../reports/2026-10-06-independent-review-followup/report.md)
 records lineage/coverage/guard changes and 249 compatibility plus 35 overlapping
-focused checks. Remaining M1 directory identity and M2 bindings stay open.
+focused checks. The [2026-10-07 discovery decision](provenance_discovery_decision.md) retains automatic
+provenance and implements known run_lock reads plus labelled heuristics. Remaining
+M1 directory identity and M2 pre-dispatch binding/change policy stay open.
 
 ## Target and compatibility boundary
 
@@ -120,9 +122,13 @@ The executable future-producer example also found controller hashing of nonexist
 promised data. With after, the isolated patch keeps declared data/prevs on the task
 and records them on the consumer worker; code repository evidence remains at the
 controller. This is a bounded prerequisite, not completion of the M2 binding policy.
-A bare run_lock argument read should have a lineage/reference record, independently
-of whether the user also declares _snapshot_.data. Preserve the concrete request and
-binding. Missing records/required fields fail; explicitly supplied optional defaults
+Direct run_lock reads now have a lineage/reference record independently of
+_snapshot_.data, with canonical producer, requested field, value/default and record
+digest captured from one stage-resolution read. Track actual arguments with relative
+_snapshot_.data references. Keep automatic target-repository and labelled data-ancestor
+discovery; explicit flags disable heuristics, not known references. Canonical explicit
+checkout declarations suppress duplicate inferred aliases. This is recording at stage
+start; existing-producer submit-time freezing/change policy remains open. Missing records/required fields fail; explicitly supplied optional defaults
 remain deliberate defaults. Content immutability is an additional declared policy.
 
 ### M3 keep / optional / deprecate candidates

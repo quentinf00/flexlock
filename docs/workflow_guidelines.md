@@ -73,8 +73,7 @@ cfg = dict(
         checkpoint_path='${run_dir}/train/model.pt',
         _snapshot_=dict(
             repos=dict(main=dict(path='/shared/checkouts/myproject-pinned')),
-            prevs=['${upstream_run}'],
-            data=dict(dataset='${run_lock:${upstream_run},config.output_path}')),
+            data=dict(dataset='${...input_path}')),
         _outputs_=dict(model=dict(path='model.pt', sha256=True))),
 )
 ```
@@ -92,14 +91,36 @@ also validate grid/mask/model schema and compatibility.
 Facts describing a checkpoint should be validated against the checkpoint contents.
 A record is not proof of compatibility between grids, masks or model architectures.
 
-The resolver is run_lock; recorded callable arguments are below config. Keep the
-explicit prevs declaration during migration: direct run_lock reads do not yet provide
-all automatic lineage guarantees planned in M2. Today run_lock fields are read at
-worker/stage execution, even for a named existing producer; retain producer records
-and products unchanged. Freezing existing field values/identity at preparation and
-reporting intervening changes remains M2 work. Hash files/manifests deliberately.
-For huge datasets, document immutable version/manifest identity and its assumptions;
-do not claim a weak directory metadata cache verifies all nested content changes.
+The resolver is run_lock; recorded callable arguments are below config. Track the
+effective argument with data=dict(dataset='${...input_path}'), so an input_path
+override also updates data tracking. The relative reference survives stage selection
+and renaming. Avoid repeating its original run_lock expression in tracking config.
+
+Direct run_lock reads now automatically record the canonical producer, requested
+field, returned value/default usage and producer-record SHA256, and add lineage from
+the same read. Repeated fields from one producer use one coherent read during stage
+resolution. A missing producer with an explicit fallback is recorded as a fallback;
+it does not manufacture producer lineage. Manual prevs remain useful for independent
+dependencies that cannot be derived from arguments, but remove redundant/stale ones.
+
+Keep lightweight automatic discovery. _snapshot_.discover accepts repos and prevs
+boolean flags, both defaulting to True. Repository discovery follows the callable's
+_target_; an explicit entry for that canonical checkout prevents a second unfiltered
+alias. Explicit declarations cover extra repositories/scopes. No discovered repository
+means absent evidence and a visible warning, not proof that imports were captured.
+Disable discovery explicitly for deliberate untracked targets.
+
+Data-ancestor discovery only examines declared data paths and labels its evidence
+as data_ancestor in the record's discovery section. Containment is an inferred
+association, not output ownership or scientific acceptance. discover.prevs=False
+disables that heuristic, not known direct run_lock references or explicit prevs.
+Unambiguous declared-output association is a future improvement; no global record
+scan, newest-run substitution or artifact-selection policy is introduced here.
+
+Named run_lock fields are still read at worker/stage execution. Retain producer
+records/products unchanged. Freezing existing values before dispatch and rejecting
+intervening changes remains separate M2 work. Hash files/manifests deliberately;
+weak directory metadata caching does not verify all nested content changes.
 
 ```bash
 flexlock-run -d myproject.configs.runs.seed3.cfg -s train \

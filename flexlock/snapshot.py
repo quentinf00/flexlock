@@ -138,6 +138,11 @@ class RunTracker:
             dict: Complete snapshot data structure
         """
         self.data["config"] = OmegaConf.to_container(config, resolve=True)
+        # The captured reads/lineage have dedicated record fields. Do not nest
+        # runtime capture buffers in each producer's config through long chains.
+        snap = self.data["config"].get('_snapshot_', {})
+        snap.pop('run_lock_reads', None)
+        snap.pop('run_lock_records', None)
         return self.data
 
     def save(self, config):
@@ -229,6 +234,44 @@ def snapshot(
         logger.debug(f"Recording data for snapshot: {data}")
         tracker.record_data(data)
 
+    # Known references are captured from the same producer read that supplied
+    # callable arguments. Never re-read them here and substitute changed metadata.
+    snap_cfg = cfg.get('_snapshot_', {})
+    reads = snap_cfg.get('run_lock_reads', [])
+    records = snap_cfg.get('run_lock_records', {})
+    if OmegaConf.is_config(reads):
+        reads = OmegaConf.to_container(reads, resolve=True)
+    if OmegaConf.is_config(records):
+        records = OmegaConf.to_container(records, resolve=True)
+    evidence = []
+    for path, info in records.items():
+        tracker.add_lineage(Path(path).name, path, info)
+    if reads:
+        tracker.data['run_lock_reads'] = reads
+        evidence.extend(dict(method='run_lock', path=entry['path'], field=entry['field'],
+                             used_default=entry['used_default']) for entry in reads)
+    explicit_prevs = {str(Path(path).resolve()) for path in snap_cfg.get('prevs', [])}
+    for name, path in (data or {}).items():
+        from .utils import _find_run_dir
+        if snap_cfg.get('discover', {}).get('prevs', True):
+            ancestor = _find_run_dir(path)
+            if ancestor:
+                evidence.append(dict(method='data_ancestor', path=str(Path(ancestor).resolve()),
+                                     data=name, input_path=str(path)))
+    for path in prevs or []:
+        canonical = str(Path(path).resolve())
+        if canonical in explicit_prevs or canonical not in {entry['path'] for entry in evidence}:
+            evidence.append(dict(method='explicit', path=canonical))
+    explicit_repos = snap_cfg.get('repos', {})
+    evidence_repos = repos
+    if evidence_repos is None and parent_lock:
+        from .utils import extract_tracking_info
+        evidence_repos, _, _ = extract_tracking_info(cfg)
+    repo_evidence = {name: dict(path=str(Path(info['path'] if hasattr(info, 'get') else info).resolve()),
+        method='explicit' if name in explicit_repos else 'target') for name, info in (evidence_repos or {}).items()}
+    if evidence or repo_evidence:
+        tracker.data['discovery'] = dict(repos=repo_evidence, lineage=evidence)
+
     # 2. Record Lineage (Automatic Discovery)
     if prevs:
         logger.debug(f"Looking for upstream FlexLock runs in: {prevs}")
@@ -257,6 +300,8 @@ def snapshot(
             return None
 
         for path_str in prevs:
+            if str(Path(path_str).resolve()) in records:
+                continue
             result = _find_snapshot_dir(path_str)
 
             if result:

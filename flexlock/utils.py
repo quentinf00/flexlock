@@ -188,8 +188,16 @@ def extract_tracking_info(cfg) -> Tuple[Dict, Dict, List]:
                 )
             prevs = OmegaConf.to_container(prevs_raw, resolve=True)
 
+    discovery = cfg.get('_snapshot_', {}).get('discover', {})
+    if OmegaConf.is_config(discovery):
+        discovery = OmegaConf.to_container(discovery, resolve=True)
+    if not isinstance(discovery, dict) or set(discovery) - {'repos', 'prevs'} or any(
+        not isinstance(value, bool) for value in discovery.values()
+    ):
+        raise FlexLockConfigError('_snapshot_.discover accepts boolean repos and prevs flags')
+
     # Auto-populate repo from _target_ using top-level module name
-    if "_target_" in cfg:
+    if "_target_" in cfg and discovery.get("repos", True):
         try:
             target_str = (
                 cfg._target_ if isinstance(cfg, DictConfig) else cfg["_target_"]
@@ -198,22 +206,30 @@ def extract_tracking_info(cfg) -> Tuple[Dict, Dict, List]:
             if top_level_module not in repos:
                 module_name, _ = target_str.rsplit(".", 1)
                 resolved_path = resolve_module_to_repo_path(module_name)
-                repos[top_level_module] = {
-                    "path": resolved_path,
-                    "module": top_level_module,
-                }
-                logger.debug(
-                    f"Auto-populated repos['{top_level_module}'] from _target_ '{target_str}': {resolved_path}"
-                )
+                # Explicit scopes are authoritative. Do not add a second,
+                # unfiltered alias of the same checkout under the module name.
+                if not any(Path(info['path']).resolve() == Path(resolved_path).resolve()
+                           for info in repos.values()):
+                    repos[top_level_module] = {
+                        "path": resolved_path,
+                        "module": top_level_module,
+                    }
+                    logger.debug(
+                        f"Auto-populated repos['{top_level_module}'] from _target_ '{target_str}': {resolved_path}"
+                    )
+                else:
+                    logger.debug(f"Using explicit checkout scope for target '{target_str}': {resolved_path}")
         except Exception:
-            logger.debug(
-                "Could not auto-populate repo from _target_ (REPL or built-in?)"
+            logger.warning(
+                f"No repository discovered for target {cfg.get('_target_')}; "
+                "source evidence is absent unless declared explicitly. "
+                "Set _snapshot_.discover.repos=False for deliberate untracked targets."
             )
 
     # "prevs_from_data": Walk up from each data path to find the nearest
     # run.lock, resolving data files to their containing flexlock run dir.
     # This way snapshot() receives clean directory paths, not raw file paths.
-    for data_path in data.values():
+    for data_path in data.values() if discovery.get("prevs", True) else []:
         run_dir = _find_run_dir(data_path)
         if run_dir and run_dir not in prevs:
             prevs.append(run_dir)

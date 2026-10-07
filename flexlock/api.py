@@ -808,6 +808,12 @@ class Project:
         if save_dir_policy in NAMING_POLICIES:
             apply_save_dir_policy(config, save_dir_policy)
             guard_policy = "raise"
+        # Local execution binds once before the destination guard creates its
+        # directory, keeping legacy naming references consistent as well.
+        if not use_hpc and not isolated:
+            from .resolvers import resolve_deferred
+            config = resolve_deferred(config)
+
         destination = config.get("save_dir", "outputs/job")
         guarded_destination = destination if "save_dir" in config or use_hpc or isolated else None
         with guard_destinations(
@@ -920,20 +926,7 @@ class Project:
                     (directory / MARKER_NAME).unlink(missing_ok=True)
                     (directory / QUEUE_POINTER).unlink(missing_ok=True)
 
-                # Extract tracking info
                 repos, data, prevs = extract_tracking_info(config)
-
-                # Single deferred-resolution point (local single-run path): fire
-                # the deferred resolvers (run_lock/latest) once and detach into a
-                # plain config. Re-wrapping prevents instantiate()'s internal
-                # config.copy() — a fresh instance with an empty resolver cache —
-                # from re-firing anything after snapshot() has run.
-                try:
-                    from .resolvers import resolve_deferred
-
-                    config = resolve_deferred(config)
-                except Exception as exc:
-                    logger.warning(f"Could not fully resolve config before execution: {exc}")
 
                 # Compute the fingerprint once (index key), stored in run.lock so
                 # `flexlock reindex` can rebuild the index from disk.

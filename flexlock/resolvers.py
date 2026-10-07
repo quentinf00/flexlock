@@ -8,6 +8,10 @@ from contextlib import contextmanager
 import re
 from pathlib import Path
 from functools import wraps
+from contextvars import ContextVar
+from copy import deepcopy
+import hashlib
+import json
 from . import config
 
 # Resolvers whose evaluation is *deferred* to stage start (they read live
@@ -20,6 +24,34 @@ DEFERRED_RESOLVERS = ("run_lock", "latest")
 # (e.g. ``${run_lock:${dir},key,null}``) is honoured rather than treated as
 # "raise". ``None`` cannot serve as this marker because it is a valid default.
 _MISSING = object()
+_run_lock_capture = ContextVar('flexlock_run_lock_capture', default=None)
+
+
+class _RunLockCapture:
+    """One coherent read of each producer during one stage resolution."""
+    def __init__(self):
+        self.records = {}
+        self.digests = {}
+        self.reads = []
+        self.seen_reads = set()
+
+    def load(self, path):
+        from .record import load_record
+        if path not in self.records:
+            self.records[path] = load_record(path)
+            self.digests[path] = (hashlib.sha256(json.dumps(
+                self.records[path], sort_keys=True, default=str).encode()).hexdigest()
+                if self.records[path] is not None else None)
+        return self.records[path]
+
+    def record(self, path, key, value, used_default):
+        entry = dict(path=path, field=key, value=deepcopy(value),
+                     used_default=used_default, record_sha256=self.digests[path])
+        identity = json.dumps(entry, sort_keys=True, default=str)
+        if identity not in self.seen_reads:
+            self.reads.append(entry)
+            self.seen_reads.add(identity)
+
 
 
 def now_resolver(fmt: str = None) -> str:
@@ -124,11 +156,17 @@ def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
 
     from .record import load_record
 
-    data = load_record(run_dir)
+    capture = _run_lock_capture.get()
+    path = str(Path(run_dir).resolve())
+    data = capture.load(path) if capture is not None else load_record(path)
+    def finish(value, used_default=False):
+        if capture is not None:
+            capture.record(path, key, value, used_default)
+        return value
     if data is None:
         if default is not _MISSING:
             logger.warning(f"run_lock resolver: no run.lock at {run_dir}, using default")
-            return default
+            return finish(default, used_default=True)
         raise FileNotFoundError(
             f"run_lock resolver: no run.lock found in {run_dir} "
             f"(nor a sweep-task record)"
@@ -141,7 +179,7 @@ def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
             value = value[part]
         else:
             if default is not _MISSING:
-                return default
+                return finish(default, used_default=True)
             raise KeyError(
                 f"run_lock resolver: key '{key}' not found in the run record at {run_dir} "
                 f"(failed at '{part}')"
@@ -150,8 +188,8 @@ def run_lock_resolver(run_dir: str, key: str, default=_MISSING):
     if value is None:
         # A legitimately null value is returned as-is when no default was
         # supplied; only substitute an explicitly provided default.
-        return None if default is _MISSING else default
-    return value
+        return finish(None if default is _MISSING else default, used_default=default is not _MISSING)
+    return finish(value)
 
 
 def run_resolver(address, select=None, pin=None, strict=None) -> str:
@@ -278,7 +316,21 @@ def resolve_deferred(cfg: DictConfig) -> DictConfig:
     (and on the local single-run path). Re-wrapping as a plain config detaches
     it from any parent so downstream ``config.copy()`` cannot re-fire anything.
     """
-    resolved = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=False)
+    capture = _RunLockCapture()
+    token = _run_lock_capture.set(capture)
+    try:
+        resolved = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=False)
+    finally:
+        _run_lock_capture.reset(token)
+    if capture.reads:
+        snap = resolved.setdefault('_snapshot_', {})
+        snap['run_lock_reads'] = capture.reads
+        snap['run_lock_records'] = {
+            path: {key: deepcopy(record[key]) for key in
+                   ('config', 'timestamp', 'repos', 'parent', 'fingerprint', 'task_id', 'record_dir')
+                   if key in record}
+            for path, record in capture.records.items() if record is not None
+        }
     return OmegaConf.create(_escape_literals(resolved))
 
 
