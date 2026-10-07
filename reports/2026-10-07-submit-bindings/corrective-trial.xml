@@ -1,0 +1,817 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="12" skipped="0" tests="186" time="89.786" timestamp="2026-10-07T13:51:00.386689+02:00" hostname="compute-118-39"><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-replace-single]" time="0.080"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz0')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz0/slurm.yaml', &lt;MagicMock id='139844937816144'&gt;)
+dispatch = 'single', change = 'replace', after = False
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz0/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-replace-sweep]" time="0.056"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz1')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz1/slurm.yaml', &lt;MagicMock id='139844884345232'&gt;)
+dispatch = 'sweep', change = 'replace', after = False
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz1/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-replace-pipeline]" time="0.056"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz2')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz2/slurm.yaml', &lt;MagicMock id='139844884808208'&gt;)
+dispatch = 'pipeline', change = 'replace', after = False
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz2/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-remove-single]" time="0.057"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz3')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz3/slurm.yaml', &lt;MagicMock id='139844886343440'&gt;)
+dispatch = 'single', change = 'remove', after = False
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz3/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-remove-sweep]" time="0.051"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz4')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz4/slurm.yaml', &lt;MagicMock id='139844884763728'&gt;)
+dispatch = 'sweep', change = 'remove', after = False
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz4/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-remove-pipeline]" time="0.053"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz5')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz5/slurm.yaml', &lt;MagicMock id='139844884837008'&gt;)
+dispatch = 'pipeline', change = 'remove', after = False
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz5/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-unchanged-single]" time="0.082" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-unchanged-sweep]" time="0.068" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-unchanged-pipeline]" time="0.068" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-replace-single]" time="0.061"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz9')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz9/slurm.yaml', &lt;MagicMock id='139844883810704'&gt;)
+dispatch = 'single', change = 'replace', after = True
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz9/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-replace-sweep]" time="0.052"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz10')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz10/slurm.yaml', &lt;MagicMock id='139844884861584'&gt;)
+dispatch = 'sweep', change = 'replace', after = True
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz10/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-replace-pipeline]" time="0.058"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz11')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz11/slurm.yaml', &lt;MagicMock id='139845155883344'&gt;)
+dispatch = 'pipeline', change = 'replace', after = True
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz11/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-remove-single]" time="0.058"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz12')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz12/slurm.yaml', &lt;MagicMock id='139844884737872'&gt;)
+dispatch = 'single', change = 'remove', after = True
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz12/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-remove-sweep]" time="0.050"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz13')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz13/slurm.yaml', &lt;MagicMock id='139844883907728'&gt;)
+dispatch = 'sweep', change = 'remove', after = True
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz13/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-remove-pipeline]" time="0.055"><failure message="AttributeError: 'str' object has no attribute 'resolve'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz14')
+scheduler = ('/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz14/slurm.yaml', &lt;MagicMock id='139844883872272'&gt;)
+dispatch = 'pipeline', change = 'remove', after = True
+
+    @pytest.mark.parametrize('dispatch', ['single', 'sweep', 'pipeline'])
+    @pytest.mark.parametrize('change', ['replace', 'remove', 'unchanged'])
+    @pytest.mark.parametrize('after', [False, True])
+    def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, scheduler, dispatch, change, after):
+        profile, backend = scheduler
+        source = tmp_path/'producer'
+        producer(source, 41)
+        destination = tmp_path/'consumer'
+        config = cfg(destination, source)
+        options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+        if dispatch == 'single':
+            Project().submit(config, **options)
+        elif dispatch == 'sweep':
+            Project().submit(config, sweep=[{}], **options)
+        else:
+            Project().submit_pipeline([[config]], **options)
+        if change == 'replace':
+            producer(source, 99)
+        elif change == 'remove':
+            (source/'run.lock').unlink()
+        if change == 'unchanged':
+            run_submitted(backend)
+        else:
+            with pytest.raises(WorkerExecutionError, match='failed task'):
+                run_submitted(backend)
+        if change == 'unchanged':
+            assert (destination/'called').read_text() == '41'
+            record = load_record(destination)
+            assert record['run_lock_reads'][0]['binding'] == 'submit'
+            assert record['lineage']['producer']['info']['config']['value'] == 41
+        else:
+            assert not (destination/'called').exists()
+            assert not (destination/'run.complete').exists()
+            import json
+            from flexlock.taskdb import get_all_tasks
+            db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
+&gt;           rows = get_all_tasks(db)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_submit_bindings.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/taskdb.py:687: in get_all_tasks
+    with _conn(db_path) as c:
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+db_path = '/tmp/pytest-of-qfebvre/pytest-103/test_existing_producer_is_froz14/consumer/run.lock.tasks.db'
+
+    @contextmanager
+    def _conn(db_path: Path):
+        """
+        A thread-safe context manager for SQLite database connections.
+    
+        This function maintains a cache of connections per thread. A new connection
+        is created for each unique database path and reused for subsequent calls
+        with the same path within that thread.
+        """
+        # Use the absolute path as a reliable key for the connections dictionary.
+&gt;       db_path_str = str(db_path.resolve())
+                          ^^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'resolve'
+
+flexlock/taskdb.py:98: AttributeError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-unchanged-single]" time="0.079" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-unchanged-sweep]" time="0.068" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-unchanged-pipeline]" time="0.070" /><testcase classname="tests.test_submit_bindings" name="test_missing_required_producer_without_after_fails_before_dispatch" time="0.005" /><testcase classname="tests.test_submit_bindings" name="test_promised_producer_with_after_uses_exact_path" time="0.056" /><testcase classname="tests.test_submit_bindings" name="test_unchanged_binding_keeps_native_values_and_literal_interpolation" time="0.014" /><testcase classname="tests.test_submit_bindings" name="test_missing_default_binds_default_and_detects_later_appearance" time="0.008" /><testcase classname="tests.test_submit_bindings" name="test_pipeline_typo_is_not_treated_as_promised_producer" time="0.005" /><testcase classname="tests.test_submit_bindings" name="test_latest_selection_is_fixed_when_newer_candidate_appears[False]" time="0.046" /><testcase classname="tests.test_submit_bindings" name="test_latest_selection_is_fixed_when_newer_candidate_appears[True]" time="0.081" /><testcase classname="tests.test_submit_bindings" name="test_missing_promised_producer_stops_worker" time="0.049" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_missing_field_is_not_deferred" time="0.008" /><testcase classname="tests.test_submit_bindings" name="test_queued_producer_without_dependency_fails_before_consumer_dispatch" time="0.026" /><testcase classname="tests.test_submit_bindings" name="test_pending_sibling_does_not_make_selected_producer_future" time="0.066" /><testcase classname="tests.test_discovery_policy" name="test_direct_read_without_data_or_prevs_records_external_product" time="0.610" /><testcase classname="tests.test_discovery_policy" name="test_same_producer_read_once_and_snapshot_does_not_substitute_changed_record" time="0.010" /><testcase classname="tests.test_discovery_policy" name="test_explicit_default_is_recorded_without_inventing_missing_lineage[False]" time="0.004" /><testcase classname="tests.test_discovery_policy" name="test_explicit_default_is_recorded_without_inventing_missing_lineage[True]" time="0.006" /><testcase classname="tests.test_discovery_policy" name="test_effective_data_argument_and_disabled_heuristic_keep_known_reference" time="0.040" /><testcase classname="tests.test_discovery_policy" name="test_ancestor_association_is_labelled_as_inferred" time="0.011" /><testcase classname="tests.test_discovery_policy" name="test_explicit_canonical_checkout_suppresses_unfiltered_auto_alias" time="0.003" /><testcase classname="tests.test_discovery_policy" name="test_discovery_flags_are_explicit_booleans[discover0]" time="0.001" /><testcase classname="tests.test_discovery_policy" name="test_discovery_flags_are_explicit_booleans[discover1]" time="0.001" /><testcase classname="tests.test_discovery_policy" name="test_discovery_flags_are_explicit_booleans[False]" time="0.001" /><testcase classname="tests.test_discovery_policy" name="test_same_named_known_producers_and_capture_scope_are_preserved" time="0.017" /><testcase classname="tests.test_discovery_policy" name="test_required_reference_fails_before_output_creation[False]" time="0.004" /><testcase classname="tests.test_discovery_policy" name="test_required_reference_fails_before_output_creation[True]" time="0.004" /><testcase classname="tests.test_discovery_policy" name="test_worker_records_known_reference_to_directory_or_database_producer[dir]" time="0.219" /><testcase classname="tests.test_discovery_policy" name="test_worker_records_known_reference_to_directory_or_database_producer[db]" time="0.187" /><testcase classname="tests.test_resolvers" name="test_now_resolver" time="0.006" /><testcase classname="tests.test_resolvers" name="test_vinc_resolver" time="0.002" /><testcase classname="tests.test_resolvers" name="test_vinc_resolver_with_custom_format" time="0.002" /><testcase classname="tests.test_resolvers" name="test_latest_resolver" time="0.022" /><testcase classname="tests.test_resolvers" name="test_latest_resolver_with_files" time="0.022" /><testcase classname="tests.test_resolvers" name="test_latest_resolver_no_matches" time="0.001" /><testcase classname="tests.test_resolvers" name="test_latest_resolver_no_matches_with_default" time="0.000" /><testcase classname="tests.test_resolvers" name="test_latest_resolver_with_globbing_patterns" time="0.012" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_basic" time="0.006" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_nested" time="0.003" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_missing_key_with_default" time="0.003" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_missing_key_no_default" time="0.002" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_missing_run_lock_with_default" time="0.001" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_missing_run_lock_no_default" time="0.001" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_in_omegaconf" time="0.011" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_null_value" time="0.003" /><testcase classname="tests.test_resolvers" name="test_vinc_stable_within_single_submit" time="0.014" /><testcase classname="tests.test_resolvers" name="test_vinc_advances_across_submits" time="0.029" /><testcase classname="tests.test_resolvers" name="test_vinc_stable_with_cross_tree_refs" time="0.018" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_native_types" time="0.008" /><testcase classname="tests.test_resolvers" name="test_resolve_deferred_keeps_escaped_literals" time="0.003" /><testcase classname="tests.test_deferred" name="test_omegaconf_preresolves_resolver_args" time="0.003" /><testcase classname="tests.test_deferred" name="test_deferred_stubbed_freezes_run_lock_args" time="0.003" /><testcase classname="tests.test_deferred" name="test_deferred_stubbed_freezes_latest" time="0.001" /><testcase classname="tests.test_deferred" name="test_deferred_stubbed_null_default_survives" time="0.002" /><testcase classname="tests.test_deferred" name="test_deferred_stubbed_restores_real_resolvers" time="0.004" /><testcase classname="tests.test_deferred" name="test_resolve_deferred_fires_real_resolver" time="0.006" /><testcase classname="tests.test_slimmer_workflow_examples" name="test_multistage_example_reads_exact_predecessors" time="2.964" /><testcase classname="tests.test_slimmer_workflow_examples" name="test_manifest_campaign_checks_empty_excluded_missing_and_corrupt" time="2.075" /><testcase classname="tests.test_slimmer_workflow_examples" name="test_resource_chain_records_acceptance_and_exact_dependencies[False]" time="0.002" /><testcase classname="tests.test_slimmer_workflow_examples" name="test_resource_chain_records_acceptance_and_exact_dependencies[True]" time="0.001" /><testcase classname="tests.test_slimmer_workflow_examples" name="test_future_producer_chain_compiles_before_any_worker_runs" time="1.882" /><testcase classname="tests.test_slimmer_workflow_examples" name="test_campaign_rejects_mutated_then_restored_input" time="0.567" /><testcase classname="tests.test_slimmer_workflow_examples" name="test_coverage_uses_recorded_identity_and_can_check_current_bytes_separately" time="0.592" /><testcase classname="tests.test_slimmer_workflow_examples" name="test_project_binding_rejects_unacceptable_producer[incomplete]" time="0.517" /><testcase classname="tests.test_slimmer_workflow_examples" name="test_project_binding_rejects_unacceptable_producer[corrupt]" time="0.525" /><testcase classname="tests.test_slimmer_workflow_examples" name="test_project_binding_rejects_unacceptable_producer[wrong_selection]" time="0.545" /><testcase classname="tests.test_destination_guard" name="test_pending_held_submission_cannot_be_forced[None]" time="0.193" /><testcase classname="tests.test_destination_guard" name="test_pending_held_submission_cannot_be_forced[overwrite]" time="0.186" /><testcase classname="tests.test_destination_guard" name="test_pending_held_submission_cannot_be_forced[unsafe]" time="0.185" /><testcase classname="tests.test_destination_guard" name="test_remote_campaign_reserves_product_before_worker_start" time="0.195" /><testcase classname="tests.test_destination_guard" name="test_batch_refusal_preserves_earlier_product" time="0.493" /><testcase classname="tests.test_destination_guard" name="test_other_controller_refused_and_lock_inode_survives_cleaning" time="0.004" /><testcase classname="tests.test_destination_guard" name="test_force_dry_run_preserves_record_and_completion[False]" time="0.493" /><testcase classname="tests.test_destination_guard" name="test_force_dry_run_preserves_record_and_completion[True]" time="0.519" /><testcase classname="tests.test_destination_guard" name="test_forced_replacement_cannot_be_found_under_old_fingerprint" time="0.969" /><testcase classname="tests.test_destination_guard" name="test_pipeline_active_refusal_preserves_every_completion[pending]" time="0.970" /><testcase classname="tests.test_destination_guard" name="test_pipeline_active_refusal_preserves_every_completion[running]" time="0.982" /><testcase classname="tests.test_destination_guard" name="test_disjoint_append_cannot_replace_active_queue_master" time="0.192" /><testcase classname="tests.test_destination_guard" name="test_force_hpc_to_local_replacement_removes_stale_worker_reference" time="1.005" /><testcase classname="tests.test_destination_guard" name="test_single_queued_failure_never_reports_success[False-failed]" time="0.010" /><testcase classname="tests.test_destination_guard" name="test_single_queued_failure_never_reports_success[False-interrupted]" time="0.009" /><testcase classname="tests.test_destination_guard" name="test_single_queued_failure_never_reports_success[True-failed]" time="0.009" /><testcase classname="tests.test_destination_guard" name="test_single_queued_failure_never_reports_success[True-interrupted]" time="0.010" /><testcase classname="tests.test_destination_guard" name="test_local_callable_without_record_destination_creates_no_directory" time="0.006" /><testcase classname="tests.test_hpc_dependencies" name="test_normalize_dependency_ids" time="0.000" /><testcase classname="tests.test_hpc_dependencies" name="test_reject_invalid_dependency_ids[]" time="0.000" /><testcase classname="tests.test_hpc_dependencies" name="test_reject_invalid_dependency_ids[42:bad]" time="0.000" /><testcase classname="tests.test_hpc_dependencies" name="test_reject_invalid_dependency_ids[42;echo]" time="0.000" /><testcase classname="tests.test_hpc_dependencies" name="test_reject_invalid_dependency_ids[-1]" time="0.000" /><testcase classname="tests.test_hpc_dependencies" name="test_reject_invalid_dependency_ids[42\ncommand]" time="0.000" /><testcase classname="tests.test_hpc_dependencies" name="test_dependency_directive_precedes_shell_commands[SlurmBackend-#SBATCH --dependency=afterok:42:43]" time="0.001" /><testcase classname="tests.test_hpc_dependencies" name="test_dependency_directive_precedes_shell_commands[PBSBackend-#PBS -W depend=afterok:42:43]" time="0.001" /><testcase classname="tests.test_hpc_dependencies" name="test_pbs_qualified_job_id" time="0.001" /><testcase classname="tests.test_hpc_dependencies" name="test_conflicting_dependency_configuration[SlurmBackend-#SBATCH --dependency=afterok:41]" time="0.001" /><testcase classname="tests.test_hpc_dependencies" name="test_conflicting_dependency_configuration[PBSBackend-#PBS -W depend=afterok:41]" time="0.001" /><testcase classname="tests.test_hpc_dependencies" name="test_after_requires_scheduler_before_creating_output" time="0.002" /><testcase classname="tests.test_hpc_dependencies" name="test_single_submission_returns_id_without_waiting" time="0.188" /><testcase classname="tests.test_hpc_dependencies" name="test_collection_results_keep_submitted_id[False]" time="0.194" /><testcase classname="tests.test_hpc_dependencies" name="test_collection_results_keep_submitted_id[True]" time="0.210" /><testcase classname="tests.test_hpc_dependencies" name="test_cli_prints_only_id" time="0.247" /><testcase classname="tests.test_hpc_dependencies" name="test_cli_collection_prints_id_once[False]" time="0.208" /><testcase classname="tests.test_hpc_dependencies" name="test_cli_collection_prints_id_once[True]" time="0.221" /><testcase classname="tests.test_hpc_dependencies" name="test_cli_rejects_preview_and_local_id_output" time="0.008" /><testcase classname="tests.test_hpc_dependencies" name="test_dry_run_renders_dependency_without_output_dir" time="0.292" /><testcase classname="tests.test_hpc_dependencies" name="test_result_payload_cannot_shadow_job_id" time="0.000" /><testcase classname="tests.test_pipeline_tasks" name="test_composite_task_runs_stages_in_order" time="0.253" /><testcase classname="tests.test_pipeline_tasks" name="test_composite_stage_dirs_have_markers" time="0.247" /><testcase classname="tests.test_pipeline_tasks" name="test_composite_failure_aborts_remaining_stages" time="0.247" /><testcase classname="tests.test_pipeline_tasks" name="test_composite_skip_complete_resumes_past_done_stages" time="0.133" /><testcase classname="tests.test_pipeline_tasks" name="test_composite_without_skip_complete_reruns_all_stages" time="0.245" /><testcase classname="tests.test_pipeline_tasks" name="test_plain_task_behaviour_unchanged" time="0.126" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_local_single_item" time="0.864" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_two_items_parallel" time="2.858" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_containment_validation" time="1.610" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_rejects_naming_policies" time="0.007" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_guard_raises_on_occupied" time="0.860" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_force_resets_and_reruns" time="1.706" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_failure_result_shape" time="0.898" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_wait_false_returns_submitted" time="0.210" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_dry_run_does_not_touch_db" time="0.007" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_smart_run_all_cached" time="1.065" /><testcase classname="tests.test_pipeline_tasks" name="test_enqueue_then_sweep_file_roundtrip" time="5.232" /><testcase classname="tests.test_pipeline_tasks" name="test_mixed_queue_plain_and_composite" time="1.235" /><testcase classname="tests.test_pipeline_tasks" name="test_single_stage_sweep_enqueue_writes_merged_items" time="0.016" /><testcase classname="tests.test_pipeline_tasks" name="test_single_stage_enqueue_no_sweep_unchanged" time="0.007" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_hpc_inline_completes" time="0.868" /><testcase classname="tests.test_presets" name="test_canonical_defaults_forms" time="0.077" /><testcase classname="tests.test_presets" name="test_address_suffix_matching[a.b.xps:train_a]" time="0.000" /><testcase classname="tests.test_presets" name="test_address_suffix_matching[xps:train_a]" time="0.000" /><testcase classname="tests.test_presets" name="test_address_suffix_matching[xps.train_a]" time="0.000" /><testcase classname="tests.test_presets" name="test_address_suffix_matching[train_a]" time="0.000" /><testcase classname="tests.test_presets" name="test_address_suffix_matching[a.b.xps.train_a]" time="0.000" /><testcase classname="tests.test_presets" name="test_address_mismatch" time="0.000" /><testcase classname="tests.test_presets" name="test_preset_never_changes_fingerprint" time="0.001" /><testcase classname="tests.test_presets" name="test_instantiate_strips_preset" time="0.000" /><testcase classname="tests.test_presets" name="test_cli_run_records_preset_and_links" time="0.475" /><testcase classname="tests.test_presets" name="test_overrides_with_interpolations_stay_literal" time="0.544" /><testcase classname="tests.test_presets" name="test_find_runs_newest_first_and_strict" time="0.903" /><testcase classname="tests.test_presets" name="test_project_get_records_preset" time="0.536" /><testcase classname="tests.test_presets" name="test_project_get_skips_non_stage_nodes" time="0.072" /><testcase classname="tests.test_presets" name="test_multistage_links_each_stage" time="1.291" /><testcase classname="tests.test_presets" name="test_sweep_tasks_are_linked" time="5.632" /><testcase classname="tests.test_presets" name="test_reindex_rebuilds_links" time="0.491" /><testcase classname="tests.test_presets" name="test_dangling_link_pruned" time="0.481" /><testcase classname="tests.test_presets" name="test_results_level_flexlock_found_from_project_root" time="0.479" /><testcase classname="tests.test_presets" name="test_list_presets" time="0.480" /><testcase classname="tests.test_presets" name="test_cli_runs_and_presets_output" time="0.500" /><testcase classname="tests.test_presets" name="test_run_ref_picks_newest_and_records_lineage" time="1.291" /><testcase classname="tests.test_presets" name="test_run_ref_pin_and_strict" time="1.736" /><testcase classname="tests.test_presets" name="test_run_ref_resolved_before_save_dir_policy" time="0.900" /><testcase classname="tests.test_presets" name="test_run_ref_skips_incomplete_runs" time="1.374" /><testcase classname="tests.test_presets" name="test_run_ref_errors" time="3.805" /><testcase classname="tests.test_presets" name="test_dump_and_enqueue_show_concrete_run" time="0.496" /><testcase classname="tests.test_presets" name="test_project_get_keeps_ref_until_submit" time="1.074" /><testcase classname="tests.test_presets" name="test_run_ref_in_sweep_items" time="6.487" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[None-single]" time="1.372" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[None-sweep]" time="1.676" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[None-pipeline]" time="1.429" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[None-cli]" time="1.394" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[strict-single]" time="1.360" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[strict-sweep]" time="1.714" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[strict-pipeline]" time="1.364" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[strict-cli]" time="1.369" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[,strict-single]" time="1.423" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]" time="1.760" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[,strict-pipeline]" time="1.379" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[,strict-cli]" time="1.380" /><testcase classname="tests.test_presets" name="test_chained_mixed_pinned_and_future_refs" time="1.468" /><testcase classname="tests.test_presets" name="test_chained_nested_run_lock" time="1.004" /><testcase classname="tests.test_presets" name="test_chained_save_dir_must_be_known" time="0.077" /><testcase classname="tests.test_presets" name="test_chained_missing_upstream_fails_on_worker" time="0.230" /></testsuite></testsuites>

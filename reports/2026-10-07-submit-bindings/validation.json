@@ -1,0 +1,65 @@
+{
+  "implementation_commit": "82b09a949b66a879805b11561421f0411a14e862",
+  "directory_identity_commit": "8f07e3e",
+  "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+  "python_version": "3.11.14 | packaged by conda-forge | (main, Jan 26 2026, 23:48:32) [GCC 14.3.0]",
+  "suites": {
+    "compatibility-trial.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "1",
+      "skipped": "1",
+      "tests": "363",
+      "time": "223.046",
+      "timestamp": "2026-10-07T13:46:21.524299+02:00",
+      "hostname": "compute-118-39"
+    },
+    "corrective-trial.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "12",
+      "skipped": "0",
+      "tests": "186",
+      "time": "89.786",
+      "timestamp": "2026-10-07T13:51:00.386689+02:00",
+      "hostname": "compute-118-39"
+    },
+    "final.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "72",
+      "time": "23.459",
+      "timestamp": "2026-10-07T13:53:47.379852+02:00",
+      "hostname": "compute-118-39"
+    },
+    "isolated-and-chain.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "31",
+      "time": "3.217",
+      "timestamp": "2026-10-07T13:54:51.126605+02:00",
+      "hostname": "compute-118-39"
+    }
+  },
+  "distinct_passed": 366,
+  "expected_failures": [
+    [
+      "tests.test_utils",
+      "test_extract_tracking_info_relative_refs_single_dot_prevs"
+    ]
+  ],
+  "full_suite": false,
+  "sha256": {
+    "docs/provenance_discovery_decision.md": "ae16c8dcf58923619c9b0f4e54d9337baa5d7d16f55228924b2e42ff048571ea",
+    "docs/slimmer_core_migration.md": "8db4047caa8fb4af512df6fde9b70c2b6f64ad60576d52ae42d7394a69571bed",
+    "docs/workflow_guidelines.md": "3f9a5734bd739792cfa1e02847efc916f567fb4e7406223729705236e3b1752c",
+    "flexlock/api.py": "03e0499591562a400bb41c19aea21943c1b0d117e04cc542cc11a4a7039d5a01",
+    "flexlock/destination_guard.py": "e7788a4cb383ba863f1f1dc1e3c9f7d746496127d0e4a87e9bd23142c8b215a5",
+    "flexlock/resolvers.py": "f52b76d46e4c2decae18c1835dc65a4ca354e74efb1c80da54fd4ff44f4c2d5f",
+    "tests/test_submit_bindings.py": "476e635fb9c5e8b67301f9b75620e9c383cf09ec024547c04bef97a85832de5a"
+  }
+}
