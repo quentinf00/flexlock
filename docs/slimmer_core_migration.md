@@ -215,6 +215,10 @@ are different provenance contracts, not feature-equivalent speed claims.
 Optimize measured repetition while preserving guards; retain optional policy
 compatibility until isolated consumers have working replacements. Real scheduler
 load, multi-worker contention and scientific adoption remain unmeasured.
+The [performance follow-up](performance_core_followup.md) clarifies asynchronous
+check boundaries, pointer/outcome consolidation, a proposed manual config-search
+command and the verified nextgems month-config replacement. Automatic discovery
+removal is not yet implemented; measured performance is not accepted scalability.
 
 ## Rollout and stop rules
 

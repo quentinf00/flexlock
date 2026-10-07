@@ -1,0 +1,90 @@
+{
+  "original_source": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc_tracking/src/nextgems_tc_tracking/confs/sweeps.py",
+  "original_sha256": "0c5647e4901763e7501393250f8b08d1ede5cf8a038527d4ecb21ee156672e58",
+  "original_month_count": 720,
+  "reusable_month_configs": 1,
+  "verified_month_payloads": 720,
+  "composed_boundaries": [
+    {
+      "pp_fn": {
+        "zoom": 3,
+        "outdir": "/unused/prepared",
+        "yearmonth": "1990-01",
+        "cat_2d": [
+          "IFS",
+          "IFS_9-FESOM_5-production-hist",
+          "2D_hourly_healpix512"
+        ],
+        "cat_3d": [
+          "IFS",
+          "IFS_9-FESOM_5-production-hist",
+          "3D_hourly_healpix512"
+        ]
+      },
+      "detect_fn": {
+        "input_file": "/unused/prepared/1990-01_zoom_3.nc"
+      }
+    },
+    {
+      "pp_fn": {
+        "zoom": 3,
+        "outdir": "/unused/prepared",
+        "yearmonth": "2019-12",
+        "cat_2d": [
+          "IFS",
+          "IFS_9-FESOM_5-production-hist",
+          "2D_hourly_healpix512"
+        ],
+        "cat_3d": [
+          "IFS",
+          "IFS_9-FESOM_5-production-hist",
+          "3D_hourly_healpix512"
+        ]
+      },
+      "detect_fn": {
+        "input_file": "/unused/prepared/2019-12_zoom_3.nc"
+      }
+    },
+    {
+      "pp_fn": {
+        "zoom": 3,
+        "outdir": "/unused/prepared",
+        "yearmonth": "2020-01",
+        "cat_2d": [
+          "IFS",
+          "IFS_9-FESOM_5-production",
+          "2D_hourly_healpix512"
+        ],
+        "cat_3d": [
+          "IFS",
+          "IFS_9-FESOM_5-production",
+          "3D_hourly_healpix512"
+        ]
+      },
+      "detect_fn": {
+        "input_file": "/unused/prepared/2020-01_zoom_3.nc"
+      }
+    },
+    {
+      "pp_fn": {
+        "zoom": 3,
+        "outdir": "/unused/prepared",
+        "yearmonth": "2049-12",
+        "cat_2d": [
+          "IFS",
+          "IFS_9-FESOM_5-production",
+          "2D_hourly_healpix512"
+        ],
+        "cat_3d": [
+          "IFS",
+          "IFS_9-FESOM_5-production",
+          "3D_hourly_healpix512"
+        ]
+      },
+      "detect_fn": {
+        "input_file": "/unused/prepared/2049-12_zoom_3.nc"
+      }
+    }
+  ],
+  "scientific_tasks_executed": 0
+}
