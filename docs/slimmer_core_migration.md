@@ -6,8 +6,8 @@ examples are available. M1's three reviewed record corrections and an explicit
 future-input snapshot correction are implemented in the isolated branch, validated
 by 202 compatibility cases and a 33-case focused executor follow-up. The isolated review
 follow-up preserves colliding producer identities, binds campaign coverage to frozen input
-bytes, and adds controller/queue destination guards. M1 directory-hash work and the
-remaining phases stay open. No production deployment or live-job authorization is implied.
+bytes, and adds controller/queue destination guards. M1 directory identity now rereads selected file paths and contents instead of
+reusing weak aggregate metadata. The remaining phases stay open. No production deployment or live-job authorization is implied.
 
 Review companions: [workflow guidelines](workflow_guidelines.md) with executable
 configuration/campaign/chain examples, and [Slurm submission proposal](slurm_submission_workflow.md).
@@ -19,7 +19,8 @@ records implementation scope and passing checks. The [independent-review follow-
 records lineage/coverage/guard changes and 249 compatibility plus 35 overlapping
 focused checks. The [2026-10-07 discovery decision](provenance_discovery_decision.md) retains automatic
 provenance and implements known run_lock reads plus labelled heuristics. Remaining
-M1 directory identity and M2 pre-dispatch binding/change policy stay open.
+M2 pre-dispatch binding/change policy stays open; directory identity is implemented
+with 70 selected checks passing.
 
 ## Target and compatibility boundary
 
@@ -85,7 +86,7 @@ requires a readable authoritative record for cache hits. No record schema or tas
 identity format changes. 202 compatibility cases and 33 focused follow-up cases
 pass. The follow-up guard uses controller locks and pending/running queue reservations
 before force/cleanup/dispatch; held jobs reserve their products. Direct queue mutation
-remains under the one-controller rule. Directory hashing remains open. Deprecating
+remains under the one-controller rule. Directory checks now reread selected paths and bytes, without aggregate cache reuse. Deprecating
 orchestration does not permit compatibility paths to lie.
 
 Smallest same-root composite remedy: reject repeated resolved stage directories
@@ -102,9 +103,15 @@ for in-place rewriting. Preserve evidence or use a fresh path for historical bin
 Old index fingerprints must not resolve to a replacement record.
 One-controller queue guidance remains until a stronger ownership protocol is tested.
 
-The current large-directory hash-cache test accepts stale hashes after nested file
-changes. Decide between correct content checks, explicitly weak metadata identity,
-or supplied immutable manifests, and record the chosen method. Do not conflate data
+Directory identity uses full selected-file content checks and relative paths, for
+all directory sizes. Aggregate directory cache reuse is removed: root mtime, file
+count and latest child mtime miss nested edits and renames. Overlapping match patterns
+are deduplicated; match/ignore selections cannot reuse another selection’s digest.
+Records label this method in data_identity; existing data digest fields remain readable.
+Empty directories, permissions and timestamps are outside this content identity.
+Inputs must stay stable while read; this is not an atomic filesystem snapshot.
+The former directory file-limit environment variables no longer weaken checks.
+Single-file mtime caching remains a labelled compatibility policy. Do not conflate data
 identity quality with cross-stage cache policy. Require readable DB-backed records.
 
 ### M2 explicit bindings without a large artifact framework

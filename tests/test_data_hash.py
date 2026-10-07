@@ -108,58 +108,44 @@ def test_small_dir_cache_invalidation_by_add_file(test_data):
     assert hash1 != hash2
 
 
-def test_large_dir_fallback_caching(tmp_path, monkeypatch):
-    """Test that large directories fall back to simple mtime caching."""
+def test_large_dir_detects_nested_edit_with_unchanged_root_mtime(tmp_path, monkeypatch):
     monkeypatch.setenv("FLEXLOCK_CACHE_DIR_FILE_LIMIT", "5")
-    large_dir = tmp_path / "large_dir"
-    large_dir.mkdir()
+    root = tmp_path / "large"
+    root.mkdir()
     for i in range(10):
-        (large_dir / f"file{i}.txt").write_text(str(i))
+        (root / f"file{i}").write_text(str(i))
+    before = hash_data(root)
+    original = root.stat().st_mtime_ns
+    (root / "file3").write_text("changed")
+    assert root.stat().st_mtime_ns == original
+    assert hash_data(root) != before
 
 
-    hash1 = hash_data(large_dir)
-    # Now, modify a file inside without touching the parent dir's mtime
-    time.sleep(0.01)
-    (large_dir / "file3.txt").write_text("changed")
-
-    # The hash should NOT change because we are in fallback mode
-    hash3 = hash_data(large_dir)
-    assert hash1 == hash3
-
-    # But if we touch the parent directory, it should invalidate
-    time.sleep(0.01)
-    large_dir.touch()
-    hash4 = hash_data(large_dir)
-    assert hash1 != hash4
-
-
-def test_cache_dir_file_limit_env_var(tmp_path, monkeypatch):
-    """Test that the FLEXLOCK_CACHE_DIR_FILE_LIMIT env var is respected."""
-    monkeypatch.setenv("FLEXLOCK_CACHE_DIR_FILE_LIMIT", "2")
-
-    test_dir = tmp_path / "test_dir"
-    test_dir.mkdir()
-    (test_dir / "f1").touch()
-    (test_dir / "f2").touch()
-
-    # With 2 files, should use the detailed stats (count=2, latest_mtime)
-    hash_data(test_dir)
+def test_directory_ignores_aggregate_cache_and_preserved_timestamps(test_data):
+    before = hash_data(test_data)
+    file = test_data / "sub" / "file2.log"
+    stat = file.stat()
+    file.write_text("WORLD")
+    os.utime(file, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+    assert hash_data(test_data) != before
     with _get_db() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT file_count FROM cache WHERE path=?", (str(test_dir.resolve()),))
-        row = cursor.fetchone()
-    assert row[0] == 2
+        assert conn.execute("SELECT * FROM cache WHERE is_dir=1").fetchone() is None
 
-    # Add a third file, exceeding the limit of 2
-    (test_dir / "f3").touch()
-    hash_data(test_dir)
-    with _get_db() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT mtime, file_count FROM cache WHERE path=?", (str(test_dir.resolve()),))
-        row = cursor.fetchone()
-    # Should now have fallen back to the simple mtime cache
-    assert row[0] is not None
-    assert row[1] is None
+
+def test_directory_filters_are_independent_and_overlap_is_deduplicated(test_data):
+    complete = hash_data(test_data, jobs=1)
+    selected = hash_data(test_data, match="**/*.txt", jobs=1)
+    assert selected != complete
+    assert hash_data(test_data, ignore="*.log", jobs=1) == selected
+    assert hash_data(test_data, match=["**/*", "**/*.txt"], jobs=1) == complete
+
+
+def test_directory_rename_detected_below_newer_file(test_data):
+    newest = test_data / "file1.txt"
+    os.utime(newest, (2000000000, 2000000000))
+    before = hash_data(test_data)
+    (test_data / "sub" / "file2.log").rename(test_data / "sub" / "renamed.log")
+    assert hash_data(test_data) != before
 
 
 def test_flexlock_no_cache_env_variable(test_data, monkeypatch):
@@ -242,3 +228,17 @@ def test_dirhash_detects_content_swap(tmp_path):
     after = hash_data(d, use_cache=False)
 
     assert before != after
+
+
+def test_snapshot_records_directory_identity_method(test_data, tmp_path):
+    from flexlock.snapshot import RunTracker
+
+    tracker = RunTracker(tmp_path / 'run')
+    tracker.record_data({'dataset': str(test_data)})
+    identity = tracker.data['data_identity']['dataset']
+    assert identity == {
+        'path': str(test_data.resolve()),
+        'method': 'directory_selected_paths_and_content',
+        'algorithm': 'xxh64',
+    }
+    assert tracker.data['data']['dataset'] == hash_data(test_data)

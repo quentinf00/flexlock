@@ -56,8 +56,8 @@ before destination creation; queued consumers bind on the worker, including prom
 future producer paths paired with --after. This does not yet freeze existing producer
 values before scheduler dispatch or reject intervening changes. That remains M2 work.
 The capture affects provenance, not automatic cache equivalence or resume policy.
-Directory-content identity and thousand-item source/queue/discovery overhead still
-need their own implementation and measurements.
+Directory identity now rereads selected relative file paths and bytes; data_identity
+records the method. Thousand-item source/queue/discovery overhead still needs measurement.
 
 See [guidelines](workflow_guidelines.md), [migration plan](slimmer_core_migration.md)
 and [acceptance evidence](../reports/2026-10-07-provenance-discovery/report.md).

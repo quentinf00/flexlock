@@ -27,7 +27,6 @@ CACHE_DIR = (
 )
 CACHE_DB = CACHE_DIR / f"hashes_v{HASH_VERSION}.db"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
-DEFAULT_DIR_FILE_LIMIT = os.environ.get("FLEXLOCK_DIR_FILE_LIMIT", 1000)
 
 # Thread-local storage for database connections
 _thread_local_conns = threading.local()
@@ -94,33 +93,6 @@ def _hash_file_content(path):
     return hasher.hexdigest()
 
 
-def _get_dir_stats(path: Path, limit: int):
-    """
-    Walks a directory to get the file count and the latest modification time.
-
-    If the file count exceeds the limit, it returns (limit + 1, 0) to signal
-    that the directory is "large".
-    """
-    count = 0
-    latest_mtime = path.stat().st_mtime
-
-    for root, _, files in os.walk(path):
-        count += len(files)
-        if count > limit:
-            return count, 0  # Exceeded limit, fallback mode
-
-        for name in files:
-            filepath = Path(root) / name
-            try:
-                mtime = filepath.stat().st_mtime
-                if mtime > latest_mtime:
-                    latest_mtime = mtime
-            except OSError:
-                # File might be a broken symlink, etc.
-                pass
-    return count, latest_mtime
-
-
 def dirhash(
     path, match=None, ignore=None, jobs=1, algorithm=hashlib.md5, chunk_size=65536
 ):
@@ -140,15 +112,12 @@ def dirhash(
     if isinstance(ignore_patterns, str):
         ignore_patterns = [ignore_patterns]
 
-    import glob
-    from pathlib import Path as p_path
-
     # Find all files matching patterns
     files_to_hash = []
     for pattern in match_pattern:
         files_to_hash.extend(base_path.glob(pattern))
 
-    files_to_hash = [f for f in files_to_hash if f.is_file()]
+    files_to_hash = sorted({f for f in files_to_hash if f.is_file()})
 
     # Apply ignore patterns
     final_files = []
@@ -204,15 +173,20 @@ def hash_data(
     use_cache=True,
 ):
     """
-    Computes a hash for a file or a directory, using an SQLite cache to avoid re-computation.
+    Hash selected file paths and bytes. Directories are always read in full.
+
+    Only single files use the legacy mtime cache. Directory aggregate metadata
+    cannot establish unchanged nested content or distinguish selection filters.
     """
     path = Path(path).resolve()
     # Honour the ``use_cache`` argument; the env var can only *force* caching
     # off (it never re-enables a cache the caller explicitly disabled).
     use_cache = use_cache and not config.get_env_bool("FLEXLOCK_NO_CACHE", False)
-    dir_file_limit = int(
-        os.environ.get("FLEXLOCK_CACHE_DIR_FILE_LIMIT", DEFAULT_DIR_FILE_LIMIT)
-    )
+    # Never reuse an aggregate directory hash based on root mtime, file count
+    # or maximum child mtime. These miss edits, renames and filtered selections.
+    if path.is_dir():
+        return dirhash(path, match=match, ignore=ignore, jobs=jobs,
+                       algorithm=algorithm, chunk_size=chunk_size)
 
     if use_cache:
         with _get_db() as conn:
@@ -231,35 +205,6 @@ def hash_data(
                     current_mtime = path.stat().st_mtime
                     if cached_mtime == current_mtime:
                         return cached_hash
-            elif path.is_dir():
-                # Check cache for directory
-                cursor.execute(
-                    "SELECT hash, mtime, file_count, latest_mtime FROM cache WHERE path=? AND is_dir=1",
-                    (str(path),),
-                )
-                row = cursor.fetchone()
-
-                if row:
-                    (
-                        cached_hash,
-                        cached_mtime,
-                        cached_file_count,
-                        cached_latest_mtime,
-                    ) = row
-                    file_count, latest_mtime = _get_dir_stats(path, dir_file_limit)
-
-                    if file_count > dir_file_limit:
-                        # Large directory fallback
-                        current_mtime = path.stat().st_mtime
-                        if cached_mtime == current_mtime:
-                            return cached_hash
-                    else:
-                        if (
-                            cached_file_count == file_count
-                            and cached_latest_mtime == latest_mtime
-                        ):
-                            return cached_hash
-
     # If not in cache or cache is invalid/disabled, compute the hash
     if not path.exists():
         raise FileNotFoundError(f"The specified path does not exist: {path}")
@@ -290,21 +235,6 @@ def hash_data(
                     "INSERT OR REPLACE INTO cache VALUES (?, ?, NULL, NULL, ?, 0)",
                     (str(path), mtime, new_hash),
                 )
-            elif path.is_dir():
-                file_count, latest_mtime = _get_dir_stats(path, dir_file_limit)
-                mtime = path.stat().st_mtime
-                if file_count > dir_file_limit:
-                    # For large directories, use just the directory's mtime
-                    cursor.execute(
-                        "INSERT OR REPLACE INTO cache VALUES (?, ?, NULL, NULL, ?, 1)",
-                        (str(path), mtime, new_hash),
-                    )
-                else:
-                    # For smaller directories, cache more detailed stats
-                    cursor.execute(
-                        "INSERT OR REPLACE INTO cache VALUES (?, ?, ?, ?, ?, 1)",
-                        (str(path), mtime, file_count, latest_mtime, new_hash),
-                    )
             conn.commit()
 
     return new_hash

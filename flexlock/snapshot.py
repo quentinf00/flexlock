@@ -106,6 +106,13 @@ class RunTracker:
 
     def record_data(self, data_paths: dict):
         self.data["data"] = {k: hash_data(v) for k, v in data_paths.items()}
+        self.data["data_identity"] = {
+            k: dict(path=str(Path(v).resolve()),
+                    method=("directory_selected_paths_and_content" if Path(v).is_dir()
+                            else "file_content_with_mtime_cache"),
+                    algorithm="xxh64")
+            for k, v in data_paths.items()
+        }
 
     def add_lineage(self, name: str, path: str, info: dict):
         """Add lineage information from upstream FlexLock runs."""
