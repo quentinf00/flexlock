@@ -136,6 +136,17 @@ the original source was only read. Hydra's [override grammar](https://hydra.cc/d
 supports sweeping values without selecting a distinct group node per item.
 
 This replacement moves the month/catalog mapping rather than eliminating it.
+It also changes discovery: the user's original requirement includes native
+`glob(*)` / `glob(20*)` selection of named months. Hydra's glob sweep enumerates
+config-group options, not values of an ordinary yearmonth field. With only
+month/base registered, a group glob would select base, not discover 720 months.
+The proof establishes payload/composition equivalence, not equivalent discovery.
+Preserving native group glob requires named month options (which can be small
+yearmonth-only aliases to a shared template), or additional config-source/sweeper
+plumbing. A manifest plus explicit fnmatch selection and ordinary value overrides
+avoids per-month registration but changes the CLI/workflow. The original group
+registration is therefore justified by this discovery requirement; the one-node
+replacement is not a drop-in solution for the stated usage.
 For arbitrary irregular jobs, a frozen manifest indexed by item ID is another
 one-config option; it introduces its own loader and provenance responsibility.
 Your original registration loop is a reasonable way to represent correlated
