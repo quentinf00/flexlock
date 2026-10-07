@@ -117,10 +117,20 @@ disables that heuristic, not known direct run_lock references or explicit prevs.
 Unambiguous declared-output association is a future improvement; no global record
 scan, newest-run substitution or artifact-selection policy is introduced here.
 
-Named run_lock fields are still read at worker/stage execution. Retain producer
-records/products unchanged. Freezing existing values before dispatch and rejecting
-intervening changes remains separate M2 work. Hash files/manifests deliberately;
-weak directory metadata caching does not verify all nested content changes.
+Existing concrete run_lock producers bind before queued dispatch. The worker checks
+their full materialized record digest before calling user code; replacement, deletion
+or any record change fails the task. --force on the consumer does not waive this check.
+Keep selected producer records stable, or choose a fresh path and resubmit after review.
+Missing concrete promised producers paired with --after, or earlier stages in an ordered
+pipeline, resolve at consumer start. A readable existing record with a missing required
+field fails before submission. Explicit defaults bind now, including null. latest
+selection freezes at dispatch; --enqueue merely exports config and is not dispatch.
+Legacy unpinned run references under --after retain worker-time compatibility behavior
+and are outside the concrete-producer recipe. Pending/running queue reservations
+identify promised producers even when their controller placeholder run.lock exists.
+Pair them with --after; completion is checked by project acceptance code. Directory
+identity rereads selected relative paths and bytes; single-file metadata caching
+remains a labelled compatibility policy. Keep inputs stable while being read.
 
 ```bash
 flexlock-run -d myproject.configs.runs.seed3.cfg -s train \

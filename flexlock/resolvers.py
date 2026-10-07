@@ -306,31 +306,106 @@ def frozen_resolvers():
     return _stubbed(tuple(_real_resolvers().keys()))
 
 
-def resolve_deferred(cfg: DictConfig) -> DictConfig:
-    """Fire the deferred resolvers once, at stage start, and return a detached
-    config of concrete values.
+def _attach_run_lock_capture(resolved, capture, *, binding=None):
+    if not capture.reads:
+        return
+    snap = resolved.setdefault('_snapshot_', {})
+    reads = snap.setdefault('run_lock_reads', [])
+    for entry in capture.reads:
+        if binding:
+            entry['binding'] = binding
+        if entry not in reads:
+            reads.append(entry)
+    records = snap.setdefault('run_lock_records', {})
+    records.update({
+        path: {key: deepcopy(record[key]) for key in
+               ('config', 'timestamp', 'repos', 'parent', 'fingerprint', 'task_id', 'record_dir')
+               if key in record}
+        for path, record in capture.records.items() if record is not None
+    })
 
-    This is the single point where ``run_lock``/``latest`` (and any other
-    interpolations left after the submit-time freeze) are evaluated with the
-    real resolvers. Called on the worker right after the task override is merged
-    (and on the local single-run path). Re-wrapping as a plain config detaches
-    it from any parent so downstream ``config.copy()`` cannot re-fire anything.
+
+def bind_existing_run_locks(cfg: DictConfig, *, allow_future=False, future_paths=()) -> DictConfig:
+    """Freeze concrete existing producer reads before dispatch.
+
+    Missing required producers may remain deferred only for an explicit future
+    workflow. Other resolver calls stay untouched. Each selected producer is read
+    once and its full record identity is checked again at stage start.
     """
+    detached = OmegaConf.create(OmegaConf.to_container(cfg, resolve=False))
+    capture = _RunLockCapture()
+    future_paths = {str(Path(path).resolve()) for path in future_paths}
+
+    def bind(run_dir, key, default=_MISSING):
+        # A deferred selection is a compatibility path, not a concrete producer.
+        if '${' in str(run_dir):
+            if not allow_future:
+                raise ValueError('run_lock requires a concrete producer path before dispatch')
+            return '${run_lock:' + ','.join(_emit_stub_arg(a) for a in
+                ((run_dir, key) if default is _MISSING else (run_dir, key, default))) + '}'
+        path = str(Path(run_dir).resolve())
+        if default is _MISSING:
+            from .destination_guard import has_active_destination
+            if has_active_destination(path):
+                if not allow_future:
+                    from .exceptions import FlexLockValidationError
+                    raise FlexLockValidationError(
+                        f"Selected producer has pending/running work: {path}. "
+                        "Pair its concrete path with after/--after."
+                    )
+                return '${run_lock:' + ','.join(_emit_stub_arg(a) for a in (path, key)) + '}'
+        if capture.load(path) is None and default is _MISSING and (allow_future or path in future_paths):
+            return '${run_lock:' + ','.join(_emit_stub_arg(a) for a in (path, key)) + '}'
+        # Escape literal interpolation syntax returned by a real producer, while
+        # leaving deliberate future resolver calls live.
+        return _escape_literals(run_lock_resolver(run_dir, key, default))
+
+    token = _run_lock_capture.set(capture)
+    try:
+        with _stubbed(tuple(name for name in _real_resolvers() if name not in ('run_lock', 'latest'))):
+            OmegaConf.register_new_resolver('run_lock', bind, replace=True, use_cache=False)
+            try:
+                resolved = OmegaConf.to_container(detached, resolve=True)
+            finally:
+                OmegaConf.register_new_resolver('run_lock', run_lock_resolver,
+                                                replace=True, use_cache=False)
+    finally:
+        _run_lock_capture.reset(token)
+    _attach_run_lock_capture(resolved, capture, binding='submit')
+    if capture.reads:
+        for key in ('run_lock_reads', 'run_lock_records'):
+            resolved['_snapshot_'][key] = _escape_literals(resolved['_snapshot_'][key])
+    return OmegaConf.create(resolved)
+
+
+def _verify_submit_bindings(cfg):
+    from .exceptions import FlexLockValidationError
+
+    raw = OmegaConf.to_container(cfg, resolve=False)
+    snap = raw.get('_snapshot_') or {}
+    capture = _RunLockCapture()
+    for entry in snap.get('run_lock_reads', []):
+        if entry.get('binding') != 'submit':
+            continue
+        path = entry['path']
+        capture.load(path)
+        if capture.digests[path] != entry['record_sha256']:
+            raise FlexLockValidationError(
+                f"Selected producer record changed or disappeared after submission: {path}. "
+                "Use a fresh producer path or resubmit after reviewing the replacement."
+            )
+
+
+def resolve_deferred(cfg: DictConfig) -> DictConfig:
+    """Verify submit bindings, then resolve promised producers at stage start."""
+    _verify_submit_bindings(cfg)
     capture = _RunLockCapture()
     token = _run_lock_capture.set(capture)
     try:
         resolved = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=False)
     finally:
         _run_lock_capture.reset(token)
-    if capture.reads:
-        snap = resolved.setdefault('_snapshot_', {})
-        snap['run_lock_reads'] = capture.reads
-        snap['run_lock_records'] = {
-            path: {key: deepcopy(record[key]) for key in
-                   ('config', 'timestamp', 'repos', 'parent', 'fingerprint', 'task_id', 'record_dir')
-                   if key in record}
-            for path, record in capture.records.items() if record is not None
-        }
+    _attach_run_lock_capture(resolved, capture)
     return OmegaConf.create(_escape_literals(resolved))
 
 

@@ -18,9 +18,11 @@ lifecycle is deferred. --after remains.
 records implementation scope and passing checks. The [independent-review follow-up](../reports/2026-10-06-independent-review-followup/report.md)
 records lineage/coverage/guard changes and 249 compatibility plus 35 overlapping
 focused checks. The [2026-10-07 discovery decision](provenance_discovery_decision.md) retains automatic
-provenance and implements known run_lock reads plus labelled heuristics. Remaining
-M2 pre-dispatch binding/change policy stays open; directory identity is implemented
-with 70 selected checks passing.
+provenance and implements known run_lock reads plus labelled heuristics.
+M2 concrete existing producers now bind before queued dispatch and are checked at
+stage start. 366 distinct selected compatibility/follow-up cases pass, with one existing
+expected failure; this is not the full suite. Directory identity has 70 selected checks
+passing. [Binding evidence](../reports/2026-10-07-submit-bindings/report.md).
 
 ## Target and compatibility boundary
 
@@ -134,8 +136,18 @@ _snapshot_.data, with canonical producer, requested field, value/default and rec
 digest captured from one stage-resolution read. Track actual arguments with relative
 _snapshot_.data references. Keep automatic target-repository and labelled data-ancestor
 discovery; explicit flags disable heuristics, not known references. Canonical explicit
-checkout declarations suppress duplicate inferred aliases. This is recording at stage
-start; existing-producer submit-time freezing/change policy remains open. Missing records/required fields fail; explicitly supplied optional defaults
+checkout declarations suppress duplicate inferred aliases. Concrete existing
+producers now bind before queued dispatch; the worker rejects
+any full materialized record digest change before user code. Values and captured
+lineage stay paired. Missing required producers defer only under --after or for
+earlier stage paths in an ordered pipeline. Pending/running queue placeholders under --after
+remain future producers despite their controller record. Other existing records
+with missing fields fail before submission; explicit defaults bind immediately.
+latest selects at dispatch; unpinned run under --after remains advanced compatibility behavior outside
+the supported concrete-producer recipe. This check does not reserve producers or
+protect against concurrent mutation after verification. Consumer force does not
+bypass it; review replacements and resubmit, preferably to fresh producer paths.
+Missing records/required fields fail; explicitly supplied optional defaults
 remain deliberate defaults. Content immutability is an additional declared policy.
 
 ### M3 keep / optional / deprecate candidates

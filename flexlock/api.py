@@ -813,6 +813,9 @@ class Project:
         if not use_hpc and not isolated:
             from .resolvers import resolve_deferred
             config = resolve_deferred(config)
+        else:
+            from .resolvers import bind_existing_run_locks
+            config = bind_existing_run_locks(config, allow_future=bool(after))
 
         destination = config.get("save_dir", "outputs/job")
         guarded_destination = destination if "save_dir" in config or use_hpc or isolated else None
@@ -1428,6 +1431,19 @@ class Project:
             if any(has_run_refs(stage) for item in items for stage in item):
                 smart_run = False
 
+        from .resolvers import bind_existing_run_locks
+        compiled = []
+        for item in items:
+            stages, future_paths = [], []
+            for stage in item:
+                stage = bind_existing_run_locks(stage, allow_future=bool(after),
+                                                future_paths=future_paths)
+                stages.append(stage)
+                if stage.get("save_dir"):
+                    future_paths.append(str(stage.save_dir))
+            compiled.append(stages)
+        items = compiled
+
         validate_policy(save_dir_policy)
         if save_dir_policy in NAMING_POLICIES:
             raise FlexLockValidationError(
@@ -1808,6 +1824,8 @@ class Project:
             if after:
                 validate_chained_paths(sweep_cfg)
             sweep_cfg = freeze_deferred(sweep_cfg, defer_runs=bool(after))
+            from .resolvers import bind_existing_run_locks
+            sweep_cfg = bind_existing_run_locks(sweep_cfg, allow_future=bool(after))
             if dir_suffix and "save_dir" in sweep_cfg:
                 # Nest each item under the base save_dir (the sweep root) so
                 # tasks DB and lineage markers stay inside the same tree.

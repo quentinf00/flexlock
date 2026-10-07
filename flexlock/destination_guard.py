@@ -47,6 +47,31 @@ def _active_rows(db):
         raise FlexLockValidationError(f'Cannot establish destination ownership from {db}: {exc}') from exc
 
 
+def has_active_destination(path):
+    """Read a selected producer's queue reservation, without creating a DB.
+
+    A queued placeholder is promised work, not a finished producer binding.
+    Current queues put a pointer at every product; historical own-dir queues
+    can be read directly. No scheduler or global ancestor search is involved.
+    """
+    directory = Path(path).resolve()
+    databases = {directory / 'run.lock.tasks.db'}
+    pointer = directory / QUEUE_POINTER
+    if pointer.exists():
+        try:
+            referenced = Path(json.loads(pointer.read_text())['task_db'])
+            if not referenced.exists():
+                raise FlexLockValidationError(f'Producer reservation references missing queue {referenced}')
+            databases.add(referenced)
+        except (ValueError, KeyError, TypeError) as exc:
+            raise FlexLockValidationError(f'Unreadable producer reservation {pointer}') from exc
+    for db in databases:
+        for (raw,) in _active_rows(db):
+            if str(directory) in task_destinations(yaml.safe_load(raw)):
+                return True
+    return False
+
+
 @contextmanager
 def guard_destinations(paths, db_dir=None):
     """Hold controller locks across preflight, mutations and launch/execution.

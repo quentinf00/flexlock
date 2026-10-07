@@ -51,13 +51,22 @@ readable; transient capture buffers are omitted from persisted callable config.
 
 ## Current implementation boundary
 
-The implemented capture is at stage resolution: synchronous local execution binds
-before destination creation; queued consumers bind on the worker, including promised
-future producer paths paired with --after. This does not yet freeze existing producer
-values before scheduler dispatch or reject intervening changes. That remains M2 work.
-The capture affects provenance, not automatic cache equivalence or resume policy.
+Existing concrete producer reads now bind before queued dispatch (single, sweep,
+isolated and ordered pipeline paths). Values and captured lineage travel together;
+stage start verifies the full materialized record SHA256. Any change or disappearance
+fails before user code; resubmit only after reviewing the replacement. Consumer force
+does not waive the check. This is conservative record identity, not a product content
+lock or reservation preventing concurrent writers after the check.
+
+Missing required producers, and pending/running queue placeholders under --after,
+remain deferred for --after or earlier concrete stage directories in an ordered pipeline. Their fields bind at consumer start.
+A readable existing producer missing a required field fails at submission; explicit
+fallbacks bind immediately. latest discovery selects once at actual dispatch.
+Unpinned run references under --after remain advanced compatibility behavior, outside
+the supported concrete-producer recipe. Cache equivalence/resume policy is unchanged.
 Directory identity now rereads selected relative file paths and bytes; data_identity
 records the method. Thousand-item source/queue/discovery overhead still needs measurement.
 
 See [guidelines](workflow_guidelines.md), [migration plan](slimmer_core_migration.md)
-and [acceptance evidence](../reports/2026-10-07-provenance-discovery/report.md).
+[initial discovery evidence](../reports/2026-10-07-provenance-discovery/report.md)
+and [dispatch-binding evidence](../reports/2026-10-07-submit-bindings/report.md).
