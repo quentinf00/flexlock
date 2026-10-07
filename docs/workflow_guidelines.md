@@ -96,6 +96,13 @@ effective argument with data=dict(dataset='${...input_path}'), so an input_path
 override also updates data tracking. The relative reference survives stage selection
 and renaming. Avoid repeating its original run_lock expression in tracking config.
 
+Project.get returns a detached config. After choosing a retained producer or receiving
+an actual result path, update the root anchor in proj.defaults before selecting the
+consumer. Assigning cfg.save_dir on an already selected stage does not update other
+stages' root references. Existing cross-stage save_dir configs need an explicit root
+update too. See the [caller inventory and migration examples](optional_policy_inventory.md).
+
+
 Direct run_lock reads now automatically record the canonical producer, requested
 field, returned value/default usage and producer-record SHA256, and add lineage from
 the same read. Repeated fields from one producer use one coherent read during stage

@@ -1,0 +1,16 @@
+{
+  "audited_revision": "f6beec9af29c8603004d4d485aa298d1842fa737",
+  "selected_files_verified": 703,
+  "python_snippets_syntax_checked": 2,
+  "local_links_verified": true,
+  "config_only_probe": "config-probe.json",
+  "test_suite_run": false,
+  "scheduler_or_scientific_execution": false,
+  "sha256": {
+    "scan.py": "dc411c8307d0ef81fc7b0dcfc58a4bd448d493bc29edbbdad06e69c18d006bac",
+    "inventory.json": "79802e7eff44655c532a4cfa26e1949b417ca227ab7ad59fa0115c3510d8d1ea",
+    "config-probe.json": "dfc3d052b9ba4a08dd18642f513f562c55e8ec7ac7f73aa7f2f733263f8cb5c9",
+    "report.md": "b1dcd9a73a5d033ef7f4e67244184b6e6dc0bfff0c98d3ba6e52f54f21cf7d45",
+    "optional_policy_inventory.md": "abe520aeb43d40fb4c47e820ed2217f059dad0eb0d26b07e79c5d44d72ec4f55"
+  }
+}

@@ -152,6 +152,14 @@ remain deliberate defaults. Content immutability is an additional declared polic
 
 ### M3 keep / optional / deprecate candidates
 
+The [bounded caller inventory](optional_policy_inventory.md) is complete, with
+[source/revision evidence](../reports/2026-10-07-optional-policy-inventory/report.md).
+SST preparation explicitly relies on cross-run cache selection; SAR pipeline caching
+is default-off, while its pilot relies on bounded explicit skip reuse. Existing
+Python defaults/adapters remain unchanged. Correct detached-config root propagation
+and demonstrate retained-product selection in isolated consumers before changing
+behavior. Policy separation and broader adoption remain open.
+
 | Surface | Proposed disposition | Compatibility action |
 |---|---|---|
 | Python config, py2cfg, @, overrides, explicit run_lock | Core | Preserve CLI and record schemas |

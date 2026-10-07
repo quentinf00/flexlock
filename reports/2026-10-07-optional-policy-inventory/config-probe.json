@@ -1,0 +1,14 @@
+{
+  "flexlock_module": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/__init__.py",
+  "defaults": {
+    "submit": "True",
+    "run_stage": "True",
+    "submit_pipeline": "False"
+  },
+  "detached_config_probe": {
+    "selected_save_dir": "/retained/prepare",
+    "consumer_before_explicit_root_update": "/fresh/prepare/data.csv",
+    "consumer_after_explicit_root_update": "/retained/prepare/data.csv"
+  },
+  "execution": "configuration selection only; no target invocation, snapshot or scheduler call"
+}
