@@ -1,0 +1,47 @@
+{
+  "implementation_commit": "063f00de51d8a070ab80d670082f6cf96a8542ef",
+  "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+  "python_version": "3.11.14 | packaged by conda-forge | (main, Jan 26 2026, 23:48:32) [GCC 14.3.0]",
+  "flexlock_module": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/__init__.py",
+  "suites": {
+    "compatibility-trial.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "1",
+      "skipped": "1",
+      "tests": "274",
+      "time": "221.513",
+      "timestamp": "2026-10-07T13:15:48.991614+02:00",
+      "hostname": "compute-118-39"
+    },
+    "followup.xml": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "1",
+      "tests": "104",
+      "time": "2.199",
+      "timestamp": "2026-10-07T13:24:01.969970+02:00",
+      "hostname": "compute-118-39"
+    }
+  },
+  "distinct_passed": 273,
+  "expected_failures": [
+    [
+      "tests.test_utils",
+      "test_extract_tracking_info_relative_refs_single_dot_prevs"
+    ]
+  ],
+  "full_suite": false,
+  "sha256": {
+    "docs/provenance_discovery_decision.md": "0410c3b696d881eecd9b293bebc859a56c1a1c590fa35ebcac662a2156d41e04",
+    "docs/slimmer_core_migration.md": "8a4b9f32f3aadb5404e53d1830b0cd2bdf89562623f6d6ef84eaded5d899b9c3",
+    "docs/workflow_guidelines.md": "1e937d5cfa060beb4f1e01cb0dc926a52aa1b4329fab7e242b74c19c8b518a15",
+    "examples/slimmer_workflows/cfgmod.py": "cfdd02f3217b5d48ea205d19fb8e1eaea6ce886a23c7b053cf6cd3410d6bb863",
+    "flexlock/api.py": "469915e81aacb29175b929bdf72258fa3d313069a3e8467bf99255611c25180f",
+    "flexlock/resolvers.py": "43decd1e922c9a84c9f045715e042d7c7d190e5697b1decd6f38c095ec40bc9f",
+    "flexlock/snapshot.py": "81cb652b9f9dd36b65bfada1b75534e20e6ca8593094a470111ff5dd104ee074",
+    "flexlock/utils.py": "135dd23b041b6c3d8696777e58aa436edfebc294784fc00623b96d4b6d414ad8",
+    "tests/test_discovery_policy.py": "42aea73fad6be071702bd4f52e7c5f950f85e981bb657a2cff768179c9c04f4c"
+  }
+}
