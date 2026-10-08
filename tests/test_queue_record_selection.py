@@ -49,3 +49,28 @@ def test_selected_reader_preserves_legacy_record_shape(tmp_path, status):
     assert expected[0]['snapshot'] == {} and expected[0]['result'] == dict(value=11)
     assert _list_task_records(db, task_ids=set()) == []
     assert _list_task_records(db, statuses=()) == []
+
+
+@pytest.mark.parametrize('text', [
+    'when: 2026-10-08\nat: 2026-10-08T11:12:13Z\nvalue: null\n',
+    'on_value: on\nitems: [true, false, 12, 0xFF, 1.5, .inf, .nan]\n',
+    'defaults: &defaults {value: 3}\ncopy: {<<: *defaults, other: 4}\n',
+    'value: "${run_lock:/producer,config.value}"\nblock: |\n  line one\n  line two\n',
+    'bytes: !!binary YWJj\nset: !!set {a: null, b: null}\n',
+    'value: !!timestamp 2026-10-08\n',
+])
+def test_record_loader_keeps_python_safe_loader_semantics(text):
+    import yaml
+    from flexlock.record import _Loader
+    class PythonRecordLoader(yaml.SafeLoader):
+        pass
+    PythonRecordLoader.yaml_implicit_resolvers = _Loader.yaml_implicit_resolvers
+    # Dumping normalizes NaN (which cannot compare equal to itself).
+    assert yaml.safe_dump(yaml.load(text, Loader=_Loader)) == yaml.safe_dump(yaml.load(text, Loader=PythonRecordLoader))
+
+
+def test_record_loader_rejects_python_object_tags():
+    import yaml
+    from flexlock.record import _Loader
+    with pytest.raises(yaml.YAMLError):
+        yaml.load('value: !!python/object/apply:builtins.str [1]', Loader=_Loader)

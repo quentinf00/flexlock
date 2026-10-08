@@ -35,11 +35,13 @@ TASKS_DB_NAME = "run.lock.tasks.db"
 _INHERITED = ("repos", "env", "note")
 
 
-class _Loader(yaml.SafeLoader):
+class _Loader(getattr(yaml, 'CSafeLoader', yaml.SafeLoader)):
     """SafeLoader that keeps timestamps as strings (as OmegaConf.load does).
 
     Plain safe_load turns an unquoted ISO timestamp into ``datetime``, which
     OmegaConf rejects when the record is later wrapped (e.g. into lineage).
+    Use LibYAML when available, with the same safe constructors and a Python
+    fallback; no record format or additional dependency is required.
     """
 
 
