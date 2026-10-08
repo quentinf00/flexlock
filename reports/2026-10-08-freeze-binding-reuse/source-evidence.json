@@ -1,0 +1,9 @@
+{
+  "flexlock/api.py": "cdaa4bfd0c4331de7eaece3f822bef4a1728c1bfc106aa3a03d4780cde184622",
+  "flexlock/freeze.py": "b2807cf27b34da1781ba248b4ca3baba9d6ad57b72da0a585e22b5cf21bb24af",
+  "flexlock/resolvers.py": "fb0a2d20213b0713f9980550549a6bd1983ef14010090eaa4503241ccf1e7555",
+  "tests/test_freeze_binding_reuse.py": "374328bfc2115c17965f3e4f8e5da8dade118d06c57fa01bc9bbb471dfa051a2",
+  "benchmarks/thousand_items/measure.py": "93348ccdc156b16f55f200006d981aaaa2519f7005181299d8c092098ad73a5a",
+  "benchmarks/thousand_items/matrix.py": "015056b323b1dd31056fc2fe5117c66d213059b402253f3d5d25c4d533acbcdf",
+  "source-controller-lock.yaml": "7a9f208533710a72e2db5bd3b6e48bc4aa0d4a1cf10420eb6bb11975854cf128"
+}

@@ -1,0 +1,1613 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="12" skipped="0" tests="196" time="138.717" timestamp="2026-10-08T14:34:03.627139+02:00" hostname="compute-118-39"><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[False-plain]" time="0.013"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found&#10;    full_key: options.text&#10;    object_type=dict">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p0')
+case = 'plain', readonly = False
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/resolvers.py:336: in bind_existing_run_locks
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+flexlock/resolvers.py:374: in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:573: in to_container
+    return BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:247: in get_node_value
+    value = BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:244: in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:231: in _format_and_raise
+    format_and_raise(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:899: in format_and_raise
+    _raise(ex, cause)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:797: in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:242: in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+E               full_key: options.text
+E               object_type=dict
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[False-container_alias]" time="0.006"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p1')
+case = 'container_alias', readonly = False
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/freeze.py:58: in freeze_deferred
+    OmegaConf.resolve(detached)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:785: in resolve
+    omegaconf._impl._resolve(cfg)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_impl.py:40: in _resolve
+    _resolve_container_value(cfg, k)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_impl.py:25: in _resolve_container_value
+    _resolve(node)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_impl.py:40: in _resolve
+    _resolve_container_value(cfg, k)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_impl.py:14: in _resolve_container_value
+    resolved = node._dereference_node()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[False-producer]" time="0.012"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found&#10;    full_key: options.text&#10;    object_type=dict">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p2')
+case = 'producer', readonly = False
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/resolvers.py:336: in bind_existing_run_locks
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+flexlock/resolvers.py:374: in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:573: in to_container
+    return BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:247: in get_node_value
+    value = BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:244: in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:231: in _format_and_raise
+    format_and_raise(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:899: in format_and_raise
+    _raise(ex, cause)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:797: in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:242: in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+E               full_key: options.text
+E               object_type=dict
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[False-future]" time="0.007"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found&#10;    full_key: options.text&#10;    object_type=dict">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p3')
+case = 'future', readonly = False
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/resolvers.py:336: in bind_existing_run_locks
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+flexlock/resolvers.py:374: in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:573: in to_container
+    return BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:247: in get_node_value
+    value = BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:244: in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:231: in _format_and_raise
+    format_and_raise(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:899: in format_and_raise
+    _raise(ex, cause)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:797: in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:242: in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+E               full_key: options.text
+E               object_type=dict
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[False-default]" time="0.008"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found&#10;    full_key: options.text&#10;    object_type=dict">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p4')
+case = 'default', readonly = False
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/resolvers.py:336: in bind_existing_run_locks
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+flexlock/resolvers.py:374: in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:573: in to_container
+    return BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:247: in get_node_value
+    value = BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:244: in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:231: in _format_and_raise
+    format_and_raise(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:899: in format_and_raise
+    _raise(ex, cause)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:797: in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:242: in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+E               full_key: options.text
+E               object_type=dict
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[False-latest]" time="0.011"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found&#10;    full_key: options.text&#10;    object_type=dict">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p5')
+case = 'latest', readonly = False
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/resolvers.py:336: in bind_existing_run_locks
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+flexlock/resolvers.py:374: in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:573: in to_container
+    return BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:247: in get_node_value
+    value = BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:244: in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:231: in _format_and_raise
+    format_and_raise(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:899: in format_and_raise
+    _raise(ex, cause)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:797: in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:242: in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+E               full_key: options.text
+E               object_type=dict
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[True-plain]" time="0.005"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found&#10;    full_key: options.text&#10;    object_type=dict">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p6')
+case = 'plain', readonly = True
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/resolvers.py:336: in bind_existing_run_locks
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+flexlock/resolvers.py:374: in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:573: in to_container
+    return BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:247: in get_node_value
+    value = BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:244: in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:231: in _format_and_raise
+    format_and_raise(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:899: in format_and_raise
+    _raise(ex, cause)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:797: in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:242: in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+E               full_key: options.text
+E               object_type=dict
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[True-container_alias]" time="0.005"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p7')
+case = 'container_alias', readonly = True
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/freeze.py:58: in freeze_deferred
+    OmegaConf.resolve(detached)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:785: in resolve
+    omegaconf._impl._resolve(cfg)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_impl.py:40: in _resolve
+    _resolve_container_value(cfg, k)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_impl.py:25: in _resolve_container_value
+    _resolve(node)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_impl.py:40: in _resolve
+    _resolve_container_value(cfg, k)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_impl.py:14: in _resolve_container_value
+    resolved = node._dereference_node()
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[True-producer]" time="0.008"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found&#10;    full_key: options.text&#10;    object_type=dict">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p8')
+case = 'producer', readonly = True
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/resolvers.py:336: in bind_existing_run_locks
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+flexlock/resolvers.py:374: in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:573: in to_container
+    return BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:247: in get_node_value
+    value = BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:244: in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:231: in _format_and_raise
+    format_and_raise(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:899: in format_and_raise
+    _raise(ex, cause)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:797: in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:242: in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+E               full_key: options.text
+E               object_type=dict
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[True-future]" time="0.007"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found&#10;    full_key: options.text&#10;    object_type=dict">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p9')
+case = 'future', readonly = True
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/resolvers.py:336: in bind_existing_run_locks
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+flexlock/resolvers.py:374: in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:573: in to_container
+    return BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:247: in get_node_value
+    value = BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:244: in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:231: in _format_and_raise
+    format_and_raise(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:899: in format_and_raise
+    _raise(ex, cause)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:797: in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:242: in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+E               full_key: options.text
+E               object_type=dict
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[True-default]" time="0.007"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found&#10;    full_key: options.text&#10;    object_type=dict">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p10')
+case = 'default', readonly = True
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/resolvers.py:336: in bind_existing_run_locks
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+flexlock/resolvers.py:374: in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:573: in to_container
+    return BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:247: in get_node_value
+    value = BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:244: in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:231: in _format_and_raise
+    format_and_raise(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:899: in format_and_raise
+    _raise(ex, cause)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:797: in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:242: in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+E               full_key: options.text
+E               object_type=dict
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_freeze_binding_reuse" name="test_combined_freeze_binding_preserves_values_and_caller[True-latest]" time="0.011"><failure message="omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found&#10;    full_key: options.text&#10;    object_type=dict">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-116/test_combined_freeze_binding_p11')
+case = 'latest', readonly = True
+
+    @pytest.mark.parametrize('case', ['plain', 'container_alias', 'producer', 'future', 'default', 'latest'])
+    @pytest.mark.parametrize('readonly', [False, True])
+    def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, readonly):
+        producer = tmp_path/'producers'/'first'
+        producer.mkdir(parents=True)
+        RunRecord(producer).write_lock(dict(config=dict(value=['literal ${missing}', {'n': 3}]), timestamp='fixed'))
+        path = str(producer)
+        value = '${.item}'
+        if case == 'container_alias':
+            value = '${options}'
+        elif case == 'producer':
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'future':
+            path = str(tmp_path/'future')
+            value = '${run_lock:${upstream},config.value}'
+        elif case == 'default':
+            path = str(tmp_path/'absent')
+            value = '${run_lock:${upstream},config.value,null}'
+        elif case == 'latest':
+            path = '${latest:'+str(producer.parent/'*')+'}'
+            value = '${run_lock:${upstream},config.value}'
+        cfg = OmegaConf.create(dict(item=7, upstream=path, value=value,
+                                   options=dict(n='${item}', text=r'\${literal}')))
+        OmegaConf.set_struct(cfg, True)
+        OmegaConf.set_readonly(cfg, readonly)
+        before = OmegaConf.to_container(cfg, resolve=False)
+&gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_freeze_binding_reuse.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/resolvers.py:336: in bind_existing_run_locks
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+flexlock/resolvers.py:374: in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:573: in to_container
+    return BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:247: in get_node_value
+    value = BaseContainer._to_content(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:292: in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:244: in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:231: in _format_and_raise
+    format_and_raise(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:899: in format_and_raise
+    _raise(ex, cause)
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/_utils.py:797: in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/basecontainer.py:242: in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:246: in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:277: in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:584: in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:764: in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:206: in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:101: in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:342: in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:298: in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:125: in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/antlr4/tree/Tree.py:34: in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py:921: in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/grammar_visitor.py:158: in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
+
+    def _resolve_node_interpolation(
+        self, inter_key: str, memo: Optional[Set[int]]
+    ) -&gt; "Node":
+        """A node interpolation is of the form `${foo.bar}`"""
+        try:
+            root_node, inter_key = self._resolve_key_and_root(inter_key)
+        except ConfigKeyError as exc:
+            raise InterpolationKeyError(
+                f"ConfigKeyError while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        try:
+            parent, last_key, value = root_node._select_impl(
+                inter_key,
+                throw_on_missing=True,
+                throw_on_resolution_failure=True,
+                memo=memo,
+            )
+        except MissingMandatoryValue as exc:
+            raise InterpolationToMissingValueError(
+                f"MissingMandatoryValue while resolving interpolation: {exc}"
+            ).with_traceback(sys.exc_info()[2])
+    
+        if parent is None or value is None:
+&gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
+E               full_key: options.text
+E               object_type=dict
+
+../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:676: InterpolationKeyError</failure></testcase><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-replace-single]" time="0.057" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-replace-sweep]" time="0.043" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-replace-pipeline]" time="0.046" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-remove-single]" time="0.048" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-remove-sweep]" time="0.043" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-remove-pipeline]" time="0.044" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-unchanged-single]" time="0.067" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-unchanged-sweep]" time="0.045" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[False-unchanged-pipeline]" time="0.044" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-replace-single]" time="0.041" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-replace-sweep]" time="0.035" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-replace-pipeline]" time="0.061" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-remove-single]" time="0.041" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-remove-sweep]" time="0.035" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-remove-pipeline]" time="0.039" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-unchanged-single]" time="0.053" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-unchanged-sweep]" time="0.044" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_is_frozen_and_checked_before_callable[True-unchanged-pipeline]" time="0.052" /><testcase classname="tests.test_submit_bindings" name="test_missing_required_producer_without_after_fails_before_dispatch" time="0.003" /><testcase classname="tests.test_submit_bindings" name="test_promised_producer_with_after_uses_exact_path" time="0.039" /><testcase classname="tests.test_submit_bindings" name="test_unchanged_binding_keeps_native_values_and_literal_interpolation" time="0.009" /><testcase classname="tests.test_submit_bindings" name="test_missing_default_binds_default_and_detects_later_appearance" time="0.005" /><testcase classname="tests.test_submit_bindings" name="test_pipeline_typo_is_not_treated_as_promised_producer" time="0.003" /><testcase classname="tests.test_submit_bindings" name="test_latest_selection_is_fixed_when_newer_candidate_appears[False]" time="0.047" /><testcase classname="tests.test_submit_bindings" name="test_latest_selection_is_fixed_when_newer_candidate_appears[True]" time="0.077" /><testcase classname="tests.test_submit_bindings" name="test_missing_promised_producer_stops_worker" time="0.034" /><testcase classname="tests.test_submit_bindings" name="test_existing_producer_missing_field_is_not_deferred" time="0.007" /><testcase classname="tests.test_submit_bindings" name="test_queued_producer_without_dependency_fails_before_consumer_dispatch" time="0.021" /><testcase classname="tests.test_submit_bindings" name="test_pending_sibling_does_not_make_selected_producer_future" time="0.057" /><testcase classname="tests.test_submit_bindings" name="test_ordered_pipeline_defers_exact_earlier_stage_path" time="0.060" /><testcase classname="tests.test_submit_bindings" name="test_isolated_worker_rejects_replacement_and_returns_failed" time="2.523" /><testcase classname="tests.test_resolvers" name="test_now_resolver" time="0.004" /><testcase classname="tests.test_resolvers" name="test_vinc_resolver" time="0.002" /><testcase classname="tests.test_resolvers" name="test_vinc_resolver_with_custom_format" time="0.001" /><testcase classname="tests.test_resolvers" name="test_latest_resolver" time="0.021" /><testcase classname="tests.test_resolvers" name="test_latest_resolver_with_files" time="0.021" /><testcase classname="tests.test_resolvers" name="test_latest_resolver_no_matches" time="0.000" /><testcase classname="tests.test_resolvers" name="test_latest_resolver_no_matches_with_default" time="0.000" /><testcase classname="tests.test_resolvers" name="test_latest_resolver_with_globbing_patterns" time="0.012" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_basic" time="0.004" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_nested" time="0.002" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_missing_key_with_default" time="0.002" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_missing_key_no_default" time="0.002" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_missing_run_lock_with_default" time="0.001" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_missing_run_lock_no_default" time="0.001" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_in_omegaconf" time="0.007" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_null_value" time="0.002" /><testcase classname="tests.test_resolvers" name="test_vinc_stable_within_single_submit" time="0.009" /><testcase classname="tests.test_resolvers" name="test_vinc_advances_across_submits" time="0.020" /><testcase classname="tests.test_resolvers" name="test_vinc_stable_with_cross_tree_refs" time="0.012" /><testcase classname="tests.test_resolvers" name="test_run_lock_resolver_native_types" time="0.005" /><testcase classname="tests.test_resolvers" name="test_resolve_deferred_keeps_escaped_literals" time="0.002" /><testcase classname="tests.test_root_anchor_sweep" name="test_python_root_anchor_sweep_executes_each_bound_input[1]" time="2.936" /><testcase classname="tests.test_root_anchor_sweep" name="test_python_root_anchor_sweep_executes_each_bound_input[2]" time="3.943" /><testcase classname="tests.test_root_anchor_sweep" name="test_root_anchor_override_remains_supported" time="0.438" /><testcase classname="tests.test_root_anchor_sweep" name="test_root_sweep_preview_and_enqueue_agree" time="3.421" /><testcase classname="tests.test_root_anchor_sweep" name="test_cli_string_and_scalar_root_sweeps[False]" time="5.417" /><testcase classname="tests.test_root_anchor_sweep" name="test_cli_string_and_scalar_root_sweeps[True]" time="3.842" /><testcase classname="tests.test_root_anchor_sweep" name="test_root_sweep_key_check_and_dump" time="0.057" /><testcase classname="tests.test_root_anchor_sweep" name="test_root_sweep_applies_selected_merge_and_override" time="2.756" /><testcase classname="tests.test_root_anchor_sweep" name="test_stage_only_and_qualified_stage_sweeps_keep_scope" time="5.157" /><testcase classname="tests.test_root_anchor_sweep" name="test_root_sweep_scheduler_receives_compiled_items" time="0.213" /><testcase classname="tests.test_root_anchor_sweep" name="test_mixed_scalar_root_sweep_has_actionable_error" time="0.013" /><testcase classname="tests.test_sweep_semantics" name="test_sweep_save_dir_outside_root_raises_clearly" time="0.004" /><testcase classname="tests.test_sweep_semantics" name="test_sweep_save_dir_all_inside_root_runs" time="2.330" /><testcase classname="tests.test_sweep_semantics" name="test_sweep_root_overrides_validation" time="4.881" /><testcase classname="tests.test_sweep_semantics" name="test_sweep_validation_uses_first_item_parent_when_no_base_save_dir" time="0.004" /><testcase classname="tests.test_sweep_semantics" name="test_marker_falls_back_to_absolute_when_db_outside_task_parent" time="0.001" /><testcase classname="tests.test_sweep_semantics" name="test_marker_uses_relative_path_when_within_tree" time="0.001" /><testcase classname="tests.test_sweep_semantics" name="test_intra_node_save_dir_ref_tracks_sweep_override" time="3.915" /><testcase classname="tests.test_sweep_semantics" name="test_sweep_dir_suffix_nests_under_base_save_dir" time="4.158" /><testcase classname="tests.test_sweep_semantics" name="test_cross_tree_ref_frozen_at_selection_then_static" time="0.002" /><testcase classname="tests.test_sweep_semantics" name="test_sweep_item_key_referenced_by_normal_ref" time="5.000" /><testcase classname="tests.test_sweep_semantics" name="test_print_config_with_sweep_previews_each_item" time="0.004" /><testcase classname="tests.test_chained_and_paths" name="test_bare_py_path_auto_appends_defaults" time="0.001" /><testcase classname="tests.test_chained_and_paths" name="test_explicit_colon_syntax_still_works" time="0.001" /><testcase classname="tests.test_chained_and_paths" name="test_dotted_module_path_unchanged" time="0.000" /><testcase classname="tests.test_chained_and_paths" name="test_slashed_nonexistent_path_gives_actionable_error" time="0.001" /><testcase classname="tests.test_chained_and_paths" name="test_project_accepts_bare_py_path" time="0.002" /><testcase classname="tests.test_chained_and_paths" name="test_file_based_target_is_reimportable" time="0.004" /><testcase classname="tests.test_chained_and_paths" name="test_submit_chained_basic" time="0.944" /><testcase classname="tests.test_chained_and_paths" name="test_submit_chained_anchor_propagation" time="4.351" /><testcase classname="tests.test_chained_and_paths" name="test_submit_chained_iteration_protocol" time="4.107" /><testcase classname="tests.test_chained_and_paths" name="test_submit_chained_requires_sweep_and_downstream" time="0.002" /><testcase classname="tests.test_chained_and_paths" name="test_submit_chained_warns_on_missing_attr" time="2.661" /><testcase classname="tests.test_swaps" name="test_swap_replaces_node" time="0.021" /><testcase classname="tests.test_swaps" name="test_later_override_applies_on_swapped_node" time="0.022" /><testcase classname="tests.test_swaps" name="test_swap_after_select" time="0.020" /><testcase classname="tests.test_swaps" name="test_fully_qualified_swap" time="0.020" /><testcase classname="tests.test_swaps" name="test_double_at_is_literal" time="0.020" /><testcase classname="tests.test_swaps" name="test_unknown_name_lists_config_attrs" time="0.006" /><testcase classname="tests.test_swaps" name="test_swap_recorded_as_typed_and_changes_fingerprint" time="0.038" /><testcase classname="tests.test_swaps" name="test_python_api_dict_overrides" time="0.022" /><testcase classname="tests.test_swaps" name="test_sweep_values_swap" time="0.006" /><testcase classname="tests.test_swaps" name="test_sweep_file_swaps_end_to_end" time="6.161" /><testcase classname="tests.test_presets" name="test_canonical_defaults_forms" time="0.070" /><testcase classname="tests.test_presets" name="test_address_suffix_matching[a.b.xps:train_a]" time="0.000" /><testcase classname="tests.test_presets" name="test_address_suffix_matching[xps:train_a]" time="0.000" /><testcase classname="tests.test_presets" name="test_address_suffix_matching[xps.train_a]" time="0.000" /><testcase classname="tests.test_presets" name="test_address_suffix_matching[train_a]" time="0.000" /><testcase classname="tests.test_presets" name="test_address_suffix_matching[a.b.xps.train_a]" time="0.000" /><testcase classname="tests.test_presets" name="test_address_mismatch" time="0.000" /><testcase classname="tests.test_presets" name="test_preset_never_changes_fingerprint" time="0.000" /><testcase classname="tests.test_presets" name="test_instantiate_strips_preset" time="0.000" /><testcase classname="tests.test_presets" name="test_cli_run_records_preset_and_links" time="0.409" /><testcase classname="tests.test_presets" name="test_overrides_with_interpolations_stay_literal" time="0.406" /><testcase classname="tests.test_presets" name="test_find_runs_newest_first_and_strict" time="0.750" /><testcase classname="tests.test_presets" name="test_project_get_records_preset" time="0.449" /><testcase classname="tests.test_presets" name="test_project_get_skips_non_stage_nodes" time="0.063" /><testcase classname="tests.test_presets" name="test_multistage_links_each_stage" time="2.266" /><testcase classname="tests.test_presets" name="test_sweep_tasks_are_linked" time="2.933" /><testcase classname="tests.test_presets" name="test_reindex_rebuilds_links" time="0.414" /><testcase classname="tests.test_presets" name="test_dangling_link_pruned" time="0.406" /><testcase classname="tests.test_presets" name="test_results_level_flexlock_found_from_project_root" time="0.488" /><testcase classname="tests.test_presets" name="test_list_presets" time="0.683" /><testcase classname="tests.test_presets" name="test_cli_runs_and_presets_output" time="0.753" /><testcase classname="tests.test_presets" name="test_run_ref_picks_newest_and_records_lineage" time="1.397" /><testcase classname="tests.test_presets" name="test_run_ref_pin_and_strict" time="3.452" /><testcase classname="tests.test_presets" name="test_run_ref_resolved_before_save_dir_policy" time="0.757" /><testcase classname="tests.test_presets" name="test_run_ref_skips_incomplete_runs" time="1.097" /><testcase classname="tests.test_presets" name="test_run_ref_errors" time="3.591" /><testcase classname="tests.test_presets" name="test_dump_and_enqueue_show_concrete_run" time="0.420" /><testcase classname="tests.test_presets" name="test_project_get_keeps_ref_until_submit" time="0.944" /><testcase classname="tests.test_presets" name="test_run_ref_in_sweep_items" time="4.265" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[None-single]" time="1.176" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[None-sweep]" time="1.449" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[None-pipeline]" time="1.241" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[None-cli]" time="1.181" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[strict-single]" time="1.159" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[strict-sweep]" time="1.420" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[strict-pipeline]" time="1.137" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[strict-cli]" time="1.146" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[,strict-single]" time="1.183" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]" time="1.432" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[,strict-pipeline]" time="1.150" /><testcase classname="tests.test_presets" name="test_chained_run_binds_on_worker_and_records_lineage[,strict-cli]" time="1.156" /><testcase classname="tests.test_presets" name="test_chained_mixed_pinned_and_future_refs" time="1.161" /><testcase classname="tests.test_presets" name="test_chained_nested_run_lock" time="0.820" /><testcase classname="tests.test_presets" name="test_chained_save_dir_must_be_known" time="0.067" /><testcase classname="tests.test_presets" name="test_chained_missing_upstream_fails_on_worker" time="0.202" /><testcase classname="tests.test_destination_guard" name="test_pending_held_submission_cannot_be_forced[None]" time="0.231" /><testcase classname="tests.test_destination_guard" name="test_pending_held_submission_cannot_be_forced[overwrite]" time="0.162" /><testcase classname="tests.test_destination_guard" name="test_pending_held_submission_cannot_be_forced[unsafe]" time="0.162" /><testcase classname="tests.test_destination_guard" name="test_remote_campaign_reserves_product_before_worker_start" time="0.160" /><testcase classname="tests.test_destination_guard" name="test_batch_refusal_preserves_earlier_product" time="0.456" /><testcase classname="tests.test_destination_guard" name="test_other_controller_refused_and_lock_inode_survives_cleaning" time="0.004" /><testcase classname="tests.test_destination_guard" name="test_force_dry_run_preserves_record_and_completion[False]" time="0.412" /><testcase classname="tests.test_destination_guard" name="test_force_dry_run_preserves_record_and_completion[True]" time="0.421" /><testcase classname="tests.test_destination_guard" name="test_forced_replacement_cannot_be_found_under_old_fingerprint" time="0.824" /><testcase classname="tests.test_destination_guard" name="test_pipeline_active_refusal_preserves_every_completion[pending]" time="0.840" /><testcase classname="tests.test_destination_guard" name="test_pipeline_active_refusal_preserves_every_completion[running]" time="0.862" /><testcase classname="tests.test_destination_guard" name="test_disjoint_append_cannot_replace_active_queue_master" time="0.165" /><testcase classname="tests.test_destination_guard" name="test_force_hpc_to_local_replacement_removes_stale_worker_reference" time="0.878" /><testcase classname="tests.test_destination_guard" name="test_single_queued_failure_never_reports_success[False-failed]" time="0.009" /><testcase classname="tests.test_destination_guard" name="test_single_queued_failure_never_reports_success[False-interrupted]" time="0.008" /><testcase classname="tests.test_destination_guard" name="test_single_queued_failure_never_reports_success[True-failed]" time="0.008" /><testcase classname="tests.test_destination_guard" name="test_single_queued_failure_never_reports_success[True-interrupted]" time="0.008" /><testcase classname="tests.test_destination_guard" name="test_local_callable_without_record_destination_creates_no_directory" time="0.005" /><testcase classname="tests.test_pipeline_tasks" name="test_composite_task_runs_stages_in_order" time="0.217" /><testcase classname="tests.test_pipeline_tasks" name="test_composite_stage_dirs_have_markers" time="0.203" /><testcase classname="tests.test_pipeline_tasks" name="test_composite_failure_aborts_remaining_stages" time="0.207" /><testcase classname="tests.test_pipeline_tasks" name="test_composite_skip_complete_resumes_past_done_stages" time="0.109" /><testcase classname="tests.test_pipeline_tasks" name="test_composite_without_skip_complete_reruns_all_stages" time="0.205" /><testcase classname="tests.test_pipeline_tasks" name="test_plain_task_behaviour_unchanged" time="0.106" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_local_single_item" time="0.721" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_two_items_parallel" time="4.586" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_containment_validation" time="1.332" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_rejects_naming_policies" time="0.007" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_guard_raises_on_occupied" time="0.728" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_force_resets_and_reruns" time="1.433" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_failure_result_shape" time="0.731" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_wait_false_returns_submitted" time="0.162" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_dry_run_does_not_touch_db" time="0.006" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_smart_run_all_cached" time="0.912" /><testcase classname="tests.test_pipeline_tasks" name="test_enqueue_then_sweep_file_roundtrip" time="2.753" /><testcase classname="tests.test_pipeline_tasks" name="test_mixed_queue_plain_and_composite" time="1.026" /><testcase classname="tests.test_pipeline_tasks" name="test_single_stage_sweep_enqueue_writes_merged_items" time="0.014" /><testcase classname="tests.test_pipeline_tasks" name="test_single_stage_enqueue_no_sweep_unchanged" time="0.006" /><testcase classname="tests.test_pipeline_tasks" name="test_submit_pipeline_hpc_inline_completes" time="0.743" /><testcase classname="tests.test_preparation_reuse" name="test_partial_overrides_keep_master_output_contracts_and_queue_payloads[None]" time="0.012" /><testcase classname="tests.test_preparation_reuse" name="test_partial_overrides_keep_master_output_contracts_and_queue_payloads[.]" time="0.010" /><testcase classname="tests.test_preparation_reuse" name="test_partial_overrides_keep_master_output_contracts_and_queue_payloads[payload]" time="0.012" /><testcase classname="tests.test_preparation_reuse" name="test_shared_composite_contracts_resolve_against_each_stage_root" time="0.012" /><testcase classname="tests.test_preparation_reuse" name="test_completed_rows_still_participate_in_append_collision_checks" time="0.011" /></testsuite></testsuites>

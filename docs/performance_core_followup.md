@@ -216,6 +216,20 @@ preparation took 31.500s in one sample; tracked worker costs remain unoptimized.
 The next slice is safe freezing/binding reconstruction reuse. Preparation is still
 too slow; no target time or production scalability is accepted.
 
+That [second slice](../reports/2026-10-08-freeze-binding-reuse/report.md) is now
+implemented at a32d227. The sweep compiler reuses freezing's detached config for
+binding and skips binding only after full freezing leaves no interpolation syntax.
+Producer/custom-resolver reads still use the complete guarded binding path.
+Fresh 1,000-item medians fell from 23.315s to 20.209s (13.3%, three repeats;
+ranges overlap), or 34.4% below today's original 30.807s baseline. Per 100 items,
+OmegaConf creations fell from 404 to 204; merges remain 201. Final focused suite:
+198 passes; six equivalent queues; 100 independently verified local products.
+Source-tracked preparation took 23.175s in one sample; file count stays 2,007.
+Next inspect repeated queue-row reading/materialization and nonblocking result
+collection, with phase timings and preserved tag/resume/record semantics. A new
+fixture exposed an existing escaped-literal limitation in the old two-pass path;
+that separate fix needs a compatibility regression before broad adoption.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

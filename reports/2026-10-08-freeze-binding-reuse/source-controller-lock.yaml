@@ -1,0 +1,30 @@
+timestamp: '2026-10-08T14:42:41.777607'
+task_record: dir
+shared_save_dirs: []
+repos:
+  main:
+    commit: a5294f76cacfc2d09a54cb2fad802d412f31170e
+    tree: 6fe86553555e724c936ee6a6dcf2b1b3efdd5255
+    is_dirty: false
+    include:
+    - benchmarks
+    path: /ontap/user/qfebvre/flexlock-execution-validation
+env:
+  main/pixi.lock: 0c13f479a9b136232de4e4f83e56fc3fd19bbbd0ab3840110fcf0e6749d4d22c
+discovery:
+  repos:
+    main:
+      path: /ontap/user/qfebvre/flexlock-execution-validation
+      method: explicit
+  lineage: []
+config:
+  save_dir: /ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-prep-slice2-source/flexlock-slurm-source-n1000-r0/runs
+  _snapshot_:
+    discover:
+      repos: false
+      prevs: false
+    repos:
+      main:
+        path: /ontap/user/qfebvre/flexlock-execution-validation
+        include:
+        - benchmarks

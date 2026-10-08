@@ -1,0 +1,57 @@
+{
+  "before": {
+    "path": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-prep-slice1-profile/profile.pstats",
+    "sha256": "516936889e1714cd4890fc2cac6f8b1f908ec9f4bd2f44da444fdf570dc3aa0a",
+    "profiler_total_seconds": 6.973937827000005,
+    "functions": {
+      "bind_existing_run_locks": {
+        "calls": 100,
+        "cumulative_seconds": 1.565609999,
+        "self_seconds": 0.001803665,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/resolvers.py",
+        "line": 328
+      },
+      "create": {
+        "calls": 404,
+        "cumulative_seconds": 2.088263022,
+        "self_seconds": 0.000463728,
+        "source": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172
+      },
+      "merge_task_into_cfg": {
+        "calls": 201,
+        "cumulative_seconds": 1.195127166,
+        "self_seconds": 0.000659505,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py",
+        "line": 748
+      },
+      "producer_binding": {
+        "calls": 100
+      }
+    }
+  },
+  "after": {
+    "path": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-prep-slice2-profile/profile.pstats",
+    "sha256": "ecdd829b09a0afde371042cabdc603b3228022d9007827187fa9553c880c986a",
+    "profiler_total_seconds": 4.663599091,
+    "functions": {
+      "create": {
+        "calls": 204,
+        "cumulative_seconds": 0.6659301870000001,
+        "self_seconds": 0.00019011600000000002,
+        "source": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172
+      },
+      "merge_task_into_cfg": {
+        "calls": 201,
+        "cumulative_seconds": 1.066846165,
+        "self_seconds": 0.000523178,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py",
+        "line": 748
+      },
+      "producer_binding": {
+        "calls": 0
+      }
+    }
+  }
+}

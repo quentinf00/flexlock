@@ -227,6 +227,13 @@ payloads and 183 distinct focused cases passing across rechecks. File count rema
 2,007 and peak RSS increased about 7.1 MiB. Next: safe freezing/binding reuse;
 source-worker repetition and bookkeeping consolidation remain separate work.
 
+The [second preparation slice](../reports/2026-10-08-freeze-binding-reuse/report.md)
+at a32d227 reuses freeze/bind working copies and skips binding only when full
+freezing leaves no interpolation. Median is now 20.209s (three repeats); 198 focused
+cases pass, queues remain equivalent, and file count remains 2,007. Next inspect
+repeated queue reads/materialization; escaped-literal compatibility and tracked
+worker source costs remain open. No production scalability acceptance follows.
+
 ## Rollout and stop rules
 
 T7 implements this plan. T6 can migrate invariants and source routing independently,
