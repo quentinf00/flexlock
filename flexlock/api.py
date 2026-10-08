@@ -1688,11 +1688,12 @@ class Project:
         faithfully reflects what happened (issue 2).
         """
         from .taskdb import _hash_task
-        from .record import list_task_records
+        from .record import _list_task_records
 
+        task_ids = [_hash_task(cfg) for cfg in task_configs]
         by_id = {
             t["task_id"]: t
-            for t in list_task_records(db_path)
+            for t in _list_task_records(db_path, task_ids=task_ids)
         }
         status_map = {
             "done": "SUCCESS",
@@ -1700,9 +1701,9 @@ class Project:
             "interrupted": "INTERRUPTED",
         }
         out = []
-        for idx, cfg in zip(indices, task_configs):
+        for idx, cfg, task_id in zip(indices, task_configs, task_ids):
             save_dir = str(cfg.get("save_dir", "."))
-            row = by_id.get(_hash_task(cfg))
+            row = by_id.get(task_id)
             db_status = row["status"] if row else None
             status = status_map.get(db_status, "SUBMITTED")
 
@@ -1726,7 +1727,7 @@ class Project:
                         cfg=cfg,
                         error=error,
                         job_id=job_id,
-                        task_id=_hash_task(cfg), task_db=str(db_path),
+                        task_id=task_id, task_db=str(db_path),
                         record_dir=row.get('record_dir') if row else None,
                     ),
                 )

@@ -180,10 +180,9 @@ class ParallelExecutor:
         task_ids = [_taskdb_hash_task(task) for task in tasks]
         all_tasks = dict(zip(task_ids, tasks))
         if self.db_path.exists():
-            from .record import list_task_records
-            for row in list_task_records(self.db_path):
-                if row['status'] == 'done':
-                    all_tasks.setdefault(row['task_id'], row['task'])
+            from .record import _list_task_records
+            for row in _list_task_records(self.db_path, statuses=('done',)):
+                all_tasks.setdefault(row['task_id'], row['task'])
         from .utils import merge_task_into_cfg
         # Partial overrides still inherit the master's defaults. Reuse each
         # effective item for both guard passes; queue payloads remain unchanged.
@@ -410,15 +409,16 @@ class ParallelExecutor:
             bool: True if tasks completed successfully (or not waiting), False on timeout/failure
         """
         from flexlock.taskdb import dump_to_yaml
-        from flexlock.record import list_task_records
+        from flexlock.record import _list_task_records
         from flexlock.outputs import validate_outputs
         from flexlock.utils import merge_task_into_cfg
 
         # Already-done DB rows are reused without being claimed by a worker.
         # Validate their resolved receipts before taking that shortcut.
         requested_ids = {_taskdb_hash_task(task) for task in self.tasks}
-        requested_rows = [row for row in list_task_records(self.db_path)
-                          if row['task_id'] in requested_ids]
+        requested_rows = _list_task_records(
+            self.db_path, task_ids=requested_ids,
+            statuses=('done', 'failed', 'interrupted'))
         prior_failure = any(row['status'] in ('failed', 'interrupted') for row in requested_rows)
         for row in requested_rows:
             if row['status'] != 'done':

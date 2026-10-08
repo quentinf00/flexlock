@@ -120,6 +120,12 @@ def list_task_records(db_path, tags=None, check_outputs=False, *, _task_id=None)
     The database is authoritative for status/result; directories carry artifact
     contracts. Unknown fields in historical schemas remain absent/None.
     """
+    return _list_task_records(db_path, tags, check_outputs, _task_id=_task_id)
+
+
+def _list_task_records(db_path, tags=None, check_outputs=False, *, _task_id=None,
+                       task_ids=None, statuses=None) -> list:
+    """Internal selection before decoding; public records keep their full shape."""
     import sqlite3
     from urllib.parse import quote
 
@@ -129,12 +135,27 @@ def list_task_records(db_path, tags=None, check_outputs=False, *, _task_id=None)
         columns = {row[1] for row in conn.execute('PRAGMA table_info(tasks)')}
         if 'task_id' not in columns:
             raise ValueError(f'No task table in {db}')
-        sql = 'SELECT * FROM tasks' + (' WHERE task_id=?' if _task_id is not None else '') + ' ORDER BY task_id'
-        records = [dict(row) for row in conn.execute(sql, (_task_id,) if _task_id is not None else ())]
+        clauses, params = [], []
+        if _task_id is not None:
+            clauses.append('task_id=?')
+            params.append(_task_id)
+        if statuses is not None:
+            statuses = tuple(statuses)
+            if not statuses:
+                return []
+            clauses.append('status IN (' + ','.join('?' for _ in statuses) + ')')
+            params.extend(statuses)
+        sql = 'SELECT * FROM tasks' + (' WHERE ' + ' AND '.join(clauses) if clauses else '') + ' ORDER BY task_id'
+        records = [dict(row) for row in conn.execute(sql, params)]
+    if not records:
+        return []
     master = read_lock(db.parent) or {}
     selected = {tags} if isinstance(tags, str) else set(tags or [])
+    requested = set(task_ids) if task_ids is not None else None
     result = []
     for row in records:
+        if requested is not None and row['task_id'] not in requested:
+            continue
         if selected and row.get('tag') not in selected:
             continue
         task = yaml.load(row.get('task_info') or '{}', Loader=_Loader)
