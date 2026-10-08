@@ -273,6 +273,19 @@ subset/context reproduction, retain serial fallback, investigate the outlier and
 run full-submission acceptance before enabling process compilation. Continue
 avoiding redundant reconstruction; a new general pipeline framework is unnecessary.
 
+The [full process-preparation experiment](../reports/2026-10-08-process-preparation/report.md)
+at fd4428c integrates a private opt-in compiler with pickled OmegaConf transport,
+canonical-config eligibility and serial fallback. Default adoption is rejected.
+Full 1,000-item medians for serial/2/4 processes: plain 19.413/22.406/16.842s,
+producer-bearing 28.393/24.363/94.644s. Four-process producer compilation stalls
+up to 163.680s with only 14.186 aggregate child CPU seconds; plain compilation
+also stalls. Waiting is evident, its source remains unproven. Focused acceptance:
+165 passes, two expected skips, 18 equivalent queues, 612 independently verified
+products (512 actually process-compiled). Interactive contexts also stay serial.
+Files remain 2,007. Preserve serial defaults; next reduce the executor's repeated
+merge/reconstruction of already-compiled items while retaining public partial
+overrides. Per-worker timing diagnostics are needed before reconsidering pools.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

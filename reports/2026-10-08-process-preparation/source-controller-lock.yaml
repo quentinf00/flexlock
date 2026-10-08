@@ -1,0 +1,30 @@
+timestamp: '2026-10-08T21:43:26.709594'
+task_record: dir
+shared_save_dirs: []
+repos:
+  main:
+    commit: b9b5d965357520524fd0bae8f7b0cbcbe3f4083c
+    tree: 4d5a4b90bfbb9b6b6a3a7cf9dd5856feec8be8e5
+    is_dirty: false
+    include:
+    - benchmarks
+    path: /ontap/user/qfebvre/flexlock-execution-validation
+env:
+  main/pixi.lock: 0c13f479a9b136232de4e4f83e56fc3fd19bbbd0ab3840110fcf0e6749d4d22c
+discovery:
+  repos:
+    main:
+      path: /ontap/user/qfebvre/flexlock-execution-validation
+      method: explicit
+  lineage: []
+config:
+  save_dir: /ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-process-preparation/source-1000/runs
+  _snapshot_:
+    discover:
+      repos: false
+      prevs: false
+    repos:
+      main:
+        path: /ontap/user/qfebvre/flexlock-execution-validation
+        include:
+        - benchmarks

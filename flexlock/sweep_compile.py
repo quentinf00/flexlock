@@ -9,6 +9,7 @@ import multiprocessing
 import os
 import pickle
 import re
+import sys
 from concurrent.futures import ProcessPoolExecutor
 
 from omegaconf import DictConfig, ListConfig, OmegaConf
@@ -59,6 +60,9 @@ def _workers(base, sweep):
         return 1
     # Never create a nested preparation pool in a spawned child.
     if multiprocessing.current_process().name != 'MainProcess':
+        return 1
+    entry = getattr(sys.modules.get('__main__'), '__file__', None)
+    if not entry or entry.startswith('<'):
         return 1
     available = len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else (os.cpu_count() or 1)
     allocation = int(os.environ.get('SLURM_CPUS_PER_TASK', str(available)))

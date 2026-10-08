@@ -1,0 +1,9 @@
+{
+  "equivalent_queues": 18,
+  "queued_items": 18000,
+  "normalized": "Output case prefix only; all config fields compared by item.",
+  "verified_local_products": 612,
+  "local_process_items": 512,
+  "scheduler": "mocked only",
+  "default_processes": 1
+}

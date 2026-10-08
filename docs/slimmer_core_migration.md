@@ -259,6 +259,15 @@ serial fallback, CPU budget and end-to-end semantics must precede integration.
 
 ## Rollout and stop rules
 
+The [full process-preparation experiment](../reports/2026-10-08-process-preparation/report.md)
+adds an opt-in canonical-config compiler at fd4428c, preserving OmegaConf transport
+and serial fallback. Default adoption is rejected: plain serial/2/4 total medians
+are 19.413/22.406/16.842s; producer-bearing 28.393/24.363/94.644s, with a 186.817s
+total slow run. The delay's root cause remains unresolved. Serial compilation and
+two-worker metadata I/O remain defaults. Next reduce repeated executor merges of
+already-compiled items while preserving public partial-override semantics; avoid
+expanding process/context machinery as a prerequisite for the slimmer core.
+
 T7 implements this plan. T6 can migrate invariants and source routing independently,
 without copying speculative execution APIs. The shared knowledge repository links
 actual tool semantics; it does not become another CLI manual.

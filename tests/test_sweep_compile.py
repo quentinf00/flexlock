@@ -56,7 +56,7 @@ class Typed:
     item: int = 0
 
 
-@pytest.mark.parametrize('case', ['small', 'custom', 'latest', 'run', 'typed', 'nested_typed', 'cache', 'attached', 'cpu'])
+@pytest.mark.parametrize('case', ['small', 'custom', 'latest', 'run', 'typed', 'nested_typed', 'cache', 'attached', 'cpu', 'interactive'])
 def test_unsupported_contexts_stay_serial(processes, monkeypatch, case):
     base = OmegaConf.create(dict(item=0))
     sweep = [dict(item=i) for i in range(6)]
@@ -74,6 +74,8 @@ def test_unsupported_contexts_stay_serial(processes, monkeypatch, case):
         base = OmegaConf.create(dict(stage=base)).stage
     elif case == 'cpu':
         monkeypatch.setenv('SLURM_CPUS_PER_TASK', '1')
+    elif case == 'interactive':
+        monkeypatch.setattr(sc.sys.modules['__main__'], '__file__', '<stdin>')
     assert sc._workers(base, sweep) == 1
 
 
