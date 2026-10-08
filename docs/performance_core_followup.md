@@ -156,6 +156,52 @@ Dask, so the Submitit benchmark is not a measurement of that execution path.
 
 ## Implementation order
 
+### Preparation optimization pass — 2026-10-08
+
+Treat automatic cache misses as outside this optimization pass: their default
+disablement/deprecation belongs to policy migration. Optimize ordinary cache-off
+preparation, measured at 32 seconds for 1,000 items on NFS (36 seconds with source
+tracking in a single sample). Keep sweep-file usage and correlated overrides.
+
+The separate 100-item preparation profile took 6.54 seconds. OmegaConf.create
+was called 504 times and accounted for 2.39 cumulative seconds; task/config merge
+was called 301 times (1.37 seconds); binding transformation took 1.44 seconds.
+These overlap. Profiler overhead prevents treating those proportions as an exact
+breakdown of the unprofiled 32-second run. Destination guard and reservation calls
+took 0.58 seconds combined, and queue insertion/serialization took 0.34 seconds.
+Configuration repetition is the first measured target; 2,007 preparation files
+remain a separate metadata concern.
+
+Proceed now with a bounded optimization investigation and small implementation
+slices, rather than another architecture redesign:
+
+1. Trace controller compilation through Project._submit_sweep and ParallelExecutor.
+   The controller already has effective per-item configs. The executor merges
+   them again for shared-product-root calculation and destination reservation.
+   Identify which master metadata those merges supply before removing them.
+2. Reuse validated compiled items/derived destination metadata internally, while
+   retaining the existing merge path for low-level executor callers that supply
+   actual partial overrides. Do not infer that task_target=None always means a
+   complete config. Avoid a new public execution mode or second queue format.
+3. Reduce config/container reconstruction during freezing and producer binding.
+   A no-binding fast path must preserve latest/run references, indirect relevant
+   resolution, literal escaping and argument interpolation. Do not disable the
+   guards or blindly mutate caller configs to reduce allocations.
+4. Run focused acceptance for interpolation, @ replacements, upstream binding,
+   future --after inputs, campaign membership and collision refusal before launch.
+   Compare queued effective configs and recorded selections with the baseline.
+5. Measure each slice independently: first a 100-item profile and a fresh
+   1,000-item mocked submission with cache off, then three repeats once the slice
+   is stable. Add a tracked preparation sample, verify pending membership and
+   payloads, and record source revision. Do not change source during timed runs.
+
+Keep constructor counts and phase timings in the evidence. Prefer call-site timer
+instrumentation for an unprofiled phase breakdown; cProfile is for locating work.
+Once configuration reuse is measured and correct, tackle pointer duplication and
+the much larger worker source/drift costs separately. Asynchronous execution is
+not the first remedy. A drop in constructor counts without a material elapsed-time
+improvement is not sufficient acceptance; no speedup or target time is claimed yet.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item
