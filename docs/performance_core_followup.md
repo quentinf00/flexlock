@@ -244,6 +244,20 @@ Next deduplicate repeated ancestor probes within destination preflight, preservi
 per-product locks and legacy/current ownership checks; measure with matched fresh
 comparisons and phase timers before accepting further speed claims.
 
+The [bounded I/O pass](../reports/2026-10-08-preparation-io/report.md) is implemented
+at a27a304. Unique ancestor probes are deduplicated; product metadata reads and
+reservation writes use two joined I/O workers under held controller locks.
+Config resolution, lock acquisition and SQLite commits remain coordinated. An
+interleaved original/1/2/4 comparison measured medians 16.120/17.724/15.249/15.223s.
+Two workers were faster than the original in each corresponding repeat; four's
+median was essentially identical with more variation. Reservation median fell
+2.661s → 1.509s. Deduplication alone did not establish a speedup; files stay 2,007.
+Default acceptance: 120 passes, two expected serial join-test skips, 12 equivalent
+queues and 100 verified products. Required failures join all I/O before releasing
+locks and prevent dispatch. Next investigate configuration reuse/batched process
+compilation with resolver/import/lineage semantics and startup costs explicit;
+these preparation threads do not make current resolver registration thread-safe.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

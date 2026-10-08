@@ -241,6 +241,14 @@ additional elapsed speedup. Unprofiled phase evidence redirects attention to
 merging/freezing and guard/reservation metadata work. Next inspect repeated
 ancestor probes while retaining lock/ownership guarantees and historical readers.
 
+The [bounded preparation I/O pass](../reports/2026-10-08-preparation-io/report.md)
+at a27a304 defaults to two joined I/O workers for guarded metadata/reservation
+work. Interleaved original/1/2/4 medians: 16.120/17.724/15.249/15.223s; two matches
+four without its variation. Default focused checks: 120 passes, two expected
+serial-only skips. Locks, active queue ownership and pre-submit failure barriers
+remain intact; file count stays 2,007. Config process compilation still requires
+resolver/context and startup-cost investigation; no production scaling acceptance.
+
 ## Rollout and stop rules
 
 T7 implements this plan. T6 can migrate invariants and source routing independently,

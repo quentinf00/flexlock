@@ -1,0 +1,38 @@
+{
+  "kind": "flexlock-local",
+  "count": 100,
+  "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-prep-io-default-local",
+  "provenance": false,
+  "data": false,
+  "cache_search": false,
+  "task_record": "dir",
+  "seconds": 8.80484971916303,
+  "phases": {
+    "submit_and_run": 8.797084334073588
+  },
+  "details": {
+    "items": 100,
+    "statuses": [
+      [
+        "done",
+        100
+      ]
+    ],
+    "scheduler_calls": 0,
+    "validated_products": 100
+  },
+  "source_revision": "a27a304e4bc01093b55cc7e266999130f840ebc7",
+  "fixture_file_count": 1000,
+  "fixture_bytes": 4096000,
+  "artifact_files": 705,
+  "artifact_bytes": 445317,
+  "peak_rss_kib": 80772,
+  "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+  "versions": {
+    "hydra-core": "1.3.2",
+    "hydra-zen": "0.16.0",
+    "hydra-submitit-launcher": "1.2.0",
+    "submitit": "1.5.4",
+    "omegaconf": "2.3.1"
+  }
+}

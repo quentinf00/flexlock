@@ -1,0 +1,107 @@
+{
+  "original": {
+    "seconds": [
+      16.12046065996401,
+      18.071967388037592,
+      16.000552743906155
+    ],
+    "median": 16.12046065996401,
+    "peak_rss_kib": [
+      139840,
+      141992,
+      140616
+    ],
+    "phase_medians": {
+      "merge": 3.464837375562638,
+      "freeze_bind": 2.937673916807398,
+      "guard_entry": 3.064020449994132,
+      "queue_insert": 1.22231784183532,
+      "reservation_write": 2.661061156075448,
+      "executor_constructor": 6.868676621001214,
+      "record_selection_materialization": 0.26456482498906553,
+      "executor_run": 0.26508922199718654,
+      "collect_results": 0.41993511794134974,
+      "guard_exit": 0.515356085030362,
+      "submit_sweep_total": 16.108644836116582
+    }
+  },
+  "io-1": {
+    "seconds": [
+      18.200125501025468,
+      17.72449558088556,
+      15.661683595040813
+    ],
+    "median": 17.72449558088556,
+    "peak_rss_kib": [
+      144308,
+      140192,
+      140820
+    ],
+    "phase_medians": {
+      "merge": 3.571761118248105,
+      "freeze_bind": 3.3077519109938294,
+      "guard_entry": 3.558607003185898,
+      "queue_insert": 1.2846797110978514,
+      "reservation_write": 3.0620160929393023,
+      "executor_constructor": 7.199897897196934,
+      "record_selection_materialization": 0.25892756320536137,
+      "executor_run": 0.2687177618499845,
+      "collect_results": 0.41959603410214186,
+      "guard_exit": 0.5159611648414284,
+      "submit_sweep_total": 17.712762491079047
+    }
+  },
+  "io-2": {
+    "seconds": [
+      15.18459927290678,
+      15.526063691824675,
+      15.249066717922688
+    ],
+    "median": 15.249066717922688,
+    "peak_rss_kib": [
+      142808,
+      143224,
+      143852
+    ],
+    "phase_medians": {
+      "merge": 3.60056496062316,
+      "freeze_bind": 3.270689205499366,
+      "guard_entry": 2.8478094479069114,
+      "queue_insert": 1.089942127931863,
+      "reservation_write": 1.5085338100325316,
+      "executor_constructor": 5.474739253986627,
+      "record_selection_materialization": 0.2756980222184211,
+      "executor_run": 0.25702875293791294,
+      "collect_results": 0.4247023321222514,
+      "guard_exit": 0.5501417659688741,
+      "submit_sweep_total": 15.237765070982277
+    }
+  },
+  "io-4": {
+    "seconds": [
+      15.222509616985917,
+      14.44144788198173,
+      17.628493580035865
+    ],
+    "median": 15.222509616985917,
+    "peak_rss_kib": [
+      145492,
+      144564,
+      142384
+    ],
+    "phase_medians": {
+      "merge": 3.3807206233032048,
+      "freeze_bind": 2.9577597798779607,
+      "guard_entry": 3.4618150261230767,
+      "queue_insert": 1.288207208039239,
+      "reservation_write": 0.9777494040317833,
+      "executor_constructor": 5.1530563870910555,
+      "record_selection_materialization": 0.28056427417322993,
+      "executor_run": 0.2728031971491873,
+      "collect_results": 0.42781642684713006,
+      "guard_exit": 0.5397623400203884,
+      "submit_sweep_total": 15.21112077892758
+    }
+  },
+  "median_reduction_percent": 5.405515142662609
+}

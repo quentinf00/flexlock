@@ -1,0 +1,9 @@
+{
+  "equivalent_queues": 12,
+  "items_per_queue": 1000,
+  "normalized": "Output case prefix only; compare all fields by item.",
+  "local_sha256_products": 100,
+  "scheduler": "mocked only",
+  "default_io_workers": 2,
+  "test_scope": "Focused tests; injected failures join outstanding operations under held locks, no scheduler on reservation failure; legacy and cross-tag guards retained."
+}

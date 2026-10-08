@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="2" tests="18" time="0.559" timestamp="2026-10-08T15:53:11.991080+02:00" hostname="compute-118-39"><testcase classname="tests.test_preparation_io" name="test_shared_ancestors_are_probed_once[1]" time="0.009" /><testcase classname="tests.test_preparation_io" name="test_shared_ancestors_are_probed_once[2]" time="0.010" /><testcase classname="tests.test_preparation_io" name="test_shared_ancestors_are_probed_once[4]" time="0.011" /><testcase classname="tests.test_preparation_io" name="test_ancestor_queue_still_blocks_before_body[1]" time="0.008" /><testcase classname="tests.test_preparation_io" name="test_ancestor_queue_still_blocks_before_body[2]" time="0.008" /><testcase classname="tests.test_preparation_io" name="test_ancestor_queue_still_blocks_before_body[4]" time="0.007" /><testcase classname="tests.test_preparation_io" name="test_reservations_deduplicate_aliases_and_finish_before_return[1]" time="0.003" /><testcase classname="tests.test_preparation_io" name="test_reservations_deduplicate_aliases_and_finish_before_return[2]" time="0.002" /><testcase classname="tests.test_preparation_io" name="test_reservations_deduplicate_aliases_and_finish_before_return[4]" time="0.001" /><testcase classname="tests.test_preparation_io" name="test_failed_io_joins_other_operations_before_releasing_locks[1-preflight]" time="0.001"><skipped type="pytest.skip" message="join ordering requires concurrent I/O">/ontap/user/qfebvre/flexlock-execution-validation/tests/test_preparation_io.py:52: join ordering requires concurrent I/O</skipped></testcase><testcase classname="tests.test_preparation_io" name="test_failed_io_joins_other_operations_before_releasing_locks[1-reservation]" time="0.001"><skipped type="pytest.skip" message="join ordering requires concurrent I/O">/ontap/user/qfebvre/flexlock-execution-validation/tests/test_preparation_io.py:52: join ordering requires concurrent I/O</skipped></testcase><testcase classname="tests.test_preparation_io" name="test_failed_io_joins_other_operations_before_releasing_locks[2-preflight]" time="0.005" /><testcase classname="tests.test_preparation_io" name="test_failed_io_joins_other_operations_before_releasing_locks[2-reservation]" time="0.006" /><testcase classname="tests.test_preparation_io" name="test_failed_io_joins_other_operations_before_releasing_locks[4-preflight]" time="0.004" /><testcase classname="tests.test_preparation_io" name="test_failed_io_joins_other_operations_before_releasing_locks[4-reservation]" time="0.006" /><testcase classname="tests.test_preparation_io" name="test_reservation_failure_prevents_scheduler_submission[1]" time="0.015"><failure message="TypeError: Project.submit() got an unexpected keyword argument 'dir_suffix'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-123/test_reservation_failure_preve0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7f49fdc58ad0&gt;
+workers = 1
+
+    def test_reservation_failure_prevents_scheduler_submission(tmp_path, monkeypatch, workers):
+        from unittest.mock import MagicMock
+        from omegaconf import OmegaConf
+        from flexlock.api import Project
+        backend = MagicMock()
+        monkeypatch.setattr('flexlock.parallel.SlurmBackend', lambda **kw: backend)
+        def fail(*args):
+            raise OSError('injected reservation failure')
+        monkeypatch.setattr(guard, '_write_reservation', fail)
+        cfg = OmegaConf.create(dict(_target_='tests.test_save_dir_guard.guard_stage',
+            save_dir=str(tmp_path/'products'), value=1,
+            _snapshot_=dict(discover=dict(repos=False, prevs=False))))
+        profile = tmp_path/'slurm.yaml'
+        profile.write_text('startup_lines: []\n')
+        with pytest.raises(OSError, match='injected reservation failure'):
+&gt;           Project().submit(cfg, sweep=[dict(value=1),dict(value=2)], dir_suffix=True,
+                             slurm_config=str(profile), smart_run=False, wait=False)
+E           TypeError: Project.submit() got an unexpected keyword argument 'dir_suffix'
+
+tests/test_preparation_io.py:109: TypeError</failure></testcase><testcase classname="tests.test_preparation_io" name="test_reservation_failure_prevents_scheduler_submission[2]" time="0.002"><failure message="TypeError: Project.submit() got an unexpected keyword argument 'dir_suffix'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-123/test_reservation_failure_preve1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7f49fd280850&gt;
+workers = 2
+
+    def test_reservation_failure_prevents_scheduler_submission(tmp_path, monkeypatch, workers):
+        from unittest.mock import MagicMock
+        from omegaconf import OmegaConf
+        from flexlock.api import Project
+        backend = MagicMock()
+        monkeypatch.setattr('flexlock.parallel.SlurmBackend', lambda **kw: backend)
+        def fail(*args):
+            raise OSError('injected reservation failure')
+        monkeypatch.setattr(guard, '_write_reservation', fail)
+        cfg = OmegaConf.create(dict(_target_='tests.test_save_dir_guard.guard_stage',
+            save_dir=str(tmp_path/'products'), value=1,
+            _snapshot_=dict(discover=dict(repos=False, prevs=False))))
+        profile = tmp_path/'slurm.yaml'
+        profile.write_text('startup_lines: []\n')
+        with pytest.raises(OSError, match='injected reservation failure'):
+&gt;           Project().submit(cfg, sweep=[dict(value=1),dict(value=2)], dir_suffix=True,
+                             slurm_config=str(profile), smart_run=False, wait=False)
+E           TypeError: Project.submit() got an unexpected keyword argument 'dir_suffix'
+
+tests/test_preparation_io.py:109: TypeError</failure></testcase><testcase classname="tests.test_preparation_io" name="test_reservation_failure_prevents_scheduler_submission[4]" time="0.002"><failure message="TypeError: Project.submit() got an unexpected keyword argument 'dir_suffix'">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-123/test_reservation_failure_preve2')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7f49fd281f90&gt;
+workers = 4
+
+    def test_reservation_failure_prevents_scheduler_submission(tmp_path, monkeypatch, workers):
+        from unittest.mock import MagicMock
+        from omegaconf import OmegaConf
+        from flexlock.api import Project
+        backend = MagicMock()
+        monkeypatch.setattr('flexlock.parallel.SlurmBackend', lambda **kw: backend)
+        def fail(*args):
+            raise OSError('injected reservation failure')
+        monkeypatch.setattr(guard, '_write_reservation', fail)
+        cfg = OmegaConf.create(dict(_target_='tests.test_save_dir_guard.guard_stage',
+            save_dir=str(tmp_path/'products'), value=1,
+            _snapshot_=dict(discover=dict(repos=False, prevs=False))))
+        profile = tmp_path/'slurm.yaml'
+        profile.write_text('startup_lines: []\n')
+        with pytest.raises(OSError, match='injected reservation failure'):
+&gt;           Project().submit(cfg, sweep=[dict(value=1),dict(value=2)], dir_suffix=True,
+                             slurm_config=str(profile), smart_run=False, wait=False)
+E           TypeError: Project.submit() got an unexpected keyword argument 'dir_suffix'
+
+tests/test_preparation_io.py:109: TypeError</failure></testcase></testsuite></testsuites>
