@@ -220,6 +220,13 @@ check boundaries, pointer/outcome consolidation, a proposed manual config-search
 command and the verified nextgems month-config replacement. Automatic discovery
 removal is not yet implemented; measured performance is not accepted scalability.
 
+The [first preparation optimization](../reports/2026-10-08-preparation-reuse/report.md)
+at 0629889 reuses effective executor configs across guard passes. Fresh 1,000-item
+cache-off medians fell from 30.807s to 23.315s (three repeats), with equivalent queue
+payloads and 183 distinct focused cases passing across rechecks. File count remains
+2,007 and peak RSS increased about 7.1 MiB. Next: safe freezing/binding reuse;
+source-worker repetition and bookkeeping consolidation remain separate work.
+
 ## Rollout and stop rules
 
 T7 implements this plan. T6 can migrate invariants and source routing independently,

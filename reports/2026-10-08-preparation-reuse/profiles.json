@@ -1,0 +1,58 @@
+{
+  "earlier_before": {
+    "path": "/ontap/user/qfebvre/flexlock-hydra-benchmark/supplement/profile-flexlock-submit/profile.pstats",
+    "sha256": "dd5516320d04f9c0ff5026be6093b16a59873e39379f8d13244adf9c33a551de",
+    "profiler_total_seconds": 6.517972312999999,
+    "functions": {
+      "bind_existing_run_locks": {
+        "calls": 100,
+        "cumulative_seconds": 1.442863478,
+        "self_seconds": 0.0016290800000000002,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/resolvers.py",
+        "line": 328
+      },
+      "create": {
+        "calls": 504,
+        "cumulative_seconds": 2.3940757350000004,
+        "self_seconds": 0.000455937,
+        "source": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172
+      },
+      "merge_task_into_cfg": {
+        "calls": 301,
+        "cumulative_seconds": 1.368148728,
+        "self_seconds": 0.000646641,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py",
+        "line": 748
+      }
+    }
+  },
+  "after": {
+    "path": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-prep-slice1-profile/profile.pstats",
+    "sha256": "516936889e1714cd4890fc2cac6f8b1f908ec9f4bd2f44da444fdf570dc3aa0a",
+    "profiler_total_seconds": 6.973937827000005,
+    "functions": {
+      "bind_existing_run_locks": {
+        "calls": 100,
+        "cumulative_seconds": 1.565609999,
+        "self_seconds": 0.001803665,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/resolvers.py",
+        "line": 328
+      },
+      "create": {
+        "calls": 404,
+        "cumulative_seconds": 2.088263022,
+        "self_seconds": 0.000463728,
+        "source": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172
+      },
+      "merge_task_into_cfg": {
+        "calls": 201,
+        "cumulative_seconds": 1.195127166,
+        "self_seconds": 0.000659505,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py",
+        "line": 748
+      }
+    }
+  }
+}

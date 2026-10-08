@@ -200,7 +200,21 @@ instrumentation for an unprofiled phase breakdown; cProfile is for locating work
 Once configuration reuse is measured and correct, tackle pointer duplication and
 the much larger worker source/drift costs separately. Asynchronous execution is
 not the first remedy. A drop in constructor counts without a material elapsed-time
-improvement is not sufficient acceptance; no speedup or target time is claimed yet.
+improvement is not sufficient acceptance.
+
+The [first preparation slice](../reports/2026-10-08-preparation-reuse/report.md)
+is implemented at 0629889. Effective executor configs are reused across the
+shared-output and destination guard passes, while partial overrides still inherit
+master defaults. Fresh cache-off 1,000-item medians fell from 30.807s to 23.315s
+(24.3%, three repeats per revision). The 100-item profile shows 201 merges and
+404 OmegaConf creations, down from 301 and 504. Peak RSS increased about 7.1 MiB;
+file count remains 2,007. All six queues have equivalent item payloads after
+normalizing destination prefixes; 100 local products match input checksums.
+Focused acceptance covers 183 distinct cases across the initial run and rechecks,
+with initial failures and baseline reproductions retained. Source-tracked
+preparation took 31.500s in one sample; tracked worker costs remain unoptimized.
+The next slice is safe freezing/binding reconstruction reuse. Preparation is still
+too slow; no target time or production scalability is accepted.
 
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while

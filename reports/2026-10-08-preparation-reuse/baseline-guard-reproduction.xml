@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="4.477" timestamp="2026-10-08T11:36:13.347982+02:00" hostname="compute-118-39"><testcase classname="tests.test_registry_items" name="test_shared_declared_output_collision_rejected_before_execution" time="0.065"><failure message="AssertionError: assert not True&#10; +  where True = exists()&#10; +    where exists = (PosixPath('/tmp/pytest-of-qfebvre/pytest-110/test_shared_declared_output_co0') / 'products').exists">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-110/test_shared_declared_output_co0')
+
+    def test_shared_declared_output_collision_rejected_before_execution(tmp_path):
+        cfg = config(tmp_path); cfg._outputs_.chunk.path = 'same.json'
+        with pytest.raises(FlexLockValidationError, match='overlapping output'):
+            Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], smart_run=False)
+&gt;       assert not (tmp_path/'products').exists()
+E       AssertionError: assert not True
+E        +  where True = exists()
+E        +    where exists = (PosixPath('/tmp/pytest-of-qfebvre/pytest-110/test_shared_declared_output_co0') / 'products').exists
+
+/ontap/user/qfebvre/flexlock-execution-validation/tests/test_registry_items.py:146: AssertionError</failure></testcase><testcase classname="tests.test_workflow_integrity" name="test_pipeline_cli_failure_and_resume" time="4.054"><failure message="AssertionError: assert not True&#10; +  where True = exists()&#10; +    where exists = (PosixPath('/tmp/pytest-of-qfebvre/pytest-110/test_pipeline_cli_failure_and_0') / 'last').exists">tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-110/test_pipeline_cli_failure_and_0')
+
+    def test_pipeline_cli_failure_and_resume(tmp_path):
+        cfg = tmp_path / "pipeline.yaml"
+        cfg.write_text(OmegaConf.to_yaml(OmegaConf.create({
+            "first": stage(tmp_path / "first"),
+            "bad": stage(tmp_path / "bad", fail=True),
+            "last": stage(tmp_path / "last"),
+        })))
+        command = [sys.executable, "-m", "flexlock.run_cli", "-c", str(cfg),
+                   "-s", "first", "bad", "last"]
+        failure = subprocess.run(command, capture_output=True, text=True)
+        assert failure.returncode != 0, failure.stderr
+        assert (tmp_path / "first/run.complete").exists()
+&gt;       assert not (tmp_path / "last").exists()
+E       AssertionError: assert not True
+E        +  where True = exists()
+E        +    where exists = (PosixPath('/tmp/pytest-of-qfebvre/pytest-110/test_pipeline_cli_failure_and_0') / 'last').exists
+
+/ontap/user/qfebvre/flexlock-execution-validation/tests/test_workflow_integrity.py:102: AssertionError</failure></testcase></testsuite></testsuites>
