@@ -127,6 +127,8 @@ class ParallelExecutor:
         note: str | None = None,
         task_record: str | None = None,
         after=None,
+        *,
+        _compiled_tasks: bool = False,
     ):
         """Initializes the ParallelExecutor.
 
@@ -186,8 +188,15 @@ class ParallelExecutor:
         from .utils import merge_task_into_cfg
         # Partial overrides still inherit the master's defaults. Reuse each
         # effective item for both guard passes; queue payloads remain unchanged.
+        # Project's frozen items already contain their guard inputs. Its wrapper
+        # only supplies controller provenance and a queue root. Reuse those items
+        # for preflight, but keep worker merges and historical partial rows intact.
+        reuse_compiled = (_compiled_tasks and task_target is None
+                          and set(cfg.keys()) <= {'save_dir', '_snapshot_'})
+        requested_ids = set(task_ids)
         compiled_items = {
-            task_id: merge_task_into_cfg(cfg, task, task_target)
+            task_id: (task if reuse_compiled and task_id in requested_ids and isinstance(task, DictConfig)
+                      and 'save_dir' in task else merge_task_into_cfg(cfg, task, task_target))
             for task_id, task in all_tasks.items()
         }
         self.shared_save_dirs = _shared_product_roots_from_items(compiled_items.values())

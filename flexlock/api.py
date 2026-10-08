@@ -1966,6 +1966,7 @@ class Project:
                     func=func,
                     tasks=task_configs,  # List of configs to execute
                     task_target=None,  # Each task is already a complete config
+                    _compiled_tasks=True,  # Reuse frozen configs for preparation guards
                     cfg=executor_cfg,  # Master config for tracking
                     n_jobs=n_jobs,
                     pbs_config=pbs_config,
