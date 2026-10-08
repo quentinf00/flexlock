@@ -68,7 +68,24 @@ def _freeze_and_bind(cfg, *, allow_future=False):
     from .resolvers import _bind_detached_run_locks
 
     detached = freeze_deferred(cfg, defer_runs=allow_future)
+    # Only scan AFTER the full freeze: aliases and custom resolver results may
+    # reveal producer reads that were not visible in the original strings.
+    # Escaped interpolation text conservatively takes the ordinary binding path.
+    raw = OmegaConf.to_container(detached, resolve=False)
+    if not _contains_interpolation(raw):
+        return detached
     return _bind_detached_run_locks(detached, allow_future=allow_future)
+
+
+def _contains_interpolation(value):
+    """Conservative scan of a fully frozen plain container, never a pre-freeze cfg."""
+    if isinstance(value, str):
+        return '${' in value
+    if isinstance(value, dict):
+        return any(_contains_interpolation(v) for v in value.values())
+    if isinstance(value, list):
+        return any(_contains_interpolation(v) for v in value)
+    return False
 
 
 def select_and_freeze_root_refs(root_cfg: DictConfig, key: str | None) -> DictConfig:

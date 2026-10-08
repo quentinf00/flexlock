@@ -42,3 +42,31 @@ def test_combined_freeze_binding_preserves_values_and_caller(tmp_path, case, rea
         assert OmegaConf.to_container(resolve_deferred(actual), resolve=True) == OmegaConf.to_container(resolve_deferred(expected), resolve=True)
     else:
         assert str(tmp_path/'future') in OmegaConf.to_container(actual, resolve=False)['value']
+
+
+def test_resolver_returned_producer_read_still_binds_after_freeze(tmp_path):
+    source = tmp_path/'producer'
+    source.mkdir()
+    RunRecord(source).write_lock(dict(config=dict(value=41), timestamp='fixed'))
+    # The live producer call exists only in a custom resolver's returned string.
+    OmegaConf.register_new_resolver('hidden_producer', lambda: '${run_lock:'+str(source)+',config.value}')
+    try:
+        cfg = OmegaConf.create(dict(value='${hidden_producer:}'))
+        actual = _freeze_and_bind(cfg)
+        assert actual.value == 41
+        assert actual._snapshot_.run_lock_reads[0].binding == 'submit'
+        RunRecord(source).write_lock(dict(config=dict(value=99), timestamp='replaced'))
+        from flexlock.exceptions import FlexLockValidationError
+        with pytest.raises(FlexLockValidationError, match='changed or disappeared'):
+            resolve_deferred(actual)
+    finally:
+        OmegaConf.clear_resolver('hidden_producer')
+
+
+def test_plain_frozen_config_avoids_binding_pass(monkeypatch):
+    def unexpected(*args, **kwargs):
+        raise AssertionError('no interpolation remains to evaluate')
+    monkeypatch.setattr('flexlock.resolvers._bind_detached_run_locks', unexpected)
+    cfg = OmegaConf.create(dict(item=4, values=['${item}', dict(path='${item}/input')]))
+    assert OmegaConf.to_container(_freeze_and_bind(cfg), resolve=False) == dict(item=4, values=[4, dict(path='4/input')])
+    assert OmegaConf.to_container(cfg, resolve=False)['values'][0] == '${item}'
