@@ -59,6 +59,18 @@ def freeze_deferred(cfg: "DictConfig | ListConfig", *, defer_runs=False) -> "Dic
     return detached
 
 
+def _freeze_and_bind(cfg, *, allow_future=False):
+    """Reuse freeze's detached result as the binding working copy.
+
+    Public freeze/bind functions retain their copy semantics. Only the private
+    sweep compiler combines them without a second identical detachment.
+    """
+    from .resolvers import _bind_detached_run_locks
+
+    detached = freeze_deferred(cfg, defer_runs=allow_future)
+    return _bind_detached_run_locks(detached, allow_future=allow_future)
+
+
 def select_and_freeze_root_refs(root_cfg: DictConfig, key: str | None) -> DictConfig:
     """Select a sub-node from `root_cfg` and freeze its root-scope references.
 

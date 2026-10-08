@@ -1811,6 +1811,7 @@ class Project:
 
         # Build sweep configs first so we can validate save_dir containment
         # in one place, before any execution.
+        from .freeze import _freeze_and_bind
         merged_items = []
         for i, override in enumerate(sweep):
             # Merge the sweep item into the base FIRST, so item-injected keys
@@ -1823,9 +1824,7 @@ class Project:
             freeze_run_refs(sweep_cfg, defer_unpinned=bool(after))
             if after:
                 validate_chained_paths(sweep_cfg)
-            sweep_cfg = freeze_deferred(sweep_cfg, defer_runs=bool(after))
-            from .resolvers import bind_existing_run_locks
-            sweep_cfg = bind_existing_run_locks(sweep_cfg, allow_future=bool(after))
+            sweep_cfg = _freeze_and_bind(sweep_cfg, allow_future=bool(after))
             if dir_suffix and "save_dir" in sweep_cfg:
                 # Nest each item under the base save_dir (the sweep root) so
                 # tasks DB and lineage markers stay inside the same tree.

@@ -333,6 +333,12 @@ def bind_existing_run_locks(cfg: DictConfig, *, allow_future=False, future_paths
     once and its full record identity is checked again at stage start.
     """
     detached = OmegaConf.create(OmegaConf.to_container(cfg, resolve=False))
+    return _bind_detached_run_locks(detached, allow_future=allow_future,
+                                    future_paths=future_paths)
+
+
+def _bind_detached_run_locks(detached, *, allow_future=False, future_paths=()):
+    """Binding implementation for an already detached, privately owned config."""
     capture = _RunLockCapture()
     future_paths = {str(Path(path).resolve()) for path in future_paths}
 
