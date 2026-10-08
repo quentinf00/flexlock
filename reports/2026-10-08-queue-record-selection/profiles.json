@@ -1,0 +1,92 @@
+{
+  "before": {
+    "path": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-prep-slice2-profile/profile.pstats",
+    "sha256": "ecdd829b09a0afde371042cabdc603b3228022d9007827187fa9553c880c986a",
+    "profiler_total_seconds": 4.663599091,
+    "functions": {
+      "collect_results": {
+        "calls": 1,
+        "cumulative_seconds": 0.6378950330000001,
+        "self_seconds": 0.000659534,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 1682
+      },
+      "_hash_task": {
+        "calls": 600,
+        "cumulative_seconds": 0.40026572000000005,
+        "self_seconds": 0.002233311,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/taskdb.py",
+        "line": 40
+      },
+      "list_task_records": {
+        "calls": 2,
+        "cumulative_seconds": 1.004047925,
+        "self_seconds": 0.002098037,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/record.py",
+        "line": 117
+      },
+      "create": {
+        "calls": 204,
+        "cumulative_seconds": 0.6659301870000001,
+        "self_seconds": 0.00019011600000000002,
+        "source": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172
+      },
+      "merge_task_into_cfg": {
+        "calls": 201,
+        "cumulative_seconds": 1.066846165,
+        "self_seconds": 0.000523178,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py",
+        "line": 748
+      },
+      "producer_binding": {
+        "calls": 0
+      }
+    }
+  },
+  "after": {
+    "path": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-prep-slice3-profile/profile.pstats",
+    "sha256": "289edae792fb8b932c9ed52256000a01a487062cfe200ad2b63c235e7d9365d1",
+    "profiler_total_seconds": 4.192002511000002,
+    "functions": {
+      "collect_results": {
+        "calls": 1,
+        "cumulative_seconds": 0.130152655,
+        "self_seconds": 0.000380199,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py",
+        "line": 1682
+      },
+      "_hash_task": {
+        "calls": 500,
+        "cumulative_seconds": 0.34164003800000003,
+        "self_seconds": 0.001910627,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/taskdb.py",
+        "line": 40
+      },
+      "_list_task_records": {
+        "calls": 2,
+        "cumulative_seconds": 0.068167275,
+        "self_seconds": 0.0010105790000000002,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/record.py",
+        "line": 128
+      },
+      "create": {
+        "calls": 204,
+        "cumulative_seconds": 0.668037408,
+        "self_seconds": 0.00019465400000000002,
+        "source": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py",
+        "line": 172
+      },
+      "merge_task_into_cfg": {
+        "calls": 201,
+        "cumulative_seconds": 1.079872173,
+        "self_seconds": 0.00052738,
+        "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py",
+        "line": 748
+      },
+      "producer_binding": {
+        "calls": 0
+      }
+    }
+  }
+}

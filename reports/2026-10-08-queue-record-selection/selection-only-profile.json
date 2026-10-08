@@ -1,0 +1,18 @@
+{
+  "path": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-prep-slice3-selection-profile/profile.pstats",
+  "sha256": "e85db33b04c776a4f52c10abf8777a7c3303cc64300ef1818d541f632d2941b7",
+  "functions": {
+    "collect_results": {
+      "calls": 1,
+      "cumulative_seconds": 0.577048726
+    },
+    "_hash_task": {
+      "calls": 500,
+      "cumulative_seconds": 0.32729007600000004
+    },
+    "_list_task_records": {
+      "calls": 2,
+      "cumulative_seconds": 0.52060668
+    }
+  }
+}

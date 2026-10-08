@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+    "/tmp/preparation_phase_timers.py",
+    "--output",
+    "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-prep-slice3-phases",
+    "--inputs",
+    "/ontap/user/qfebvre/flexlock-hydra-benchmark/inputs"
+  ],
+  "environment": {
+    "PYTHONPATH": "/ontap/user/qfebvre/flexlock-benchmark-deps:/ontap/user/qfebvre/flexlock-execution-validation",
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1"
+  }
+}

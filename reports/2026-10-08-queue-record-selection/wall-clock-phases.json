@@ -1,0 +1,46 @@
+{
+  "merge": {
+    "calls": 2001,
+    "seconds": 3.4758105911314487
+  },
+  "freeze_bind": {
+    "calls": 1000,
+    "seconds": 2.961965099675581
+  },
+  "guard_entry": {
+    "calls": 1,
+    "seconds": 2.3466773540712893
+  },
+  "queue_insert": {
+    "calls": 1,
+    "seconds": 1.2999734049662948
+  },
+  "reservation_write": {
+    "calls": 1,
+    "seconds": 2.082303339848295
+  },
+  "executor_constructor": {
+    "calls": 1,
+    "seconds": 6.246270539006218
+  },
+  "record_selection_materialization": {
+    "calls": 2,
+    "seconds": 0.24805309204384685
+  },
+  "executor_run": {
+    "calls": 1,
+    "seconds": 0.2526267769280821
+  },
+  "collect_results": {
+    "calls": 1,
+    "seconds": 0.40444076899439096
+  },
+  "guard_exit": {
+    "calls": 1,
+    "seconds": 0.39251185418106616
+  },
+  "submit_sweep_total": {
+    "calls": 1,
+    "seconds": 14.608589729992673
+  }
+}

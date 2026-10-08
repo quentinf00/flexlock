@@ -1,0 +1,15 @@
+{
+  "pyyaml": "6.0.3",
+  "with_libyaml": true,
+  "record_loader_bases": [
+    "_Loader",
+    "CSafeLoader",
+    "CParser",
+    "SafeConstructor",
+    "BaseConstructor",
+    "Resolver",
+    "BaseResolver",
+    "object"
+  ],
+  "fallback": "yaml.SafeLoader"
+}

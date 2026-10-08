@@ -230,6 +230,20 @@ collection, with phase timings and preserved tag/resume/record semantics. A new
 fixture exposed an existing escaped-literal limitation in the old two-pass path;
 that separate fix needs a compatibility regression before broad adoption.
 
+The [queue-reader slice](../reports/2026-10-08-queue-record-selection/report.md)
+at 6211ef6 selects terminal/requested rows before decoding, reuses result hashes,
+and uses optional safe LibYAML parsing with the existing timestamp semantics and
+Python fallback. Final focused acceptance: 155 passes, equivalent queues and 100
+verified local products. Record materialization drops to 0.068 cumulative seconds
+per 100-item profile, but the 1,000-item median is 19.948s versus 20.209s: **no
+meaningful additional elapsed-time speedup is established**. Files remain 2,007.
+An unprofiled diagnostic sample (14.617s total) measured 6.4s merging/freezing,
+4.8s guard entry/exit plus reservation writes, and 0.25s record materialization.
+Nested timers overlap; this single faster run is not the accepted timing result.
+Next deduplicate repeated ancestor probes within destination preflight, preserving
+per-product locks and legacy/current ownership checks; measure with matched fresh
+comparisons and phase timers before accepting further speed claims.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

@@ -234,6 +234,13 @@ cases pass, queues remain equivalent, and file count remains 2,007. Next inspect
 repeated queue reads/materialization; escaped-literal compatibility and tracked
 worker source costs remain open. No production scalability acceptance follows.
 
+The [queue-reader slice](../reports/2026-10-08-queue-record-selection/report.md)
+at 6211ef6 filters before decoding and uses optional safe C record parsing;
+155 focused cases pass. Median 19.948s versus 20.209s establishes no meaningful
+additional elapsed speedup. Unprofiled phase evidence redirects attention to
+merging/freezing and guard/reservation metadata work. Next inspect repeated
+ancestor probes while retaining lock/ownership guarantees and historical readers.
+
 ## Rollout and stop rules
 
 T7 implements this plan. T6 can migrate invariants and source routing independently,
