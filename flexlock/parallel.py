@@ -54,22 +54,29 @@ def _default_tag(tasks, save_dir) -> str:
 
 def _shared_product_roots(cfg, tasks, task_target):
     """Find roots reused by distinct items and reject declared output collisions."""
-    from collections import Counter
     from .utils import merge_task_into_cfg
+
+    return _shared_product_roots_from_items(
+        merge_task_into_cfg(cfg, task, task_target) for task in tasks
+    )
+
+
+def _shared_product_roots_from_items(items):
+    """Check effective items without merging them again or resolving future inputs."""
+    from collections import Counter
     from .outputs import _contracts
     from .exceptions import FlexLockValidationError
 
     stages = []
-    for task in tasks:
-        item = merge_task_into_cfg(cfg, task, task_target)
+    for item in items:
         raw_stages = item.get('_stages_', [item])
         item_dirs = set()
         for raw in raw_stages:
             # Composite stages resolve their own root references on the worker.
             # Detach them here too; ${item} must not bind to the wrapper root.
-            stage = OmegaConf.create(OmegaConf.to_container(raw, resolve=False)
-                                     if OmegaConf.is_config(raw) else raw)
-            sd = OmegaConf.to_container(stage, resolve=False).get('save_dir')
+            stage = (OmegaConf.to_container(raw, resolve=False)
+                     if OmegaConf.is_config(raw) else raw)
+            sd = stage.get('save_dir')
             if sd and '${' not in str(sd):
                 resolved = str(Path(sd).resolve())
                 if resolved in item_dirs:
@@ -85,7 +92,9 @@ def _shared_product_roots(cfg, tasks, task_target):
     for sd, stage in stages:
         if sd not in shared:
             continue
-        for path, _ in _contracts(stage, sd).values():
+        # Only shared roots need contract resolution. Detach the stage so its
+        # relative references keep binding to that stage rather than the wrapper.
+        for path, _ in _contracts(OmegaConf.create(stage), sd).values():
             resolved = path.resolve()
             if any(resolved == previous or resolved in previous.parents or previous in resolved.parents
                    for previous in outputs):
@@ -168,13 +177,21 @@ class ParallelExecutor:
         # A cached prefix can leave only one new item to enqueue. Include the
         # existing DB so appending it does not turn its shared root into a
         # single-run receipt directory or overwrite the campaign master.
-        all_tasks = {_taskdb_hash_task(task): task for task in tasks}
+        task_ids = [_taskdb_hash_task(task) for task in tasks]
+        all_tasks = dict(zip(task_ids, tasks))
         if self.db_path.exists():
             from .record import list_task_records
             for row in list_task_records(self.db_path):
                 if row['status'] == 'done':
                     all_tasks.setdefault(row['task_id'], row['task'])
-        self.shared_save_dirs = _shared_product_roots(cfg, list(all_tasks.values()), task_target)
+        from .utils import merge_task_into_cfg
+        # Partial overrides still inherit the master's defaults. Reuse each
+        # effective item for both guard passes; queue payloads remain unchanged.
+        compiled_items = {
+            task_id: merge_task_into_cfg(cfg, task, task_target)
+            for task_id, task in all_tasks.items()
+        }
+        self.shared_save_dirs = _shared_product_roots_from_items(compiled_items.values())
         from .record import read_lock
         previous = read_lock(self.save_dir) or {}
         self.shared_save_dirs = sorted(set(self.shared_save_dirs) | set(previous.get('shared_save_dirs', [])))
@@ -205,11 +222,9 @@ class ParallelExecutor:
                 )
 
         from .destination_guard import reserve_queue, task_destinations
-        from .utils import merge_task_into_cfg
         destinations = set()
-        for task in tasks:
-            compiled = merge_task_into_cfg(cfg, task, task_target)
-            destinations.update(task_destinations(compiled))
+        for task_id in task_ids:
+            destinations.update(task_destinations(compiled_items[task_id]))
         queue_tasks(self.db_path, tasks, tag=self.tag)
         reserve_queue(destinations, self.db_path)
         logger.info(f"Queued {len(tasks)} tasks (tag={self.tag!r})")

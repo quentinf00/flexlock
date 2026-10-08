@@ -143,7 +143,11 @@ def test_shared_declared_output_collision_rejected_before_execution(tmp_path):
     cfg = config(tmp_path); cfg._outputs_.chunk.path = 'same.json'
     with pytest.raises(FlexLockValidationError, match='overlapping output'):
         Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], smart_run=False)
-    assert not (tmp_path/'products').exists()
+    # Pre-submit guards can create a mutex directory; no work or queue may land.
+    assert not (tmp_path/'products/same.json').exists()
+    assert not list((tmp_path/'products').glob('chunk_*.json'))
+    assert not (tmp_path/'products/run.complete').exists()
+    assert not list(tmp_path.rglob('run.lock.tasks.db'))
 
 
 def test_missing_task_database_is_not_created(tmp_path):

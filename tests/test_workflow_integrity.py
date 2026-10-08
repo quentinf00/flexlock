@@ -99,7 +99,10 @@ def test_pipeline_cli_failure_and_resume(tmp_path):
     failure = subprocess.run(command, capture_output=True, text=True)
     assert failure.returncode != 0, failure.stderr
     assert (tmp_path / "first/run.complete").exists()
-    assert not (tmp_path / "last").exists()
+    # Queue reservations create destinations before the first stage starts.
+    # A failed predecessor must still prevent user work and success receipts.
+    assert not (tmp_path / "last/predictions.json").exists()
+    assert not (tmp_path / "last/run.complete").exists()
     # Fix the injected failure; legacy skip resumes the healthy first stage.
     plan = OmegaConf.load(cfg)
     plan.bad.fail = False
