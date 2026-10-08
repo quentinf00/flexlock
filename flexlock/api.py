@@ -1804,7 +1804,6 @@ class Project:
             List of ExecutionResult objects
         """
         from .parallel import ParallelExecutor
-        from .utils import merge_task_into_cfg
 
         results = []
         configs_to_run = []
@@ -1812,20 +1811,9 @@ class Project:
 
         # Build sweep configs first so we can validate save_dir containment
         # in one place, before any execution.
-        from .freeze import _freeze_and_bind
-        merged_items = []
-        for i, override in enumerate(sweep):
-            # Merge the sweep item into the base FIRST, so item-injected keys
-            # (e.g. `variable`) exist before any resolution — then freeze.
-            sweep_cfg = merge_task_into_cfg(base_config, override, sweep_target)
-            # Eager-resolve everything self-contained for DB serialization,
-            # while preserving deferred resolvers (run_lock/latest) as call
-            # strings so they fire once, on the worker, at stage start.
-            # ${run:} per item first, so its lineage lands in the item.
-            freeze_run_refs(sweep_cfg, defer_unpinned=bool(after))
-            if after:
-                validate_chained_paths(sweep_cfg)
-            sweep_cfg = _freeze_and_bind(sweep_cfg, allow_future=bool(after))
+        from .sweep_compile import compile_sweep
+        merged_items = compile_sweep(base_config, sweep, sweep_target, after=bool(after))
+        for i, sweep_cfg in merged_items:
             if dir_suffix and "save_dir" in sweep_cfg:
                 # Nest each item under the base save_dir (the sweep root) so
                 # tasks DB and lineage markers stay inside the same tree.
@@ -1833,7 +1821,6 @@ class Project:
                 # to train/), which always tripped the containment check.
                 base_save_dir = Path(sweep_cfg.save_dir)
                 sweep_cfg.save_dir = str(base_save_dir / f"sweep_{i:04d}")
-            merged_items.append((i, sweep_cfg))
 
         # Validate per-item save_dir containment up front. The tasks DB lives
         # at <sweep_root>/run.lock.tasks.db and each task records its path
