@@ -1,0 +1,5 @@
+{
+  "other_thread_saw_stub": "${run_lock:/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-config-processes/producer,config.value}",
+  "after_context_saw_real_value": 99,
+  "errors": []
+}

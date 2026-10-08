@@ -249,6 +249,14 @@ serial-only skips. Locks, active queue ownership and pre-submit failure barriers
 remain intact; file count stays 2,007. Config process compilation still requires
 resolver/context and startup-cost investigation; no production scaling acceptance.
 
+The [process-compilation prototype](../reports/2026-10-08-config-processes/report.md)
+shows isolated-process parallelism is viable for the two canonical fixtures:
+plain 1,000-item compilation 4.246s serial → 1.790s with four processes, with
+equivalent configs/provenance and startup included. Parent-only custom resolvers
+require reconstruction, small sweeps can slow down, and a four-process producer
+run took 45.140s. This investigation changes no runtime defaults. Eligibility,
+serial fallback, CPU budget and end-to-end semantics must precede integration.
+
 ## Rollout and stop rules
 
 T7 implements this plan. T6 can migrate invariants and source routing independently,

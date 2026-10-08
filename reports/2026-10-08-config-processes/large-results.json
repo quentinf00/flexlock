@@ -1,0 +1,190 @@
+{
+  "source_revision": "914fbb3a9e8db552ee26e3c864fc758546cec201",
+  "hostname": "compute-118-39",
+  "affinity_cpus": 16,
+  "options": {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-config-processes",
+    "inputs": "/ontap/user/qfebvre/flexlock-hydra-benchmark/inputs",
+    "count": 1000,
+    "repeat": 3,
+    "batch": 50
+  },
+  "driver_sha256": "6168ceb827a0a860ff2c1cfe3c633f1f29a9029aea77d9f00f038c06d4a1cb8e",
+  "runs": [
+    {
+      "case": "plain",
+      "repeat": 0,
+      "workers": 1,
+      "seconds": 4.435109862824902,
+      "payload_sha256": "155dbc33034e3395bb7a7e67e2a2b8652775fcd7d87f36812f7eac8c032c5d34",
+      "json_bytes": 527780,
+      "producer_reads": 0
+    },
+    {
+      "case": "plain",
+      "repeat": 0,
+      "workers": 2,
+      "seconds": 3.039776325924322,
+      "payload_sha256": "155dbc33034e3395bb7a7e67e2a2b8652775fcd7d87f36812f7eac8c032c5d34",
+      "json_bytes": 527780,
+      "producer_reads": 0
+    },
+    {
+      "case": "plain",
+      "repeat": 0,
+      "workers": 4,
+      "seconds": 1.8850782939698547,
+      "payload_sha256": "155dbc33034e3395bb7a7e67e2a2b8652775fcd7d87f36812f7eac8c032c5d34",
+      "json_bytes": 527780,
+      "producer_reads": 0
+    },
+    {
+      "case": "producer",
+      "repeat": 0,
+      "workers": 1,
+      "seconds": 10.578653974924237,
+      "payload_sha256": "6e3e6a003f5e72b200e415a30aa97bb83708f26d9b21c4dc511719d827cff956",
+      "json_bytes": 1172890,
+      "producer_reads": 1000
+    },
+    {
+      "case": "producer",
+      "repeat": 0,
+      "workers": 2,
+      "seconds": 6.410658944863826,
+      "payload_sha256": "6e3e6a003f5e72b200e415a30aa97bb83708f26d9b21c4dc511719d827cff956",
+      "json_bytes": 1172890,
+      "producer_reads": 1000
+    },
+    {
+      "case": "producer",
+      "repeat": 0,
+      "workers": 4,
+      "seconds": 3.734093274921179,
+      "payload_sha256": "6e3e6a003f5e72b200e415a30aa97bb83708f26d9b21c4dc511719d827cff956",
+      "json_bytes": 1172890,
+      "producer_reads": 1000
+    },
+    {
+      "case": "plain",
+      "repeat": 1,
+      "workers": 2,
+      "seconds": 3.3750443160533905,
+      "payload_sha256": "155dbc33034e3395bb7a7e67e2a2b8652775fcd7d87f36812f7eac8c032c5d34",
+      "json_bytes": 527780,
+      "producer_reads": 0
+    },
+    {
+      "case": "plain",
+      "repeat": 1,
+      "workers": 4,
+      "seconds": 1.7900243529584259,
+      "payload_sha256": "155dbc33034e3395bb7a7e67e2a2b8652775fcd7d87f36812f7eac8c032c5d34",
+      "json_bytes": 527780,
+      "producer_reads": 0
+    },
+    {
+      "case": "plain",
+      "repeat": 1,
+      "workers": 1,
+      "seconds": 4.245926055125892,
+      "payload_sha256": "155dbc33034e3395bb7a7e67e2a2b8652775fcd7d87f36812f7eac8c032c5d34",
+      "json_bytes": 527780,
+      "producer_reads": 0
+    },
+    {
+      "case": "producer",
+      "repeat": 1,
+      "workers": 2,
+      "seconds": 6.415633697994053,
+      "payload_sha256": "6e3e6a003f5e72b200e415a30aa97bb83708f26d9b21c4dc511719d827cff956",
+      "json_bytes": 1172890,
+      "producer_reads": 1000
+    },
+    {
+      "case": "producer",
+      "repeat": 1,
+      "workers": 4,
+      "seconds": 3.6445878869853914,
+      "payload_sha256": "6e3e6a003f5e72b200e415a30aa97bb83708f26d9b21c4dc511719d827cff956",
+      "json_bytes": 1172890,
+      "producer_reads": 1000
+    },
+    {
+      "case": "producer",
+      "repeat": 1,
+      "workers": 1,
+      "seconds": 11.043030756060034,
+      "payload_sha256": "6e3e6a003f5e72b200e415a30aa97bb83708f26d9b21c4dc511719d827cff956",
+      "json_bytes": 1172890,
+      "producer_reads": 1000
+    },
+    {
+      "case": "plain",
+      "repeat": 2,
+      "workers": 4,
+      "seconds": 1.7816397540736943,
+      "payload_sha256": "155dbc33034e3395bb7a7e67e2a2b8652775fcd7d87f36812f7eac8c032c5d34",
+      "json_bytes": 527780,
+      "producer_reads": 0
+    },
+    {
+      "case": "plain",
+      "repeat": 2,
+      "workers": 1,
+      "seconds": 4.110002802917734,
+      "payload_sha256": "155dbc33034e3395bb7a7e67e2a2b8652775fcd7d87f36812f7eac8c032c5d34",
+      "json_bytes": 527780,
+      "producer_reads": 0
+    },
+    {
+      "case": "plain",
+      "repeat": 2,
+      "workers": 2,
+      "seconds": 2.902775976806879,
+      "payload_sha256": "155dbc33034e3395bb7a7e67e2a2b8652775fcd7d87f36812f7eac8c032c5d34",
+      "json_bytes": 527780,
+      "producer_reads": 0
+    },
+    {
+      "case": "producer",
+      "repeat": 2,
+      "workers": 4,
+      "seconds": 45.13966655707918,
+      "payload_sha256": "6e3e6a003f5e72b200e415a30aa97bb83708f26d9b21c4dc511719d827cff956",
+      "json_bytes": 1172890,
+      "producer_reads": 1000
+    },
+    {
+      "case": "producer",
+      "repeat": 2,
+      "workers": 1,
+      "seconds": 11.29991374607198,
+      "payload_sha256": "6e3e6a003f5e72b200e415a30aa97bb83708f26d9b21c4dc511719d827cff956",
+      "json_bytes": 1172890,
+      "producer_reads": 1000
+    },
+    {
+      "case": "producer",
+      "repeat": 2,
+      "workers": 2,
+      "seconds": 6.626705507049337,
+      "payload_sha256": "6e3e6a003f5e72b200e415a30aa97bb83708f26d9b21c4dc511719d827cff956",
+      "json_bytes": 1172890,
+      "producer_reads": 1000
+    }
+  ],
+  "custom_resolver_without_initializer": {
+    "error": "UnsupportedInterpolationType",
+    "message": "Unsupported interpolation type offset"
+  },
+  "custom_resolver_explicit_initializer": {
+    "equivalent": true,
+    "seconds": 0.5069333650171757
+  },
+  "future_producer": {
+    "equivalent": true,
+    "path": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-config-processes/future"
+  },
+  "changed_producer_rejected": true
+}

@@ -258,6 +258,21 @@ locks and prevent dispatch. Next investigate configuration reuse/batched process
 compilation with resolver/import/lineage semantics and startup costs explicit;
 these preparation threads do not make current resolver registration thread-safe.
 
+The [configuration-process investigation](../reports/2026-10-08-config-processes/report.md)
+confirms that isolated spawned processes can compile batches of canonical configs
+with equivalent captured producer records. Three-repeat 1,000-item compilation
+medians: plain 4.246/3.040/1.790s and producer-bearing 11.043/6.416/3.734s for
+serial/2/4. Startup and result transfer are included; executor/queue/guard work is
+excluded. Four-process producer binding has a retained 45.140s outlier. A 100-item
+plain smoke is slower with processes (0.490s serial versus 0.773/0.752s).
+Parent-only custom resolver registration fails under spawn; explicit initializer
+registration reproduces it. Temporary global resolver replacement and the global
+preset lineage stack constrain threads; run-lock capture itself is context-local.
+Runtime defaults are unchanged by this prototype. Next define an eligible config
+subset/context reproduction, retain serial fallback, investigate the outlier and
+run full-submission acceptance before enabling process compilation. Continue
+avoiding redundant reconstruction; a new general pipeline framework is unnecessary.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

@@ -1,0 +1,82 @@
+{
+  "source_revision": "914fbb3a9e8db552ee26e3c864fc758546cec201",
+  "hostname": "compute-118-39",
+  "affinity_cpus": 16,
+  "options": {
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-config-processes-small",
+    "inputs": "/ontap/user/qfebvre/flexlock-hydra-benchmark/inputs",
+    "count": 100,
+    "repeat": 1,
+    "batch": 50
+  },
+  "driver_sha256": "6168ceb827a0a860ff2c1cfe3c633f1f29a9029aea77d9f00f038c06d4a1cb8e",
+  "runs": [
+    {
+      "case": "plain",
+      "repeat": 0,
+      "workers": 1,
+      "seconds": 0.48950699297711253,
+      "payload_sha256": "f07547062ee9ee3559fe348c78a274c7575ec327f2ca060554e2c3d62e191068",
+      "json_bytes": 53180,
+      "producer_reads": 0
+    },
+    {
+      "case": "plain",
+      "repeat": 0,
+      "workers": 2,
+      "seconds": 0.7728583707939833,
+      "payload_sha256": "f07547062ee9ee3559fe348c78a274c7575ec327f2ca060554e2c3d62e191068",
+      "json_bytes": 53180,
+      "producer_reads": 0
+    },
+    {
+      "case": "plain",
+      "repeat": 0,
+      "workers": 4,
+      "seconds": 0.751760033890605,
+      "payload_sha256": "f07547062ee9ee3559fe348c78a274c7575ec327f2ca060554e2c3d62e191068",
+      "json_bytes": 53180,
+      "producer_reads": 0
+    },
+    {
+      "case": "producer",
+      "repeat": 0,
+      "workers": 1,
+      "seconds": 1.2174781549256295,
+      "payload_sha256": "3cfa97b9488ce95ad30e44bca80b6e52fd9278d6f10b3ce20dcab3bf2b7152c7",
+      "json_bytes": 119590,
+      "producer_reads": 100
+    },
+    {
+      "case": "producer",
+      "repeat": 0,
+      "workers": 2,
+      "seconds": 1.1044603679329157,
+      "payload_sha256": "3cfa97b9488ce95ad30e44bca80b6e52fd9278d6f10b3ce20dcab3bf2b7152c7",
+      "json_bytes": 119590,
+      "producer_reads": 100
+    },
+    {
+      "case": "producer",
+      "repeat": 0,
+      "workers": 4,
+      "seconds": 1.0714887799695134,
+      "payload_sha256": "3cfa97b9488ce95ad30e44bca80b6e52fd9278d6f10b3ce20dcab3bf2b7152c7",
+      "json_bytes": 119590,
+      "producer_reads": 100
+    }
+  ],
+  "custom_resolver_without_initializer": {
+    "error": "UnsupportedInterpolationType",
+    "message": "Unsupported interpolation type offset"
+  },
+  "custom_resolver_explicit_initializer": {
+    "equivalent": true,
+    "seconds": 0.5047194289509207
+  },
+  "future_producer": {
+    "equivalent": true,
+    "path": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-config-processes-small/future"
+  },
+  "changed_producer_rejected": true
+}

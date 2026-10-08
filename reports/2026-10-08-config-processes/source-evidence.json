@@ -1,0 +1,12 @@
+{
+  "python": "3.11.14 | packaged by conda-forge | (main, Jan 26 2026, 23:48:32) [GCC 14.3.0]",
+  "omegaconf": "2.3.1",
+  "scope": "Prototype investigation only; runtime unchanged",
+  "files": {
+    "flexlock/resolvers.py": "fb0a2d20213b0713f9980550549a6bd1983ef14010090eaa4503241ccf1e7555",
+    "flexlock/presets.py": "402d924ffe65e82ab9b1ea40d1ac00390c2138860accb447ad75c9d5fec31230",
+    "flexlock/freeze.py": "b2807cf27b34da1781ba248b4ca3baba9d6ad57b72da0a585e22b5cf21bb24af",
+    "flexlock/utils.py": "135dd23b041b6c3d8696777e58aa436edfebc294784fc00623b96d4b6d414ad8",
+    "flexlock/parallel.py": "498ffa7075e10f8dc9ce27e41516ce92f410152aca0ef544f65bb809b03ef6ca"
+  }
+}
