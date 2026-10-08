@@ -77,7 +77,7 @@ All failures occurred while computing the expected result with the old two-pass
 path: a plain escaped literal loses its escape during freezing and the subsequent
 pass interprets it again. The new fixture was corrected to ordinary text; producer
 returned literals remain tested. The corrected 12 cases passed, then the full
-198-case final suite passed. Initial evidence remains retained. The escaped-literal
+198-case final suite passed. Initial evidence remains retained (copied XML has trailing whitespace normalized; raw XML remains in `/tmp/flexlock-binding-reuse-tests`). The escaped-literal
 issue in the old path is not fixed by this optimization and remains follow-up work.
 
 All six before/final queue payloads match by item after normalizing only each

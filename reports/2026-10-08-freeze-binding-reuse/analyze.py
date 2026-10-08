@@ -83,6 +83,9 @@ shutil.copyfile('/tmp/flexlock-binding-reuse-tests/results.xml', OUT/'initial.xm
 shutil.copyfile('/tmp/flexlock-binding-reuse-tests/new-cases-recheck.xml', OUT/'new-cases-recheck.xml')
 shutil.copyfile('/tmp/flexlock-binding-fastpath-tests/results.xml', OUT/'final-tests.xml')
 emit('intermediate-manifest.json', json.loads((RAW/'2026-10-08-prep-slice2/manifest.json').read_text()))
+# Normalize copied traceback whitespace; original XML remains in /tmp.
+for xml in OUT.glob('*.xml'):
+    xml.write_text('\n'.join(line.rstrip() for line in xml.read_text().splitlines())+'\n')
 emit('validation.json', dict(all_six_queues_equivalent=True, normalization='Replace each case output prefix only; compare all parsed task payload fields by item. Task hashes differ with destination.',
      pending_items_per_queue=1000, scheduler_calls_per_case=1, worker_array='0-3', pickle_files_per_case=1,
      scheduler_products=0, local_products_sha256_verified=100, distinct_selected_test_cases_passing_across_runs=198,

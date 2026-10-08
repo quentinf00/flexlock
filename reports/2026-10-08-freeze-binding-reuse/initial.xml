@@ -30,8 +30,8 @@ case = 'plain', readonly = False
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/resolvers.py:336: in bind_existing_run_locks
     return _bind_detached_run_locks(detached, allow_future=allow_future,
 flexlock/resolvers.py:374: in _bind_detached_run_locks
@@ -102,7 +102,7 @@ flexlock/resolvers.py:374: in _bind_detached_run_locks
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -116,7 +116,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -128,7 +128,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -167,8 +167,8 @@ case = 'container_alias', readonly = False
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/freeze.py:58: in freeze_deferred
     OmegaConf.resolve(detached)
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:785: in resolve
@@ -225,7 +225,7 @@ flexlock/freeze.py:58: in freeze_deferred
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -239,7 +239,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -251,7 +251,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -288,8 +288,8 @@ case = 'producer', readonly = False
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/resolvers.py:336: in bind_existing_run_locks
     return _bind_detached_run_locks(detached, allow_future=allow_future,
 flexlock/resolvers.py:374: in _bind_detached_run_locks
@@ -360,7 +360,7 @@ flexlock/resolvers.py:374: in _bind_detached_run_locks
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -374,7 +374,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -386,7 +386,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -425,8 +425,8 @@ case = 'future', readonly = False
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/resolvers.py:336: in bind_existing_run_locks
     return _bind_detached_run_locks(detached, allow_future=allow_future,
 flexlock/resolvers.py:374: in _bind_detached_run_locks
@@ -497,7 +497,7 @@ flexlock/resolvers.py:374: in _bind_detached_run_locks
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -511,7 +511,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -523,7 +523,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -562,8 +562,8 @@ case = 'default', readonly = False
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/resolvers.py:336: in bind_existing_run_locks
     return _bind_detached_run_locks(detached, allow_future=allow_future,
 flexlock/resolvers.py:374: in _bind_detached_run_locks
@@ -634,7 +634,7 @@ flexlock/resolvers.py:374: in _bind_detached_run_locks
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -648,7 +648,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -660,7 +660,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -699,8 +699,8 @@ case = 'latest', readonly = False
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/resolvers.py:336: in bind_existing_run_locks
     return _bind_detached_run_locks(detached, allow_future=allow_future,
 flexlock/resolvers.py:374: in _bind_detached_run_locks
@@ -771,7 +771,7 @@ flexlock/resolvers.py:374: in _bind_detached_run_locks
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -785,7 +785,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -797,7 +797,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -836,8 +836,8 @@ case = 'plain', readonly = True
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/resolvers.py:336: in bind_existing_run_locks
     return _bind_detached_run_locks(detached, allow_future=allow_future,
 flexlock/resolvers.py:374: in _bind_detached_run_locks
@@ -908,7 +908,7 @@ flexlock/resolvers.py:374: in _bind_detached_run_locks
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -922,7 +922,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -934,7 +934,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -973,8 +973,8 @@ case = 'container_alias', readonly = True
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/freeze.py:58: in freeze_deferred
     OmegaConf.resolve(detached)
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/omegaconf.py:785: in resolve
@@ -1031,7 +1031,7 @@ flexlock/freeze.py:58: in freeze_deferred
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -1045,7 +1045,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -1057,7 +1057,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -1094,8 +1094,8 @@ case = 'producer', readonly = True
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/resolvers.py:336: in bind_existing_run_locks
     return _bind_detached_run_locks(detached, allow_future=allow_future,
 flexlock/resolvers.py:374: in _bind_detached_run_locks
@@ -1166,7 +1166,7 @@ flexlock/resolvers.py:374: in _bind_detached_run_locks
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -1180,7 +1180,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -1192,7 +1192,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -1231,8 +1231,8 @@ case = 'future', readonly = True
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/resolvers.py:336: in bind_existing_run_locks
     return _bind_detached_run_locks(detached, allow_future=allow_future,
 flexlock/resolvers.py:374: in _bind_detached_run_locks
@@ -1303,7 +1303,7 @@ flexlock/resolvers.py:374: in _bind_detached_run_locks
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -1317,7 +1317,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -1329,7 +1329,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -1368,8 +1368,8 @@ case = 'default', readonly = True
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/resolvers.py:336: in bind_existing_run_locks
     return _bind_detached_run_locks(detached, allow_future=allow_future,
 flexlock/resolvers.py:374: in _bind_detached_run_locks
@@ -1440,7 +1440,7 @@ flexlock/resolvers.py:374: in _bind_detached_run_locks
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -1454,7 +1454,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -1466,7 +1466,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
@@ -1505,8 +1505,8 @@ case = 'latest', readonly = True
 &gt;       expected = bind_existing_run_locks(freeze_deferred(cfg, defer_runs=True), allow_future=True)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tests/test_freeze_binding_reuse.py:36: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_freeze_binding_reuse.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 flexlock/resolvers.py:336: in bind_existing_run_locks
     return _bind_detached_run_locks(detached, allow_future=allow_future,
 flexlock/resolvers.py:374: in _bind_detached_run_locks
@@ -1577,7 +1577,7 @@ flexlock/resolvers.py:374: in _bind_detached_run_locks
 ../work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/omegaconf/base.py:745: in node_interpolation_callback
     return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
 
@@ -1591,7 +1591,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationKeyError(
                 f"ConfigKeyError while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         try:
             parent, last_key, value = root_node._select_impl(
                 inter_key,
@@ -1603,7 +1603,7 @@ self = {'n': 7, 'text': '${literal}'}, inter_key = 'literal', memo = None
             raise InterpolationToMissingValueError(
                 f"MissingMandatoryValue while resolving interpolation: {exc}"
             ).with_traceback(sys.exc_info()[2])
-    
+
         if parent is None or value is None:
 &gt;           raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
 E           omegaconf.errors.InterpolationKeyError: Interpolation key 'literal' not found
