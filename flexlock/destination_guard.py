@@ -15,9 +15,9 @@ from .exceptions import FlexLockValidationError
 CONTROLLER_LOCK = '.flexlock-controller.lock'
 QUEUE_POINTER = '.flexlock-queue.json'
 
-# Internal tuning only. Keep serial until bounded I/O measurements justify a
-# default; resolver compilation and SQLite writes never enter this pool.
-_IO_WORKERS = 1
+# Internal bounded I/O only; resolver compilation and SQLite writes never enter
+# this pool. Two workers matched four's median with less variation in the pilot.
+_IO_WORKERS = 2
 
 
 def _map_io(func, items):
