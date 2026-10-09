@@ -22,6 +22,7 @@ from typing import Any, Optional
 
 from loguru import logger
 from omegaconf import OmegaConf
+from .queue_refs import TASKS_DB_NAME, MARKER_NAME, read_marker
 
 LOCK_NAME = "run.lock"
 COMPLETE_MARKER = "run.complete"
@@ -186,8 +187,6 @@ class RunRecord:
 # it with the task snapshot (worker._write_owned_master_lock); the helpers
 # below let readers see the real snapshot for run dirs created before that fix.
 
-TASKS_DB_NAME = "run.lock.tasks.db"
-MARKER_NAME = ".flexlock_marker"
 _PLACEHOLDER_CONFIG_KEYS = {"save_dir", "_snapshot_"}
 
 
@@ -238,12 +237,9 @@ def _task_snapshot_for_dir(run_dir: Path) -> Optional[dict]:
     if not db.exists():
         return None
     task_id = None
-    marker = run_dir / MARKER_NAME
-    if marker.exists():
-        try:
-            task_id = json.loads(marker.read_text()).get("task_id")
-        except Exception:
-            task_id = None
+    marker = read_marker(run_dir)
+    if marker is not None:
+        task_id = marker.get('task_id')
     try:
         conn = sqlite3.connect(f"file:{db.resolve()}?mode=ro", uri=True, timeout=30)
     except sqlite3.Error as exc:

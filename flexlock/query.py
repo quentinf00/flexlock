@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+from .queue_refs import (MARKER_NAME, TASKS_DB_NAME,
+                         read_marker as _read_marker, marker_db as _resolve_marker_db)
 
 from .run_record import (
     RunRecord,
@@ -22,8 +24,6 @@ from .run_record import (
 
 SCHEMA_VERSION = 1
 
-MARKER_NAME = ".flexlock_marker"
-TASKS_DB_NAME = "run.lock.tasks.db"
 
 # Map task-DB statuses onto the run-dir status vocabulary.
 _TASK_STATUS_MAP = {
@@ -40,28 +40,6 @@ def _load_lock(run_dir: Path) -> Optional[dict]:
     from .record import load_record
 
     return load_record(run_dir)
-
-
-def _read_marker(run_dir: Path) -> Optional[dict]:
-    marker = Path(run_dir) / MARKER_NAME
-    if not marker.exists():
-        return None
-    try:
-        return json.loads(marker.read_text())
-    except Exception:
-        return None
-
-
-def _resolve_marker_db(run_dir: Path, marker: dict) -> Path:
-    """Resolve the task DB path recorded in a ``.flexlock_marker``.
-
-    The worker stores ``db`` relative to the task dir's *parent* (worker.py),
-    so a relative path is resolved against ``run_dir.parent``.
-    """
-    db = Path(marker.get("db", ""))
-    if not db.is_absolute():
-        db = (Path(run_dir).parent / db)
-    return db
 
 
 def run_status(run_dir) -> dict:

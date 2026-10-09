@@ -11,9 +11,9 @@ import sqlite3
 import yaml
 
 from .exceptions import FlexLockValidationError
+from .queue_refs import QUEUE_POINTER, referenced_databases, ancestor_candidates
 
 CONTROLLER_LOCK = '.flexlock-controller.lock'
-QUEUE_POINTER = '.flexlock-queue.json'
 
 # Internal bounded I/O only; resolver compilation and SQLite writes never enter
 # this pool. Two workers matched four's median with less variation in the pilot.
@@ -57,21 +57,7 @@ def _write_reservation(directory, payload):
 
 def _product_databases(path):
     """Read one locked product's current/legacy pointers; no resolver mutation."""
-    databases = set()
-    pointer = Path(path) / QUEUE_POINTER
-    if pointer.exists():
-        try:
-            referenced = Path(json.loads(pointer.read_text())['task_db'])
-            if not referenced.exists():
-                raise FlexLockValidationError(f'Destination reservation references missing queue {referenced}; ownership is unknown')
-            databases.add(referenced)
-        except (ValueError, KeyError, TypeError) as exc:
-            raise FlexLockValidationError(f'Unreadable destination reservation {pointer}') from exc
-    from .record import read_marker, marker_db
-    marker = read_marker(path)
-    if marker:
-        databases.add(marker_db(path, marker))
-    return databases
+    return referenced_databases(path)
 
 
 def _existing_database(path):
@@ -93,23 +79,17 @@ def has_active_destination(path):
     """Read a selected producer's queue reservation, without creating a DB.
 
     A queued placeholder is promised work, not a finished producer binding.
-    Current queues put a pointer at every product; historical own-dir queues
-    can be read directly. No scheduler or global ancestor search is involved.
+    Include historical ancestor queues even when a stale explicit pointer names
+    a different terminal queue. No scheduler or cache search is involved.
     """
     directory = Path(path).resolve()
-    databases = {directory / 'run.lock.tasks.db'}
-    pointer = directory / QUEUE_POINTER
-    if pointer.exists():
-        try:
-            referenced = Path(json.loads(pointer.read_text())['task_db'])
-            if not referenced.exists():
-                raise FlexLockValidationError(f'Producer reservation references missing queue {referenced}')
-            databases.add(referenced)
-        except (ValueError, KeyError, TypeError) as exc:
-            raise FlexLockValidationError(f'Unreadable producer reservation {pointer}') from exc
+    databases = _product_databases(directory)
+    databases.update(db for candidate in ancestor_candidates([directory])
+                     if (db := _existing_database(candidate)) is not None)
     for db in databases:
         for (raw,) in _active_rows(db):
-            if str(directory) in task_destinations(yaml.safe_load(raw)):
+            destinations = task_destinations(yaml.safe_load(raw))
+            if not destinations or str(directory) in destinations:
                 return True
     return False
 
@@ -138,8 +118,7 @@ def guard_destinations(paths, db_dir=None):
             databases.update(found)
         # Shared ancestors need one probe per guarded invocation, rather than
         # one per product. Keep own-directory and historical ancestor queues.
-        ancestors = {parent / 'run.lock.tasks.db' for path in products
-                     for parent in (Path(path), *Path(path).parents)}
+        ancestors = ancestor_candidates(products)
         databases.update(path for path in _map_io(_existing_database, sorted(ancestors))
                          if path is not None)
         for db in databases:

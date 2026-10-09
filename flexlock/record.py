@@ -26,10 +26,9 @@ from pathlib import Path
 from typing import Iterator, Optional
 
 import yaml
+from .queue_refs import MARKER_NAME, TASKS_DB_NAME, read_marker, marker_db
 
 LOCK_NAME = "run.lock"
-MARKER_NAME = ".flexlock_marker"
-TASKS_DB_NAME = "run.lock.tasks.db"
 
 # Master fields a task delta inherits when materialized.
 _INHERITED = ("repos", "env", "note")
@@ -60,22 +59,6 @@ def read_lock(run_dir) -> Optional[dict]:
     except (OSError, yaml.YAMLError):
         return None
     return data if isinstance(data, dict) else None
-
-
-def read_marker(run_dir) -> Optional[dict]:
-    """Parse ``run_dir/.flexlock_marker``, or ``None``."""
-    try:
-        return json.loads((Path(run_dir) / MARKER_NAME).read_text())
-    except (OSError, ValueError):
-        return None
-
-
-def marker_db(run_dir, marker: dict) -> Path:
-    """Task DB path from a marker (relative paths are relative to the parent dir)."""
-    db = Path(marker.get("db", ""))
-    if not db.is_absolute():
-        db = Path(run_dir).parent / db
-    return db
 
 
 def is_run_dir(path) -> bool:
