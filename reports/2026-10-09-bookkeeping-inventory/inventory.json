@@ -1,0 +1,168 @@
+{
+  "plain-0-reuse": {
+    "counts": {
+      "slurm.yaml": 1,
+      "measurement.json": 1,
+      ".flexlock-controller.lock": 1001,
+      "run.lock.tasks.db": 1,
+      "run.lock": 1,
+      "run.lock.tasks": 1,
+      ".flexlock-queue.json": 1000,
+      "*.pkl": 1,
+      "*.slurm": 1
+    },
+    "bytes": {
+      "slurm.yaml": 68,
+      "measurement.json": 1323,
+      ".flexlock-controller.lock": 0,
+      "run.lock.tasks.db": 786432,
+      "run.lock": 260,
+      "run.lock.tasks": 3,
+      ".flexlock-queue.json": 128000,
+      "*.pkl": 1103,
+      "*.slurm": 989
+    },
+    "measurement": {
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-compiled-guard-reuse/plain-0-reuse",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 14.640576810808852,
+      "phases": {
+        "prepare_submit": 14.631232012063265
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "1244e7068512d66e5a249fa42bdfdfe537bf9426",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 916855,
+      "peak_rss_kib": 114000,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 4.406684356974438,
+        "controller_cpu_seconds": 4.3789388769999995,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 33716
+      },
+      "guard_reuse": {
+        "baseline": false,
+        "merges": {
+          "compiler": 1000,
+          "executor": 0,
+          "other": 1
+        },
+        "executor_seconds": 4.102411430096254
+      }
+    }
+  },
+  "local-100": {
+    "counts": {
+      "index.db": 1,
+      "measurement.json": 1,
+      ".flexlock-controller.lock": 101,
+      "run.lock.tasks.db": 1,
+      "run.lock": 101,
+      "run.lock.tasks": 1,
+      "product.json": 100,
+      ".flexlock-queue.json": 100,
+      ".flexlock_marker": 100,
+      "results.json": 100,
+      "run.complete": 100
+    },
+    "bytes": {
+      "index.db": 61440,
+      "measurement.json": 1343,
+      ".flexlock-controller.lock": 0,
+      "run.lock.tasks.db": 229376,
+      "run.lock": 103236,
+      "run.lock.tasks": 11290,
+      "product.json": 8990,
+      ".flexlock-queue.json": 12400,
+      ".flexlock_marker": 8800,
+      "results.json": 9590,
+      "run.complete": 7000
+    },
+    "measurement": {
+      "kind": "flexlock-local",
+      "count": 100,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-compiled-guard-reuse/local-100",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 9.527438236866146,
+      "phases": {
+        "submit_and_run": 9.522637909045443
+      },
+      "details": {
+        "items": 100,
+        "statuses": [
+          [
+            "done",
+            100
+          ]
+        ],
+        "scheduler_calls": 0,
+        "validated_products": 100
+      },
+      "source_revision": "1244e7068512d66e5a249fa42bdfdfe537bf9426",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 705,
+      "artifact_bytes": 452122,
+      "peak_rss_kib": 80160,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 0.4852443798445165,
+        "controller_cpu_seconds": 0.48195520399999997,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 33776
+      },
+      "guard_reuse": {
+        "baseline": false,
+        "merges": {
+          "compiler": 100,
+          "executor": 0,
+          "other": 1
+        },
+        "executor_seconds": 0.45616186992265284
+      }
+    }
+  },
+  "pointerless_nested_counterexample": {
+    "pending_queue": true,
+    "ownership_guard_rejects": true,
+    "producer_active_reader": false,
+    "submit_binding": "old artifact",
+    "implication": "Removing nested pointers without reader migration permits stale binding."
+  }
+}
