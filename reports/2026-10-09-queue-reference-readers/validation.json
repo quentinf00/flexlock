@@ -1,0 +1,12 @@
+{
+  "prepared_queues": 6,
+  "equivalent_queue_configs": 6000,
+  "equivalent_completed_bindings": 6000,
+  "equivalent_future_bindings": 600,
+  "old_counterexample_reproduced": true,
+  "current_stale_binding_rejected": true,
+  "exact_future_path_preserved": true,
+  "prepared_files": 2007,
+  "writers_changed": false,
+  "scheduler": "mocked only"
+}

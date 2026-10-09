@@ -312,6 +312,18 @@ cohort costs before versioned pointer/marker migration. A pointer/marker merger
 saves a completed-item file, not a prepared-item file; stage completion and
 immutable item source evidence cannot be discarded as duplicates.
 
+The [shared queue readers and ancestor guard](../reports/2026-10-09-queue-reference-readers/report.md)
+at 8ad211c fix required producer binding against active ancestor replacement work,
+including stale terminal pointers. Current/legacy marker readers share a private
+implementation; writers and 2,007 prepared files remain unchanged. Acceptance:
+166 focused passes, two expected skips, plus 72 overlapping legacy rechecks;
+six equivalent prepared queues, 6,000 completed and 600 future bindings. Matched
+medians: preparation 13.373/13.289s, 1,000 completed bindings 10.161/10.626s,
+100 future bindings from 1,000 pending rows 12.863/13.299s. No preparation speed
+gain is established. Next profile repeated active-row decoding/path scans before
+writer migration, preserving mutable ownership and historical destination fallbacks.
+The reader fix does not establish compatibility with older installed readers.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

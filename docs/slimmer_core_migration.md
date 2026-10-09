@@ -287,6 +287,16 @@ writer migration. A later pointer/marker merger saves a completed-item file,
 not a prepared-item file. Preserve stage completion and immutable item source
 evidence; do not merge atomically replaced metadata with a stable mutex inode.
 
+The [queue-reader consolidation](../reports/2026-10-09-queue-reference-readers/report.md)
+at 8ad211c now guards required producer bindings against active ancestor queues,
+retains exact allowed future paths and centralizes legacy marker reading. Optional
+resolver policy and writer formats remain unchanged. 166 focused passes, two
+expected skips and 72 overlapping legacy rechecks support isolated acceptance.
+Preparation is essentially unchanged (13.373/13.289s); 100 future bindings against
+1,000 pending rows still cost 13.299s. Next profile/optimize repeated active-row
+decoding and destination lookup with mutable ownership intact. Pointer omission
+still needs older-reader compatibility; no production adoption is established.
+
 T7 implements this plan. T6 can migrate invariants and source routing independently,
 without copying speculative execution APIs. The shared knowledge repository links
 actual tool semantics; it does not become another CLI manual.
