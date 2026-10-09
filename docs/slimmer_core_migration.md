@@ -297,6 +297,14 @@ Preparation is essentially unchanged (13.373/13.289s); 100 future bindings again
 decoding and destination lookup with mutable ownership intact. Pointer omission
 still needs older-reader compatibility; no production adoption is established.
 
+The [safe ownership parsing pass](../reports/2026-10-09-ownership-yaml/report.md)
+at 1512422 reduces the pending cohort median 13.040 → 6.490s with optional
+CSafeLoader and SafeLoader fallback. 126 passes/two expected skips, equivalent
+configs/bindings; status/task edits and symlink changes remain visible. No schema,
+writer or ownership-cache change. Next investigate repeated row scans/destination
+resolution; keep file reduction behind older-reader compatibility. Production
+installation unchanged.
+
 T7 implements this plan. T6 can migrate invariants and source routing independently,
 without copying speculative execution APIs. The shared knowledge repository links
 actual tool semantics; it does not become another CLI manual.

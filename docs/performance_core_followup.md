@@ -324,6 +324,16 @@ gain is established. Next profile repeated active-row decoding/path scans before
 writer migration, preserving mutable ownership and historical destination fallbacks.
 The reader fix does not establish compatibility with older installed readers.
 
+The [safe C ownership parser](../reports/2026-10-09-ownership-yaml/report.md)
+at 1512422 cuts 100 future bindings against 1,000 pending rows from 13.040 to
+6.490s median (50.2%). 126 focused passes/two expected skips, six equivalent queues,
+6,000 completed and 600 future bindings; no ownership cache or format change.
+Preparation/completed fixture ranges overlap; no causal gain is claimed there.
+After profiling, repeated destination extraction/path resolution dominates the
+remaining active-row lookup. Next reduce repeated scans with fresh status/path
+validation and legacy fallbacks retained. Optional C loader falls back safely;
+files remain 2,007. Pointer reduction still requires older-reader compatibility.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

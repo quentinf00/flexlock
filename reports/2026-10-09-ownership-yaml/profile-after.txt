@@ -1,0 +1,39 @@
+Fri Oct  9 14:02:18 2026    /tmp/flexlock-active-after.prof
+
+         17131053 function calls (17001874 primitive calls) in 9.657 seconds
+
+   Ordered by: cumulative time
+   List reduced from 3375 to 45 due to restriction <'has_active_destination|task_destinations|safe_load|__init__.py:.*load|resolve|realpath|_active_rows'>
+   List reduced from 45 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      100    0.000    0.000    6.290    0.063 resolvers.py:328(bind_existing_run_locks)
+      100    0.001    0.000    6.263    0.063 resolvers.py:340(_bind_detached_run_locks)
+      100    0.000    0.000    6.026    0.060 base.py:545(_resolve_interpolation_from_parse_tree)
+      100    0.000    0.000    6.020    0.060 base.py:728(resolve_parse_tree)
+      100    0.000    0.000    6.003    0.060 base.py:747(resolver_interpolation_callback)
+      100    0.000    0.000    6.003    0.060 base.py:681(_evaluate_custom_resolver)
+      100    0.000    0.000    6.002    0.060 omegaconf.py:422(resolver_wrapper)
+      100    0.001    0.000    6.002    0.060 resolvers.py:345(bind)
+      100    0.090    0.001    5.993    0.060 destination_guard.py:82(has_active_destination)
+    49600    0.052    0.000    3.474    0.000 destination_guard.py:37(task_destinations)
+    51002    0.079    0.000    2.872    0.000 pathlib.py:981(resolve)
+    49600    0.066    0.000    2.323    0.000 __init__.py:74(load)
+    51004    0.060    0.000    2.033    0.000 <frozen posixpath>:412(realpath)
+51009/51004    0.384    0.000    1.667    0.000 <frozen posixpath>:421(_joinrealpath)
+   275000    0.255    0.000    0.370    0.000 resolver.py:143(resolve)
+      100    0.001    0.000    0.052    0.001 destination_guard.py:71(_active_rows)
+   264000    0.041    0.000    0.041    0.000 resolver.py:91(descend_resolver)
+    18900    0.010    0.000    0.035    0.000 _utils.py:212(_resolve_optional)
+   264000    0.034    0.000    0.034    0.000 resolver.py:114(ascend_resolver)
+      812    0.003    0.000    0.027    0.000 omegaconf.py:372(register_new_resolver)
+      200    0.001    0.000    0.019    0.000 resolvers.py:240(_stubbed)
+    51600    0.012    0.000    0.012    0.000 resolver.py:21(__init__)
+      100    0.001    0.000    0.004    0.000 OmegaConfGrammarParser.py:1198(resolverName)
+        1    0.000    0.000    0.004    0.004 resolver.py:1(<module>)
+        1    0.000    0.000    0.002    0.002 omegaconf.py:101(register_default_resolvers)
+      100    0.000    0.000    0.001    0.000 __init__.py:299(loads)
+        2    0.000    0.000    0.001    0.000 sysconfig.py:185(_safe_realpath)
+        1    0.000    0.000    0.000    0.000 resolvers.py:206(register_resolvers)
+      200    0.000    0.000    0.000    0.000 resolvers.py:219(_real_resolvers)
+      300    0.000    0.000    0.000    0.000 resolvers.py:362(<genexpr>)
