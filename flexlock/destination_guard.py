@@ -19,6 +19,10 @@ CONTROLLER_LOCK = '.flexlock-controller.lock'
 # this pool. Two workers matched four's median with less variation in the pilot.
 _IO_WORKERS = 2
 
+# Ownership needs plain YAML values, not OmegaConf construction. Preserve safe
+# YAML semantics (including timestamps) and retain the pure-Python fallback.
+_TASK_LOADER = getattr(yaml, 'CSafeLoader', yaml.SafeLoader)
+
 
 def _map_io(func, items):
     items = list(items)
@@ -88,7 +92,7 @@ def has_active_destination(path):
                      if (db := _existing_database(candidate)) is not None)
     for db in databases:
         for (raw,) in _active_rows(db):
-            destinations = task_destinations(yaml.safe_load(raw))
+            destinations = task_destinations(yaml.load(raw, Loader=_TASK_LOADER))
             if not destinations or str(directory) in destinations:
                 return True
     return False
@@ -123,7 +127,7 @@ def guard_destinations(paths, db_dir=None):
                          if path is not None)
         for db in databases:
             for (raw,) in _active_rows(db):
-                task = yaml.safe_load(raw)
+                task = yaml.load(raw, Loader=_TASK_LOADER)
                 destinations = task_destinations(task)
                 if (master and db.resolve() == (Path(master) / 'run.lock.tasks.db').resolve()) or destinations & products or not destinations:
                     raise FlexLockValidationError(
