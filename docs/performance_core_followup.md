@@ -48,8 +48,8 @@ No asynchronous runtime implementation is introduced by this decision note.
 | DB outcomes plus `results.json`, `run.complete`, `run.error` | Define one authoritative terminal outcome; consider one atomic result/error receipt for standalone runs | Versioned reader migration required; do not silently change result payloads or historical success semantics |
 | Fingerprint index and automatic YAML queue dump | Make derived lookup/export work optional or requested | Task membership/status and durable provenance remain core |
 
-Start with the pointer merger and redundant writes, not a wholesale record format
-rewrite. The current successful baseline has seven files per item, including
+Start with compatible reader consolidation before changing pointer writers, not a
+wholesale record format rewrite. The current successful baseline has seven files per item, including
 the user's product; pointers and duplicated state are concrete opportunities.
 Removing collision protection merely to reduce file count is not an acceptable
 optimization. Sharing source evidence reduces serialization but its export/move
@@ -299,6 +299,18 @@ shadow commit IDs retained. Files remain 2,007. Next inventory pointer/marker
 bookkeeping and remaining preparation phases before further optimization, retaining
 durable lock inodes, ownership and historical readers; tracked-worker source costs
 and automatic discovery migration remain separate.
+
+The [bookkeeping inventory](../reports/2026-10-09-bookkeeping-inventory/report.md)
+finds 1,001 mutexes plus 1,000 queue pointers in the 2,007-file prepared fixture.
+A retained prototype omitting nested pointers halves file count but improves the
+matched median only 13.190 → 12.381s (6.1%). Default adoption is rejected: a
+counterexample binds an old producer while ancestor replacement work is pending,
+because upstream ownership detection lacks the controller guard's ancestor lookup.
+No runtime format changes. Next consolidate private queue-reference readers and
+fix that ownership gap while preserving current writers, then measure upstream
+cohort costs before versioned pointer/marker migration. A pointer/marker merger
+saves a completed-item file, not a prepared-item file; stage completion and
+immutable item source evidence cannot be discarded as duplicates.
 
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while

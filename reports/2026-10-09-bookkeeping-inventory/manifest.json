@@ -1,0 +1,282 @@
+{
+  "revision": "9cb00fc229eaefad5876452316bb1c08c2b2cf81",
+  "hostname": "compute-118-39",
+  "runs": [
+    {
+      "case": "0-current",
+      "prototype": false,
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-09-bookkeeping-inventory/0-current",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 13.28112814691849,
+      "phases": {
+        "prepare_submit": 13.27076695393771
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "9cb00fc229eaefad5876452316bb1c08c2b2cf81",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 917927,
+      "peak_rss_kib": 108772,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 4.423889950150624,
+        "controller_cpu_seconds": 4.396195868,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 31808
+      }
+    },
+    {
+      "case": "0-omit",
+      "prototype": true,
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-09-bookkeeping-inventory/0-omit",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 12.380770146846771,
+      "phases": {
+        "prepare_submit": 12.367569922935218
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "9cb00fc229eaefad5876452316bb1c08c2b2cf81",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 1007,
+      "artifact_bytes": 788807,
+      "peak_rss_kib": 108840,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 4.900626590941101,
+        "controller_cpu_seconds": 4.868078661,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 30204
+      }
+    },
+    {
+      "case": "1-omit",
+      "prototype": true,
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-09-bookkeeping-inventory/1-omit",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 11.424600017955527,
+      "phases": {
+        "prepare_submit": 11.411154676927254
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "9cb00fc229eaefad5876452316bb1c08c2b2cf81",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 1007,
+      "artifact_bytes": 784711,
+      "peak_rss_kib": 108640,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 4.279048885917291,
+        "controller_cpu_seconds": 4.251175881,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 31672
+      }
+    },
+    {
+      "case": "1-current",
+      "prototype": false,
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-09-bookkeeping-inventory/1-current",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 13.189754222985357,
+      "phases": {
+        "prepare_submit": 13.177379657980055
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "9cb00fc229eaefad5876452316bb1c08c2b2cf81",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 909735,
+      "peak_rss_kib": 109796,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 4.3173489950131625,
+        "controller_cpu_seconds": 4.291418468,
+        "child_cpu_seconds": 2.168404344971009e-19,
+        "child_peak_rss_kib": 31792
+      }
+    },
+    {
+      "case": "2-current",
+      "prototype": false,
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-09-bookkeeping-inventory/2-current",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 12.771497102919966,
+      "phases": {
+        "prepare_submit": 12.758468619082123
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "9cb00fc229eaefad5876452316bb1c08c2b2cf81",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 913831,
+      "peak_rss_kib": 109796,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 4.337927982909605,
+        "controller_cpu_seconds": 4.311771804,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 31968
+      }
+    },
+    {
+      "case": "2-omit",
+      "prototype": true,
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-09-bookkeeping-inventory/2-omit",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 12.728852627100423,
+      "phases": {
+        "prepare_submit": 12.716395326890051
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "9cb00fc229eaefad5876452316bb1c08c2b2cf81",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 1007,
+      "artifact_bytes": 796999,
+      "peak_rss_kib": 106836,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 4.886077000992373,
+        "controller_cpu_seconds": 4.854207475,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 33632
+      }
+    }
+  ]
+}

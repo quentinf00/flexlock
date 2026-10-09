@@ -277,6 +277,16 @@ default. Acceptance: 161 distinct passes, two expected skips, 16 equivalent queu
 inventory pointer/marker bookkeeping and remaining preparation phases; preserve
 lock inodes, ownership/history and provenance when considering consolidation.
 
+The [bookkeeping inventory](../reports/2026-10-09-bookkeeping-inventory/report.md)
+rejects a pointerless nested prototype despite halving prepared files (2,007 →
+1,007): median gain is only 6.1%, and current upstream binding can accept an old
+record while an ancestor replacement queue is pending. Keep current writers.
+Next consolidate private queue-reference readers and fix ancestor ownership
+detection, then measure large upstream cohorts before any versioned descriptor
+writer migration. A later pointer/marker merger saves a completed-item file,
+not a prepared-item file. Preserve stage completion and immutable item source
+evidence; do not merge atomically replaced metadata with a stable mutex inode.
+
 T7 implements this plan. T6 can migrate invariants and source routing independently,
 without copying speculative execution APIs. The shared knowledge repository links
 actual tool semantics; it does not become another CLI manual.

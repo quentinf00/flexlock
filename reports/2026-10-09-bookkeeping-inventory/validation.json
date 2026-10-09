@@ -1,0 +1,8 @@
+{
+  "equivalent_configs": 6000,
+  "equivalent_queues": 6,
+  "normalization": "Output case prefix only.",
+  "scheduler": "mocked only",
+  "default_adoption": false,
+  "reason": "Unchanged producer reader permits stale binding without a nested pointer."
+}
