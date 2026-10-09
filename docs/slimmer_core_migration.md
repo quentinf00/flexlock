@@ -268,6 +268,15 @@ two-worker metadata I/O remain defaults. Next reduce repeated executor merges of
 already-compiled items while preserving public partial-override semantics; avoid
 expanding process/context machinery as a prerequisite for the slimmer core.
 
+The [compiled-item guard reuse](../reports/2026-10-08-compiled-guard-reuse/report.md)
+at 1244e70 removes repeated executor merges for frozen Project items while keeping
+low-level partial/default/historical merges intact. Matched plain and producer
+medians improve 17.031 → 14.128s and 26.560 → 23.447s; serial compilation remains
+default. Acceptance: 161 distinct passes, two expected skips, 16 equivalent queues,
+100 product checksums and matching source trees/env. Files remain 2,007. Next
+inventory pointer/marker bookkeeping and remaining preparation phases; preserve
+lock inodes, ownership/history and provenance when considering consolidation.
+
 T7 implements this plan. T6 can migrate invariants and source routing independently,
 without copying speculative execution APIs. The shared knowledge repository links
 actual tool semantics; it does not become another CLI manual.

@@ -286,6 +286,20 @@ Files remain 2,007. Preserve serial defaults; next reduce the executor's repeate
 merge/reconstruction of already-compiled items while retaining public partial
 overrides. Per-worker timing diagnostics are needed before reconsidering pools.
 
+The [compiled-item guard reuse](../reports/2026-10-08-compiled-guard-reuse/report.md)
+at 1244e70 removes the executor's second merge for Project's frozen configs under
+its minimal wrapper, retaining low-level/default/historical-row merges. Serial
+compilation stays default. Alternating 1,000-item pairs improve plain median
+17.031 → 14.128s (17.0%) and producer-bearing 26.560 → 23.447s (11.7%); every
+corresponding large pair improves. Executor merges fall 1,000 → zero. Peak RSS
+falls about 30/45MiB. Small single-pair timing does not demonstrate a speedup.
+161 distinct focused passes, two expected skips; 16 equivalent queues / 14,200
+configs, 100 verified local products, matching source trees/env with generated
+shadow commit IDs retained. Files remain 2,007. Next inventory pointer/marker
+bookkeeping and remaining preparation phases before further optimization, retaining
+durable lock inodes, ownership and historical readers; tracked-worker source costs
+and automatic discovery migration remain separate.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

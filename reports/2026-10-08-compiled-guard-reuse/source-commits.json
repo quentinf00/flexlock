@@ -1,0 +1,10 @@
+{
+  "baseline": {
+    "commit": "76c0a21296fe590ad1d0f775f4ee11f364cbbd95",
+    "contents": "tree c7a02dedb0ba57d99adb807f550c25a40e2483b3\nparent 1244e7068512d66e5a249fa42bdfdfe537bf9426\nauthor Quentin Febvre <quentin.febvre@imt-atlantique.fr> 1791491857 +0200\ncommitter Quentin Febvre <quentin.febvre@imt-atlantique.fr> 1791491857 +0200\n\nFlexLock Shadow: 1244e70 + Changes\n"
+  },
+  "reuse": {
+    "commit": "0323d1a92251ae8b7f397505903709b5b5a3b770",
+    "contents": "tree c7a02dedb0ba57d99adb807f550c25a40e2483b3\nparent 1244e7068512d66e5a249fa42bdfdfe537bf9426\nauthor Quentin Febvre <quentin.febvre@imt-atlantique.fr> 1791491876 +0200\ncommitter Quentin Febvre <quentin.febvre@imt-atlantique.fr> 1791491876 +0200\n\nFlexLock Shadow: 1244e70 + Changes\n"
+  }
+}

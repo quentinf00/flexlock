@@ -1,0 +1,30 @@
+timestamp: '2026-10-08T22:37:56.841994'
+task_record: dir
+shared_save_dirs: []
+repos:
+  main:
+    commit: 0323d1a92251ae8b7f397505903709b5b5a3b770
+    tree: c7a02dedb0ba57d99adb807f550c25a40e2483b3
+    is_dirty: false
+    include:
+    - benchmarks
+    path: /ontap/user/qfebvre/flexlock-execution-validation
+env:
+  main/pixi.lock: 0c13f479a9b136232de4e4f83e56fc3fd19bbbd0ab3840110fcf0e6749d4d22c
+discovery:
+  repos:
+    main:
+      path: /ontap/user/qfebvre/flexlock-execution-validation
+      method: explicit
+  lineage: []
+config:
+  save_dir: /ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-08-compiled-guard-reuse/source-reuse/runs
+  _snapshot_:
+    discover:
+      repos: false
+      prevs: false
+    repos:
+      main:
+        path: /ontap/user/qfebvre/flexlock-execution-validation
+        include:
+        - benchmarks

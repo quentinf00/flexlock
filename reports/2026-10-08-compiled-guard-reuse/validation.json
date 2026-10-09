@@ -1,0 +1,13 @@
+{
+  "equivalent_queues": 16,
+  "equivalent_configs": 14200,
+  "normalized": "Output-case prefix only; all config fields compared by item.",
+  "verified_local_products": 100,
+  "equivalent_source_content_records": 2,
+  "source_normalization": "Output-case prefix, timestamp and generated shadow commit ID; commit trees and parents independently verified, original IDs retained.",
+  "distinct_passes": 161,
+  "distinct_skips": 2,
+  "scheduler": "mocked only",
+  "process_compilers": 1,
+  "file_count_1000": 2007
+}
