@@ -4,6 +4,7 @@ No scheduler inference: pending work stays reserved until its queue is resolved.
 Workers attach to existing queues independently of this controller guard.
 """
 from contextlib import contextmanager, ExitStack
+from functools import lru_cache
 from pathlib import Path
 import fcntl
 import json
@@ -22,6 +23,32 @@ _IO_WORKERS = 2
 # Ownership needs plain YAML values, not OmegaConf construction. Preserve safe
 # YAML semantics (including timestamps) and retain the pure-Python fallback.
 _TASK_LOADER = getattr(yaml, 'CSafeLoader', yaml.SafeLoader)
+
+# Cache only immutable, unresolved paths derived from exact task text. Queue
+# status and filesystem resolution never enter this process-local cache. Large
+# task documents bypass it, bounding retained text as well as entry count.
+_ROW_CACHE_CHARS = 4096
+
+
+def _decode_row_paths(raw, loader):
+    task = yaml.load(raw, Loader=loader)
+    if not hasattr(task, 'get'):
+        return frozenset()
+    stages = task.get('_stages_', [task])
+    return frozenset(str(Path(stage['save_dir'])) for stage in stages
+                     if stage.get('save_dir') and '${' not in str(stage['save_dir']))
+
+
+@lru_cache(maxsize=1024)
+def _cached_row_paths(raw, loader):
+    return _decode_row_paths(raw, loader)
+
+
+def _row_destinations(raw, resolve):
+    paths = (_cached_row_paths(raw, _TASK_LOADER)
+             if isinstance(raw, str) and len(raw) <= _ROW_CACHE_CHARS
+             else _decode_row_paths(raw, _TASK_LOADER))
+    return {resolve(path) for path in paths}
 
 
 def _map_io(func, items):
@@ -115,7 +142,7 @@ def has_active_destination(path):
     resolve = _destination_resolver()
     for db in databases:
         for (raw,) in _active_rows(db):
-            destinations = task_destinations(yaml.load(raw, Loader=_TASK_LOADER), _resolve=resolve)
+            destinations = _row_destinations(raw, resolve)
             if not destinations or str(directory) in destinations:
                 return True
     return False
@@ -151,8 +178,7 @@ def guard_destinations(paths, db_dir=None):
         resolve = _destination_resolver()
         for db in databases:
             for (raw,) in _active_rows(db):
-                task = yaml.load(raw, Loader=_TASK_LOADER)
-                destinations = task_destinations(task, _resolve=resolve)
+                destinations = _row_destinations(raw, resolve)
                 if (master and db.resolve() == (Path(master) / 'run.lock.tasks.db').resolve()) or destinations & products or not destinations:
                     raise FlexLockValidationError(
                         f'Destination has pending/running work in {db}; refusing before submission even with --force. '
