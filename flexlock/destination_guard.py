@@ -34,12 +34,34 @@ def _map_io(func, items):
         return list(pool.map(func, items))
 
 
-def task_destinations(task):
+def _destination_resolver():
+    """Reuse shared parent resolution within one ownership scan only.
+
+    Final components are inspected individually, including symlinks. Nothing
+    survives the scan: a later check sees changes to parent and final symlinks.
+    """
+    parents = {}
+
+    def resolve(value):
+        path = Path(value)
+        if not path.name or path.name == '..':
+            return str(path.resolve())
+        parent = path.parent
+        if parent not in parents:
+            parents[parent] = parent.resolve()
+        candidate = parents[parent] / path.name
+        return str(candidate.resolve() if candidate.is_symlink() else candidate)
+
+    return resolve
+
+
+def task_destinations(task, *, _resolve=None):
     """Concrete stage paths in an already compiled queue entry."""
     if not hasattr(task, 'get'):
         return set()
     stages = task.get('_stages_', [task])
-    return {str(Path(stage['save_dir']).resolve()) for stage in stages
+    resolve = _resolve or (lambda value: str(Path(value).resolve()))
+    return {resolve(stage['save_dir']) for stage in stages
             if stage.get('save_dir') and '${' not in str(stage['save_dir'])}
 
 
@@ -90,9 +112,10 @@ def has_active_destination(path):
     databases = _product_databases(directory)
     databases.update(db for candidate in ancestor_candidates([directory])
                      if (db := _existing_database(candidate)) is not None)
+    resolve = _destination_resolver()
     for db in databases:
         for (raw,) in _active_rows(db):
-            destinations = task_destinations(yaml.load(raw, Loader=_TASK_LOADER))
+            destinations = task_destinations(yaml.load(raw, Loader=_TASK_LOADER), _resolve=resolve)
             if not destinations or str(directory) in destinations:
                 return True
     return False
@@ -125,10 +148,11 @@ def guard_destinations(paths, db_dir=None):
         ancestors = ancestor_candidates(products)
         databases.update(path for path in _map_io(_existing_database, sorted(ancestors))
                          if path is not None)
+        resolve = _destination_resolver()
         for db in databases:
             for (raw,) in _active_rows(db):
                 task = yaml.load(raw, Loader=_TASK_LOADER)
-                destinations = task_destinations(task)
+                destinations = task_destinations(task, _resolve=resolve)
                 if (master and db.resolve() == (Path(master) / 'run.lock.tasks.db').resolve()) or destinations & products or not destinations:
                     raise FlexLockValidationError(
                         f'Destination has pending/running work in {db}; refusing before submission even with --force. '
