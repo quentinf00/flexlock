@@ -353,6 +353,20 @@ six equivalent queues and bindings. No general preparation speed gain claimed;
 larger working-set throughput is unmeasured. Next isolate full preparation's config,
 serialization, reservation-write and locking phases before more lookup machinery.
 
+The [nested phase accounting](../reports/2026-10-10-preparation-phases/report.md)
+finds SQLite writes about 0.02s, plain/producer compile 2.585/6.723s, controller
+preflight 2.409/2.492s and reservation writes 1.179/1.217s. Five hashes/item cost
+0.459/0.931s; producer binding costs 3.568s. Nested/worker timings must not be added
+as independent wall costs. Eight equivalent queues / 8,000 configs support diagnosis.
+
+The [bounded lock-handle pass](../reports/2026-10-10-controller-lock-handles/report.md)
+at 0cb765a opens mutex handles with two I/O workers, retaining sorted main-thread
+flock acquisition and joined failure cleanup. Full plain/producer medians improve
+10.468 → 7.462s / 16.546 → 14.057s; individual regressions remain retained.
+142 passes/two expected skips, 12 equivalent queues / 12,000 configs, 10 verified
+local products; files still 2,007. Next source/data-enabled preparation and consumer
+validation before broad adoption; no general cluster/scientific acceptance.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

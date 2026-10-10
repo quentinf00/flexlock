@@ -1,0 +1,1333 @@
+{
+  "revision": "bc07c03159092bdf2716a7bc7a20bd1a0ac42266",
+  "hostname": "compute-116-7",
+  "runs": [
+    {
+      "case": "plain-control",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-preparation-phases/plain-control",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 10.229995534056798,
+      "phases": {
+        "prepare_submit": 10.218111306079663
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "bc07c03159092bdf2716a7bc7a20bd1a0ac42266",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 910743,
+      "peak_rss_kib": 109964,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 2.5927857399219647,
+        "controller_cpu_seconds": 2.5732678289999997,
+        "child_cpu_seconds": -1.0842021724855044e-19,
+        "child_peak_rss_kib": 36292
+      },
+      "instrumented": false,
+      "timings": {}
+    },
+    {
+      "case": "producer-control",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-preparation-phases/producer-control",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 14.523778805974871,
+      "phases": {
+        "prepare_submit": 14.515254140016623
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "bc07c03159092bdf2716a7bc7a20bd1a0ac42266",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 2285927,
+      "peak_rss_kib": 136452,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 6.96457216097042,
+        "controller_cpu_seconds": 6.133759255,
+        "child_cpu_seconds": -2.168404344971009e-19,
+        "child_peak_rss_kib": 37792
+      },
+      "instrumented": false,
+      "timings": {}
+    },
+    {
+      "case": "plain-1",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-preparation-phases/plain-1",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 8.323727692943066,
+      "phases": {
+        "prepare_submit": 8.317880291957408
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "bc07c03159092bdf2716a7bc7a20bd1a0ac42266",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 908791,
+      "peak_rss_kib": 114040,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 2.5451097500044852,
+        "controller_cpu_seconds": 2.520379262,
+        "child_cpu_seconds": 4.336808689942018e-19,
+        "child_peak_rss_kib": 31412
+      },
+      "instrumented": true,
+      "timings": {
+        "main:config_merge": {
+          "calls": 1001,
+          "inclusive_wall": 0.7635654242476448,
+          "exclusive_wall": 0.7635654242476448,
+          "inclusive_cpu": 0.757808560000006,
+          "exclusive_cpu": 0.757808560000006
+        },
+        "main:freeze_bind": {
+          "calls": 1000,
+          "inclusive_wall": 1.7010072766570374,
+          "exclusive_wall": 1.7010072766570374,
+          "inclusive_cpu": 1.6831036640000052,
+          "exclusive_cpu": 1.6831036640000052
+        },
+        "main:compile": {
+          "calls": 1,
+          "inclusive_wall": 2.5451022690394893,
+          "exclusive_wall": 0.08161737711634487,
+          "inclusive_cpu": 2.5203655510000003,
+          "exclusive_cpu": 0.08053075099998885
+        },
+        "main:metadata_pool": {
+          "calls": 3,
+          "inclusive_wall": 1.465833178954199,
+          "exclusive_wall": 1.465833178954199,
+          "inclusive_cpu": 0.026488619000000213,
+          "exclusive_cpu": 0.026488619000000213
+        },
+        "main:guard_preflight": {
+          "calls": 1,
+          "inclusive_wall": 2.4085744640324265,
+          "exclusive_wall": 2.096200978034176,
+          "inclusive_cpu": 0.20172354100000023,
+          "exclusive_cpu": 0.1842297710000005
+        },
+        "main:collision_check": {
+          "calls": 1000,
+          "inclusive_wall": 0.16338793886825442,
+          "exclusive_wall": 0.16338793886825442,
+          "inclusive_cpu": 0.025546848000006506,
+          "exclusive_cpu": 0.025546848000006506
+        },
+        "main:task_hash": {
+          "calls": 5000,
+          "inclusive_wall": 0.45640774944331497,
+          "exclusive_wall": 0.45640774944331497,
+          "inclusive_cpu": 0.45349196899998434,
+          "exclusive_cpu": 0.45349196899998434
+        },
+        "main:campaign_tag": {
+          "calls": 1,
+          "inclusive_wall": 0.0910001719603315,
+          "exclusive_wall": 0.001962101669050753,
+          "inclusive_cpu": 0.09039448599999966,
+          "exclusive_cpu": 0.001928460000006904
+        },
+        "main:shared_roots": {
+          "calls": 1,
+          "inclusive_wall": 0.2710023958934471,
+          "exclusive_wall": 0.2710023958934471,
+          "inclusive_cpu": 0.1277223249999997,
+          "exclusive_cpu": 0.1277223249999997
+        },
+        "main:queue_yaml": {
+          "calls": 1000,
+          "inclusive_wall": 0.5276127026882023,
+          "exclusive_wall": 0.5276127026882023,
+          "inclusive_cpu": 0.5243107050000022,
+          "exclusive_cpu": 0.5243107050000022
+        },
+        "main:sqlite_write_transaction": {
+          "calls": 1,
+          "inclusive_wall": 0.023065344896167517,
+          "exclusive_wall": 0.023065344896167517,
+          "inclusive_cpu": 0.004357818999999985,
+          "exclusive_cpu": 0.004357818999999985
+        },
+        "main:queue_insert": {
+          "calls": 1,
+          "inclusive_wall": 0.6626297140028328,
+          "exclusive_wall": 0.0071260572876781225,
+          "inclusive_cpu": 0.6397560389999999,
+          "exclusive_cpu": 0.006934278999995325
+        },
+        "io_workers:reservation_file": {
+          "calls": 1000,
+          "inclusive_wall": 2.2938076875871047,
+          "exclusive_wall": 2.2938076875871047,
+          "inclusive_cpu": 0.16142529300000003,
+          "exclusive_cpu": 0.16142529300000003
+        },
+        "main:reserve_products": {
+          "calls": 1,
+          "inclusive_wall": 1.179337786976248,
+          "exclusive_wall": 0.025878094020299613,
+          "inclusive_cpu": 0.03439005400000017,
+          "exclusive_cpu": 0.0253952049999997
+        },
+        "main:executor_setup": {
+          "calls": 1,
+          "inclusive_wall": 2.248051021946594,
+          "exclusive_wall": 0.04952834011055529,
+          "inclusive_cpu": 0.9339491680000003,
+          "exclusive_cpu": 0.04708521300000568
+        },
+        "main:record_selection": {
+          "calls": 2,
+          "inclusive_wall": 0.14552042505238205,
+          "exclusive_wall": 0.14552042505238205,
+          "inclusive_cpu": 0.0996280220000001,
+          "exclusive_cpu": 0.0996280220000001
+        },
+        "main:task_repo_collection": {
+          "calls": 1,
+          "inclusive_wall": 0.01745156606193632,
+          "exclusive_wall": 0.0163637570803985,
+          "inclusive_cpu": 0.017307785999999936,
+          "exclusive_cpu": 0.016230361999999943
+        },
+        "main:master_snapshot": {
+          "calls": 1,
+          "inclusive_wall": 0.002738957991823554,
+          "exclusive_wall": 0.002738957991823554,
+          "inclusive_cpu": 0.0011375959999995189,
+          "exclusive_cpu": 0.0011375959999995189
+        },
+        "main:executor_run": {
+          "calls": 1,
+          "inclusive_wall": 0.14628194202668965,
+          "exclusive_wall": 0.01132287341170013,
+          "inclusive_cpu": 0.11374956100000055,
+          "exclusive_cpu": 0.0035998480000056787
+        },
+        "main:collect_results": {
+          "calls": 1,
+          "inclusive_wall": 0.2164673509541899,
+          "exclusive_wall": 0.008724185405299067,
+          "inclusive_cpu": 0.19243850400000007,
+          "exclusive_cpu": 0.008637643000001027
+        },
+        "main:guard_release": {
+          "calls": 1,
+          "inclusive_wall": 0.40772607491817325,
+          "exclusive_wall": 0.40772607491817325,
+          "inclusive_cpu": 0.01721039099999988,
+          "exclusive_cpu": 0.01721039099999988
+        },
+        "main:total_submit": {
+          "calls": 1,
+          "inclusive_wall": 8.317710586008616,
+          "exclusive_wall": 0.09111935226246715,
+          "inclusive_cpu": 4.184936779,
+          "exclusive_cpu": 0.08955872899999306
+        }
+      }
+    },
+    {
+      "case": "producer-1",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-preparation-phases/producer-1",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 14.902723724022508,
+      "phases": {
+        "prepare_submit": 14.896437832037918
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "bc07c03159092bdf2716a7bc7a20bd1a0ac42266",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 1595847,
+      "peak_rss_kib": 129920,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 6.72257121396251,
+        "controller_cpu_seconds": 6.081990286,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 31296
+      },
+      "instrumented": true,
+      "timings": {
+        "main:config_merge": {
+          "calls": 1001,
+          "inclusive_wall": 0.7828371883369982,
+          "exclusive_wall": 0.7828371883369982,
+          "inclusive_cpu": 0.7777198329999926,
+          "exclusive_cpu": 0.7777198329999926
+        },
+        "main:producer_binding": {
+          "calls": 1000,
+          "inclusive_wall": 3.5676397086353973,
+          "exclusive_wall": 3.5676397086353973,
+          "inclusive_cpu": 2.9492902040000004,
+          "exclusive_cpu": 2.9492902040000004
+        },
+        "main:freeze_bind": {
+          "calls": 1000,
+          "inclusive_wall": 5.857308377977461,
+          "exclusive_wall": 2.2896686693420634,
+          "inclusive_cpu": 5.2226764000000045,
+          "exclusive_cpu": 2.2733861960000032
+        },
+        "main:compile": {
+          "calls": 1,
+          "inclusive_wall": 6.722562602022663,
+          "exclusive_wall": 0.08434072369709611,
+          "inclusive_cpu": 6.081974262,
+          "exclusive_cpu": 0.08349485100000376
+        },
+        "main:metadata_pool": {
+          "calls": 3,
+          "inclusive_wall": 1.769777663052082,
+          "exclusive_wall": 1.769777663052082,
+          "inclusive_cpu": 0.030660635999999464,
+          "exclusive_cpu": 0.030660635999999464
+        },
+        "main:guard_preflight": {
+          "calls": 1,
+          "inclusive_wall": 3.23755315807648,
+          "exclusive_wall": 2.8588697540108114,
+          "inclusive_cpu": 0.21074062799999993,
+          "exclusive_cpu": 0.19228870600000025
+        },
+        "main:collision_check": {
+          "calls": 1000,
+          "inclusive_wall": 0.19241935678292066,
+          "exclusive_wall": 0.19241935678292066,
+          "inclusive_cpu": 0.026036187000000766,
+          "exclusive_cpu": 0.026036187000000766
+        },
+        "main:task_hash": {
+          "calls": 5000,
+          "inclusive_wall": 0.9350561975734308,
+          "exclusive_wall": 0.9350561975734308,
+          "inclusive_cpu": 0.9296880839999693,
+          "exclusive_cpu": 0.9296880839999693
+        },
+        "main:campaign_tag": {
+          "calls": 1,
+          "inclusive_wall": 0.1912190659204498,
+          "exclusive_wall": 0.002403669524937868,
+          "inclusive_cpu": 0.19000396800000008,
+          "exclusive_cpu": 0.0023379400000074213
+        },
+        "main:shared_roots": {
+          "calls": 1,
+          "inclusive_wall": 0.39660804194863886,
+          "exclusive_wall": 0.39660804194863886,
+          "inclusive_cpu": 0.22114938199999923,
+          "exclusive_cpu": 0.22114938199999923
+        },
+        "main:queue_yaml": {
+          "calls": 1000,
+          "inclusive_wall": 1.0167757647577673,
+          "exclusive_wall": 1.0167757647577673,
+          "inclusive_cpu": 1.0106240809999845,
+          "exclusive_cpu": 1.0106240809999845
+        },
+        "main:sqlite_write_transaction": {
+          "calls": 1,
+          "inclusive_wall": 0.02411214297171682,
+          "exclusive_wall": 0.02411214297171682,
+          "inclusive_cpu": 0.004871914000000643,
+          "exclusive_cpu": 0.004871914000000643
+        },
+        "main:queue_insert": {
+          "calls": 1,
+          "inclusive_wall": 1.252201050054282,
+          "exclusive_wall": 0.00783220655284822,
+          "inclusive_cpu": 1.2253903480000004,
+          "exclusive_cpu": 0.00759352700001692
+        },
+        "io_workers:reservation_file": {
+          "calls": 1000,
+          "inclusive_wall": 2.764327359269373,
+          "exclusive_wall": 2.764327359269373,
+          "inclusive_cpu": 0.18363338099999965,
+          "exclusive_cpu": 0.18363338099999965
+        },
+        "main:reserve_products": {
+          "calls": 1,
+          "inclusive_wall": 1.417053215089254,
+          "exclusive_wall": 0.025958956102840602,
+          "inclusive_cpu": 0.03773696499999879,
+          "exclusive_cpu": 0.025528250999999003
+        },
+        "main:executor_setup": {
+          "calls": 1,
+          "inclusive_wall": 3.2940490869805217,
+          "exclusive_wall": 0.051121416268870234,
+          "inclusive_cpu": 1.7101389970000005,
+          "exclusive_cpu": 0.049746234999997974
+        },
+        "main:record_selection": {
+          "calls": 2,
+          "inclusive_wall": 0.2568532960722223,
+          "exclusive_wall": 0.2568532960722223,
+          "inclusive_cpu": 0.16919967599999985,
+          "exclusive_cpu": 0.16919967599999985
+        },
+        "main:task_repo_collection": {
+          "calls": 1,
+          "inclusive_wall": 0.040869803982786834,
+          "exclusive_wall": 0.03894611599389464,
+          "inclusive_cpu": 0.04057518900000012,
+          "exclusive_cpu": 0.03865836700000003
+        },
+        "main:master_snapshot": {
+          "calls": 1,
+          "inclusive_wall": 0.0029778979951515794,
+          "exclusive_wall": 0.0029778979951515794,
+          "inclusive_cpu": 0.0011648459999999972,
+          "exclusive_cpu": 0.0011648459999999972
+        },
+        "main:executor_run": {
+          "calls": 1,
+          "inclusive_wall": 0.2820498620858416,
+          "exclusive_wall": 0.01020979171153158,
+          "inclusive_cpu": 0.23072779099999963,
+          "exclusive_cpu": 0.0037571360000026033
+        },
+        "main:collect_results": {
+          "calls": 1,
+          "inclusive_wall": 0.4050051160156727,
+          "exclusive_wall": 0.01044968655332923,
+          "inclusive_cpu": 0.35791705000000107,
+          "exclusive_cpu": 0.010342831000023978
+        },
+        "main:guard_release": {
+          "calls": 1,
+          "inclusive_wall": 0.4773614041041583,
+          "exclusive_wall": 0.4773614041041583,
+          "inclusive_cpu": 0.017371836000000584,
+          "exclusive_cpu": 0.017371836000000584
+        },
+        "main:total_submit": {
+          "calls": 1,
+          "inclusive_wall": 14.89626435097307,
+          "exclusive_wall": 0.09404469898436219,
+          "inclusive_cpu": 8.918157422999998,
+          "exclusive_cpu": 0.0932467039999949
+        }
+      }
+    },
+    {
+      "case": "plain-2",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-preparation-phases/plain-2",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 11.795603365986608,
+      "phases": {
+        "prepare_submit": 11.786072164075449
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "bc07c03159092bdf2716a7bc7a20bd1a0ac42266",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 908791,
+      "peak_rss_kib": 109156,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 2.5851118770660833,
+        "controller_cpu_seconds": 2.563659515,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 34276
+      },
+      "instrumented": true,
+      "timings": {
+        "main:config_merge": {
+          "calls": 1001,
+          "inclusive_wall": 0.7845991301583126,
+          "exclusive_wall": 0.7845991301583126,
+          "inclusive_cpu": 0.7787131619999965,
+          "exclusive_cpu": 0.7787131619999965
+        },
+        "main:freeze_bind": {
+          "calls": 1000,
+          "inclusive_wall": 1.7180936506483704,
+          "exclusive_wall": 1.7180936506483704,
+          "inclusive_cpu": 1.7039180440000115,
+          "exclusive_cpu": 1.7039180440000115
+        },
+        "main:compile": {
+          "calls": 1,
+          "inclusive_wall": 2.585105065954849,
+          "exclusive_wall": 0.0835212361998856,
+          "inclusive_cpu": 2.5636467659999997,
+          "exclusive_cpu": 0.0821154979999914
+        },
+        "main:metadata_pool": {
+          "calls": 3,
+          "inclusive_wall": 2.6424766649724916,
+          "exclusive_wall": 2.6424766649724916,
+          "inclusive_cpu": 0.030112230999999934,
+          "exclusive_cpu": 0.030112230999999934
+        },
+        "main:guard_preflight": {
+          "calls": 1,
+          "inclusive_wall": 4.401360042043962,
+          "exclusive_wall": 3.9767714580520988,
+          "inclusive_cpu": 0.20795370199999974,
+          "exclusive_cpu": 0.19149422499999957
+        },
+        "main:collision_check": {
+          "calls": 1000,
+          "inclusive_wall": 0.26145382900722325,
+          "exclusive_wall": 0.26145382900722325,
+          "inclusive_cpu": 0.027193726000001472,
+          "exclusive_cpu": 0.027193726000001472
+        },
+        "main:task_hash": {
+          "calls": 5000,
+          "inclusive_wall": 0.4588926048018038,
+          "exclusive_wall": 0.4588926048018038,
+          "inclusive_cpu": 0.4562422029999764,
+          "exclusive_cpu": 0.4562422029999764
+        },
+        "main:campaign_tag": {
+          "calls": 1,
+          "inclusive_wall": 0.09118662297260016,
+          "exclusive_wall": 0.0021774391643702984,
+          "inclusive_cpu": 0.09063916000000027,
+          "exclusive_cpu": 0.002115304999995349
+        },
+        "main:shared_roots": {
+          "calls": 1,
+          "inclusive_wall": 0.35646716703195125,
+          "exclusive_wall": 0.35646716703195125,
+          "inclusive_cpu": 0.12916778499999992,
+          "exclusive_cpu": 0.12916778499999992
+        },
+        "main:queue_yaml": {
+          "calls": 1000,
+          "inclusive_wall": 0.5296819746727124,
+          "exclusive_wall": 0.5296819746727124,
+          "inclusive_cpu": 0.5265540699999973,
+          "exclusive_cpu": 0.5265540699999973
+        },
+        "main:sqlite_write_transaction": {
+          "calls": 1,
+          "inclusive_wall": 0.03127571695949882,
+          "exclusive_wall": 0.03127571695949882,
+          "inclusive_cpu": 0.00426882300000031,
+          "exclusive_cpu": 0.00426882300000031
+        },
+        "main:queue_insert": {
+          "calls": 1,
+          "inclusive_wall": 0.6748875039629638,
+          "exclusive_wall": 0.007320296484977007,
+          "inclusive_cpu": 0.6438771249999999,
+          "exclusive_cpu": 0.007069841000003851
+        },
+        "io_workers:reservation_file": {
+          "calls": 1000,
+          "inclusive_wall": 4.421117499587126,
+          "exclusive_wall": 4.421117499587126,
+          "inclusive_cpu": 0.1602543700000002,
+          "exclusive_cpu": 0.1602543700000002
+        },
+        "main:reserve_products": {
+          "calls": 1,
+          "inclusive_wall": 2.244225978036411,
+          "exclusive_wall": 0.026337897055782378,
+          "inclusive_cpu": 0.0393972309999997,
+          "exclusive_cpu": 0.025744476999999932
+        },
+        "main:executor_setup": {
+          "calls": 1,
+          "inclusive_wall": 3.409768037032336,
+          "exclusive_wall": 0.05073888041079044,
+          "inclusive_cpu": 0.9435074770000003,
+          "exclusive_cpu": 0.0480666440000066
+        },
+        "main:record_selection": {
+          "calls": 2,
+          "inclusive_wall": 0.1834347959375009,
+          "exclusive_wall": 0.1834347959375009,
+          "inclusive_cpu": 0.09848693600000047,
+          "exclusive_cpu": 0.09848693600000047
+        },
+        "main:task_repo_collection": {
+          "calls": 1,
+          "inclusive_wall": 0.01701658102683723,
+          "exclusive_wall": 0.015907629975117743,
+          "inclusive_cpu": 0.016820585999999693,
+          "exclusive_cpu": 0.01572064800000028
+        },
+        "main:master_snapshot": {
+          "calls": 1,
+          "inclusive_wall": 0.003097577951848507,
+          "exclusive_wall": 0.003097577951848507,
+          "inclusive_cpu": 0.001173618000000154,
+          "exclusive_cpu": 0.001173618000000154
+        },
+        "main:executor_run": {
+          "calls": 1,
+          "inclusive_wall": 0.17186934896744788,
+          "exclusive_wall": 0.013840328203514218,
+          "inclusive_cpu": 0.11417352399999992,
+          "exclusive_cpu": 0.0036446530000073807
+        },
+        "main:collect_results": {
+          "calls": 1,
+          "inclusive_wall": 0.23484848800580949,
+          "exclusive_wall": 0.009503156295977533,
+          "inclusive_cpu": 0.19409157900000018,
+          "exclusive_cpu": 0.009404045000013461
+        },
+        "main:guard_release": {
+          "calls": 1,
+          "inclusive_wall": 0.5374074839055538,
+          "exclusive_wall": 0.5374074839055538,
+          "inclusive_cpu": 0.01669419599999955,
+          "exclusive_cpu": 0.01669419599999955
+        },
+        "main:total_submit": {
+          "calls": 1,
+          "inclusive_wall": 11.785902959993109,
+          "exclusive_wall": 0.09290404210332781,
+          "inclusive_cpu": 4.249469713,
+          "exclusive_cpu": 0.09156958299999829
+        }
+      }
+    },
+    {
+      "case": "producer-2",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-preparation-phases/producer-2",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 14.037261524004862,
+      "phases": {
+        "prepare_submit": 14.028753333957866
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "bc07c03159092bdf2716a7bc7a20bd1a0ac42266",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 1595847,
+      "peak_rss_kib": 128660,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 6.640584534034133,
+        "controller_cpu_seconds": 6.134205706,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 32396
+      },
+      "instrumented": true,
+      "timings": {
+        "main:config_merge": {
+          "calls": 1001,
+          "inclusive_wall": 0.7880594577873126,
+          "exclusive_wall": 0.7880594577873126,
+          "inclusive_cpu": 0.7830596090000114,
+          "exclusive_cpu": 0.7830596090000114
+        },
+        "main:producer_binding": {
+          "calls": 1000,
+          "inclusive_wall": 3.454857329837978,
+          "exclusive_wall": 3.454857329837978,
+          "inclusive_cpu": 2.970628092000005,
+          "exclusive_cpu": 2.970628092000005
+        },
+        "main:freeze_bind": {
+          "calls": 1000,
+          "inclusive_wall": 5.769720013486221,
+          "exclusive_wall": 2.3148626836482435,
+          "inclusive_cpu": 5.269135628999995,
+          "exclusive_cpu": 2.29850753699999
+        },
+        "main:compile": {
+          "calls": 1,
+          "inclusive_wall": 6.640577013022266,
+          "exclusive_wall": 0.08466786972712725,
+          "inclusive_cpu": 6.134190122,
+          "exclusive_cpu": 0.08385011299999334
+        },
+        "main:metadata_pool": {
+          "calls": 3,
+          "inclusive_wall": 1.598769320989959,
+          "exclusive_wall": 1.598769320989959,
+          "inclusive_cpu": 0.02754566400000158,
+          "exclusive_cpu": 0.02754566400000158
+        },
+        "main:guard_preflight": {
+          "calls": 1,
+          "inclusive_wall": 2.4922322620404884,
+          "exclusive_wall": 2.0842896500835195,
+          "inclusive_cpu": 0.2076039249999999,
+          "exclusive_cpu": 0.18777214899999972
+        },
+        "main:collision_check": {
+          "calls": 1000,
+          "inclusive_wall": 0.25470706983469427,
+          "exclusive_wall": 0.25470706983469427,
+          "inclusive_cpu": 0.026127763999999054,
+          "exclusive_cpu": 0.026127763999999054
+        },
+        "main:task_hash": {
+          "calls": 5000,
+          "inclusive_wall": 0.900680654682219,
+          "exclusive_wall": 0.900680654682219,
+          "inclusive_cpu": 0.8954051760000103,
+          "exclusive_cpu": 0.8954051760000103
+        },
+        "main:campaign_tag": {
+          "calls": 1,
+          "inclusive_wall": 0.18481556698679924,
+          "exclusive_wall": 0.0023063481785357,
+          "inclusive_cpu": 0.18369269100000007,
+          "exclusive_cpu": 0.002246656000009395
+        },
+        "main:shared_roots": {
+          "calls": 1,
+          "inclusive_wall": 0.42784096591640264,
+          "exclusive_wall": 0.42784096591640264,
+          "inclusive_cpu": 0.21322991400000024,
+          "exclusive_cpu": 0.21322991400000024
+        },
+        "main:queue_yaml": {
+          "calls": 1000,
+          "inclusive_wall": 1.0254779229871929,
+          "exclusive_wall": 1.0254779229871929,
+          "inclusive_cpu": 1.0189690010000119,
+          "exclusive_cpu": 1.0189690010000119
+        },
+        "main:sqlite_write_transaction": {
+          "calls": 1,
+          "inclusive_wall": 0.03088307601865381,
+          "exclusive_wall": 0.03088307601865381,
+          "inclusive_cpu": 0.004942816999999877,
+          "exclusive_cpu": 0.004942816999999877
+        },
+        "main:queue_insert": {
+          "calls": 1,
+          "inclusive_wall": 1.2618398540653288,
+          "exclusive_wall": 0.007996911532245576,
+          "inclusive_cpu": 1.227877530999999,
+          "exclusive_cpu": 0.007746507999962127
+        },
+        "io_workers:reservation_file": {
+          "calls": 1000,
+          "inclusive_wall": 2.3714790355879813,
+          "exclusive_wall": 2.3714790355879813,
+          "inclusive_cpu": 0.15500791000000008,
+          "exclusive_cpu": 0.15500791000000008
+        },
+        "main:reserve_products": {
+          "calls": 1,
+          "inclusive_wall": 1.2169561320915818,
+          "exclusive_wall": 0.026129423058591783,
+          "inclusive_cpu": 0.0332557910000002,
+          "exclusive_cpu": 0.02554190299999881
+        },
+        "main:executor_setup": {
+          "calls": 1,
+          "inclusive_wall": 3.1266318580601364,
+          "exclusive_wall": 0.04970984905958176,
+          "inclusive_cpu": 1.691794399,
+          "exclusive_cpu": 0.048060822999993036
+        },
+        "main:record_selection": {
+          "calls": 2,
+          "inclusive_wall": 0.29227352794259787,
+          "exclusive_wall": 0.29227352794259787,
+          "inclusive_cpu": 0.16820898199999945,
+          "exclusive_cpu": 0.16820898199999945
+        },
+        "main:task_repo_collection": {
+          "calls": 1,
+          "inclusive_wall": 0.03832902596332133,
+          "exclusive_wall": 0.0364586979849264,
+          "inclusive_cpu": 0.038081766999999545,
+          "exclusive_cpu": 0.03622653799999931
+        },
+        "main:master_snapshot": {
+          "calls": 1,
+          "inclusive_wall": 0.0028478309977799654,
+          "exclusive_wall": 0.0028478309977799654,
+          "inclusive_cpu": 0.0011265680000001055,
+          "exclusive_cpu": 0.0011265680000001055
+        },
+        "main:executor_run": {
+          "calls": 1,
+          "inclusive_wall": 0.2959096970735118,
+          "exclusive_wall": 0.01285897777415812,
+          "inclusive_cpu": 0.22349675199999908,
+          "exclusive_cpu": 0.003847903999998792
+        },
+        "main:collect_results": {
+          "calls": 1,
+          "inclusive_wall": 0.4108160419855267,
+          "exclusive_wall": 0.010011940961703658,
+          "inclusive_cpu": 0.3460069049999994,
+          "exclusive_cpu": 0.009868840000013535
+        },
+        "main:guard_release": {
+          "calls": 1,
+          "inclusive_wall": 0.5283549129962921,
+          "exclusive_wall": 0.5283549129962921,
+          "inclusive_cpu": 0.0169227240000005,
+          "exclusive_cpu": 0.0169227240000005
+        },
+        "main:total_submit": {
+          "calls": 1,
+          "inclusive_wall": 14.02858039306011,
+          "exclusive_wall": 0.09453597106039524,
+          "inclusive_cpu": 8.923138261,
+          "exclusive_cpu": 0.0933029790000024
+        }
+      }
+    },
+    {
+      "case": "plain-3",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-preparation-phases/plain-3",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 7.924164547002874,
+      "phases": {
+        "prepare_submit": 7.918479320011102
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "bc07c03159092bdf2716a7bc7a20bd1a0ac42266",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 908791,
+      "peak_rss_kib": 98336,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 2.647363249096088,
+        "controller_cpu_seconds": 2.628228059,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 28184
+      },
+      "instrumented": true,
+      "timings": {
+        "main:config_merge": {
+          "calls": 1001,
+          "inclusive_wall": 0.8147868764353916,
+          "exclusive_wall": 0.8147868764353916,
+          "inclusive_cpu": 0.8096656459999967,
+          "exclusive_cpu": 0.8096656459999967
+        },
+        "main:freeze_bind": {
+          "calls": 1000,
+          "inclusive_wall": 1.7509165602969006,
+          "exclusive_wall": 1.7509165602969006,
+          "inclusive_cpu": 1.7378622599999942,
+          "exclusive_cpu": 1.7378622599999942
+        },
+        "main:compile": {
+          "calls": 1,
+          "inclusive_wall": 2.6473547759233043,
+          "exclusive_wall": 0.08272863319143653,
+          "inclusive_cpu": 2.628211795,
+          "exclusive_cpu": 0.08175245000000864
+        },
+        "main:metadata_pool": {
+          "calls": 3,
+          "inclusive_wall": 1.3210378050571308,
+          "exclusive_wall": 1.3210378050571308,
+          "inclusive_cpu": 0.033489193999999944,
+          "exclusive_cpu": 0.033489193999999944
+        },
+        "main:guard_preflight": {
+          "calls": 1,
+          "inclusive_wall": 2.0546694869408384,
+          "exclusive_wall": 1.7665643009822816,
+          "inclusive_cpu": 0.21173093099999996,
+          "exclusive_cpu": 0.18790959099999993
+        },
+        "main:collision_check": {
+          "calls": 1000,
+          "inclusive_wall": 0.1467526440974325,
+          "exclusive_wall": 0.1467526440974325,
+          "inclusive_cpu": 0.026388038999997754,
+          "exclusive_cpu": 0.026388038999997754
+        },
+        "main:task_hash": {
+          "calls": 5000,
+          "inclusive_wall": 0.4682653162162751,
+          "exclusive_wall": 0.4682653162162751,
+          "inclusive_cpu": 0.465547736999985,
+          "exclusive_cpu": 0.465547736999985
+        },
+        "main:campaign_tag": {
+          "calls": 1,
+          "inclusive_wall": 0.09485143492929637,
+          "exclusive_wall": 0.0020140453707426786,
+          "inclusive_cpu": 0.094228969,
+          "exclusive_cpu": 0.0019768730000016
+        },
+        "main:shared_roots": {
+          "calls": 1,
+          "inclusive_wall": 0.26063373195938766,
+          "exclusive_wall": 0.26063373195938766,
+          "inclusive_cpu": 0.13214588299999974,
+          "exclusive_cpu": 0.13214588299999974
+        },
+        "main:queue_yaml": {
+          "calls": 1000,
+          "inclusive_wall": 0.5358117975993082,
+          "exclusive_wall": 0.5358117975993082,
+          "inclusive_cpu": 0.5324612109999833,
+          "exclusive_cpu": 0.5324612109999833
+        },
+        "main:sqlite_write_transaction": {
+          "calls": 1,
+          "inclusive_wall": 0.021311303018592298,
+          "exclusive_wall": 0.021311303018592298,
+          "inclusive_cpu": 0.004734991000000299,
+          "exclusive_cpu": 0.004734991000000299
+        },
+        "main:queue_insert": {
+          "calls": 1,
+          "inclusive_wall": 0.672120004077442,
+          "exclusive_wall": 0.007211292395368218,
+          "inclusive_cpu": 0.651414543,
+          "exclusive_cpu": 0.007027397000004765
+        },
+        "io_workers:reservation_file": {
+          "calls": 1000,
+          "inclusive_wall": 2.0521229365840554,
+          "exclusive_wall": 2.0521229365840554,
+          "inclusive_cpu": 0.15703923099999995,
+          "exclusive_cpu": 0.15703923099999995
+        },
+        "main:reserve_products": {
+          "calls": 1,
+          "inclusive_wall": 1.0590978258987889,
+          "exclusive_wall": 0.026165206800214946,
+          "inclusive_cpu": 0.03545473600000015,
+          "exclusive_cpu": 0.025786882000000233
+        },
+        "main:executor_setup": {
+          "calls": 1,
+          "inclusive_wall": 2.130896368995309,
+          "exclusive_wall": 0.05059770424850285,
+          "inclusive_cpu": 0.9559562930000003,
+          "exclusive_cpu": 0.04900489000000485
+        },
+        "main:record_selection": {
+          "calls": 2,
+          "inclusive_wall": 0.14177066495176405,
+          "exclusive_wall": 0.14177066495176405,
+          "inclusive_cpu": 0.09778839300000008,
+          "exclusive_cpu": 0.09778839300000008
+        },
+        "main:task_repo_collection": {
+          "calls": 1,
+          "inclusive_wall": 0.016339980997145176,
+          "exclusive_wall": 0.015262686996720731,
+          "inclusive_cpu": 0.016216770999999852,
+          "exclusive_cpu": 0.01514821000000044
+        },
+        "main:master_snapshot": {
+          "calls": 1,
+          "inclusive_wall": 0.0023963210405781865,
+          "exclusive_wall": 0.0023963210405781865,
+          "inclusive_cpu": 0.001099989000000079,
+          "exclusive_cpu": 0.001099989000000079
+        },
+        "main:executor_run": {
+          "calls": 1,
+          "inclusive_wall": 0.14680728397797793,
+          "exclusive_wall": 0.009530156035907567,
+          "inclusive_cpu": 0.11482378300000029,
+          "exclusive_cpu": 0.00353577400001015
+        },
+        "main:collect_results": {
+          "calls": 1,
+          "inclusive_wall": 0.21099599602166563,
+          "exclusive_wall": 0.008570944191887975,
+          "inclusive_cpu": 0.19047458600000056,
+          "exclusive_cpu": 0.008488986000011245
+        },
+        "main:guard_release": {
+          "calls": 1,
+          "inclusive_wall": 0.3903024409664795,
+          "exclusive_wall": 0.3903024409664795,
+          "inclusive_cpu": 0.017037941999999973,
+          "exclusive_cpu": 0.017037941999999973
+        },
+        "main:total_submit": {
+          "calls": 1,
+          "inclusive_wall": 7.91830008092802,
+          "exclusive_wall": 0.09566964907571673,
+          "inclusive_cpu": 4.333451689,
+          "exclusive_cpu": 0.09459935100000116
+        }
+      }
+    },
+    {
+      "case": "producer-3",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-preparation-phases/producer-3",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 13.38634271803312,
+      "phases": {
+        "prepare_submit": 13.380542488070205
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "bc07c03159092bdf2716a7bc7a20bd1a0ac42266",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 1595847,
+      "peak_rss_kib": 122952,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 7.039051127037965,
+        "controller_cpu_seconds": 6.339627027,
+        "child_cpu_seconds": -2.168404344971009e-19,
+        "child_peak_rss_kib": 27720
+      },
+      "instrumented": true,
+      "timings": {
+        "main:config_merge": {
+          "calls": 1001,
+          "inclusive_wall": 0.8011758483480662,
+          "exclusive_wall": 0.8011758483480662,
+          "inclusive_cpu": 0.795660376999991,
+          "exclusive_cpu": 0.795660376999991
+        },
+        "main:producer_binding": {
+          "calls": 1000,
+          "inclusive_wall": 3.754014925681986,
+          "exclusive_wall": 3.754014925681986,
+          "inclusive_cpu": 3.0794133630000013,
+          "exclusive_cpu": 3.0794133630000013
+        },
+        "main:freeze_bind": {
+          "calls": 1000,
+          "inclusive_wall": 6.152345279348083,
+          "exclusive_wall": 2.398330353666097,
+          "inclusive_cpu": 5.459338104000003,
+          "exclusive_cpu": 2.3799247410000017
+        },
+        "main:compile": {
+          "calls": 1,
+          "inclusive_wall": 7.039042584015988,
+          "exclusive_wall": 0.08745396824087948,
+          "inclusive_cpu": 6.339611124,
+          "exclusive_cpu": 0.08653275100000624
+        },
+        "main:metadata_pool": {
+          "calls": 3,
+          "inclusive_wall": 1.3030008468776941,
+          "exclusive_wall": 1.3030008468776941,
+          "inclusive_cpu": 0.03101575799999967,
+          "exclusive_cpu": 0.03101575799999967
+        },
+        "main:guard_preflight": {
+          "calls": 1,
+          "inclusive_wall": 1.9724167259410024,
+          "exclusive_wall": 1.6586749990237877,
+          "inclusive_cpu": 0.21169876600000048,
+          "exclusive_cpu": 0.18943110800000085
+        },
+        "main:collision_check": {
+          "calls": 1000,
+          "inclusive_wall": 0.16062382888048887,
+          "exclusive_wall": 0.16062382888048887,
+          "inclusive_cpu": 0.025911701000024046,
+          "exclusive_cpu": 0.025911701000024046
+        },
+        "main:task_hash": {
+          "calls": 5000,
+          "inclusive_wall": 0.9311599413631484,
+          "exclusive_wall": 0.9311599413631484,
+          "inclusive_cpu": 0.9251297110000278,
+          "exclusive_cpu": 0.9251297110000278
+        },
+        "main:campaign_tag": {
+          "calls": 1,
+          "inclusive_wall": 0.19335765799041837,
+          "exclusive_wall": 0.0023358112666755915,
+          "inclusive_cpu": 0.19195050900000066,
+          "exclusive_cpu": 0.0022779610000123185
+        },
+        "main:shared_roots": {
+          "calls": 1,
+          "inclusive_wall": 0.36098151898477226,
+          "exclusive_wall": 0.36098151898477226,
+          "inclusive_cpu": 0.22281970300000076,
+          "exclusive_cpu": 0.22281970300000076
+        },
+        "main:queue_yaml": {
+          "calls": 1000,
+          "inclusive_wall": 1.0337335558142513,
+          "exclusive_wall": 1.0337335558142513,
+          "inclusive_cpu": 1.027019713999997,
+          "exclusive_cpu": 1.027019713999997
+        },
+        "main:sqlite_write_transaction": {
+          "calls": 1,
+          "inclusive_wall": 0.024307016981765628,
+          "exclusive_wall": 0.024307016981765628,
+          "inclusive_cpu": 0.005244296000000759,
+          "exclusive_cpu": 0.005244296000000759
+        },
+        "main:queue_insert": {
+          "calls": 1,
+          "inclusive_wall": 1.2668562030885369,
+          "exclusive_wall": 0.007838358753360808,
+          "inclusive_cpu": 1.2395886119999995,
+          "exclusive_cpu": 0.007629647999968903
+        },
+        "io_workers:reservation_file": {
+          "calls": 1000,
+          "inclusive_wall": 1.966199822141789,
+          "exclusive_wall": 1.966199822141789,
+          "inclusive_cpu": 0.1643250650000003,
+          "exclusive_cpu": 0.1643250650000003
+        },
+        "main:reserve_products": {
+          "calls": 1,
+          "inclusive_wall": 1.0154745620675385,
+          "exclusive_wall": 0.02621544210705906,
+          "inclusive_cpu": 0.034520505999999784,
+          "exclusive_cpu": 0.025772405999999748
+        },
+        "main:executor_setup": {
+          "calls": 1,
+          "inclusive_wall": 2.872914587962441,
+          "exclusive_wall": 0.051607806351967156,
+          "inclusive_cpu": 1.7232703970000012,
+          "exclusive_cpu": 0.04949463400000376
+        },
+        "main:record_selection": {
+          "calls": 2,
+          "inclusive_wall": 0.244577007018961,
+          "exclusive_wall": 0.244577007018961,
+          "inclusive_cpu": 0.17253116599999885,
+          "exclusive_cpu": 0.17253116599999885
+        },
+        "main:task_repo_collection": {
+          "calls": 1,
+          "inclusive_wall": 0.04059963708277792,
+          "exclusive_wall": 0.038667125161737204,
+          "inclusive_cpu": 0.04026741200000039,
+          "exclusive_cpu": 0.03834730400000019
+        },
+        "main:master_snapshot": {
+          "calls": 1,
+          "inclusive_wall": 0.002571113989688456,
+          "exclusive_wall": 0.002571113989688456,
+          "inclusive_cpu": 0.0011629840000004776,
+          "exclusive_cpu": 0.0011629840000004776
+        },
+        "main:executor_run": {
+          "calls": 1,
+          "inclusive_wall": 0.27316564496140927,
+          "exclusive_wall": 0.009950138977728784,
+          "inclusive_cpu": 0.22970117600000073,
+          "exclusive_cpu": 0.003923587000013384
+        },
+        "main:collect_results": {
+          "calls": 1,
+          "inclusive_wall": 0.39650064101442695,
+          "exclusive_wall": 0.010802063276059926,
+          "inclusive_cpu": 0.3577892930000015,
+          "exclusive_cpu": 0.010690052999979827
+        },
+        "main:guard_release": {
+          "calls": 1,
+          "inclusive_wall": 0.376522577018477,
+          "exclusive_wall": 0.376522577018477,
+          "inclusive_cpu": 0.017595927000000344,
+          "exclusive_cpu": 0.017595927000000344
+        },
+        "main:total_submit": {
+          "calls": 1,
+          "inclusive_wall": 13.380386021919549,
+          "exclusive_wall": 0.0958417741348967,
+          "inclusive_cpu": 9.192465417,
+          "exclusive_cpu": 0.09493652399996932
+        }
+      }
+    }
+  ]
+}

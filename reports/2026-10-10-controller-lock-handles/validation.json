@@ -1,0 +1,8 @@
+{
+  "equivalent_queues": 12,
+  "equivalent_configs": 12000,
+  "local_products_verified": 10,
+  "prepared_file_count": 2007,
+  "scheduler": "mocked only",
+  "format_changed": false
+}

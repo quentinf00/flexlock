@@ -321,6 +321,15 @@ matching configs/bindings. No schema/writer change or production adoption. Next
 isolate full-preparation config/metadata costs and verify a representative consumer;
 avoid a persistent destination index without evidence. Files remain 2,007.
 
+The [phase investigation](../reports/2026-10-10-preparation-phases/report.md) identifies
+controller metadata work rather than SQLite writes as substantial. The resulting
+[lock-handle pass](../reports/2026-10-10-controller-lock-handles/report.md) at 0cb765a
+prepares handles with two I/O workers but retains sorted main-thread lock acquisition,
+ownership barriers and cleanup. Plain/producer medians 10.468 → 7.462s /
+16.546 → 14.057s; mixed individual pairs retained. 142 passes/two expected skips,
+12 equivalent queues and 10 local product checks. No writer change; still 2,007
+files. Next source/data-enabled preparation and consumer validation; production unchanged.
+
 T7 implements this plan. T6 can migrate invariants and source routing independently,
 without copying speculative execution APIs. The shared knowledge repository links
 actual tool semantics; it does not become another CLI manual.

@@ -1,0 +1,8 @@
+{
+  "equivalent_queues": 8,
+  "equivalent_configs": 8000,
+  "main_exclusive_accounting_verified": true,
+  "file_count": 2007,
+  "scheduler": "mocked only",
+  "runtime_changed": false
+}
