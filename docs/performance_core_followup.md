@@ -344,6 +344,15 @@ result; no stable preparation speed conclusion. All evidence is retained. Next
 evaluate reducing repeated immutable-row decoding/scanning while retaining fresh
 status/path checks and legacy fallbacks, without an ownership-answer cache.
 
+The [immutable row reuse](../reports/2026-10-10-ownership-row-reuse/report.md)
+at be865f9 adds a process-local LRU of unresolved destination strings keyed by exact
+YAML and loader: 1,024 entries, documents over 4,096 characters bypassed. Status,
+canonical paths and ownership answers are never cached. Pending median improves
+3.111 → 1.834s (41.0%); YAML loads 49,600 → 991. 137 passes/two expected skips,
+six equivalent queues and bindings. No general preparation speed gain claimed;
+larger working-set throughput is unmeasured. Next isolate full preparation's config,
+serialization, reservation-write and locking phases before more lookup machinery.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

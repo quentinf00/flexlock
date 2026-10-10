@@ -36,6 +36,10 @@ for row in manifest['runs'] + followup:
     if fixture != 'prep':
         assert row['queue_items'] == 1000
         assert row['count'] == (100 if fixture == 'future' else 1000)
+        if fixture == 'future':
+            assert row['yaml_loads'] == (49600 if row['baseline'] else 991)
+            assert row['row_cache']['currsize'] == (0 if row['baseline'] else 991)
+            assert row['row_cache']['hits'] == (0 if row['baseline'] else 48609)
         hashes.setdefault(fixture, row['payload_sha256'])
         assert row['payload_sha256'] == hashes[fixture]
         continue
@@ -75,6 +79,10 @@ validation = dict(prepared_queues=6, equivalent_queue_configs=6000,
                   baseline_and_current_reject_active_ancestor=True, current_stale_binding_rejected=True,
                   exact_future_path_preserved=True, prepared_files=2007,
                   writers_changed=False, scheduler='mocked only')
+validation.update(future_baseline_decodes=49600, future_current_decodes=991,
+                  future_current_cache_hits=48609, cache_entries_limit=1024,
+                  cached_document_chars_limit=4096, resolved_paths_cached=False,
+                  ownership_answers_cached=False)
 for name, value in [('manifest.json', manifest), ('summary.json', summary), ('validation.json', validation)]:
     (OUT/name).write_text(json.dumps(value, indent=2)+'\n')
 for source, name in [('/tmp/flexlock-row-cache-tests.xml', 'tests.xml')]:

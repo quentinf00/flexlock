@@ -313,6 +313,14 @@ Preparation primary/follow-up results conflict, so no stable speed conclusion th
 Next address repeated row decoding/scanning without expanding to a persistent
 index or caching mutable ownership answers. Files remain 2,007; production unchanged.
 
+The [bounded immutable-row pass](../reports/2026-10-10-ownership-row-reuse/report.md)
+at be865f9 caches only unresolved destination strings from exact YAML/loader keys,
+with 1,024-entry and 4,096-character limits. Fresh status and filesystem resolution
+remain intact. Pending median 3.111 → 1.834s (41.0%); 137 passes/two expected skips,
+matching configs/bindings. No schema/writer change or production adoption. Next
+isolate full-preparation config/metadata costs and verify a representative consumer;
+avoid a persistent destination index without evidence. Files remain 2,007.
+
 T7 implements this plan. T6 can migrate invariants and source routing independently,
 without copying speculative execution APIs. The shared knowledge repository links
 actual tool semantics; it does not become another CLI manual.

@@ -1,0 +1,492 @@
+{
+  "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b",
+  "hostname": "compute-116-7",
+  "runs": [
+    {
+      "case": "prep-0-baseline",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-ownership-row-reuse/prep-0-baseline",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 12.639028424047865,
+      "phases": {
+        "prepare_submit": 12.630864269915037
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 917863,
+      "peak_rss_kib": 96796,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 3.911048360983841,
+        "controller_cpu_seconds": 2.8408714550000003,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 30748
+      }
+    },
+    {
+      "case": "prep-0-current",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-ownership-row-reuse/prep-0-current",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 13.854403247009031,
+      "phases": {
+        "prepare_submit": 13.844119468005374
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 920951,
+      "peak_rss_kib": 105184,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 3.490005378960632,
+        "controller_cpu_seconds": 2.8344296200000003,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 35288
+      }
+    },
+    {
+      "case": "terminal-0-baseline",
+      "seconds": 10.616915273945779,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": false,
+      "yaml_loads": 1000,
+      "row_cache": {
+        "hits": 0,
+        "misses": 0,
+        "maxsize": 1024,
+        "currsize": 0
+      },
+      "peak_rss_kib": 81456,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "terminal-0-current",
+      "seconds": 7.778811292024329,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": false,
+      "yaml_loads": 1000,
+      "row_cache": {
+        "hits": 0,
+        "misses": 0,
+        "maxsize": 1024,
+        "currsize": 0
+      },
+      "peak_rss_kib": 80384,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "future-0-baseline",
+      "seconds": 2.730098091997206,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": true,
+      "yaml_loads": 49600,
+      "row_cache": {
+        "hits": 0,
+        "misses": 0,
+        "maxsize": 1024,
+        "currsize": 0
+      },
+      "peak_rss_kib": 62908,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "future-0-current",
+      "seconds": 1.5308180719148368,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": true,
+      "yaml_loads": 991,
+      "row_cache": {
+        "hits": 48609,
+        "misses": 991,
+        "maxsize": 1024,
+        "currsize": 991
+      },
+      "peak_rss_kib": 59320,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "prep-1-current",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-ownership-row-reuse/prep-1-current",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 10.23629820602946,
+      "phases": {
+        "prepare_submit": 10.2273865978932
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 916855,
+      "peak_rss_kib": 98204,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 3.210779777960852,
+        "controller_cpu_seconds": 2.800422421,
+        "child_cpu_seconds": -2.168404344971009e-19,
+        "child_peak_rss_kib": 32256
+      }
+    },
+    {
+      "case": "prep-1-baseline",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-ownership-row-reuse/prep-1-baseline",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 8.529445810010657,
+      "phases": {
+        "prepare_submit": 8.520457627018914
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 917863,
+      "peak_rss_kib": 99784,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 3.2503865680191666,
+        "controller_cpu_seconds": 2.872241755,
+        "child_cpu_seconds": -4.336808689942018e-19,
+        "child_peak_rss_kib": 29268
+      }
+    },
+    {
+      "case": "terminal-1-current",
+      "seconds": 10.024565040017478,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": false,
+      "yaml_loads": 1000,
+      "row_cache": {
+        "hits": 0,
+        "misses": 0,
+        "maxsize": 1024,
+        "currsize": 0
+      },
+      "peak_rss_kib": 83600,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "terminal-1-baseline",
+      "seconds": 8.486800511949696,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": false,
+      "yaml_loads": 1000,
+      "row_cache": {
+        "hits": 0,
+        "misses": 0,
+        "maxsize": 1024,
+        "currsize": 0
+      },
+      "peak_rss_kib": 81888,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "future-1-current",
+      "seconds": 1.834235480055213,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": true,
+      "yaml_loads": 991,
+      "row_cache": {
+        "hits": 48609,
+        "misses": 991,
+        "maxsize": 1024,
+        "currsize": 991
+      },
+      "peak_rss_kib": 62896,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "future-1-baseline",
+      "seconds": 3.375665351981297,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": true,
+      "yaml_loads": 49600,
+      "row_cache": {
+        "hits": 0,
+        "misses": 0,
+        "maxsize": 1024,
+        "currsize": 0
+      },
+      "peak_rss_kib": 59016,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "prep-2-baseline",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-ownership-row-reuse/prep-2-baseline",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 13.095809311023913,
+      "phases": {
+        "prepare_submit": 13.08433241804596
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 917863,
+      "peak_rss_kib": 103856,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 3.8801933400100097,
+        "controller_cpu_seconds": 2.792958617,
+        "child_cpu_seconds": 4.336808689942018e-19,
+        "child_peak_rss_kib": 32332
+      }
+    },
+    {
+      "case": "prep-2-current",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-ownership-row-reuse/prep-2-current",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 9.488426471012644,
+      "phases": {
+        "prepare_submit": 9.480746067943983
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 916855,
+      "peak_rss_kib": 101420,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 3.709929661010392,
+        "controller_cpu_seconds": 2.749526828,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 32072
+      }
+    },
+    {
+      "case": "terminal-2-baseline",
+      "seconds": 10.145021497970447,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": false,
+      "yaml_loads": 1000,
+      "row_cache": {
+        "hits": 0,
+        "misses": 0,
+        "maxsize": 1024,
+        "currsize": 0
+      },
+      "peak_rss_kib": 79576,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "terminal-2-current",
+      "seconds": 7.988885908969678,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": false,
+      "yaml_loads": 1000,
+      "row_cache": {
+        "hits": 0,
+        "misses": 0,
+        "maxsize": 1024,
+        "currsize": 0
+      },
+      "peak_rss_kib": 83056,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "future-2-baseline",
+      "seconds": 3.1108779730275273,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": true,
+      "yaml_loads": 49600,
+      "row_cache": {
+        "hits": 0,
+        "misses": 0,
+        "maxsize": 1024,
+        "currsize": 0
+      },
+      "peak_rss_kib": 59868,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    },
+    {
+      "case": "future-2-current",
+      "seconds": 2.033599487040192,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": true,
+      "yaml_loads": 991,
+      "row_cache": {
+        "hits": 48609,
+        "misses": 991,
+        "maxsize": 1024,
+        "currsize": 991
+      },
+      "peak_rss_kib": 62320,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "be865f9c2b9aa6baa422cd0e0cd9ad0f5c5e124b"
+    }
+  ]
+}

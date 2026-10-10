@@ -1,0 +1,19 @@
+{
+  "prepared_queues": 6,
+  "equivalent_queue_configs": 6000,
+  "equivalent_completed_bindings": 6000,
+  "equivalent_future_bindings": 600,
+  "baseline_and_current_reject_active_ancestor": true,
+  "current_stale_binding_rejected": true,
+  "exact_future_path_preserved": true,
+  "prepared_files": 2007,
+  "writers_changed": false,
+  "scheduler": "mocked only",
+  "future_baseline_decodes": 49600,
+  "future_current_decodes": 991,
+  "future_current_cache_hits": 48609,
+  "cache_entries_limit": 1024,
+  "cached_document_chars_limit": 4096,
+  "resolved_paths_cached": false,
+  "ownership_answers_cached": false
+}
