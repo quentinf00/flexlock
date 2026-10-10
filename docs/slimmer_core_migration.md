@@ -305,6 +305,14 @@ writer or ownership-cache change. Next investigate repeated row scans/destinatio
 resolution; keep file reduction behind older-reader compatibility. Production
 installation unchanged.
 
+The [scan-local destination pass](../reports/2026-10-10-destination-resolution/report.md)
+at da91f41 shares parent resolution within each ownership check, inspecting final
+symlinks separately. No map persists across checks. Matched pending median
+2.600 → 1.919s (26.2%); 130 passes/two expected skips, ten equivalent queues.
+Preparation primary/follow-up results conflict, so no stable speed conclusion there.
+Next address repeated row decoding/scanning without expanding to a persistent
+index or caching mutable ownership answers. Files remain 2,007; production unchanged.
+
 T7 implements this plan. T6 can migrate invariants and source routing independently,
 without copying speculative execution APIs. The shared knowledge repository links
 actual tool semantics; it does not become another CLI manual.

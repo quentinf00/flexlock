@@ -1,0 +1,39 @@
+Sat Oct 10 21:05:44 2026    /ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-destination-resolution/diagnostic-baseline/profile.pstats
+
+         53056646 function calls (51130503 primitive calls) in 21.896 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1232 to 46 due to restriction <'guard_destinations|_map_io|_destination_resolver|task_destinations|acquire|mkdir|open|resolve|flock'>
+   List reduced from 46 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        2    0.002    0.001    4.459    2.229 baseline_guard.py:101(guard_destinations)
+     1009    2.040    0.002    2.045    0.002 {built-in method io.open}
+    16885    2.043    0.000    2.043    0.000 {method 'acquire' of '_thread.lock' objects}
+     1003    0.001    0.000    2.041    0.002 pathlib.py:1036(open)
+        1    0.000    0.000    1.718    1.718 destination_guard.py:27(_map_io)
+     1000    0.001    0.000    1.393    0.001 omegaconf.py:769(resolve)
+39000/1000    0.037    0.000    1.387    0.001 _impl.py:28(_resolve)
+39000/7000    0.037    0.000    1.371    0.000 _impl.py:9(_resolve_container_value)
+     1007    0.000    0.000    1.039    0.001 pathlib.py:1111(mkdir)
+     1007    1.037    0.001    1.038    0.001 {built-in method posix.mkdir}
+     5009    0.006    0.000    0.485    0.000 pathlib.py:981(resolve)
+        2    0.000    0.000    0.384    0.192 baseline_guard.py:27(_map_io)
+     1001    0.305    0.000    0.305    0.000 {built-in method fcntl.flock}
+    16032    0.011    0.000    0.188    0.000 basecontainer.py:86(_resolve_with_default)
+     1000    0.002    0.000    0.166    0.000 base.py:545(_resolve_interpolation_from_parse_tree)
+   122082    0.041    0.000    0.138    0.000 _utils.py:212(_resolve_optional)
+     1000    0.003    0.000    0.133    0.000 base.py:728(resolve_parse_tree)
+   153058    0.087    0.000    0.130    0.000 resolver.py:143(resolve)
+     1000    0.001    0.000    0.126    0.000 destination_guard.py:58(task_destinations)
+     2000    0.006    0.000    0.120    0.000 resolvers.py:240(_stubbed)
+     4002    0.013    0.000    0.113    0.000 omegaconf.py:372(register_new_resolver)
+    18032    0.006    0.000    0.094    0.000 base.py:706(_maybe_resolve_interpolation)
+     2000    0.003    0.000    0.075    0.000 base.py:652(_resolve_node_interpolation)
+     3008    0.004    0.000    0.015    0.000 threading.py:440(acquire)
+   106044    0.011    0.000    0.011    0.000 resolver.py:114(ascend_resolver)
+   106044    0.011    0.000    0.011    0.000 resolver.py:91(descend_resolver)
+       16    0.005    0.000    0.005    0.000 {built-in method io.open_code}
+     2000    0.002    0.000    0.005    0.000 base.py:449(_resolve_key_and_root)
+     1002    0.001    0.000    0.005    0.000 serializer.py:27(open)
+        2    0.004    0.002    0.004    0.002 {built-in method posix.open}

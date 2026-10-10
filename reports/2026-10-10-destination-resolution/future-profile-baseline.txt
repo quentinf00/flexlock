@@ -1,0 +1,17 @@
+Sat Oct 10 21:07:46 2026    /tmp/flexlock-destination-baseline.prof
+
+         20314809 function calls (20184537 primitive calls) in 16.368 seconds
+
+   Ordered by: cumulative time
+   List reduced from 3340 to 9 due to restriction <'has_active_destination|task_destinations|destination_guard.py:.*resolve|baseline_guard.py:.*resolve|pathlib.py:.*resolve|__init__.py:.*load|is_symlink|lstat|_active_rows'>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      100    0.053    0.001    6.224    0.062 baseline_guard.py:82(has_active_destination)
+    49600    0.036    0.000    3.632    0.000 baseline_guard.py:37(task_destinations)
+    51002    0.054    0.000    3.210    0.000 pathlib.py:981(resolve)
+    49600    0.040    0.000    1.601    0.000 __init__.py:74(load)
+   458860    0.997    0.000    0.997    0.000 {built-in method posix.lstat}
+      100    0.000    0.000    0.732    0.007 baseline_guard.py:71(_active_rows)
+      100    0.000    0.000    0.001    0.000 pathlib.py:1298(is_symlink)
+      100    0.000    0.000    0.001    0.000 __init__.py:299(loads)
+      100    0.000    0.000    0.001    0.000 pathlib.py:1158(lstat)

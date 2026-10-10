@@ -1,0 +1,396 @@
+{
+  "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97",
+  "hostname": "compute-116-7",
+  "runs": [
+    {
+      "case": "prep-0-baseline",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-destination-resolution/prep-0-baseline",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 10.96023106703069,
+      "phases": {
+        "prepare_submit": 10.946717093000188
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "da91f419b12b0cbcce4c2c24500b30953068bf97",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 920887,
+      "peak_rss_kib": 103712,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 2.625933129922487,
+        "controller_cpu_seconds": 2.604417126,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 31884
+      }
+    },
+    {
+      "case": "prep-0-current",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-destination-resolution/prep-0-current",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 12.103205800056458,
+      "phases": {
+        "prepare_submit": 12.091121881036088
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "da91f419b12b0cbcce4c2c24500b30953068bf97",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 923975,
+      "peak_rss_kib": 104576,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 2.664052380947396,
+        "controller_cpu_seconds": 2.643060224,
+        "child_cpu_seconds": -2.168404344971009e-19,
+        "child_peak_rss_kib": 37388
+      }
+    },
+    {
+      "case": "terminal-0-baseline",
+      "seconds": 10.335440214024857,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": false,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "terminal-0-current",
+      "seconds": 9.732875353074633,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": false,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "future-0-baseline",
+      "seconds": 2.736223123036325,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": true,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "future-0-current",
+      "seconds": 1.9189102030359209,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": true,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "prep-1-current",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-destination-resolution/prep-1-current",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 12.7136487030657,
+      "phases": {
+        "prepare_submit": 12.701344612054527
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "da91f419b12b0cbcce4c2c24500b30953068bf97",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 919879,
+      "peak_rss_kib": 106416,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 2.6276682349853218,
+        "controller_cpu_seconds": 2.6079810119999998,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 36196
+      }
+    },
+    {
+      "case": "prep-1-baseline",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-destination-resolution/prep-1-baseline",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 10.693773678969592,
+      "phases": {
+        "prepare_submit": 10.68161406496074
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "da91f419b12b0cbcce4c2c24500b30953068bf97",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 920887,
+      "peak_rss_kib": 98120,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 2.649763319059275,
+        "controller_cpu_seconds": 2.624752919,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 29808
+      }
+    },
+    {
+      "case": "terminal-1-current",
+      "seconds": 8.812250433024019,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": false,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "terminal-1-baseline",
+      "seconds": 6.945126135018654,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": false,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "future-1-current",
+      "seconds": 1.7809136590221897,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": true,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "future-1-baseline",
+      "seconds": 2.557766751968302,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": true,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "prep-2-baseline",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-destination-resolution/prep-2-baseline",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 11.656261970056221,
+      "phases": {
+        "prepare_submit": 11.64617234596517
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "da91f419b12b0cbcce4c2c24500b30953068bf97",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 920887,
+      "peak_rss_kib": 103720,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 2.6449522690381855,
+        "controller_cpu_seconds": 2.624374087,
+        "child_cpu_seconds": 0.0,
+        "child_peak_rss_kib": 32500
+      }
+    },
+    {
+      "case": "prep-2-current",
+      "kind": "flexlock-slurm",
+      "count": 1000,
+      "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-10-destination-resolution/prep-2-current",
+      "provenance": false,
+      "data": false,
+      "cache_search": false,
+      "task_record": "dir",
+      "seconds": 14.891585945966654,
+      "phases": {
+        "prepare_submit": 14.87845067307353
+      },
+      "details": {
+        "items": 1000,
+        "statuses": [
+          [
+            "pending",
+            1000
+          ]
+        ],
+        "scheduler_calls": 1
+      },
+      "source_revision": "da91f419b12b0cbcce4c2c24500b30953068bf97",
+      "fixture_file_count": 1000,
+      "fixture_bytes": 4096000,
+      "artifact_files": 2007,
+      "artifact_bytes": 919879,
+      "peak_rss_kib": 107384,
+      "python": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python",
+      "versions": {
+        "hydra-core": "1.3.2",
+        "hydra-zen": "0.16.0",
+        "hydra-submitit-launcher": "1.2.0",
+        "submitit": "1.5.4",
+        "omegaconf": "2.3.1"
+      },
+      "compilation": {
+        "selected_workers": 1,
+        "compile_seconds": 2.6378774780314416,
+        "controller_cpu_seconds": 2.618159349,
+        "child_cpu_seconds": 1.0842021724855044e-19,
+        "child_peak_rss_kib": 36604
+      }
+    },
+    {
+      "case": "terminal-2-baseline",
+      "seconds": 9.91845120198559,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": false,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "terminal-2-current",
+      "seconds": 7.55320004792884,
+      "count": 1000,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": false,
+      "payload_sha256": "6b4df4d80ee9dcba5760929f646e0f83998eee09b084109973c49ca90e5183ab",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "future-2-baseline",
+      "seconds": 2.5995579549344257,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": true,
+      "future": true,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    },
+    {
+      "case": "future-2-current",
+      "seconds": 2.0901101499330252,
+      "count": 100,
+      "queue_items": 1000,
+      "baseline": false,
+      "future": true,
+      "payload_sha256": "ab10d2ae024b0edd9df4538b9845ab95bdc1dd6ab5846902dfa5360a7b886936",
+      "revision": "da91f419b12b0cbcce4c2c24500b30953068bf97"
+    }
+  ]
+}

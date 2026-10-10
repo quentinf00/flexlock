@@ -334,6 +334,16 @@ remaining active-row lookup. Next reduce repeated scans with fresh status/path
 validation and legacy fallbacks retained. Optional C loader falls back safely;
 files remain 2,007. Pointer reduction still requires older-reader compatibility.
 
+The [scan-local parent reuse](../reports/2026-10-10-destination-resolution/report.md)
+at da91f41 improves the matched pending median 2.600 → 1.919s (26.2%). Full
+fixture Path.resolve calls fall 51,002 → 1,502; rows decoded stay 49,600. Maps
+expire after each scan; final symlinks are inspected individually. 130 passes/two
+expected skips, ten equivalent queues / 10,000 configs and matching bindings.
+Primary preparation pairs slowed down, but separate follow-up pairs reversed the
+result; no stable preparation speed conclusion. All evidence is retained. Next
+evaluate reducing repeated immutable-row decoding/scanning while retaining fresh
+status/path checks and legacy fallbacks, without an ownership-answer cache.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

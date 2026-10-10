@@ -27,9 +27,10 @@ for fixture in ('prep', 'terminal', 'future'):
         summary[fixture+'-'+variant] = dict(seconds=[r['seconds'] for r in rows],
                                           median=statistics.median(r['seconds'] for r in rows))
 
+followup = json.loads((RAW/'prep-followup.json').read_text())
 reference = None
 hashes = {}
-for row in manifest['runs']:
+for row in manifest['runs'] + followup:
     assert row.get('revision', row.get('source_revision')) == manifest['revision']
     fixture = row['case'].split('-')[0]
     if fixture != 'prep':
@@ -69,12 +70,12 @@ with tempfile.TemporaryDirectory(prefix='flexlock-fixed-binding-') as tmp:
     future = bind_existing_run_locks(cfg, allow_future=True)
     assert OmegaConf.to_container(future, resolve=False)['value'] == '${run_lock:'+str(product)+',config.value}'
 
-validation = dict(prepared_queues=6, equivalent_queue_configs=6000,
+validation = dict(prepared_queues=10, equivalent_queue_configs=10000,
                   equivalent_completed_bindings=6000, equivalent_future_bindings=600,
                   baseline_and_current_reject_active_ancestor=True, current_stale_binding_rejected=True,
                   exact_future_path_preserved=True, prepared_files=2007,
                   writers_changed=False, scheduler='mocked only')
-for name, value in [('manifest.json', manifest), ('summary.json', summary), ('validation.json', validation)]:
+for name, value in [('manifest.json', manifest), ('prep-followup.json', followup), ('summary.json', summary), ('validation.json', validation)]:
     (OUT/name).write_text(json.dumps(value, indent=2)+'\n')
 for source, name in [('/tmp/flexlock-destination-resolution-tests.xml', 'tests.xml')]:
     text = Path(source).read_text()
