@@ -9,6 +9,7 @@ from pathlib import Path
 import fcntl
 import json
 import sqlite3
+import threading
 import yaml
 
 from .exceptions import FlexLockValidationError
@@ -117,6 +118,12 @@ def _existing_database(path):
     return path if path.exists() else None
 
 
+def _open_controller_lock(path):
+    directory = Path(path)
+    directory.mkdir(parents=True, exist_ok=True)
+    return (directory / CONTROLLER_LOCK).open('a+')
+
+
 def _active_rows(db):
     # Do not open/create a task DB through the mutating taskdb connection cache.
     if not db.exists():
@@ -159,10 +166,26 @@ def guard_destinations(paths, db_dir=None):
     master = str(Path(db_dir).resolve()) if db_dir is not None else None
     locks = products | ({master} if master else set())
     with ExitStack() as stack:
-        for path in sorted(locks):
-            directory = Path(path)
-            directory.mkdir(parents=True, exist_ok=True)
-            stream = stack.enter_context((directory / CONTROLLER_LOCK).open('a+'))
+        ordered = sorted(locks)
+        opened = []
+        opened_lock = threading.Lock()
+
+        def open_lock(path):
+            stream = _open_controller_lock(path)
+            with opened_lock:
+                opened.append(stream)
+            return stream
+
+        try:
+            streams = _map_io(open_lock, ordered)
+        finally:
+            # _map_io joins all opens even after an error. Register every handle
+            # before propagating it, including successes after the failing item.
+            for stream in opened:
+                stack.enter_context(stream)
+        # Only handle preparation is parallel. Acquire locks in the same global
+        # order on the controller thread, then retain them through all mutations.
+        for path, stream in zip(ordered, streams):
             try:
                 fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError as exc:
