@@ -4,6 +4,12 @@ import json
 import runpy
 import sys
 import time
+import os
+
+# Some FlexLock imports initialize the hash-cache path. Isolate before imports.
+output = Path(sys.argv[sys.argv.index('--output')+1])
+os.environ['FLEXLOCK_CACHE'] = str(output.with_name(output.name+'-hash-cache'))
+os.environ['FLEXLOCK_INDEX'] = str(output/'index.db')
 from flexlock import utils, parallel
 
 if '--baseline' in sys.argv:

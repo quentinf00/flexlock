@@ -9,6 +9,12 @@ import runpy
 import sys
 import threading
 import time
+import os
+
+# Cache paths are initialized during imports, before the measurement driver.
+output = Path(sys.argv[sys.argv.index('--output')+1])
+os.environ['FLEXLOCK_CACHE'] = str(output.with_name(output.name+'-hash-cache'))
+os.environ['FLEXLOCK_INDEX'] = str(output/'index.db')
 
 # Import caller aliases before patching so each original function has one wrapper.
 modules = [importlib.import_module('flexlock.'+name) for name in

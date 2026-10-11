@@ -5,6 +5,11 @@ from pathlib import Path
 import runpy
 import sys
 import time
+import os
+
+output = Path(sys.argv[sys.argv.index('--output')+1])
+os.environ['FLEXLOCK_CACHE'] = str(output.with_name(output.name+'-hash-cache'))
+os.environ['FLEXLOCK_INDEX'] = str(output/'index.db')
 from git.repo import Repo
 from flexlock.git_utils import create_shadow_tree
 

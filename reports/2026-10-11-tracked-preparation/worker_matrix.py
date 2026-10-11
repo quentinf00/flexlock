@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 here = Path(__file__).resolve().parent
-root = Path('/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-11-fingerprint-status')
+root = Path('/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-11-fingerprint-status-isolated')
 root.mkdir(parents=True, exist_ok=False)
 result = dict(revision=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
               hostname=os.uname().nodename, runs=[])
