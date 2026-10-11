@@ -367,6 +367,25 @@ flock acquisition and joined failure cleanup. Full plain/producer medians improv
 local products; files still 2,007. Next source/data-enabled preparation and consumer
 validation before broad adoption; no general cluster/scientific acceptance.
 
+The [tracked follow-up](../reports/2026-10-11-tracked-preparation/report.md) removes
+literal source regrouping across different item data paths and unused Git-status
+work during fingerprinting. Source/data preparation median 18.153 → 16.924s
+(one full-case regression retained); 100 tracked local items 55.556 → 35.150s.
+170 distinct focused tests pass across source and worker suites. Twelve equivalent
+queues / 6,600 configs, 600 verified products, matching fingerprints/source/input
+identities and independent case caches. SST existing contracts and scratch queue
+pass without scientific replay, source capture or project modification. Runtime
+`dbfb288`; benchmark harness `f5f5156`. Public dirty-status helpers remain unchanged.
+
+The [new pointer experiment](../reports/2026-10-11-nested-pointer-prototype/report.md)
+reduces tracked prepared files 2,007 → 1,007 and median 17.529 → 13.335s in three
+matched pairs, retaining 1,001 mutexes. Six equivalent queues / 6,000 configs;
+current required binding and ownership readers refuse pointerless active work.
+Older readers can bind a stale artifact. Default writer is unchanged: next requires
+a user decision on requiring updated readers for newly prepared runs, followed
+by explicit layout/version declaration and adopting-project revision inventory.
+Keep existing pointers if older installations must consume new queues.
+
 1. Separate cache-key/index work from required provenance, eliminate repeated
    configuration construction, and optimize loaded-module/source checks while
    retaining the existing correctness cases. Re-run the tracked thousand-item

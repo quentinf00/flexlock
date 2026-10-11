@@ -330,6 +330,24 @@ ownership barriers and cleanup. Plain/producer medians 10.468 → 7.462s /
 12 equivalent queues and 10 local product checks. No writer change; still 2,007
 files. Next source/data-enabled preparation and consumer validation; production unchanged.
 
+The [tracked preparation/source pass](../reports/2026-10-11-tracked-preparation/report.md)
+at dbfb288 removes literal source regrouping and discarded Git-status work without
+changing public interfaces or fingerprint values. Source/data preparation median
+18.153 → 16.924s; 100 local tracked items 55.556 → 35.150s. 170 distinct focused
+tests, equivalent queues/receipts, 600 products and matching fingerprints; SST
+existing contracts/config/scratch queue verified without scientific replay or source
+capture. Child bootstrap tests explicitly select the tested checkout; installed
+project code remains unchanged.
+
+The [updated nested-pointer prototype](../reports/2026-10-11-nested-pointer-prototype/report.md)
+saves 1,000 prepared files and improves tracked median 17.529 → 13.335s. Current
+required binding/ownership checks pass, but retained old readers can select a stale
+producer. No writer change accepted yet. The next decision is whether newly
+prepared runs may require updated readers. Preserve historical readers, external
+and existing pointers, mutexes and exact producer selection; inventory adopting
+project revisions before any layout migration. A version field cannot protect an
+old reader that never probes the ancestor master.
+
 T7 implements this plan. T6 can migrate invariants and source routing independently,
 without copying speculative execution APIs. The shared knowledge repository links
 actual tool semantics; it does not become another CLI manual.

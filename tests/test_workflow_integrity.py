@@ -1,6 +1,7 @@
 """Failure exits and output health across the existing execution entry points."""
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -41,6 +42,12 @@ def stage(root, **kwargs):
 @pytest.fixture(autouse=True)
 def fast_worker(monkeypatch):
     monkeypatch.setattr("flexlock.worker.time.sleep", lambda _: None)
+    # A rendered bootstrap is a file under tmp_path. Its fallback submission
+    # path intentionally comes after installed packages; explicitly select the
+    # same checkout in child processes rather than exercising an older install.
+    checkout = str(Path(__file__).resolve().parents[1])
+    inherited = os.environ.get('PYTHONPATH')
+    monkeypatch.setenv('PYTHONPATH', checkout + (os.pathsep + inherited if inherited else ''))
 
 
 def test_worker_drains_after_failure_and_persists_receipts(tmp_path):

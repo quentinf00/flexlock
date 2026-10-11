@@ -1,0 +1,31 @@
+{
+  "consumer": "isolated SST frozen-reassessment configuration",
+  "original": "/ontap/user/qfebvre/sst-workflow-pilot/workflow-results/reassessment-20261006",
+  "original_artifact_sha256": {
+    "paired_matchups.csv": "b505b5271a679f3ded189d80deab0d844769b9f3fb7681d24b5ecc4b368324b9",
+    "run.lock": "b960bdf696b2bb6eb25d1aa6b211814b3271f232a5462c97c415160deb248c24",
+    "provenance.json": "ed17d7cffb4ac791bdf19e0f057978c04560436285d091dd4bcc74236e7190a0",
+    "assessment.json": "8cca0c6a9cf82ccb8cf40012ed18365ecd44f3681e4cfcd6dc5ad34fe8ee780c",
+    "acceptance.json": "2a332c5a5876974af8667d89fc188529fa2a69537230f0ecbe7a4ce576b0c0b3",
+    "results.json": "6d4b2d4252500e91beeeb0a63ca4f16af429a326bf5b4048f65b9d3c06299dcb",
+    "run.outputs.json": "cfa2fbc60b54e094416f80aa7c5de5b2da9df3980e07ff8b7e8950be2cdc86a1",
+    "run.complete": "5db6e4461c7201b1987b362cece2d3496b9511ca13c10f870f47af1f62b55163"
+  },
+  "contracts_passed": true,
+  "callable_signature_passed": true,
+  "scratch_queue_pending": 1,
+  "queued_config_unchanged": true,
+  "repositories": {
+    "sst": {
+      "path": "/ontap/user/qfebvre/sst-workflow-pilot"
+    },
+    "flexlock": {
+      "path": "/ontap/user/qfebvre/flexlock-execution-validation"
+    }
+  },
+  "source_capture": false,
+  "scientific_execution": false,
+  "scheduler_calls": 0,
+  "original_artifacts_unchanged": true,
+  "limits": "Config/guard/queue/read-contract acceptance only; no source snapshot or scientific replay."
+}

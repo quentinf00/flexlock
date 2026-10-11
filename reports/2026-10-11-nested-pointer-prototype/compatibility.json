@@ -1,0 +1,25 @@
+{
+  "legacy_revision": "1244e70",
+  "cases": [
+    {
+      "state": "pending",
+      "current_required_binding_rejects": true,
+      "current_future_binding_exact": true,
+      "current_controller_rejects": true,
+      "legacy_pointerless_binding": "old artifact",
+      "legacy_with_pointer_rejects": true,
+      "external_pointer_retained": true
+    },
+    {
+      "state": "running",
+      "current_required_binding_rejects": true,
+      "current_future_binding_exact": true,
+      "current_controller_rejects": true,
+      "legacy_pointerless_binding": "old artifact",
+      "legacy_with_pointer_rejects": true,
+      "external_pointer_retained": true
+    }
+  ],
+  "default_writer_changed": false,
+  "adoption_requires": "Updated readers before pointer omission"
+}

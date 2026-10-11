@@ -1,0 +1,22 @@
+{
+  "preparation": {
+    "equivalent_queues": 6,
+    "equivalent_configs": 6000,
+    "products_verified": 0,
+    "matching_source_trees": true,
+    "master_input_hash_verified": true,
+    "per_item_paths_verified": true,
+    "isolated_caches_verified": true,
+    "fingerprints_match": null
+  },
+  "worker": {
+    "equivalent_queues": 6,
+    "equivalent_configs": 600,
+    "products_verified": 600,
+    "matching_source_trees": true,
+    "master_input_hash_verified": true,
+    "per_item_paths_verified": true,
+    "isolated_caches_verified": true,
+    "fingerprints_match": true
+  }
+}
