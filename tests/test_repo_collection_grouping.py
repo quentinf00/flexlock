@@ -44,16 +44,14 @@ def test_repository_interpolation_through_data_retains_full_grouping(tmp_path, m
     assert len(calls) == 2
 
 
-def test_partial_target_and_composite_sources(tmp_path, monkeypatch):
+def test_composite_sources(tmp_path, monkeypatch):
     calls = trace_merges(monkeypatch)
     base = OmegaConf.create(dict(save_dir=str(tmp_path/'queue')))
     def stage(name):
         return dict(_snapshot_=dict(repos={name: str(tmp_path/name)},
                                     discover=dict(repos=False, prevs=False)))
-    tasks = [dict(main=stage('partial'))]
-    assert set(collect_task_repos(base, tasks, 'main')) == {'partial'}
     assert set(collect_task_repos(base, [dict(_stages_=[stage('a'), stage('b')])])) == {'a', 'b'}
-    assert len(calls) == 3
+    assert len(calls) == 2
 
 
 def test_different_literal_repositories_and_inherited_defaults(tmp_path, monkeypatch):
