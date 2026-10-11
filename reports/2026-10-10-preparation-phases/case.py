@@ -119,6 +119,10 @@ else:
     raise RuntimeError('Use --instrument; controls use the retained ordinary case driver')
 output = Path(sys.argv[sys.argv.index('--output')+1])
 driver = Path(__file__).resolve().parents[1]/'2026-10-08-process-preparation'/'case.py'
+if '--driver' in sys.argv:
+    index = sys.argv.index('--driver')
+    driver = Path(sys.argv[index+1]).resolve()
+    del sys.argv[index:index+2]
 runpy.run_path(str(driver))['main']()
 (output/'phase-timings.json').write_text(json.dumps(dict(metrics), indent=2)+'\n')
 print(json.dumps(dict(event='phases', metrics=dict(metrics))), flush=True)

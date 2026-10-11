@@ -265,7 +265,16 @@ def collect_task_repos(cfg, tasks, task_to=None) -> Dict:
         snap = node.get("_snapshot_")
         if target is None and snap is None:
             continue
-        key = (str(target), str(snap))
+        # Item data/lineage belongs to workers, not the master's source record.
+        # Group literal controller settings independently of those changing
+        # paths. Interpolated settings may depend on omitted input fields, so
+        # retain the historical full-snapshot grouping for them.
+        controller = (OmegaConf.to_container(snap, resolve=False)
+                      if OmegaConf.is_config(snap) else snap)
+        if isinstance(controller, dict):
+            controller = {key: value for key, value in controller.items()
+                          if key not in ('data', 'prevs')}
+        key = (str(target), str(controller if '${' not in str((target, controller)) else snap))
         if key in seen:
             continue
         seen.add(key)
