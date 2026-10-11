@@ -118,6 +118,11 @@ def create_shadow_tree(
     Returns:
         dict: ``{"tree": <hash>, "is_dirty": <bool>}``.
     """
+    return _create_shadow_tree(repo_path, include, exclude, check_dirty=True)
+
+
+def _create_shadow_tree(repo_path, include=None, exclude=None, *, check_dirty):
+    """Capture a fresh tree; skip status only for callers using its hash alone."""
     repo = GitRepo(repo_path, search_parent_directories=True)
     include = include or None
     exclude = exclude or []
@@ -144,10 +149,10 @@ def create_shadow_tree(
         # 3. Write the tree — the content fingerprint. No commit, no ref.
         tree_hash = git.write_tree(env=shadow_env)
 
-        return {
-            "tree": tree_hash,
-            "is_dirty": repo.is_dirty(untracked_files=True),
-        }
+        result = {"tree": tree_hash}
+        if check_dirty:
+            result['is_dirty'] = repo.is_dirty(untracked_files=True)
+        return result
 
 
 def get_git_tree_hash(path: str = ".") -> str:

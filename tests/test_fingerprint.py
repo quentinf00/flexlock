@@ -8,6 +8,52 @@ from omegaconf import OmegaConf
 from flexlock.fingerprint import fingerprint, canonical_config, SAVE_DIR_PLACEHOLDER
 
 
+@pytest.mark.parametrize('change', ['modified', 'untracked', 'deleted', 'staged'])
+@pytest.mark.parametrize('scope', [{}, {'include': ['model.py']}, {'exclude': ['notes.md']}])
+def test_hash_only_capture_matches_status_capture(git_repo, monkeypatch, change, scope):
+    import importlib
+    from flexlock.git_utils import create_shadow_tree
+    module = importlib.import_module('flexlock.fingerprint')
+    repo = Repo(git_repo)
+    if change == 'modified':
+        (git_repo/'model.py').write_text('VERSION = 2\n')
+    elif change == 'untracked':
+        (git_repo/'extra.py').write_text('NEW = True\n')
+    elif change == 'deleted':
+        (git_repo/'notes.md').unlink()
+    else:
+        (git_repo/'model.py').write_text('VERSION = 3\n')
+        repo.index.add(['model.py'])
+    index_before = Path(repo.index.path).read_bytes()
+    entries_before = {key: (entry.mode, entry.hexsha) for key, entry in repo.index.entries.items()}
+    head_before = repo.head.commit.hexsha
+    refs_before = [r.path for r in repo.refs]
+    cfg = OmegaConf.create(dict(save_dir='/unused', value=42))
+    repos = dict(main=dict(path=str(git_repo), **scope))
+    actual = fingerprint(cfg, repos=repos)
+    assert Path(repo.index.path).read_bytes() == index_before
+    def with_status(path, include=None, exclude=None, *, check_dirty):
+        return create_shadow_tree(path, include, exclude)
+    monkeypatch.setattr(module, '_create_shadow_tree', with_status)
+    assert fingerprint(cfg, repos=repos) == actual
+    # Git's historical status check may refresh index stat metadata. It must
+    # preserve the staged content; the new hash-only path preserves bytes too.
+    assert {key: (entry.mode, entry.hexsha) for key, entry in Repo(git_repo).index.entries.items()} == entries_before
+    assert repo.head.commit.hexsha == head_before
+    assert [r.path for r in repo.refs] == refs_before
+
+
+def test_fingerprint_skips_status_but_keeps_fresh_tree(git_repo, monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError('fingerprint must not request unused Git status')
+    monkeypatch.setattr(Repo, 'is_dirty', forbidden)
+    cfg = OmegaConf.create(dict(save_dir='/unused'))
+    repos = dict(main=dict(path=str(git_repo)))
+    first = fingerprint(cfg, repos=repos)
+    (git_repo/'model.py').write_text('VERSION = 99\n')
+    assert fingerprint(cfg, repos=repos) != first
+
+
 @pytest.fixture
 def git_repo(tmp_path):
     repo_dir = tmp_path / "repo"

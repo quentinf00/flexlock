@@ -27,7 +27,9 @@ from typing import Any, Mapping, Optional
 
 from omegaconf import OmegaConf, DictConfig
 
-from .git_utils import create_shadow_tree
+# Preserve the historical module alias; fingerprints only need the private
+# hash-only capture, while public callers still receive the dirty flag.
+from .git_utils import create_shadow_tree, _create_shadow_tree
 from .data_hash import hash_data
 from . import config as _config
 
@@ -107,10 +109,11 @@ def canonical_config(cfg: Any) -> Any:
 
 def _repo_tree(repo_info: Mapping[str, Any]) -> str:
     """Tree hash for one tracked repo, restricted to its include/exclude."""
-    result = create_shadow_tree(
+    result = _create_shadow_tree(
         repo_info["path"],
         include=repo_info.get("include"),
         exclude=repo_info.get("exclude"),
+        check_dirty=False,
     )
     return result["tree"]
 
