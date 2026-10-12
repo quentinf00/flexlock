@@ -1,0 +1,52 @@
+[
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion",
+    "agents": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template",
+    "agents": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke",
+    "agents": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced",
+    "agents": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa",
+    "agents": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench",
+    "agents": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260506_hafs/confild",
+    "agents": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools",
+    "agents": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs",
+    "agents": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo",
+    "agents": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/AGENTS.md",
+    "created": true
+  }
+]
