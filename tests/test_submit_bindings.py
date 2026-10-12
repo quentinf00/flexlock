@@ -80,10 +80,11 @@ def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, sched
     else:
         assert not (destination/'called').exists()
         assert not (destination/'run.complete').exists()
-        import json
         from flexlock.taskdb import get_all_tasks
-        db = json.loads((destination/'.flexlock-queue.json').read_text())['task_db']
-        rows = get_all_tasks(Path(db))
+        from flexlock.queue_refs import ancestor_candidates, referenced_databases
+        databases = referenced_databases(destination) | {
+            db for db in ancestor_candidates([destination.resolve()]) if db.exists()}
+        rows = [row for db in databases for row in get_all_tasks(db)]
         assert rows and all(row['status'] == 'failed' for row in rows)
         assert all('changed or disappeared after submission' in row['error'] for row in rows)
 

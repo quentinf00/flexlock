@@ -1,0 +1,6 @@
+{
+  "version": "0.9.1",
+  "sha256": "13381dba98026d1c57ee3b3e28b5c8337d7479eceaf40a8d2b8f069e99ca3bff",
+  "base_revision": "522f300",
+  "uncommitted_changes": "queue layout 2 and version bump; see release commit"
+}

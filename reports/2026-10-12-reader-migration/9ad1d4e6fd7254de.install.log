@@ -1,0 +1,10 @@
+Using Python 3.11.14 environment at: /scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter
+Resolved 1 package in 1ms
+Prepared 1 package in 0.46ms
+Uninstalled 1 package in 55ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 1 package in 45ms
+ - flexlock==0.5.5 (from file:///scale/user/qfebvre/projects/2509_flexlock/flexlock)
+ + flexlock==0.9.1 (from file:///ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-reader-migration/flexlock-0.9.1-py3-none-any.whl)

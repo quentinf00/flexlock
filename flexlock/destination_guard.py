@@ -13,7 +13,7 @@ import threading
 import yaml
 
 from .exceptions import FlexLockValidationError
-from .queue_refs import QUEUE_POINTER, referenced_databases, ancestor_candidates
+from .queue_refs import QUEUE_POINTER, TASKS_DB_NAME, referenced_databases, ancestor_candidates
 
 CONTROLLER_LOCK = '.flexlock-controller.lock'
 
@@ -94,11 +94,30 @@ def task_destinations(task, *, _resolve=None):
 
 
 def reserve_queue(paths, db_path):
-    """Point products at their authoritative queue before scheduler submission."""
-    payload = json.dumps({'task_db': str(Path(db_path).resolve())})
+    """Reserve products through their ancestor queue or an explicit locator.
+
+    Layout 2 requires ancestor-aware readers (FlexLock 0.9.1+). Existing
+    locators remain authoritative and are updated; external products and
+    nonstandard queue filenames still need explicit locators.
+    """
+    database = Path(db_path).resolve()
+    payload = json.dumps({'task_db': str(database)})
+    ancestor_layout = database.name == TASKS_DB_NAME and database.is_file()
+    if ancestor_layout:
+        with sqlite3.connect(database) as conn:
+            conn.execute('CREATE TABLE IF NOT EXISTS flexlock_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
+            conn.execute("INSERT OR REPLACE INTO flexlock_metadata VALUES ('queue_layout', '2')")
+            conn.execute("INSERT OR REPLACE INTO flexlock_metadata VALUES ('minimum_reader', '0.9.1')")
     # Aliases must not race on one product's temporary pointer file.
     directories = sorted({Path(path).resolve() for path in paths})
-    _map_io(lambda directory: _write_reservation(directory, payload), directories)
+    def reserve(directory):
+        if (ancestor_layout and directory.is_relative_to(database.parent)
+                and not (directory / QUEUE_POINTER).exists()
+                and not (directory / QUEUE_POINTER).is_symlink()):
+            directory.mkdir(parents=True, exist_ok=True)
+        else:
+            _write_reservation(directory, payload)
+    _map_io(reserve, directories)
 
 
 def _write_reservation(directory, payload):

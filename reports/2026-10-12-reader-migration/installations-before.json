@@ -1,0 +1,3108 @@
+[
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default/lib/python3.12/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default/lib/python3.12/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default/lib/python3.12/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/hpc/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/hpc/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/hpc/lib/python3.1/site-packages/flexlock-0.5.4.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/hpc/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/hpc/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/hpc/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/hpc/lib/python3.11/site-packages/flexlock-0.5.4.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/hpc/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/jepa-hpc/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/jepa-hpc/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/jepa-hpc/lib/python3.1/site-packages/flexlock-0.5.4.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/jepa-hpc/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/jepa-hpc/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/jepa-hpc/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/jepa-hpc/lib/python3.11/site-packages/flexlock-0.5.4.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/jepa-hpc/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/default/lib/python3.1/site-packages/flexlock-0.5.4.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/default/lib/python3.11/site-packages/flexlock-0.5.4.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.1/site-packages/flexlock-0.4.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.1/site-packages/flexlock-0.3.1.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.1/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.1/site-packages/flexlock-0.3.3.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.1/site-packages/flexlock-0.3.4.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.1/site-packages/flexlock-0.3.2.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages/flexlock-0.4.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages/flexlock-0.3.1.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages/flexlock-0.3.3.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages/flexlock-0.3.4.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages/flexlock-0.3.2.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.1/site-packages/flexlock-0.4.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.1/site-packages/flexlock-0.3.1.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.1/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.1/site-packages/flexlock-0.3.3.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.1/site-packages/flexlock-0.3.4.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.1/site-packages/flexlock-0.3.2.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages/flexlock-0.4.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages/flexlock-0.3.1.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages/flexlock-0.3.3.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages/flexlock-0.3.4.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages/flexlock-0.3.2.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference/lib/python3.1/site-packages/flexlock-0.5.5.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference/lib/python3.11/site-packages/flexlock-0.5.5.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.1/site-packages/flexlock-0.5.5.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.11/site-packages/flexlock-0.5.5.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-3660010703751928665/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-3660010703751928665/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-3660010703751928665/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock/.claude/worktrees/resolution-simplification\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-3660010703751928665/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock/.claude/worktrees/resolution-simplification"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-3660010703751928665/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-3660010703751928665/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-3660010703751928665/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock/.claude/worktrees/resolution-simplification\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-3660010703751928665/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock/.claude/worktrees/resolution-simplification"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-13731226562123482784/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-13731226562123482784/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-13731226562123482784/envs/default/lib/python3.1/site-packages/flexlock-0.7.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock/.claude/worktrees/dedup-deps\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-13731226562123482784/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock/.claude/worktrees/dedup-deps"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-13731226562123482784/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-13731226562123482784/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-13731226562123482784/envs/default/lib/python3.11/site-packages/flexlock-0.7.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock/.claude/worktrees/dedup-deps\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-13731226562123482784/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock/.claude/worktrees/dedup-deps"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu/lib/python3.1/site-packages/flexlock-0.5.3.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu/lib/python3.11/site-packages/flexlock-0.5.3.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.1/site-packages/flexlock-0.1.9.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.1/site-packages/flexlock-0.1.6.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.1/site-packages/flexlock-0.1.5.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.1/site-packages/flexlock-0.1.7.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.1/site-packages/flexlock-0.1.8.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages/flexlock-0.1.9.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages/flexlock-0.1.6.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages/flexlock-0.1.5.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages/flexlock-0.1.7.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages/flexlock-0.1.8.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.1/site-packages/flexlock-0.7.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.11/site-packages/flexlock-0.7.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-14742073660771720561/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-14742073660771720561/envs/default/lib/python3.1/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/nextgems_tc-13266959035230603531/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/nextgems_tc-13266959035230603531/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/nextgems_tc-13266959035230603531/envs/default/lib/python3.1/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/nextgems_tc-13266959035230603531/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/nextgems_tc-13266959035230603531/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/nextgems_tc-13266959035230603531/envs/default/lib/python3.11/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/temp_project-16482461194144082308/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/temp_project-16482461194144082308/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/temp_project-16482461194144082308/envs/default/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/temp_project-16482461194144082308/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/temp_project-16482461194144082308/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/temp_project-16482461194144082308/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/temp_project-16482461194144082308/envs/default/lib/python3.11/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/temp_project-16482461194144082308/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.1/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-3726440498292266968/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-3726440498292266968/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-3726440498292266968/envs/default/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock_dev\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-3726440498292266968/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock_dev"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-3726440498292266968/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-3726440498292266968/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-3726440498292266968/envs/default/lib/python3.11/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock_dev\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-3726440498292266968/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock_dev"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sample_project-4955893711133568813/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sample_project-4955893711133568813/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-4955893711133568813/envs/default/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-4955893711133568813/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sample_project-4955893711133568813/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sample_project-4955893711133568813/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-4955893711133568813/envs/default/lib/python3.11/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-4955893711133568813/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-16974564074017050279/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-16974564074017050279/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-16974564074017050279/envs/default/lib/python3.1/site-packages/flexlock-0.5.4.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock_fable\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-16974564074017050279/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock_fable"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-16974564074017050279/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-16974564074017050279/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-16974564074017050279/envs/default/lib/python3.11/site-packages/flexlock-0.5.4.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock_fable\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-16974564074017050279/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock_fable"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock_dev\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock_dev"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.11/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock_dev\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock_dev"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.1/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.11/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.11/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-5005236116905148094/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-5005236116905148094/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-5005236116905148094/envs/default/lib/python3.1/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock-pipeline-tasks\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-5005236116905148094/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock-pipeline-tasks"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-5005236116905148094/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-5005236116905148094/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-5005236116905148094/envs/default/lib/python3.11/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock-pipeline-tasks\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-5005236116905148094/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock-pipeline-tasks"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/biomass_proc-14742073660771720561/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_proc-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/biomass_proc-14742073660771720561/envs/default/lib/python3.1/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/biomass_proc-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_proc-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/biomass_proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/soba-bench-12618292729968530394/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/soba-bench-12618292729968530394/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/soba-bench-12618292729968530394/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/soba-bench-12618292729968530394/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/soba-bench-12618292729968530394/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/soba-bench-12618292729968530394/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-15162692178169221427/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-15162692178169221427/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-15162692178169221427/envs/default/lib/python3.1/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-15162692178169221427/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-15162692178169221427/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-15162692178169221427/envs/default/lib/python3.11/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.12/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.12/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.12/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/build/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/build/lib/python3.1/site-packages/flexlock-0.6.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock-ergonomics-fable\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/build/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock-ergonomics-fable"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/build/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/build/lib/python3.11/site-packages/flexlock-0.6.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock-ergonomics-fable\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/build/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock-ergonomics-fable"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/default/lib/python3.1/site-packages/flexlock-0.6.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock-ergonomics-fable\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock-ergonomics-fable"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/default/lib/python3.11/site-packages/flexlock-0.6.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock-ergonomics-fable\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock-ergonomics-fable"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.12/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.12/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.12/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.12/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.12/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.12/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/geosplat-diffusion-5123862402727346974/envs/default/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/geosplat-diffusion-5123862402727346974/envs/default/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/geosplat-diffusion-5123862402727346974/envs/default/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/geosplat-diffusion-5123862402727346974/envs/default/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/tcwind-benchtools-17047569021062202688/envs/default/lib/python3.14/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tcwind-benchtools-17047569021062202688/envs/default/lib/python3.14/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tcwind-benchtools-17047569021062202688/envs/default/lib/python3.14/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/tcwind-benchtools-17047569021062202688/envs/default/lib/python3.14/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/hpc/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/hpc/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/hpc/lib/python3.13/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/hpc/lib/python3.13/site-packages/_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.1/site-packages/_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.11/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.11/site-packages/_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/maxss-ml/.pixi/envs/hpc/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/maxss-ml/.pixi/envs/hpc/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/maxss-ml/.pixi/envs/hpc/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/maxss-ml/.pixi/envs/default/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/maxss-ml/.pixi/envs/default/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/maxss-ml/.pixi/envs/default/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/hpc/lib/python3.12/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/hpc/lib/python3.12/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/hpc/lib/python3.12/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/hpc/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/hpc/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/hpc/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/default/lib/python3.12/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/default/lib/python3.12/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/default/lib/python3.12/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/.pixi/envs/default/lib/python3.12/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/.pixi/envs/default/lib/python3.12/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/.pixi/envs/default/lib/python3.12/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock_dev\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock_dev"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock_dev\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock_dev"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.4.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/soba-bench-12618292729968530394/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/soba-bench-12618292729968530394/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/hpc/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/hpc/lib/python3.1/site-packages/flexlock-0.7.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/hpc/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/hpc/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/hpc/lib/python3.11/site-packages/flexlock-0.7.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/hpc/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/hpc/lib/python3.12/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/hpc/lib/python3.12/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/hpc/lib/python3.12/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/hpc/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/hpc/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/hpc/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/default/lib/python3.12/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/default/lib/python3.12/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/default/lib/python3.12/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.12/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.pixi/envs/hpc/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.pixi/envs/hpc/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.pixi/envs/hpc/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.pixi/envs/default/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.pixi/envs/default/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.pixi/envs/default/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/docs/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/docs/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/docs/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/docs/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/docs/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/docs/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/build/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/build/lib/python3.1/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/build/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/build/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/build/lib/python3.11/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/build/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/flexlock/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools/.pixi/envs/default/lib/python3.14/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/tcwind-benchtools-17047569021062202688/envs/default/lib/python3.14/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools/.pixi/envs/default/lib/python3.14/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools/.pixi/envs/default/lib/python3.14/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/docs/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/docs/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/docs/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/docs/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/docs/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/docs/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/build/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/build/lib/python3.1/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/build/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/build/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/build/lib/python3.11/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/build/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/flexlock/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/gpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/gpu/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/gpu/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/gpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/gpu/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/gpu/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/gpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/gpu/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/gpu/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/gpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/gpu/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/gpu/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/docs/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/docs/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/docs/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/docs/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/docs/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/docs/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/build/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/build/lib/python3.1/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/build/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/build/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/build/lib/python3.11/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/build/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/flexlock/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/.pixi/envs/cpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/.pixi/envs/cpu/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/.pixi/envs/cpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/.pixi/envs/cpu/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/gpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/gpu/lib/python3.1/site-packages/flexlock-0.5.3.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/gpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/gpu/lib/python3.11/site-packages/flexlock-0.5.3.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.1/site-packages/flexlock-0.1.9.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.1/site-packages/flexlock-0.1.6.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.1/site-packages/flexlock-0.1.5.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.1/site-packages/flexlock-0.1.7.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.1/site-packages/flexlock-0.1.8.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.11/site-packages/flexlock-0.1.9.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.11/site-packages/flexlock-0.1.6.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.11/site-packages/flexlock-0.1.5.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.11/site-packages/flexlock-0.1.7.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      },
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/cpu/lib/python3.11/site-packages/flexlock-0.1.8.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///home/qfebvre/projects/251014_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/maxss-ml/.pixi/envs/hpc/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/maxss-ml/.pixi/envs/hpc/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/maxss-ml/.pixi/envs/hpc/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/maxss-ml/.pixi/envs/default/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/maxss-ml/.pixi/envs/default/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/maxss-ml/.pixi/envs/default/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/docs/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/docs/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/docs/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/docs/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/docs/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/docs/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/build/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/build/lib/python3.1/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/build/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/build/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/build/lib/python3.11/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/build/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/flexlock/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/gpu/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/gpu/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/gpu/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/gpu/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/gpu/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/gpu/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_explo_app/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_explo_app/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_explo_app/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_explo_app/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.3.0.dist-info",
+        "direct_url": "{\"dir_info\": {}, \"url\": \"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\"}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/example_maxss/.pixi/envs/hpc/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/example_maxss/.pixi/envs/hpc/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/example_maxss/.pixi/envs/hpc/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/example_maxss/.pixi/envs/default/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/example_maxss/.pixi/envs/default/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/example_maxss/.pixi/envs/default/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/docs/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/docs/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/docs/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/docs/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/docs/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/docs/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/build/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/build/lib/python3.1/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/build/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/build/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/build/lib/python3.11/site-packages/flexlock-0.8.1.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/build/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/default/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/flexlock/.pixi/envs/default/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/inference/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/inference/lib/python3.1/site-packages/flexlock-0.5.5.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/inference/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/inference/lib/python3.11/site-packages/flexlock-0.5.5.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/jupyter/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/jupyter/lib/python3.1/site-packages/flexlock-0.5.5.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/jupyter/lib/python3.1/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/jupyter/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/jupyter/lib/python3.11/site-packages/flexlock-0.5.5.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/jupyter/lib/python3.11/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.1/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.1/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default/lib/python3.11/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/flexlock-0.8.0.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{}}"
+      }
+    ],
+    "pth": []
+  },
+  {
+    "site": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion/.pixi/envs/default/lib/python3.13/site-packages",
+    "real_site": "/scale/scratch/qfebvre/pixienvs/geosplat-diffusion-5123862402727346974/envs/default/lib/python3.13/site-packages",
+    "metadata": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion/.pixi/envs/default/lib/python3.13/site-packages/flexlock-0.8.2.dist-info",
+        "direct_url": "{\"url\":\"file:///scale/user/qfebvre/projects/2509_flexlock/flexlock\",\"dir_info\":{\"editable\":true}}"
+      }
+    ],
+    "pth": [
+      {
+        "path": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion/.pixi/envs/default/lib/python3.13/site-packages/_editable_impl_flexlock.pth",
+        "text": "/scale/user/qfebvre/projects/2509_flexlock/flexlock"
+      }
+    ]
+  }
+]
