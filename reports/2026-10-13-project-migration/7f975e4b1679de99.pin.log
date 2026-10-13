@@ -1,0 +1,12 @@
+✔ Updated lock file
+Environment: container                 
+  ~ (pypi) flexlock     <unknown>  ->  0.9.2
+                                       
+Environment: cpu                       
+  ~ (pypi) flexlock     <unknown>  ->  0.9.2
+                                       
+Environment: default                   
+  ~ (pypi) flexlock     <unknown>  ->  0.9.2
+                                       
+Environment: gpu                       
+  ~ (pypi) flexlock     <unknown>  ->  0.9.2

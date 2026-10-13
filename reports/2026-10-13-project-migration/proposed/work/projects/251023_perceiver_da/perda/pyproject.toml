@@ -1,0 +1,109 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "perda"
+version = "0.1.0"
+authors = [
+    { name = "Quentin Febvre", email = "quentin.febvre@ifremer.fr" }
+]
+description = "A new project created with cookiecutter"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["perda"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge" , "quentinf00"]
+platforms = [{ platform = "linux-64", cuda = "12" }]
+preview = ["pixi-build"]
+
+[tool.pixi.package]
+name = "perda"
+version = "0.1.0"
+
+[tool.pixi.package.build.backend]
+name = "pixi-build-python"
+version = "*"
+channels = ["https://prefix.dev/pixi-build-backends", "conda-forge"]
+
+[tool.pixi.feature.build.pypi-dependencies]
+build = "*"
+twine = "*"
+
+[tool.pixi.tasks]
+start = "python perda/main.py"
+
+
+[tool.pixi.pypi-dependencies]
+flexlock = { path = "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl" }
+perda = { path = ".", editable = true }
+
+[tool.pixi.feature.dev.dependencies]
+lovely-tensors = "*" 
+lovely-numpy = "*"
+ipython = "*"
+ipykernel = ">=7.0.1,<8"
+
+[tool.pixi.feature.dev.pypi-dependencies]
+better_exceptions = "*"
+
+[tool.pixi.dependencies]
+python = "3.11.*"
+scipy = ">=1.16.2,<2"
+loguru = ">=0.7.3,<0.8"
+torchmetrics = ">=1.8.2,<2"
+xarray = ">=2025.10.1,<2026"
+zarr = ">=3.1.3,<4"
+h5netcdf = ">=1.7.3,<2"
+xdggs = ">=0.3.0,<0.4"
+healpy = ">=1.18.1,<2"
+xrft = ">=1.0.2,<2"
+pyresample = ">=1.35.0,<2"
+
+
+[tool.pixi.feature.torch-gpu.dependencies]
+cuda-version = "12.*"
+pytorch-gpu = "2.7.*"
+
+[tool.pixi.feature.gpu-compat.dependencies]
+cuda-compat="12.4.*"
+cuda-compat-impl="550.54.*"
+
+[tool.pixi.feature.gpu-compat.activation.env]
+LD_LIBRARY_PATH = "$CONDA_PREFIX/cuda-compat"
+
+
+[tool.pixi.feature.dev.activation.env]
+FLEXLOCK_DEBUG = "1"
+
+[tool.pixi.feature.torch-cpu.dependencies]
+pytorch-cpu = "2.7.*"
+
+
+
+
+[tool.pixi.activation.env]
+MLFLOW_DISABLE_TELEMETRY = "true"
+BETTER_EXCEPTIONS = "1"
+LOVELY_TENSORS = "1"
+MLFLOW_TRACKING_URI = "./mlruns"
+MLFLOW_EXPERIMENT_NAME = "PerDA" 
+
+
+[tool.pixi.environments]
+default = ["dev", "torch-gpu", "gpu-compat"]
+build = ["build"]
+
+cpu = ["dev", "torch-cpu" ]
+gpu = ["dev", "torch-gpu" ]
+gpu-compat = ["dev", "torch-gpu", "gpu-compat"]
+
+

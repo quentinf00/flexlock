@@ -1,0 +1,112 @@
+[
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app",
+    "agents": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2508_nextgems/nextgems_tc",
+    "agents": "/ontap/user/qfebvre/work/projects/2508_nextgems/nextgems_tc/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools",
+    "agents": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion",
+    "agents": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template",
+    "agents": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke",
+    "agents": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced",
+    "agents": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda",
+    "agents": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping",
+    "agents": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch",
+    "agents": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping",
+    "agents": "/ontap/user/qfebvre/work/projects/260313_claude_setup/sst_ml_mapping/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa",
+    "agents": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa",
+    "agents": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260324_jepa/le-tc-wm",
+    "agents": "/ontap/user/qfebvre/work/projects/260324_jepa/le-tc-wm/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench",
+    "agents": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260506_hafs/confild",
+    "agents": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa",
+    "agents": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs-jepa/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools",
+    "agents": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs",
+    "agents": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_explo_app",
+    "agents": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_explo_app/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc",
+    "agents": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc/AGENTS.md",
+    "created": false
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo",
+    "agents": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/AGENTS.md",
+    "created": false
+  }
+]

@@ -1,0 +1,12 @@
+Using Python 3.11.14 environment at: /scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default
+Resolved 11 packages in 24ms
+Prepared 1 package in 1ms
+Uninstalled 2 packages in 162ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 2 packages in 70ms
+ - flexlock==0.8.0 (from file:///scale/user/qfebvre/projects/2509_flexlock/flexlock)
+ + flexlock==0.9.2 (from file:///ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl)
+ - gitpython==3.1.45 (from file:///home/conda/feedstock_root/build_artifacts/gitpython_1753444155689/work)
+ + gitpython==3.1.62

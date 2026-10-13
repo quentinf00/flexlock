@@ -1,0 +1,73 @@
+[project]
+name = "tc-demo"
+version = "0.1.0"
+requires-python = ">= 3.11"
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge", "quentinf00"]
+platforms = [{platform = "linux-64", cuda = "13"}]
+
+
+[tool.pixi.activation.env]
+LD_LIBRARY_PATH = "$CONDA_PREFIX/cuda-compat"
+HDF5_USE_FILE_LOCKING = "FALSE"
+
+[tool.pixi.feature.dev.activation.env]
+BETTER_EXCEPTIONS = "1"
+
+[tool.pixi.pypi-dependencies]
+tc-demo = { path = ".", editable = true }
+tcwind_benchtools = { path = "../../250930_maxss_era5pp/tcwind_benchtools", editable = true }
+maxss-ml = { path = "../../250930_maxss_era5pp/maxss-ml", editable = true }
+
+[tool.pixi.feature.dev.pypi-dependencies]
+flexlock = { path = "../../2509_flexlock/flexlock", editable = true }
+
+[tool.pixi.feature.container.dependencies]
+flexlock = "*"
+
+[tool.pixi.dependencies]
+python = "3.11.*"
+requests = ">=2.31"
+xarray = ">=2025.9.0,<2026"
+netcdf4 = ">=1.7.3,<2"
+h5netcdf = ">=1.6.4,<2"
+matplotlib = ">=3.8"
+jinja2 = ">=3.1"
+loguru = ">=0.7.3,<0.8"
+tqdm = ">=4.67.1,<5"
+pandas = ">=2.2"
+numpy = ">=1.26"
+cartopy = ">=0.25.0,<0.26"
+pyresample = ">=1.34.2,<2"
+pytorch-gpu = "2.7.*"
+diffusers = ">=0.35.2,<0.36"
+lightning = ">=2.5.5,<3"
+gitpython = ">=3.1.45,<4"
+scipy = ">=1.13"
+cuda-version = "12.*"
+omegaconf = ">=2.3.0,<3"
+python-xxhash = ">=3.5.0,<4"
+joblib = ">=1.5.2,<2"
+submitit = ">=1.5.2,<2"
+
+[tool.pixi.feature.jepa.dependencies]
+timm = ">=1.0"
+einops = ">=0.8"
+
+[tool.pixi.feature.jepa.pypi-dependencies]
+geo-jepa = { path = "../../260324_jepa/geo-jepa", editable = true }
+
+[tool.pixi.environments]
+default = ["dev"]
+hpc = ["dev"]
+container = ["container"]
+jepa = ["dev", "jepa"]
+jepa-hpc = ["dev", "jepa"]

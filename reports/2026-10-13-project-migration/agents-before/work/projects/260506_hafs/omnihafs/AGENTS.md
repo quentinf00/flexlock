@@ -1,0 +1,92 @@
+# Agent Guidance: sample_project
+
+## Project Structure
+- `src/sample_project/`: Core implementation.
+    - `cnf/`: Conditional Neural Field components.
+    - `diffusion/`: Latent diffusion models.
+    - `data/`: Preprocessing and data loading.
+    - `evaluate/`: Reconstruction and assimilation scripts.
+- `outputs/`: Training artifacts and results.
+- `configs/`: Execution configurations.
+
+## Project Objective
+
+Reproduce the ConFiLD (see docs/confild.md when necessary) experiment on a NATL60 ssh (available here /scale/user/qfebvre/projects/251023_perceiver_da/2020a_SSH_mapping_NATL60/dc_ref):
+
+see docs/project_steps.md
+the original ConfilD implementation is here /scale/user/qfebvre/projects/260506_hafs/CoNFiLD
+
+## Flexlock
+
+You must use the flexlock library to configure/run/distribute/orchestrate  the different stages/experiments of the project
+
+You are a beta tester, 
+- you should refer first to the documentation: ../flexlock/docs and only inspect the code when you encounter an error
+- Maintain a flexlock wiki  `flexlock_wiki/` with:
+    - Use cases (should be framed as user stories): with best solution so far
+    - Fail cases: failed command, misunderstood doc, unintuitive interface, code bug
+    - Improvements:
+        - doc updates
+        - bug fixes
+        - missing features
+- Refer to the wiki to check if the intended usage already is in it with a adequate solution.
+
+## Environment
+The project uses pixi to manage dependencies
+You have access to a slurm cluster, and to 2 gpus locally
+
+
+
+
+
+
+
+
+## Key Constraints
+- **CNF Architecture**: Currently supports both standard MLP and FiLM conditioning.
+- **Diffusion**: Operates on latent vectors $z$ produced by the CNF stage, using temporal windowing to learn sequence structure.
+
+## Verification
+- No dedicated test suite is currently defined in `pyproject.toml`. Verification should be done via `run_*.py` scripts and inspecting `outputs/`.
+
+<!-- flexlock-release-compatibility -->
+## FlexLock release compatibility (2026-10-12)
+
+The installed-environment migration pilot uses FlexLock 0.9.2. Project
+manifests and lockfiles are not yet repinned: a Pixi synchronization can restore
+an older installation. Before launching new work, check the actual environment:
+
+```sh
+python -c "import flexlock; print(flexlock.__version__, flexlock.__file__)"
+```
+
+Use the following execution contracts when working with the updated release:
+
+- Destination ownership/collision checks run before scheduler submission.
+  Use a fresh destination by default. Explicit `--force` may overwrite inactive
+  prior provenance; it cannot bypass pending/running queue ownership. Inspect
+  and continue an existing queue instead of resubmitting over it.
+- Existing `${run_lock:...}` producers bind at submission; changing or removing
+  their records before consumer execution causes failure. Choose concrete
+  upstream paths. Promised inputs with `--after` retain that exact path and bind
+  when available; a newer run is not an automatic replacement.
+- Invalid declared outputs or missing authoritative records prevent successful
+  reuse. Worker/queue failure must be checked; a scheduler submission ID is not
+  evidence of successful computation or complete cohort coverage.
+- Queue layout 2 omits `.flexlock-queue.json` for fresh nested products. Use
+  FlexLock's `load_record` and shared queue readers rather than reading that
+  pointer directly. All consumers of new queues need FlexLock 0.9.1+.
+  Keep pending products with their ancestor queue; preserve referenced records
+  when exporting or moving provenance. Existing/external pointers remain.
+- Python configuration, `py2cfg`, `@` presets, direct upstream overrides and
+  sweeps remain supported. Automatic cache discovery has not yet been retired;
+  this pilot does not establish scientific equivalence or project acceptance.
+
+FlexLock 0.9.2 removes its unused pandas dependency. It neither installs nor
+downgrades pandas. Optional MLflow and scientific packages retain their own
+dependency requirements. Library ownership checks passed for the migrated
+installations; scientific workloads have not been replayed by this pilot.
+
+This section documents FlexLock compatibility only. Existing project research,
+knowledge and reporting instructions continue to apply.
+<!-- /flexlock-release-compatibility -->

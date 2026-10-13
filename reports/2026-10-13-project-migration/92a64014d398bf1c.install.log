@@ -1,0 +1,19 @@
+Using Python 3.11.15 environment at: /scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs
+Resolved 11 packages in 10ms
+Prepared 1 package in 0.68ms
+Uninstalled 1 package in 13ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 10 packages in 117ms
+ + antlr4-python3-runtime==4.9.3
+ + cloudpickle==3.1.2
+ - flexlock==0.8.0 (from file:///scale/user/qfebvre/projects/2509_flexlock/flexlock)
+ + flexlock==0.9.2 (from file:///ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl)
+ + gitdb==4.0.12
+ + gitpython==3.1.62
+ + joblib==1.6.0
+ + loguru==0.7.3
+ + omegaconf==2.3.1
+ + smmap==5.0.3
+ + xxhash==3.8.1

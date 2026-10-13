@@ -1,0 +1,175 @@
+[
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/pyproject.toml",
+    "changes": [
+      "antlr-python-runtime",
+      "cloudpickle",
+      "flexlock",
+      "gitdb",
+      "gitpython",
+      "joblib",
+      "loguru",
+      "omegaconf",
+      "python-xxhash",
+      "setuptools",
+      "smmap",
+      "xxhash"
+    ],
+    "unrelated": [
+      "setuptools"
+    ]
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app/pyproject.toml",
+    "changes": [
+      "antlr-python-runtime",
+      "cloudpickle",
+      "flexlock",
+      "loguru",
+      "omegaconf",
+      "python-xxhash",
+      "xxhash"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2508_nextgems/nextgems_tc/pyproject.toml",
+    "changes": [
+      "antlr-python-runtime",
+      "flexlock",
+      "gitdb",
+      "gitpython",
+      "loguru",
+      "omegaconf",
+      "python-xxhash",
+      "smmap",
+      "xxhash"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/pyproject.toml",
+    "changes": [
+      "flexlock",
+      "loguru",
+      "python-xxhash",
+      "xxhash"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/pyproject.toml",
+    "changes": [
+      "antlr-python-runtime",
+      "flexlock",
+      "gitdb",
+      "gitpython",
+      "joblib",
+      "omegaconf",
+      "python-xxhash",
+      "smmap",
+      "xxhash"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260324_jepa/le-tc-wm/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/pixi.toml",
+    "changes": [
+      "antlr-python-runtime",
+      "flexlock",
+      "loguru",
+      "omegaconf",
+      "python-xxhash",
+      "xxhash"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc/pyproject.toml",
+    "changes": [
+      "antlr-python-runtime",
+      "flexlock",
+      "omegaconf",
+      "python-xxhash",
+      "xxhash"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/pyproject.toml",
+    "changes": [
+      "flexlock"
+    ],
+    "unrelated": []
+  }
+]

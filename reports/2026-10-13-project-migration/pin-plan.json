@@ -1,0 +1,97 @@
+[
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/2507_galeio/biomass_explo_app/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2508_nextgems/nextgems_tc/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/2508_nextgems/nextgems_tc/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/2508_nextgems/nextgems_tc/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/250930_maxss_era5pp/tcwind_benchtools/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/2509_GSD_TC/geosplat_diffusion/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/2509_flexlock/project_template/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2509_sar_ml/example_maxss/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/2509_sar_ml/example_maxss/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/2509_sar_ml/example_maxss/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/2509_sar_ml/sar-ml-enhanced/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/251023_perceiver_da/perda/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/251218_sst/sst_ml_mapping/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/251218_sst/sst_ml_zarrpatch/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/260324_jepa/geo-jepa/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/260324_jepa/hafs-jepa/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260324_jepa/le-tc-wm/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/260324_jepa/le-tc-wm/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/260324_jepa/le-tc-wm/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/pixi.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/260505_soba/soba_bench/pixi.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/260506_hafs/confild/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/260506_hafs/hafs_tools/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/260506_hafs/omnihafs/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/260617_biomass/biomass_proc/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc/pixi.lock"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/pyproject.toml",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-13-project-migration/proposed/work/projects/260626_tcdemo/tc_demo/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/pixi.lock"
+  }
+]

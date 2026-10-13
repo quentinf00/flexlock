@@ -1,0 +1,49 @@
+[project]
+authors = [{name = "Quentin Febvre", email = "quentin.febvre@imt-atlantique.fr"}]
+name = "geosplat-diffusion"
+requires-python = ">= 3.11"
+version = "0.1.0"
+dependencies = ["dirhash>=0.5.0,<0.6", "flexlock>=0.8.2"]
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = [{ platform = "linux-64", cuda = "12" }]
+preview = ["pixi-build"]
+
+[tool.pixi.pypi-dependencies]
+geosplat_diffusion = { path = ".", editable = true }
+flexlock = { path = "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl" }
+
+# [tool.pixi.activation.env]
+# LD_LIBRARY_PATH="$(pwd)/.pixi/envs/default/cuda-compat"
+
+[tool.pixi.tasks]
+print-pipeline = "flexlock-run -d geosplat_diffusion.pipeline.defaults -s fit_splats -o pipeline_dir=results/example --print-config"
+
+[tool.pixi.dependencies]
+python = "3.13.*"
+pytest = ">=8,<9"
+pytorch-gpu = "*"
+torchvision = "*"
+numpy = ">=2.3.3,<3"
+tqdm = ">=4.67.1,<5"
+matplotlib = ">=3.10.6,<4"
+omegaconf = ">=2.3.0,<3"
+ipykernel = ">=6.30.1,<7"
+lovely-tensors = ">=0.1.18,<0.2"
+xarray = ">=2025.9.0,<2026"
+zarr = ">=3.1.2,<4"
+h5netcdf = ">=1.6.4,<2"
+einops = ">=0.8.1,<0.9"
+torchmetrics = ">=1.8.2,<2"
+scipy = ">=1.16.2,<2"
+scikit-image = ">=0.25.2,<0.26"
+joblib = ">=1.5.2,<2"
+mlflow = ">=3.2.0,<4"
+submitit = ">=1.5.2,<2"
+python-xxhash = ">=3.5.0,<4"
+gitpython = ">=3.1.46,<4"

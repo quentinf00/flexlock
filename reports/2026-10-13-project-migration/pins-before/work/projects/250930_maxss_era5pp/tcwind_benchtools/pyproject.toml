@@ -1,0 +1,69 @@
+[project]
+name = "tcwind-benchtools"
+version = "0.1.0"
+requires-python = ">= 3.11"
+authors = [{name = "Quentin Febvre", email = "quentin.febvre@imt-atlantique.fr"}]
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Flat layout: package lives at the project root (no src/ subfolder)
+[tool.hatch.build.targets.wheel]
+packages = ["tcwind_benchtools"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge", "quentinf00"]
+platforms = ["linux-64"]
+
+[tool.pixi.activation.env]
+HDF5_USE_FILE_LOCKING = "FALSE"
+
+[tool.pixi.pypi-dependencies]
+tcwind-benchtools = { path = ".", editable = true }
+
+[tool.pixi.feature.dev.pypi-dependencies]
+flexlock = { path = "../flexlock", editable = true }
+
+[tool.pixi.feature.dev.activation.env]
+BETTER_EXCEPTIONS = "1"
+
+[tool.pixi.dependencies]
+python = ">=3.11"
+xarray = ">=2025.9.0,<2026"
+pandas = ">=2.0"
+numpy = ">=1.24"
+matplotlib = ">=3.8"
+loguru = ">=0.7"
+requests = ">=2.28"
+h5netcdf = ">=1.0"
+tqdm = ">=4.0"
+scipy = ">=1.10"
+pillow = ">=10.0"
+cartopy = ">=0.25"
+pyresample = ">=1.30"
+pytest = ">=8.0"
+dask = ">=2026.1.2,<2027"
+zarr = ">=3.1.5,<4"
+
+[tool.pixi.feature.dev.dependencies]
+gitpython = ">=3.1.45,<4"
+python-xxhash = ">=3.5.0,<4"
+joblib = ">=1.5.2,<2"
+pandas = ">=2.3.2,<3"
+omegaconf = ">=2.3.0,<3"
+loguru = ">=0.7.0,<1"
+cloudpickle = ">=3.0.0,<4"
+
+
+[dependency-groups]
+dev = ["better-exceptions>=0.3.3,<0.4"]
+
+[tool.pixi.environments]
+default = ["dev"]
+
+[tool.pixi.tasks]
+bench = "python -m tcwind_benchtools"
+compile = "python -m tcwind_benchtools.cli_compile"
+osse = "python -m tcwind_benchtools.cli_osse"

@@ -1,0 +1,97 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sst_ml_mapping"
+version = "0.1.0"
+authors = [
+    { name = "quentinf00", email = "your.email@example.com" }
+]
+description = "A new project created with cookiecutter"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["sst_ml_mapping"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge" , "quentinf00"]
+platforms = ["linux-64", {platform="linux-64", cuda="12"}, {platform="linux-64", cuda="13"}]
+
+
+[tool.pixi.tasks]
+start = "python sst_ml_mapping/main.py"
+
+
+[tool.pixi.pypi-dependencies]
+sst_ml_mapping = { path = ".", editable = true }
+flexlock = { path = "../flexlock", editable = true }
+
+[tool.pixi.feature.dev.dependencies]
+lovely-tensors = "*" 
+mlflow = "*" 
+lovely-numpy = "*"
+ipython = "*"
+ipykernel = ">=7.1.0,<8"
+
+[tool.pixi.feature.dev.pypi-dependencies]
+better_exceptions = "*"
+
+[tool.pixi.dependencies]
+python = "3.11.*"
+# flexlock = "*"
+xarray = "*"
+netcdf4 = "*"
+scipy = "*"
+matplotlib = "*"
+dask = ">=2025.12.0,<2026"
+pandas = ">=2,<3"
+lightning = ">=2.6.0,<3"
+h5netcdf = ">=1.7.3,<2"
+zarr = ">=3.1.5,<4"
+kornia = ">=0.8.2,<0.9"
+einops = ">=0.8.1,<0.9"
+cartopy = ">=0.25.0,<0.26"
+datashader = ">=0.18.2,<0.19"
+diffusers = ">=0.35.2,<0.36"
+
+
+[tool.pixi.feature.torch-gpu]
+platforms = ["linux-64-cuda-12"]
+
+[tool.pixi.feature.torch-gpu.dependencies]
+# cuda-version = "13.*"
+pytorch-gpu = "2.12.*"
+
+
+
+[tool.pixi.feature.torch-cpu]
+platforms = ["linux-64"]
+
+[tool.pixi.feature.torch-cpu.dependencies]
+pytorch-cpu = "2.12.*"
+
+
+
+
+[tool.pixi.activation.env]
+DO_NOT_TRACK = "true"
+BETTER_EXCEPTIONS = "1"
+LOVELY_TENSORS = "1"
+MLFLOW_TRACKING_URI = "./mlruns"
+MLFLOW_EXPERIMENT_NAME = "SST ML Mapping" 
+
+
+[tool.pixi.environments]
+default = ["dev", "torch-gpu"]
+container = []
+
+gpu = ["dev", "torch-gpu" ]
+cpu = ["dev", "torch-cpu" ]
+

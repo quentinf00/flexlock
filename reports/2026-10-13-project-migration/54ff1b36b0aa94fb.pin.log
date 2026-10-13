@@ -1,0 +1,27 @@
+✔ Updated lock file
+Environment: default                                  
+  - (conda) flexlock       0.8.0 pyh4616a5c_0         
+  + (pypi) flexlock        0.9.2                      
+  - (conda) loguru         0.7.3 pyh707e725_0         
+  + (pypi) loguru          0.7.3                      
+  - (conda) python-xxhash  3.7.0 py311h041eb40_0      
+  + (pypi) xxhash          3.8.1                      
+  - (conda) xxhash         0.8.3 hb47aa4a_0           
+                                                      
+Environment: inference                                
+  + (pypi) flexlock        0.9.2                      
+  - (conda) flexlock       0.8.0 pyh4616a5c_0         
+  + (pypi) loguru          0.7.3                      
+  - (conda) loguru         0.7.3 pyh707e725_0         
+  - (conda) python-xxhash  3.7.0 py311h041eb40_0      
+  - (conda) xxhash         0.8.3 hb47aa4a_0           
+  + (pypi) xxhash          3.8.1                      
+                                                      
+Environment: jupyter                                  
+  + (pypi) flexlock        0.9.2                      
+  - (conda) flexlock       0.8.0 pyh4616a5c_0         
+  + (pypi) loguru          0.7.3                      
+  - (conda) loguru         0.7.3 pyh707e725_0         
+  - (conda) python-xxhash  3.7.0 py311h041eb40_0      
+  + (pypi) xxhash          3.8.1                      
+  - (conda) xxhash         0.8.3 hb47aa4a_0           

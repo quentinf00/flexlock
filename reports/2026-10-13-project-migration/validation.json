@@ -1,0 +1,15 @@
+{
+  "installs": 49,
+  "excluded_maxss_prefixes": 4,
+  "pinned_projects": 18,
+  "agent_paths": 22,
+  "agent_files": 19,
+  "original_agent_instructions_preserved": true,
+  "restored_template_files": true,
+  "scientific_package_artifacts_unchanged": true,
+  "extra_removed_tool": "tmpl_smoke: setuptools",
+  "full_environment_sync": false,
+  "scientific_replay": false,
+  "restored_maxss_alias": true,
+  "scientific_environment_membership_unchanged": true
+}

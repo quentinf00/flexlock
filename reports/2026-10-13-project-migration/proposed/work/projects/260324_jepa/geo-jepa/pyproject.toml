@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "geo-jepa"
+version = "0.1.0"
+description = "Geo-JEPA: temporal V-JEPA + SIGReg for geophysical foundation models"
+authors = [{name = "Quentin Febvre", email = "quentin.febvre@ifremer.fr"}]
+requires-python = ">=3.10"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/geo_jepa"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = [{ platform = "linux-64", cuda = "13" }]
+
+
+[tool.pixi.pypi-dependencies]
+geo-jepa = { path = ".", editable = true }
+flexlock = { path = "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl" }
+
+[tool.pixi.dependencies]
+python = "3.11.*"
+pytorch-gpu = ">=2.3"
+torchvision = ">=0.18"
+lightning = ">=2.3"
+timm = ">=1.0"
+xarray = ">=2024.1"
+netcdf4 = ">=1.7"
+h5py = ">=3.11"
+h5netcdf = "*"
+numpy = ">=1.26"
+scipy = ">=1.13"
+einops = ">=0.8"
+omegaconf = ">=2.3"
+loguru = ">=0.7"
+wandb = ">=0.17"
+gitpython = ">=3.1"
+python-xxhash = ">=3.4"
+joblib = ">=1.4"
+pandas = ">=2.2"
+scikit-learn = ">=1.5"
+tqdm = ">=4.66"
+cloudpickle = ">=3.0"
+cuda-version = "13.*"
+pyarrow = ">=23.0.1,<24"
+fastparquet = ">=2025.12.0,<2026"
+
+[tool.pixi.feature.dev.dependencies]
+ipykernel = ">=6"
+ipython = "*"
+lovely-tensors = ">=0.1"
+matplotlib = ">=3.9"
+
+[tool.pixi.feature.dev.pypi-dependencies]
+better_exceptions = "*"
+
+[tool.pixi.activation.env]
+BETTER_EXCEPTIONS = "1"
+LOVELY_TENSORS = "1"
+LD_LIBRARY_PATH = "$CONDA_PREFIX/cuda-compat"
+HDF5_USE_FILE_LOCKING = "FALSE"
+
+[tool.pixi.environments]
+default = ["dev"]
+container = []

@@ -1,0 +1,37 @@
+[workspace]
+name = "soba-bench"
+version = "0.1.0"
+channels = ["conda-forge", "quentinf00"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.11.*"
+numpy = "*"
+pandas = "*"
+pyarrow = "*"
+pyyaml = "*"
+xarray = "*"
+netcdf4 = "*"
+matplotlib-base = "*"
+pytest = "*"
+flexlock = ">=0.8"
+# The shared registry is created by its owning MLflow 3.13 environment. Keep
+# the client on the same schema line; MLflow 3.12 cannot resolve its Alembic
+# revision (da6fb0208061).
+mlflow = "3.13.*"
+
+[pypi-dependencies]
+soba-bench = { path = ".", editable = true }
+mlflow-pixi = { path = "../../260318_model_registry/mlflow_pixi", editable = true }
+
+[tasks]
+test = "pytest tests -q"
+evaluate = "python -m soba_bench evaluate"
+reevaluate-all = "python -m soba_bench reevaluate_all"
+import-test-dataset = "python -m soba_bench.cli import-test-dataset"
+describe-dataset = "python -m soba_bench.cli describe-dataset"
+leaderboard = "python -m soba_bench.cli leaderboard"
+render-site = "python -m soba_bench.cli render-site"
+render-report = "python -m soba_bench.cli render-report"
+accept-oci = "python -m soba_bench.cli accept-oci"
+import-predictions = "python -m soba_bench.cli import-predictions"
