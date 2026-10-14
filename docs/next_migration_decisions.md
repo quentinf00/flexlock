@@ -12,7 +12,11 @@ Adoption prerequisite found on subsequent source inspection: enhanced
 exceptions in `safe_feats`, logging and continuing. Thus current success can hide
 failed reads or partial processing. The accepted status/presence rule below assumes
 errors propagate; applying it to real SAR extraction requires strict failure
-handling or explicit partial-error accounting. That project decision is pending.
+handling or explicit partial-error accounting. The SAR submission records the
+2026-10-14 user decision for strict errors: its new enhanced recipe opts in while
+legacy callers keep their defaults. The bounded recipe is now
+[centrally accepted](../reports/project-adoption/sar-ml/central-review.md);
+full campaigns and remaining callers are separate adoption work.
 Mandatory receipts would not themselves fix suppressed exceptions.
 
 Accepted correction: mandatory per-SAFE outcome receipts are unnecessary for the
@@ -63,8 +67,9 @@ python -m examples.slimmer_workflows.sar_coverage campaign.json coverage.json
 The command writes a fresh report and exits nonzero when assembly must stop.
 Its `present` mapping can feed a project assembler after scientific CSV/schema
 and reuse checks. It does not read raw SAFE data, check science, certify input
-immutability, or change assembly paths. Actual SAR integration remains pending;
-historical queue status alone cannot detect subsequently deleted CSVs.
+immutability, or change assembly paths. The actual enhanced SAR recipe now adds
+explicit produced/empty queue results and CSV SHA256/row checks; historical queue
+status alone cannot detect subsequently deleted CSVs.
 
 ## Slurm: keep ordinary submission; defer public export
 
