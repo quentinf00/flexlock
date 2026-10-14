@@ -1,6 +1,14 @@
 # Migration toward a smaller FlexLock core
 
 Date: 2026-10-06. Status: accepted direction and staged implementation plan.
+Current status (2026-10-14): the passages below preserve dated milestone evidence.
+All 53 inventoried consumer environments now use 0.9.2; shared recipes are linked
+from 21 distinct consumer AGENTS files. Bounded SST/SAR/NF acceptance is recorded,
+but project config adoption and optional-policy retirement remain incomplete.
+The private Slurm materialization seam is implemented only in this checkout.
+[Remaining decisions and execution order](next_migration_decisions.md) distinguish
+proposals, installed migration and scientific workflow changes.
+
 M0's root-anchor CLI fix is implemented and validated. Review drafts and executable
 examples are available. M1's three reviewed record corrections and an explicit
 future-input snapshot correction are implemented in the isolated branch, validated
@@ -11,7 +19,7 @@ reusing weak aggregate metadata. The remaining phases stay open. No production d
 
 Review companions: [workflow guidelines](workflow_guidelines.md) with executable
 configuration/campaign/chain examples, and [Slurm submission proposal](slurm_submission_workflow.md).
-Backend materialization is proposed after M1 guards/M2 bindings; a managed prepared-launch
+Private backend materialization is implemented; a managed prepared-launch
 lifecycle is deferred. --after remains.
 
 [Milestone evidence](../reports/2026-10-06-workflow-guidelines-record-contracts/report.md)

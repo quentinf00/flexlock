@@ -11,6 +11,44 @@ from flexlock.exceptions import FlexLockValidationError
 from examples.slimmer_workflows import campaign, orchestrate
 
 
+def test_retained_preparation_updates_root_before_detached_consumer_selection(tmp_path, monkeypatch):
+    """SST-style migration plumbing; no SST scientific computation."""
+    from flexlock import Project
+    from omegaconf import OmegaConf
+    from examples.slimmer_workflows.bindings import require_product
+    from examples.slimmer_workflows.stages import prepare, train
+    from flexlock import py2cfg
+
+    monkeypatch.setenv('FLEXLOCK_INDEX', str(tmp_path / '.flexlock/index.db'))
+    producer = tmp_path / 'retained/prepare'
+    proj = Project(dict(
+        prepare=py2cfg(prepare, save_dir=str(producer), output_path=str(producer / 'dataset.json'),
+                       _snapshot_=dict(repos={}),
+                       _outputs_=dict(dataset=dict(path='dataset.json', sha256=True))),
+        train=py2cfg(train, save_dir=str(tmp_path / 'fresh/train'),
+                     checkpoint_path=str(tmp_path / 'fresh/train/model.json'), multiplier=2,
+                     input_path='${prepare.save_dir}/dataset.json',
+                     producer_record='${prepare.save_dir}', _snapshot_=dict(repos={}))
+    ))
+    result = proj.submit('prepare', smart_run=False)
+    result.raise_on_failure()
+    assert result.is_success
+    require_product(producer, 'output_path', producer / 'dataset.json')
+    OmegaConf.update(proj.defaults, 'prepare.save_dir', str(tmp_path / 'unexecuted/prepare'))
+    detached = proj.get('train')
+    # Altering a previously selected copy cannot wire the root or later consumers.
+    detached.producer_record = str(producer)
+    assert proj.get('train').producer_record == str(tmp_path / 'unexecuted/prepare')
+    OmegaConf.update(proj.defaults, 'prepare.save_dir', str(producer))
+    selected = proj.get('train')
+    assert selected.input_path == str(producer / 'dataset.json')
+    result = proj.submit(selected, smart_run=False)
+    result.raise_on_failure()
+    assert result.is_success
+    assert not (tmp_path / 'unexecuted/prepare').exists()
+    assert load_record(tmp_path / 'fresh/train')['config']['producer_record'] == str(producer)
+
+
 def test_multistage_example_reads_exact_predecessors(tmp_path, monkeypatch):
     monkeypatch.setenv('FLEXLOCK_INDEX', str(tmp_path/'.flexlock/index.db'))
     FlexLockRunner().run(['-d', 'examples.slimmer_workflows.cfgmod.cfg',

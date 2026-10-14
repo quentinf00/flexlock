@@ -1,7 +1,8 @@
 # Slurm submission workflow
 
 2026-10-06. Profiles, --after and --print-job-id are available in the isolated
-checkout. The backend preparation seam below is proposed, not implemented.
+checkout. The private backend preparation seam is now implemented in this checkout;
+public export remains a proposal. See the dated implementation note below.
 [Workflow recipes](workflow_guidelines.md) and [migration plan](slimmer_core_migration.md).
 
 ## Ordinary use: computation config plus resource profile
