@@ -730,7 +730,10 @@ def _atomic_write_yaml(data: list, path: Path):
 
     def _to_primitive(v):
         if isinstance(v, (DictConfig, ListConfig)):
-            return OmegaConf.to_container(v, resolve=True)
+            # Export recorded invocations, not a fresh evaluation of their
+            # resolvers. Aborted pipeline stages can reference missing products;
+            # resolving here would hide the original task failure.
+            return OmegaConf.to_container(v, resolve=False)
         if isinstance(v, dict):
             return {k: _to_primitive(val) for k, val in v.items()}
         if isinstance(v, list):

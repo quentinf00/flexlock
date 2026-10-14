@@ -68,3 +68,21 @@ Training/export, collocation/validation, diagnostics/MLflow, original SAR and
 fix_colloc callers are explicitly deferred. Keep these open; accepting this recipe
 does not close them or the extended lifecycle task. The SAR owner may record this
 bounded acceptance on its local board, retaining those broader follow-ups.
+
+## Trace correction — central follow-up, 2026-10-14
+
+Reading the full cli-chain.log shows that split executed. The first failure is
+SAR accepted_record raising 'No authoritative completed stage': it requires a
+snapshot record_dir even when FlexLock stores the ordinary directory in
+snapshot.config.save_dir and omits redundant record_dir. Accept the selected
+stage only when its completed record/config and authoritative snapshot match;
+use snapshot.get('record_dir', snapshot['config'].get('save_dir')) for that path
+comparison. Retain output checks and stage completion evidence; do not require
+the entire composite queue row to be done while a later stage is consuming it.
+
+The final missing-run_lock traceback is a second defect: terminal queue YAML
+export resolves unexecuted downstream expressions and masks the original error.
+A core export fix with a queue regression is under validation. The earlier
+'fails before execution' diagnosis was incorrect; bounded sequential adoption
+acceptance is unchanged. Recheck the composite recipe after both corrections,
+using a fresh small fixture; no full extraction or scheduler campaign needed.
