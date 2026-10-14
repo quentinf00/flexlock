@@ -1,0 +1,51 @@
+[
+  {
+    "project": "maxss-ml",
+    "feedback": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/reports/flexlock-adoption/central-feedback.md",
+    "sha256": "08d8f68d7d96fa7645fda39af350491fbb79a71a60c38b2980d98247848a1a62",
+    "board": "/scale/user/qfebvre/projects/250930_maxss_era5pp/plans/todo.md",
+    "board_exists": true
+  },
+  {
+    "project": "sst-ml",
+    "feedback": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/central-feedback.md",
+    "sha256": "7891313e164a81a25c3cf3d410ee6ee40e86d5668f178fe87d0452947baf8475",
+    "board": "/scale/user/qfebvre/projects/251218_sst/plans/TODO.md",
+    "board_exists": true
+  },
+  {
+    "project": "2508_nextgems--nextgems_tc",
+    "feedback": "/scale/user/qfebvre/projects/2508_nextgems/reports/flexlock-adoption/central-feedback.md",
+    "sha256": "687a33897de26ed4b1ac6e091108d5a935bf47797062dc0f261f4b0ce67e6a9a",
+    "board": "/scale/user/qfebvre/projects/2508_nextgems/plans/TODO.md",
+    "board_exists": true
+  },
+  {
+    "project": "hafs-jepa",
+    "feedback": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/reports/flexlock-adoption/central-feedback.md",
+    "sha256": "d70c376b062ec69bf1a477437b4cbe5dcc9ddc55ec556abdbee3b012e50025cc",
+    "board": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/plans/TODO.md",
+    "board_exists": true
+  },
+  {
+    "project": "260506_hafs--hafs_tools",
+    "feedback": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/reports/flexlock-adoption/central-feedback.md",
+    "sha256": "42684c8bbdd98a0cc2fc08d7db04d1a28143c768fb83f5e6e6adbc8d8ee041a0",
+    "board": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/plans/TODO.md",
+    "board_exists": true
+  },
+  {
+    "project": "260617_biomass--biomass_proc",
+    "feedback": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/reports/flexlock-adoption/central-feedback.md",
+    "sha256": "9a0730f5c760afcd1f9c1d4c5eb35fdc8e18f63fa864cebb4302a3eae1c5bf48",
+    "board": "/scale/user/qfebvre/projects/260617_biomass/plans/TODO.md",
+    "board_exists": true
+  },
+  {
+    "project": "sar-ml",
+    "feedback": "/scale/user/qfebvre/projects/2509_sar_ml/reports/flexlock-adoption/central-feedback.md",
+    "sha256": "4e5e6fd66d36e610a614f804a376f33842fee6d11d5c4eb3dafecfb7b1363900",
+    "board": "/scale/user/qfebvre/projects/2509_sar_ml/plans/TODO.md",
+    "board_exists": true
+  }
+]

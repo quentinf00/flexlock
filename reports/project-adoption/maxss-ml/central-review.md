@@ -41,3 +41,18 @@ in 0.9.2 environments. Output-hash cost is in the project acceptance helper; no
 unsafe record-digest substitute accepted. Composite source attribution stays open.
 The pilot evidence is positive; broader task closure remains pending deferred
 active configs/readers and bounded recovery review.
+
+## Acceptance decision — 2026-10-14
+
+**Decision: accepted — bounded I39 local and four-job CPU smoke recipe.**
+Independently verified all seven declared smoke outputs and completion markers.
+A mocked orchestrator check (no scheduler calls) confirms that failure at the second
+submission preserves the first accepted job ID and that an existing ledger refuses
+replay. Manual repair requires a new ledger and verified stage subset; it is not
+crash-atomic recovery if submission succeeds before ledger persistence.
+Full-size GPU execution and deferred configs/readers remain open. Composite source
+superset attribution is a core follow-up, not a blocker for the separately submitted
+stage recipe. Add unknown-stage rejection to the orchestrator; preserve manual
+inspection after any uncertain submission result.
+
+Local project feedback is mirrored in `reports/flexlock-adoption/central-feedback.md`.

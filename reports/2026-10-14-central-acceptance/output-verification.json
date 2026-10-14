@@ -1,0 +1,348 @@
+{
+  "maxss-ml": [
+    {
+      "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/embed/run.outputs.json",
+      "name": "emb",
+      "path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/embed/windows_emb.npz",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/train/run.outputs.json",
+      "name": "model",
+      "path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/train/model.pt",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/train/run.outputs.json",
+      "name": "metrics",
+      "path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/train/metrics.csv",
+      "exists": true,
+      "sha256_match": null,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/collect/run.outputs.json",
+      "name": "windows",
+      "path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/collect/windows.npz",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/evaluate/run.outputs.json",
+      "name": "summary",
+      "path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/evaluate/summary.csv",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/evaluate/run.outputs.json",
+      "name": "per_window",
+      "path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/evaluate/per_window.csv",
+      "exists": true,
+      "sha256_match": null,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/evaluate/run.outputs.json",
+      "name": "meta",
+      "path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/results_hafs/runs/nf_latent_fm-smoke/ir_cls/slurm-smoke-20261014a/evaluate/meta.json",
+      "exists": true,
+      "sha256_match": null,
+      "complete": true
+    }
+  ],
+  "sst-ml": [
+    {
+      "manifest": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/reassess/run.outputs.json",
+      "name": "metrics",
+      "path": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/reassess/drifter_rmse.csv",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/reassess/run.outputs.json",
+      "name": "ci",
+      "path": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/reassess/paired_day_ci.csv",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/reassess/run.outputs.json",
+      "name": "methodology",
+      "path": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/reassess/methodology.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/reassess/run.outputs.json",
+      "name": "validation",
+      "path": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/reassess/validation.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/accept_preparation/run.outputs.json",
+      "name": "preparation",
+      "path": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/accept_preparation/preparation.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    }
+  ],
+  "hafs-jepa": [
+    {
+      "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval/run.outputs.json",
+      "name": "summary",
+      "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval/irar_probe.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval/run.outputs.json",
+      "name": "table",
+      "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval/results.md",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval/run.outputs.json",
+      "name": "pred_vmax",
+      "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval/test_predictions_vmax.parquet",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval/run.outputs.json",
+      "name": "pred_dv24",
+      "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval/test_predictions_dv24.parquet",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval/run.outputs.json",
+      "name": "pred_dv48",
+      "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval/test_predictions_dv48.parquet",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/hafs_dyn/run.outputs.json",
+      "name": "summary",
+      "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/hafs_dyn/dynamics_probe.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/hafs_dyn/run.outputs.json",
+      "name": "table",
+      "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/hafs_dyn/results.md",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/hafs_dyn/run.outputs.json",
+      "name": "pred_vmax",
+      "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/hafs_dyn/val_predictions_vmax_kt.parquet",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/hafs_dyn/run.outputs.json",
+      "name": "pred_dv24",
+      "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/hafs_dyn/val_predictions_delta_vmax_24h_kt.parquet",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/hafs_dyn/run.outputs.json",
+      "name": "pred_dv48",
+      "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/hafs_dyn/val_predictions_delta_vmax_48h_kt.parquet",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    }
+  ],
+  "hafs_tools": [
+    {
+      "manifest": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/runs/adopt-20261014/v2-retained/items/wind-202303l/run.outputs.json",
+      "name": "receipt",
+      "path": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/runs/adopt-20261014/v2-retained/items/wind-202303l/receipt.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/runs/adopt-20261014/v2-retained/items/wind-202620p/run.outputs.json",
+      "name": "receipt",
+      "path": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/runs/adopt-20261014/v2-retained/items/wind-202620p/receipt.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/runs/adopt-20261014/v1-wind/items/wind-202620p/run.outputs.json",
+      "name": "receipt",
+      "path": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/runs/adopt-20261014/v1-wind/items/wind-202620p/receipt.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/runs/adopt-20261014/v1-mom6/items/mom6-202592a/run.outputs.json",
+      "name": "receipt",
+      "path": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/runs/adopt-20261014/v1-mom6/items/mom6-202592a/receipt.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    }
+  ],
+  "biomass_proc": [
+    {
+      "manifest": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/reports/flexlock-adoption/runs/retained-wave-checked004/select/run.outputs.json",
+      "name": "selection",
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/reports/flexlock-adoption/runs/retained-wave-checked004/select/selection.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/reports/flexlock-adoption/runs/retained-wave-checked004/assess/run.outputs.json",
+      "name": "report",
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/reports/flexlock-adoption/runs/retained-wave-checked004/assess/assessment.json",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    }
+  ],
+  "nextgems_tc": [
+    {
+      "manifest": "/scale/scratch/qfebvre/nextgems_flexlock_adopt/smoke-20261014/chunks/chunk_0001/run.outputs.json",
+      "name": "manifest",
+      "path": "/scale/scratch/qfebvre/nextgems_flexlock_adopt/smoke-20261014/chunks/chunk_0001/manifest.parquet",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    },
+    {
+      "manifest": "/scale/scratch/qfebvre/nextgems_flexlock_adopt/smoke-20261014/chunks/chunk_0000/run.outputs.json",
+      "name": "manifest",
+      "path": "/scale/scratch/qfebvre/nextgems_flexlock_adopt/smoke-20261014/chunks/chunk_0000/manifest.parquet",
+      "exists": true,
+      "sha256_match": true,
+      "complete": true
+    }
+  ],
+  "biomass_source": [
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/__init__.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/_registry.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/acquisition_search.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/browse_cog.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/campaign.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/colloc.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/cwave.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/embed.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/listing.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/lonboard_catalog.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/retained_assessment.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/seastate.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/train_mlp.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/src/biomass_proc/zeroshot.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/configs/adoption.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/configs/defaults.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/configs/latest_embed.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/configs/raw_sigma0.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/workflows/retained_wave.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/pipeline.py",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/pyproject.toml",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/pixi.lock",
+      "match": true
+    },
+    {
+      "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/analysis/classify_s1_s3_failures.py",
+      "match": true
+    }
+  ]
+}

@@ -25,3 +25,19 @@ smoke. Do not silently accept failed/unreadable outcomes as scientific success.
 Snapshot-ref retention/pruning needs its own ownership audit; no automatic cleanup.
 
 No project source, submitted report, retained products or jobs changed by this review.
+
+## Acceptance decision — 2026-10-14
+
+**Decision: accepted — bounded frozen storm-chunk smoke/accounting recipe.**
+Independently verified both declared chunk manifest hashes/completion markers.
+Re-executed the read-only gate: three ok/one missing_zarr; the missing outcome blocks
+acceptance without an explicit accepted outcome and passes when missing_zarr is
+explicitly accepted. This checks accounting, not a decision to accept production
+gaps. The recheck used an available 0.9.2 SST interpreter with the NextGEMS source
+path because this checkout's default interpreter lacked FlexLock; validate the
+intended campaign interpreter before further execution.
+Correct local month-sweep guidance and state clearly that current per-storm product
+checks establish presence/nonzero size rather than full byte identity. Full repair,
+production integrity and unrelated plain-script workflows remain outside scope.
+
+Local project feedback is mirrored in `reports/flexlock-adoption/central-feedback.md`.

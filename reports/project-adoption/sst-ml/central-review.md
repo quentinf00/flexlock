@@ -25,3 +25,16 @@ Follow-up requested before closing:
 
 No project source, scientific artifacts, submitted report or active jobs changed
 by this review.
+
+## Acceptance decision — 2026-10-14
+
+**Decision: accepted — local retained-preparation/frozen reassessment recipe.**
+Independently verified five declared outputs/completion markers and compared all
+24 reassessment metric rows with the selected reference at rtol/atol 1e-12.
+Scheduler execution is excluded from this acceptance: replace log-message job-ID
+parsing with supported CLI output, or label scheduler mode provisional and validate
+partial-reporting recovery before using it. Fix central evidence links to actual
+local paths. Mapping/legacy preparation and broader caller migration remain open;
+cube metadata hashing is not full cube-byte integrity.
+
+Local project feedback is mirrored in `reports/flexlock-adoption/central-feedback.md`.
