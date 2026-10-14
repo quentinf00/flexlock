@@ -6,6 +6,8 @@ Review against [guidelines](../../docs/workflow_guidelines.md) and the
 - cfgmod.py/stages.py: explicit root anchors and distinct stage directories.
 - bindings.py: project acceptance of completed, declared producer products.
 - campaign.py: frozen input hashes, one bulk export, deliberate coverage gate.
+- sar_coverage.py: isolated SAR gate using exact queue tasks and CSV presence;
+  no mandatory outcome receipt or change to scientific extraction.
 - orchestrate.py: separate CPU/GPU/CPU submissions and a best-effort ID ledger.
 - slurm/: template resource profiles; adapt cluster/environment paths.
 

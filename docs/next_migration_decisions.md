@@ -33,6 +33,25 @@ of the queue, or detailed empty reasons, becomes useful. Historical reports pres
 what was investigated, not the accepted workflow. No scientific SAR source or split
 protocol was changed.
 
+The isolated [coverage helper](../examples/slimmer_workflows/sar_coverage.py) now
+implements this rule, with 11 passing real-SQLite fixture checks. Freeze a JSON
+manifest containing `database` (absolute path), `extractor_target`, and `items`
+with each selected process member's exact `task_id`, absolute `safe` and absolute
+`save_dir`. Bind queue IDs to the already frozen SAFE membership after enqueueing;
+do not define completeness by enumerating only the tasks that happened to exist
+after execution. Exclusions remain in the campaign's frozen membership evidence,
+outside this process-only manifest. Run after old workers have stopped:
+
+```bash
+python -m examples.slimmer_workflows.sar_coverage campaign.json coverage.json
+```
+
+The command writes a fresh report and exits nonzero when assembly must stop.
+Its `present` mapping can feed a project assembler after scientific CSV/schema
+and reuse checks. It does not read raw SAFE data, check science, certify input
+immutability, or change assembly paths. Actual SAR integration remains pending;
+historical queue status alone cannot detect subsequently deleted CSVs.
+
 ## Slurm: keep ordinary submission; defer public export
 
 The private backend materialization seam is implemented and locally tested. Keep
