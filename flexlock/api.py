@@ -790,7 +790,7 @@ class Project:
             )
             if match_dir:
                 logger.info(f"Skipping execution, using cached result from {match_dir}")
-                return self.get_result(config, search_dirs)
+                return self._load_cached_result(match_dir, config)
 
         # Check if using HPC backend
         use_hpc = pbs_config is not None or slurm_config is not None
@@ -1856,7 +1856,7 @@ class Project:
                     )
                     if match_dir:
                         logger.info(f"Sweep {i}: Using cached result from {match_dir}")
-                        cached_results.append((i, self.get_result(sweep_cfg, search_dirs)))
+                        cached_results.append((i, self._load_cached_result(match_dir, sweep_cfg)))
                         continue
 
                 configs_to_run.append((i, sweep_cfg))

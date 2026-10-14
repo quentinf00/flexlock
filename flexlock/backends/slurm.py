@@ -27,6 +27,19 @@ _ENV_ACTIVATION_PATTERNS = (
 )
 
 
+def _uses_absolute_python(lines):
+    """Recognize explicit interpreter selection without requiring activation."""
+    for line in lines:
+        try:
+            argv = shlex.split(line, comments=True)
+        except ValueError:
+            continue
+        if (len(argv) >= 2 and Path(argv[0]).is_absolute()
+                and re.fullmatch(r'python(?:\d+(?:\.\d+)*)?', Path(argv[0]).name)):
+            return True
+    return False
+
+
 def validate_slurm_script(
     script: str, *, expects_gpu: bool = False
 ) -> list[str]:
@@ -65,11 +78,13 @@ def validate_slurm_script(
             "startup_lines."
         )
 
-    # 3. Some form of env activation is almost always needed.
-    if not any(p.search(ln) for ln in body_lines for p in _ENV_ACTIVATION_PATTERNS):
+    # 3. An explicit interpreter can select its environment without activation.
+    if (not _uses_absolute_python(body_lines)
+            and not any(p.search(ln) for ln in body_lines for p in _ENV_ACTIVATION_PATTERNS)):
         warnings.append(
             "No environment-activation command detected in startup_lines "
             "(eval, source, conda/mamba activate, module load, pixi run/shell). "
+            "Use environment activation or an absolute Python interpreter; "
             "Python imports may fail on the compute node."
         )
 

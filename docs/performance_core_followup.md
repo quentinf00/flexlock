@@ -1,5 +1,14 @@
 # Performance follow-up: core checks, record files and explicit discovery
 
+Current status, 2026-10-14: the dated experiments below preserve their original
+scope. Queue layout 2 is implemented in 0.9.1/0.9.2, and all 53 previously
+inventoried environments have been upgraded. The 13.335s nested-pointer prototype
+result is not a new installed-release benchmark. Automatic caching and its Python
+defaults remain unchanged; new workflow recipes use smart_run=False. Project
+adoption is now delegated through [review handoffs](project_adoption_handoff.md).
+Further source/output integrity shortcuts require evidence and an explicit policy;
+an unchanged record digest does not prove product bytes are unchanged.
+
 2026-10-07. The [benchmark](../reports/2026-10-07-thousand-items-hydra/report.md)
 used FlexLock 0.9.0 from the isolated migration checkout at 9ab83a3, including the
 preceding guard/discovery/directory/binding changes. It was not an unmodified

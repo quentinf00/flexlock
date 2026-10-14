@@ -172,6 +172,19 @@ def test_render_script_validation_catches_missing_partition(tmp_path):
     assert any(W_PARTITION in w for w in warnings)
 
 
+@pytest.mark.parametrize('python_exe', ['/env/bin/python', '/env/bin/python3.13'])
+def test_absolute_interpreter_does_not_require_shell_activation(tmp_path, python_exe):
+    backend = SlurmBackend(folder=tmp_path,
+        startup_lines=['#SBATCH --partition=cpu', 'cd $SLURM_SUBMIT_DIR'],
+        python_exe=python_exe)
+    assert not any(W_ENV in w for w in validate_slurm_script(backend.render_script()))
+
+
+def test_commented_interpreter_does_not_suppress_activation_warning():
+    script = '#SBATCH --partition=cpu\ncd /work\n# /env/bin/python task.py\npython task.py'
+    assert any(W_ENV in w for w in validate_slurm_script(script))
+
+
 # --- is_terminal (orphan reconciliation depends on this) ---
 
 @pytest.mark.parametrize("status,expected", [

@@ -1,0 +1,12 @@
+{
+  "hash_calls_per_sample": 5000,
+  "samples_seconds": [
+    0.1954056650865823,
+    0.4185389729682356,
+    0.4801087148953229
+  ],
+  "median_seconds": 0.4185389729682356,
+  "record_digest_unchanged_after_corruption": true,
+  "same_size_and_mtime_corruption_detected": true,
+  "scope": "synthetic 1000 small DictConfigs; no queue/filesystem throughput claim"
+}

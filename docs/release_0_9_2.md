@@ -1,5 +1,14 @@
 # FlexLock 0.9.2: remove unused pandas dependency
 
+Rollout status as of 2026-10-14: all 53 originally inventoried environment prefixes
+have been upgraded, including MaxSS after its training finished. Later-discovered
+legacy/example consumers must verify their installations individually. The initial
+batch counts below are historical evidence. See the
+[project rollout](../reports/2026-10-13-project-migration/report.md),
+[MaxSS completion](../reports/2026-10-14-maxss-migration/report.md), and
+[project adoption handoffs](project_adoption_handoff.md). Scientific workflow
+adoption remains project-owned and reviewed separately.
+
 This local release follows [0.9.1](release_0_9_1.md). Its only runtime/package
 change is removing the unused pandas dependency and updating the version.
 FlexLock's runtime package has no pandas imports. Optional MLflow and scientific
