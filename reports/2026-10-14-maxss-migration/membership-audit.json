@@ -1,0 +1,10 @@
+[
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/pyproject.toml",
+    "unexpected": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/pyproject.toml",
+    "unexpected": []
+  }
+]

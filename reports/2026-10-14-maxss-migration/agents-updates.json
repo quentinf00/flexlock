@@ -1,0 +1,12 @@
+[
+  {
+    "project": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml",
+    "agents": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/AGENTS.md",
+    "created": true
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field",
+    "agents": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/AGENTS.md",
+    "created": true
+  }
+]

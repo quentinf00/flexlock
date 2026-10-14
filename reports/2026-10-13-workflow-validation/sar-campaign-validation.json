@@ -1,0 +1,17 @@
+{
+  "cohort_size": 34218,
+  "preview_size": 3,
+  "distinct_destinations": true,
+  "inputs_present": [
+    true,
+    true,
+    true
+  ],
+  "missing_inputs_not_excluded": true,
+  "raw_data_byte_hashes_computed": false,
+  "scientific_execution": false,
+  "gates": [
+    "Explicit produced/empty receipt required before extraction adoption",
+    "Coverage must pass before prepare_dataset; it currently skips missing feature CSVs"
+  ]
+}

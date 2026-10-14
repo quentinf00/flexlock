@@ -400,3 +400,16 @@ readers and exercise the recipes locally/fake-backend before isolated SAR/SST ad
 The toy computations exercise plumbing, not scientific acceptance. The draft does
 not establish large data identity or prepared-submission safety. Controller collision
 checks cover the supported Project paths; advanced queue mutation requires one controller.
+
+
+## Validated transition examples (2026-10-14)
+
+See the [project transition draft](../reports/2026-10-13-workflow-validation/TRANSITION.md) and [acceptance report](../reports/2026-10-13-workflow-validation/report.md). The SST retained-matchup reassessment and SAR legacy split were executed with installed 0.9.2; neural-field config resolution was checked without training.
+
+Start with one config entrypoint, explicit retained-artifact bindings, and a fresh absolute run root. Add stage or track modules only when actual reuse warrants them. Keep historical receipts and artifacts in place. A historical config.save_dir can be relative: resolve against its original project context or use the selected producer directory explicitly, rather than the new consumer working directory.
+
+Data snapshots should reference the effective stage argument, so overrides update both execution and evidence. Likewise, explicit prevs should follow the argument that selects the producer. Changing an input independently of its producer binding needs a deliberate lineage review.
+
+For SAR-style file processing, freeze membership before scheduling and give each item its own receipt directory. Require an explicit produced or legitimate-empty outcome, then check accepted cohort coverage before dataset assembly. A missing output alone cannot establish emptiness; the current SAR assembler silently skips missing CSVs and needs this workflow gate before adoption.
+
+For separate Slurm resources, keep the small orchestration script and --after dependencies. Capture accepted job IDs and persist them immediately; a frontend reporting failure after submission must not trigger automatic resubmission. The --print-job-id CLI output is a submission receipt, not a completed execution result.

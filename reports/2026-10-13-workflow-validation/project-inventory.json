@@ -1,0 +1,524 @@
+[
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke",
+    "manifest": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/pyproject.toml",
+    "config_count": 5,
+    "configs": [
+      "configs/sweep_example.yaml",
+      "configs/slurm_gpu_sif.yaml",
+      "configs/slurm_cpu_sif.yaml",
+      "configs/slurm_cpu.yaml",
+      "configs/slurm_gpu.yaml"
+    ],
+    "resource_profile_count": 4,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "results",
+      "data"
+    ],
+    "workflow_scripts": [],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app",
+    "manifest": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app/pyproject.toml",
+    "config_count": 0,
+    "configs": [],
+    "resource_profile_count": 0,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "data"
+    ],
+    "workflow_scripts": [],
+    "active_family": true,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2508_nextgems/nextgems_tc",
+    "manifest": "/ontap/user/qfebvre/work/projects/2508_nextgems/nextgems_tc/pyproject.toml",
+    "config_count": 1,
+    "configs": [
+      "configs/slurm_cpu_worker.yaml"
+    ],
+    "resource_profile_count": 1,
+    "identical_profile_groups": [],
+    "artifact_roots": [],
+    "workflow_scripts": [
+      "scripts/compute_radii.py"
+    ],
+    "active_family": true,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools",
+    "manifest": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools/pyproject.toml",
+    "config_count": 7,
+    "configs": [
+      "configs/compile_since2014.py",
+      "configs/slurm_cpu_worker.yaml",
+      "configs/compile_hscat2b.yaml",
+      "configs/compile_ccmp_v31.py",
+      "configs/compile_v05.py",
+      "configs/bench_delhio.yaml",
+      "configs/slurm_cpu_eval.yaml"
+    ],
+    "resource_profile_count": 2,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "results",
+      "data"
+    ],
+    "workflow_scripts": [
+      "scripts/apply_era5_recalibration.py",
+      "scripts/report_v05_calibration.py",
+      "scripts/build_midterm_comparison_report.py",
+      "scripts/build_v05.py",
+      "scripts/diagnose_start_sensor_availability.py",
+      "scripts/fit_era5_recalibration.py",
+      "scripts/prepare_v05_build.py",
+      "scripts/populate_v03_colloc.py",
+      "scripts/build_anggrek_report.py",
+      "scripts/compare_intense_ose.py",
+      "scripts/report_by_intensity.py",
+      "scripts/prepare_v05_catalog.py",
+      "scripts/score_dump_ibtracs.py",
+      "scripts/temporal_average_dump.py"
+    ],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion",
+    "manifest": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion/pyproject.toml",
+    "config_count": 0,
+    "configs": [],
+    "resource_profile_count": 0,
+    "identical_profile_groups": [],
+    "artifact_roots": [],
+    "workflow_scripts": [],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced",
+    "manifest": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/pyproject.toml",
+    "config_count": 12,
+    "configs": [
+      "configs/slurm_pipeline.yaml",
+      "configs/diags.yaml",
+      "configs/slurm_extract.yaml",
+      "configs/hsmaps.yaml",
+      "configs/dataprep.yaml",
+      "configs/training.yaml",
+      "configs/run_colloc.sh",
+      "configs/17km/model.yaml",
+      "configs/17km/diags.yaml",
+      "configs/17km/data.yaml",
+      "configs/17km/unified_logging.yaml",
+      "configure/s1iw/__init__.py"
+    ],
+    "resource_profile_count": 2,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "outputs",
+      "data"
+    ],
+    "workflow_scripts": [
+      "scripts/repro_scatter_hang.py",
+      "scripts/t0m1_underestimation_analysis.py",
+      "scripts/diag_gradient_loss.py",
+      "scripts/populate_confidence_0045.py",
+      "scripts/test_worker_loop_actual.py",
+      "scripts/test_scatter_spawn.py",
+      "scripts/test_png_minimal.py",
+      "scripts/test_png_export.py",
+      "scripts/diag_context_impact.py",
+      "scripts/test_validation_pipeline.py",
+      "sar_ml/pipelines/validation_pipeline.py",
+      "sar_ml/pipelines/data_pipeline.py",
+      "sar_ml/pipelines/phase3_finetune.py",
+      "sar_ml/pipelines/phase1_flow_matching.py",
+      "sar_ml/pipelines/diags_pipeline.py",
+      "sar_ml/pipelines/phase2_context_mdn.py",
+      "sar_ml/pipelines/phase3_context_flow.py",
+      "sar_ml/pipelines/__init__.py",
+      "sar_ml/pipelines/ablation_hs_mlp.py",
+      "sar_ml/pipelines/training_pipeline.py"
+    ],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda",
+    "manifest": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/pyproject.toml",
+    "config_count": 0,
+    "configs": [],
+    "resource_profile_count": 0,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "outputs",
+      "mlruns",
+      "results",
+      "data"
+    ],
+    "workflow_scripts": [
+      "scripts/plot_gradients.py"
+    ],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping",
+    "manifest": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/pyproject.toml",
+    "config_count": 4,
+    "configs": [
+      "configs/slurm_gpu_hpc.yaml",
+      "configs/pipeline.yaml",
+      "configs/slurm_gpu_256g.yaml",
+      "configs/slurm.yaml"
+    ],
+    "resource_profile_count": 3,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "outputs",
+      "results_starter_glob"
+    ],
+    "workflow_scripts": [
+      "scripts/repro_tiling_artifacts.py",
+      "scripts/replot_inference.py",
+      "scripts/scratch.py",
+      "scripts/gulfstream_viz.py",
+      "scripts/evaluate.py",
+      "scripts/debug_banding.py",
+      "scripts/monthly_climatology.py"
+    ],
+    "active_family": true,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch",
+    "manifest": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/pyproject.toml",
+    "config_count": 52,
+    "configs": [
+      "configs/slurm_t20_a2_consistency1.yaml",
+      "configs/slurm_t20a1_inference.yaml",
+      "configs/slurm_t18d_evaluation.yaml",
+      "configs/slurm_t20_a2.yaml",
+      "configs/slurm_t20_a2_diagnostics.yaml",
+      "configs/slurm_native_inference.yaml",
+      "configs/slurm_t20_a3_inference.yaml",
+      "configs/slurm_t20a0_inference.yaml",
+      "configs/slurm_t20_a0.yaml",
+      "configs/slurm_t17b_inference.yaml",
+      "configs/slurm_gpu_prod.yaml",
+      "configs/t20_resolution_summary.py",
+      "configs/slurm_t20a2_inference.yaml",
+      "configs/slurm_nearest_evaluation.yaml",
+      "configs/slurm_t20_a1.yaml",
+      "configs/slurm_gpu_hpc.yaml",
+      "configs/t20_reinjection.py",
+      "configs/slurm_cpu.yaml",
+      "configs/slurm_native_full.yaml",
+      "configs/slurm_native_aux.yaml",
+      "configs/t20_followup.py",
+      "configs/slurm_t20_cuda_probe.yaml",
+      "configs/slurm_t18_deep.yaml",
+      "configs/pipeline.yaml",
+      "configs/slurm_t18_wide_smoke.yaml",
+      "configs/slurm_t17a_inference.yaml",
+      "configs/native_regrid.py",
+      "configs/slurm_t18_wide.yaml",
+      "configs/slurm_native_train.yaml",
+      "configs/slurm_t20_a3.yaml",
+      "configs/slurm_t17a_evaluation.yaml",
+      "configs/slurm_t20_sensor_direction.yaml",
+      "configs/t20_iteration.py",
+      "configs/slurm_polar_gate_gpu.yaml",
+      "configs/slurm_t20_a2_consistency1_inference.yaml",
+      "configs/slurm_t15_evaluation.yaml",
+      "configs/t15.py",
+      "configs/slurm_t18d_inference.yaml",
+      "configs/slurm_native_evaluation.yaml",
+      "configs/slurm_t20_a3_evaluation.yaml",
+      "configs/slurm_t18w_inference.yaml",
+      "configs/slurm_t15_inference.yaml",
+      "configs/slurm.yaml",
+      "configs/slurm_t17b_evaluation.yaml",
+      "configs/slurm_polar_cpu.yaml",
+      "configs/slurm_t18w_evaluation.yaml",
+      "configs/slurm_t20_a2_consistency1_evaluation.yaml",
+      "configs/t20_spectral_summary.py",
+      "configs/slurm_t18_deep_numa.yaml",
+      "configs/slurm_t20a2_evaluation.yaml",
+      "configs/slurm_native_build.yaml",
+      "configs/slurm_t20_evaluation.yaml"
+    ],
+    "resource_profile_count": 44,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "outputs",
+      "results_starter_glob",
+      "results_i1_gate",
+      "results_full_year_inference",
+      "results_oi_benchmark"
+    ],
+    "workflow_scripts": [
+      "scripts/select_climatology_fill.py",
+      "scripts/sst_gradient_maps.py",
+      "scripts/benchmark_oi.py",
+      "scripts/checkpoint_latitude_eval.py",
+      "scripts/audit_climatology_coverage.py",
+      "scripts/t20_sensor_direction.py",
+      "scripts/t20_resolution_summary.py",
+      "scripts/repro_tiling_artifacts.py",
+      "scripts/cross_eval_gate.py",
+      "scripts/t20_followup.py",
+      "scripts/replot_inference.py",
+      "scripts/sweep_oi_qc_r.py",
+      "scripts/oi_convergence_probe.py",
+      "scripts/evaluate_drifters.py",
+      "scripts/tc_wake_study.py",
+      "scripts/sst_reader_parity.py",
+      "scripts/scratch.py",
+      "scripts/i19_p0_drifter_split.py",
+      "scripts/inference_smoke.py",
+      "scripts/odyssea_diagnostics.py",
+      "scripts/gulfstream_viz.py",
+      "scripts/summarize_oi_validation.py",
+      "scripts/submit_t20_followup.py",
+      "scripts/i18_e0_tile_spectra.py",
+      "scripts/audit_climatology_fallback.py",
+      "scripts/evaluate.py",
+      "scripts/t20_cuda_runtime.py",
+      "scripts/audit_oi_production.py",
+      "scripts/i18_e0_summary.py",
+      "scripts/i19_p0_obs_fit.py",
+      "scripts/t20_spectral_summary.py",
+      "scripts/diagnose_oi_innovations.py",
+      "scripts/t15_scene_diagnostics.py",
+      "scripts/debug_banding.py",
+      "scripts/polar_stratified_eval.py",
+      "scripts/monthly_climatology.py"
+    ],
+    "active_family": true,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa",
+    "manifest": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/pyproject.toml",
+    "config_count": 2,
+    "configs": [
+      "configs/ablation_irwin_wv.yaml",
+      "configs/ablation_no_sigreg.yaml"
+    ],
+    "resource_profile_count": 0,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "results"
+    ],
+    "workflow_scripts": [],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa",
+    "manifest": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/pyproject.toml",
+    "config_count": 5,
+    "configs": [
+      "configs/sweep_bisect_geo.yaml",
+      "configs/slurm_gpu_hpc.yaml",
+      "configs/slurm_gpu_hpc_lowprio.yaml",
+      "configs/ablation_sweep.yaml",
+      "configs/slurm_gpu.yaml"
+    ],
+    "resource_profile_count": 3,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "outputs",
+      "results"
+    ],
+    "workflow_scripts": [
+      "scripts/embed_irar_external.py",
+      "scripts/paired_arm_bootstrap.py",
+      "scripts/build_cross_cycle_index.py",
+      "scripts/context_length_probe.py",
+      "scripts/dynamics_probe.py",
+      "scripts/tcbench_hafs_entry.py",
+      "scripts/band_floors.py",
+      "scripts/dynamics_baselines.py",
+      "scripts/cluster_frame_corpus.py",
+      "scripts/verify_zarr_webds_parity.py",
+      "scripts/build_irar_cache.py",
+      "scripts/concat_seq_embeddings.py",
+      "scripts/irar_probe.py",
+      "scripts/reshard_slim.py",
+      "scripts/__init__.py",
+      "scripts/bench_zarr_epoch.py",
+      "scripts/finetune_dv.py",
+      "scripts/extract_seq_embeddings.py",
+      "scripts/bench_dataloader.py",
+      "scripts/train_lejepa_faithful.py",
+      "scripts/build_slim256_ir.py",
+      "scripts/tcbench_ir_forecaster.py",
+      "scripts/build_frame_corpus.py",
+      "scripts/repair_wind_init_time.py",
+      "scripts/tcbench_compare.py",
+      "scripts/wind_profile_features.py",
+      "scripts/tcbench_ir_realtime.py",
+      "scripts/tcbench_hafs_ir.py",
+      "scripts/compare_irar_backbones.py",
+      "scripts/tcbench_ri_classifier.py",
+      "scripts/t03_latent_persistence.py",
+      "scripts/build_tcprimed_cache.py",
+      "scripts/tcprimed_probe.py",
+      "scripts/materialize_zarr_val.py",
+      "scripts/tcbench_ri.py",
+      "scripts/dense_probe.py",
+      "scripts/smoke_zarr_ddp.py",
+      "scripts/analyse_clusters.py",
+      "scripts/embed_tcprimed.py"
+    ],
+    "active_family": true,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260324_jepa/le-tc-wm",
+    "manifest": "/ontap/user/qfebvre/work/projects/260324_jepa/le-tc-wm/pyproject.toml",
+    "config_count": 0,
+    "configs": [],
+    "resource_profile_count": 0,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "results"
+    ],
+    "workflow_scripts": [],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench",
+    "manifest": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/pixi.toml",
+    "config_count": 0,
+    "configs": [],
+    "resource_profile_count": 0,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "outputs",
+      "mlruns",
+      "data"
+    ],
+    "workflow_scripts": [
+      "scripts/score_wv_baselines.py",
+      "scripts/rehearse_unified_targets.py",
+      "scripts/generate_wv_cci_submissions.py",
+      "scripts/normalize_wv_ecmwf_direction.py",
+      "scripts/run_wv_oceansar.py",
+      "scripts/convert_wv_oceansar.py",
+      "scripts/generate_wv_ocn_submission.py",
+      "scripts/render_wv_baseline_html.py",
+      "scripts/generate_wv_comparison_scatter.py",
+      "scripts/convert_wv_oceansar_direction.py",
+      "scripts/generate_wv_model_baselines.py"
+    ],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260506_hafs/confild",
+    "manifest": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/pyproject.toml",
+    "config_count": 4,
+    "configs": [
+      "configs/slurm_cpu.yaml",
+      "configs/__init__.py",
+      "configs/slurm_gpu.yaml",
+      "configs/defaults.py"
+    ],
+    "resource_profile_count": 2,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "outputs"
+    ],
+    "workflow_scripts": [],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools",
+    "manifest": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/pyproject.toml",
+    "config_count": 2,
+    "configs": [
+      "configs/slurm_dl.yaml",
+      "configs/download_configs.py"
+    ],
+    "resource_profile_count": 1,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "outputs"
+    ],
+    "workflow_scripts": [],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs",
+    "manifest": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/pyproject.toml",
+    "config_count": 4,
+    "configs": [
+      "configs/slurm_cpu.yaml",
+      "configs/__init__.py",
+      "configs/slurm_gpu.yaml",
+      "configs/defaults.py"
+    ],
+    "resource_profile_count": 2,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "outputs"
+    ],
+    "workflow_scripts": [],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc",
+    "manifest": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc/pyproject.toml",
+    "config_count": 4,
+    "configs": [
+      "configs/latest_embed.py",
+      "configs/slurm_cpu.yaml",
+      "configs/raw_sigma0.py",
+      "configs/defaults.py"
+    ],
+    "resource_profile_count": 1,
+    "identical_profile_groups": [],
+    "artifact_roots": [],
+    "workflow_scripts": [],
+    "active_family": true,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  },
+  {
+    "project": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo",
+    "manifest": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/pyproject.toml",
+    "config_count": 4,
+    "configs": [
+      "configs/pipeline.py",
+      "configs/__init__.py",
+      "configs/compile.py",
+      "configs/generate.py"
+    ],
+    "resource_profile_count": 0,
+    "identical_profile_groups": [],
+    "artifact_roots": [
+      "results"
+    ],
+    "workflow_scripts": [
+      "scripts/test_uc3_jepa_guidance.py",
+      "scripts/test_uc1_ar_rollout.py",
+      "scripts/test_uc1_ar_tokens.py",
+      "scripts/test_uc2_ar_guidance.py",
+      "scripts/__init__.py"
+    ],
+    "active_family": false,
+    "cleanup": "Add reviewed config/track/run entrypoints alongside existing configs; freeze explicit bindings; keep retained artifact paths; archive only after references and queues are audited"
+  }
+]

@@ -1,0 +1,76 @@
+[
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default",
+    "site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.11/site-packages",
+    "defer": true,
+    "version": "0.9.1",
+    "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/__init__.py",
+    "dependencies": {
+      "omegaconf": "2.3.0",
+      "gitpython": "3.1.45",
+      "xxhash": "3.6.0",
+      "cloudpickle": "3.1.2",
+      "joblib": "1.5.2",
+      "pandas": "2.3.3",
+      "loguru": "0.7.3"
+    },
+    "dependency_mismatches": [
+      "gitpython<4,>=3.1.46"
+    ],
+    "eligible": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/hpc",
+    "site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/hpc/lib/python3.13/site-packages",
+    "defer": true,
+    "version": "0.9.1",
+    "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/__init__.py",
+    "dependencies": {
+      "omegaconf": "2.3.0",
+      "gitpython": "3.1.46",
+      "xxhash": "3.6.0",
+      "cloudpickle": "3.1.2",
+      "joblib": "1.5.3",
+      "pandas": "2.3.3",
+      "loguru": "0.7.3"
+    },
+    "dependency_mismatches": [],
+    "eligible": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default",
+    "site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages",
+    "defer": true,
+    "version": "0.9.1",
+    "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/__init__.py",
+    "dependencies": {
+      "omegaconf": "2.3.0",
+      "gitpython": "3.1.50",
+      "xxhash": "3.7.0",
+      "cloudpickle": "3.1.2",
+      "joblib": "1.5.3",
+      "pandas": "2.3.3",
+      "loguru": "0.7.3"
+    },
+    "dependency_mismatches": [],
+    "eligible": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc",
+    "site": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages",
+    "defer": true,
+    "version": "0.9.1",
+    "source": "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/__init__.py",
+    "dependencies": {
+      "omegaconf": "2.3.0",
+      "gitpython": "3.1.57",
+      "xxhash": "3.7.0",
+      "cloudpickle": "3.1.2",
+      "joblib": "1.5.3",
+      "pandas": "2.3.3",
+      "loguru": "0.7.3"
+    },
+    "dependency_mismatches": [],
+    "eligible": true
+  }
+]

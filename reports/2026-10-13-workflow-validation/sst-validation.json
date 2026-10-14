@@ -1,0 +1,23 @@
+{
+  "version": "0.9.2",
+  "library": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/lib/python3.11/site-packages/flexlock/__init__.py",
+  "save_dir": "/ontap/user/qfebvre/workflow-transition-validation/20261013/runs/native-vs-legacy/frozen-matchups/acceptance-001/assess",
+  "status": "SUCCESS",
+  "scientific_replay": true,
+  "training": false,
+  "inference": false,
+  "common_platform_days": 15975,
+  "assessment_matches_retained": true,
+  "old_artifacts_unchanged": true,
+  "source_run": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/results_starter_glob/native_regrid_evaluation_2021",
+  "source_repositories": [
+    "sst",
+    "flexlock"
+  ],
+  "data": [
+    "matchups"
+  ],
+  "lineage": [
+    "native_regrid_evaluation_2021"
+  ]
+}

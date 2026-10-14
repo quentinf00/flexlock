@@ -1,0 +1,24 @@
+[
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/pyproject.toml",
+    "changes": [
+      "flexlock",
+      "loguru",
+      "omegaconf",
+      "xxhash"
+    ],
+    "unrelated": []
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/pyproject.toml",
+    "changes": [
+      "flexlock",
+      "loguru",
+      "omegaconf",
+      "tcwind-benchtools",
+      "xxhash",
+      "zarrpatch"
+    ],
+    "unrelated": []
+  }
+]

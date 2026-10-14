@@ -1,0 +1,9 @@
+startup_lines:
+  - '#SBATCH --partition=cpu'
+  - '#SBATCH --job-name=flexlock-transition-check'
+  - '#SBATCH --cpus-per-task=1'
+  - '#SBATCH --mem=2G'
+  - '#SBATCH --time=00:03:00'
+  - 'cd /ontap/user/qfebvre/flexlock-execution-validation'
+  - 'export PYTHONPATH=/ontap/user/qfebvre/flexlock-execution-validation'
+python_exe: /ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/.pixi/envs/cpu/bin/python

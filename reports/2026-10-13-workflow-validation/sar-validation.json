@@ -1,0 +1,19 @@
+{
+  "version": "0.9.2",
+  "library": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/flexlock/__init__.py",
+  "status": "SUCCESS",
+  "source": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/data/listings/b08_listing_hpc.csv",
+  "listing_sha256": "642abf09c4ee6e54988fe384b183ca9d87ea0c1d49fd3bf033bd15c573ca37d7",
+  "source_unchanged": true,
+  "save_dir": "/ontap/user/qfebvre/workflow-transition-validation/20261013/runs/sar-data/legacy-split-plumbing/acceptance-002/split",
+  "counts": {
+    "train": 22472,
+    "val": 7490,
+    "test": 4255
+  },
+  "coverage_complete": true,
+  "disjoint": true,
+  "protocol": "Existing legacy random split; seed1234/val0.25; no change to test eligibility; not a leakage-safe new experiment",
+  "training": false,
+  "feature_extraction": false
+}

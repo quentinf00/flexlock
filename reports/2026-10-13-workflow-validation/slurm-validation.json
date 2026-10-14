@@ -1,0 +1,20 @@
+{
+  "job_id": "1352647",
+  "node": "compute-116-11",
+  "status": "done",
+  "stages": [
+    "prepare",
+    "train",
+    "assess"
+  ],
+  "output_contracts_passed": true,
+  "exact_upstream_paths": true,
+  "assessment": {
+    "count": 3,
+    "total": 12
+  },
+  "real_slurm": true,
+  "gpu_requested": false,
+  "resource_limit": "1 CPU / 2 GB / 3 minutes",
+  "frontend_reporting_error": "Initial launcher assumed Python return values with --print-job-id; job completed; reporting recovered from authoritative queue; no resubmission"
+}

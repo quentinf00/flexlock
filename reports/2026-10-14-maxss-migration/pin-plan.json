@@ -1,0 +1,12 @@
+[
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/pixi.lock",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-maxss-migration/proposed/main/pyproject.toml"
+  },
+  {
+    "manifest": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/pyproject.toml",
+    "lock": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/pixi.lock",
+    "proposed": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-maxss-migration/proposed/neural-field/pyproject.toml"
+  }
+]
