@@ -69,10 +69,9 @@ Overwrite cleans occupied directories. Keep immutable producer paths for consume
 The existing --dry-run previews a script with a placeholder payload. Its output is
 not a runnable export. --print-config and --dry-run remain side-effect-free previews.
 
-The next bounded change should extract backend materialization: serialize the
+The isolated backend now provides a private `_materialize` seam: serialize the
 existing worker payload, write the real scheduler script, and return their absolute
-paths plus an sbatch argv list and working directory. Normal backend submit then
-uses that result. Keep existing payload/queue formats; add no mandatory launch object
+paths plus an sbatch argv list and working directory. Normal backend submit uses that result. Keep existing payload/queue formats; add no mandatory launch object
 or pipeline compiler. Test with fake sbatch and actual local payload execution.
 
 An advanced caller could print a shell-quoted command and insert one-off Slurm
@@ -104,3 +103,15 @@ that are unnecessary for ordinary profile-based submission and occasional holds.
 The materialization seam should be useful and testable before considering a public
 CLI export. Any future managed delayed-launch feature needs its own concrete
 ownership contract and acceptance evidence.
+
+
+### Isolated materialization implementation (2026-10-14)
+
+The private seam writes the existing callable/args/kwargs payload and real script,
+returning absolute payload/script paths, submission argv and the preparation cwd.
+Normal submission uses that argv exactly once. Bootstrap paths are shell-quoted,
+including launch directories with spaces. Project ownership guards still run on
+the ordinary submission path; this private helper itself does not reserve work.
+No public export flag, managed delayed launch, installation upgrade or new scheduler
+submission is part of this change. Pickled imports remain dependent on the chosen
+source/environment. Public export and policy-default changes remain review items.

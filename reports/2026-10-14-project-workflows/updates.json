@@ -1,0 +1,170 @@
+[
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/2507_galeio/biomass_explo_app/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "e7e1e523957d337b6155530aa1720bfb0efd81f4d82ceee2b961fa0b62722909",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/0",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/2508_nextgems/nextgems_tc/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "05ce15ea29c229b700253ab3eda591c77434ce4c04d6cbeda412b9415a02e76f",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/1",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/tcwind_benchtools/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "f40f9d506c7c011f6d9645ce5339f346d36e91a9d59e8c56d7df189baf5cbf73",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/2",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/2509_GSD_TC/geosplat_diffusion/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "0ff2fc54fe0d71e2c3dea7d18e6f8711637b2abdc3b3b2e35ab498a13d981311",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/3",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/2509_flexlock/project_template/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/2509_flexlock/project_template/AGENTS.md",
+    "before_sha256": "519da7906225c1cf4c83f689571bf0ce3d08aabe363da1fb71b8f9d4df775c79",
+    "after_sha256": "333aebdab544851e49eebe187f39883586310d8817265ec0d73c99eb1a429c18",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/4",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/2509_flexlock/tmpl_smoke/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "0ff2fc54fe0d71e2c3dea7d18e6f8711637b2abdc3b3b2e35ab498a13d981311",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/5",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/2509_sar_ml/sar-ml-enhanced/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "a4ce9c04cdea612721d5b6b45c33637498c9c6a08e1d9b815bd4c956f685e359",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/6",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/251023_perceiver_da/perda/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/251023_perceiver_da/perda/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "0ff2fc54fe0d71e2c3dea7d18e6f8711637b2abdc3b3b2e35ab498a13d981311",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/7",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_mapping/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "28ad5222d63f29722c932295c25bc43302b3aa6f8240e55aec5f4e11eab40f6c",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/8",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "28ad5222d63f29722c932295c25bc43302b3aa6f8240e55aec5f4e11eab40f6c",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/9",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/260324_jepa/geo-jepa/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "b7d2f5c4a271b279ce19bd5a29635312738984846133ba95de0149a79d182c74",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/10",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/260324_jepa/hafs-jepa/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "b7d2f5c4a271b279ce19bd5a29635312738984846133ba95de0149a79d182c74",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/11",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/260324_jepa/le-tc-wm/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "b7d2f5c4a271b279ce19bd5a29635312738984846133ba95de0149a79d182c74",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/12",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/260505_soba/soba_bench/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/260505_soba/soba_bench/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "0ff2fc54fe0d71e2c3dea7d18e6f8711637b2abdc3b3b2e35ab498a13d981311",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/13",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/260506_hafs/confild/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/260506_hafs/confild/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "0ff2fc54fe0d71e2c3dea7d18e6f8711637b2abdc3b3b2e35ab498a13d981311",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/14",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/260506_hafs/hafs_tools/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "0ff2fc54fe0d71e2c3dea7d18e6f8711637b2abdc3b3b2e35ab498a13d981311",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/15",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/260506_hafs/omnihafs/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/260506_hafs/omnihafs/AGENTS.md",
+    "before_sha256": "a8cab2d1d466068fbb6caede52e20c021d97ab95f3bc068b3ec43a083fc52982",
+    "after_sha256": "94eb900da352a7cf625c75faabb0ce71bf4c882b545e5ef59be268d9b5fe7f9a",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/16",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/260617_biomass/biomass_proc/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "e7e1e523957d337b6155530aa1720bfb0efd81f4d82ceee2b961fa0b62722909",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/17",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/260626_tcdemo/tc_demo/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo/AGENTS.md",
+    "before_sha256": "0c6f76579d4c7b2b563382b9828ef7769531799a02720cfcd68becb3ef23dbcc",
+    "after_sha256": "0ff2fc54fe0d71e2c3dea7d18e6f8711637b2abdc3b3b2e35ab498a13d981311",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/18",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/AGENTS.md",
+    "before_sha256": "1d48ef2430753d1811cb3c40dbf2fcd4c619fd2cc0ce45b79856d766a171aeff",
+    "after_sha256": "0a5f00ddd920da8c3ef40a763f7158c20218aaff0ebc1c13c60a634dc4cfc0f0",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/19",
+    "preserved_existing_text": true
+  },
+  {
+    "agents": "/ontap/user/qfebvre/work/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/AGENTS.md",
+    "physical_path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/AGENTS.md",
+    "before_sha256": "1d48ef2430753d1811cb3c40dbf2fcd4c619fd2cc0ce45b79856d766a171aeff",
+    "after_sha256": "0a5f00ddd920da8c3ef40a763f7158c20218aaff0ebc1c13c60a634dc4cfc0f0",
+    "backup": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-14-project-workflows/before/20",
+    "preserved_existing_text": true
+  }
+]

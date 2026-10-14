@@ -19,3 +19,15 @@ workspace/environment identities when excluding active jobs: project aliases
 can share both source files and environments. Preserve shared source checkouts
 still imported by excluded jobs. A successful package probe is distinct from
 full environment synchronization and scientific workflow validation.
+
+
+## Shared recipes and local project notes
+
+Maintain generic recipes in workflow_guidelines.md and link them from each project's
+AGENTS.md alongside the applicable release. Keep concrete entrypoints, environment/cwd,
+artifact bindings, coverage decisions and exceptions local. Preserve pre-existing
+research/knowledge/reporting instructions. The 2026-10-14 rollout added workflow
+sections to 21 physically distinct consumer files; aliases were deduplicated.
+See reports/2026-10-14-project-workflows/updates.json for paths, hashes and backups.
+Project starting-point guidance is distinct from actual adoption: record concrete
+run selections after validation, rather than inventing missing bindings.

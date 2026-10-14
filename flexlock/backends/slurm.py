@@ -1,6 +1,8 @@
 """Slurm backend for FlexLock parallel execution."""
 
 import cloudpickle, subprocess, os
+from dataclasses import dataclass
+import shlex
 import re
 from pathlib import Path
 import secrets  # Better random for filenames
@@ -114,6 +116,14 @@ class SlurmJob(Job):
         return False
 
 
+@dataclass(frozen=True)
+class _MaterializedInvocation:
+    payload_path: Path
+    script_path: Path
+    argv: tuple[str, ...]
+    cwd: Path
+
+
 class SlurmBackend(Backend):
     """Implements the FlexLock backend for Slurm job submission."""
 
@@ -193,27 +203,38 @@ class SlurmBackend(Backend):
         bootstrap_path = f"{pickled_path}.main.py"
         lines.extend(
             [
-                f"cat > {bootstrap_path} <<'PY'\n{python_code}\nPY",
-                f"{self.python_exe} {bootstrap_path}",
+                f"cat > {shlex.quote(bootstrap_path)} <<'PY'\n{python_code}\nPY",
+                f"{self.python_exe} {shlex.quote(bootstrap_path)}",
             ]
         )
         return "\n".join(lines)
 
-    def submit(self, fn, *args, **kwargs):
-        """Submits a single function for execution as a Slurm job."""
+    def _materialize(self, fn, *args, **kwargs):
+        """Write a real invocation without dispatching; internal backend seam.
+
+        This does not reserve destinations or track manual scheduler submissions.
+        Project's normal submission path remains responsible for those guards.
+        """
         data = (fn, args, kwargs)
-        pkl_path = self.folder / f"task_{secrets.token_hex(4)}.pkl"
+        pkl_path = self.folder.resolve() / f"task_{secrets.token_hex(4)}.pkl"
         with open(pkl_path, "wb") as f:
             cloudpickle.dump(data, f)
 
-        script_path = self.folder / f"job_{secrets.token_hex(4)}.slurm"
+        script_path = self.folder.resolve() / f"job_{secrets.token_hex(4)}.slurm"
         script = self._make_script(pkl_path)
         script_path.write_text(script)
 
         for w in validate_slurm_script(script):
             logger.warning(f"Slurm config: {w}")
 
-        out = subprocess.check_output(["sbatch", str(script_path)], text=True).strip()
+        return _MaterializedInvocation(
+            pkl_path, script_path, ("sbatch", str(script_path)), Path.cwd().resolve()
+        )
+
+    def submit(self, fn, *args, **kwargs):
+        """Submits a single function for execution as a Slurm job."""
+        invocation = self._materialize(fn, *args, **kwargs)
+        out = subprocess.check_output(list(invocation.argv), text=True).strip()
         job_id = out.split()[-1]
         return SlurmJob(job_id, backend=self)
 
