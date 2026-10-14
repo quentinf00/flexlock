@@ -25,3 +25,19 @@ Core findings triage:
 Next review: inspect local patch/records, check concrete producer acceptance and
 orchestrator recovery, and state pilot acceptance separately from deferred callers.
 No changes to the project's submitted report or scientific code made here.
+
+## Follow-up review of updated submission
+
+The report now includes a user-authorized four-job CPU smoke chain, jobs
+1392537/1392576/1392598/1392600. Local check JSON records all stage completion,
+absolute paths, declared outputs and producer bindings. This supersedes the
+earlier dry-run-only description; it validates scheduler ordering, not the real
+GPU/full-size workflow. The local orchestrator was inspected: exclusive ledger,
+immediate flush, concrete stage paths and dependency IDs are present. Recovery
+uses a new ledger and manually verified stage subset; it is not automatic recovery.
+
+The absolute-interpreter warning is fixed centrally at a0a934b, not yet installed
+in 0.9.2 environments. Output-hash cost is in the project acceptance helper; no
+unsafe record-digest substitute accepted. Composite source attribution stays open.
+The pilot evidence is positive; broader task closure remains pending deferred
+active configs/readers and bounded recovery review.

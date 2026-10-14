@@ -17,7 +17,7 @@ Keep the current projects usable while adding a small, explicit new entrypoint. 
 |---|---:|---|
 | tmpl_smoke | 5 root config files | Begin with one cfg.py and one bindings file; expand into stages/tracks/runs only if there are genuine reuse or comparison needs. |
 | biomass_explo_app | 0 root config files | Freeze item membership and existing feature/model bindings, then add a coverage report before aggregation. Preserve historical batch outputs. |
-| nextgems_tc | 1 root config files | Keep month sweep files (smoke/full/subset) and explicit listing membership. One shared stage config and explicit selected-month campaign; do not register one config per month. |
+| nextgems_tc | 1 root config files | Freeze storm-catalogue membership with smoke/full/repair selections, explicit chunk outcomes and a coverage gate. The month-sweep example belongs to nextgems_tc_tracking, not this consumer. |
 | tcwind_benchtools | 7 root config files | Use a retained-input diagnostic/reassessment entrypoint and explicit outputs; keep dependency source paths stable. |
 | geosplat_diffusion | 0 root config files | Begin with one cfg.py and one bindings file; expand into stages/tracks/runs only if there are genuine reuse or comparison needs. |
 | sar-ml-enhanced | 12 root config files | Separate split, per-SAFE extraction receipts, coverage publication and train/val/test datasets. Replace shared receipt roots and missing-CSV skips with explicit coverage decisions. |
