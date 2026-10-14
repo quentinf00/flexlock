@@ -5,59 +5,33 @@ AGENTS links are in place in 21 distinct consumer checkouts. All 53 inventoried
 environment prefixes use FlexLock 0.9.2. Config organization and scientific
 workflow adoption are incremental; an upgraded package does not establish either.
 
-## SAR: explicit per-SAFE outcomes before assembly
+## SAR: queue status and CSV presence before assembly
 
-The inspected `sar_ml/stages/data.py` extractor returns None for an existing CSV,
-for no extracted features, and after producing a CSV. `prepare_dataset` silently
-ignores absent CSVs. A wrapper observing only those return values cannot certify
-legitimate emptiness. Do not infer it from file absence or a log message.
+Accepted correction: mandatory per-SAFE outcome receipts are unnecessary for the
+current extractor. Its normal return with no CSV denotes no usable extracted
+features. An exception is a failed task. Successful tasks with a CSV may have
+produced it or skipped an existing file; status and presence do not distinguish
+those two cases.
 
-Proposed project change: retain the scientific extraction calculations and write
-a required `item.json` only after a known terminal outcome. Give each SAFE its
-own receipt directory. The existing CSV can live below that directory; dataset
-assembly then needs an explicit feature-path mapping rather than basename lookup
-in a shared folder. Train/val/test assembly each gets a separate receipt directory.
+Freeze the expected SAFE membership and bind each member to its exact queue task
+and expected CSV path. Before assembly, require terminal successful status for
+all process members. With that evidence, CSV absence can count as empty, provided
+products have not been moved/deleted and the status belongs to the same invocation.
+Failed, pending, running, missing or mismatched task evidence must block assembly.
+Explicit exclusions remain separate. Report produced/present and empty counts;
+stop clearly on an all-empty cohort instead of concatenating an empty list.
 
-Minimal receipt examples:
+Use fresh destinations for fresh extraction so an existing-file skip cannot be
+mistaken for new processing. Deliberate existing CSV reuse needs explicit provenance
+and product acceptance checks. No mandatory item.json or new extractor return type
+is required. Separate FlexLock record directories still avoid record collisions;
+CSV layout changes are a separate project choice, not imposed by this decision.
 
-```json
-{"schema": 1, "safe": "/inputs/one.SAFE", "outcome": "produced", "rows": 12,
- "product": "feats/one_features.csv", "sha256": "<full CSV digest>"}
-```
-
-```json
-{"schema": 1, "safe": "/inputs/two.SAFE", "outcome": "empty", "rows": 0,
- "reason": "No tiles survived the configured extraction filters"}
-```
-
-[Executable validator](../examples/slimmer_workflows/sar_outcomes.py) checks SAFE
-identity, explicit emptiness, product containment, CSV bytes and row count. It is
-an isolated proposal and does not implement extraction or certify scientific CSV
-schema. Input/config/source identities remain in the FlexLock invocation record
-and frozen campaign manifest; the receipt does not replace those contracts.
-
-Use the existing output hook; no optional-output API is necessary:
-
-```python
-_outputs_=dict(item=dict(path='item.json', sha256=True,
-    validator=dict(_target_='examples.slimmer_workflows.sar_outcomes.validate_item',
-                   expected_safe='${....safe}')))
-```
-
-The relative interpolation above ascends from the validator to the stage config.
-In an adopted project, move the helper into that project's importable package.
-Before assembly, require completed records and healthy receipts for every
-process member of the frozen manifest, check each receipt against that member's
-SAFE and invocation inputs, and account for explicit exclusions. Receipt validation
-alone is not a cohort coverage check. A missing receipt is unfinished or failed.
-An all-empty cohort must stop assembly with a clear outcome, rather than concatenate
-an empty list. Decide scientific acceptance of empty members before launching.
-
-Historical CSVs may be selected as retained products after explicit project checks;
-do not fabricate historical extraction receipts or reinterpret missing files as empty.
-Existing-file skip must use accepted retained evidence or refuse the destination.
-This changes project bookkeeping and assembly paths, so integration awaits review.
-It does not alter the legacy split protocol or resolve its datatake leakage.
+The earlier receipt validator was a tested proposal, now withdrawn from active
+examples. Receipts may be reconsidered if durable empty-outcome evidence independent
+of the queue, or detailed empty reasons, becomes useful. Historical reports preserve
+what was investigated, not the accepted workflow. No scientific SAR source or split
+protocol was changed.
 
 ## Slurm: keep ordinary submission; defer public export
 
@@ -86,15 +60,16 @@ selected paths. No bulk archive or artifact move is needed for the core migratio
 
 ## Execution order
 
-1. Review SAR receipt/assembly contract and the decision to defer public export.
+1. Implement the accepted SAR queue-status/CSV coverage gate in an isolated pilot.
+   Public Slurm export remains deferred pending a concrete use case.
 2. Build an isolated SST retained-preparation selection example and validate root
    propagation and retained product checks without running expensive preparation.
    The synthetic SST-style regression now passes: a detached config edit leaves
    later selections unchanged, while updating the root before selection consumes
    the accepted retained product without creating the unused preparation path.
    Actual SST preparation configuration adoption remains to be validated.
-3. Integrate the accepted SAR contract in a bounded project pilot; exercise a
-   produced item, a genuinely empty item, failure and incomplete cohort rejection.
+3. Validate the SAR pilot with a produced item, a genuinely empty item, failure
+   and incomplete cohort rejection before scientific assembly adoption.
 4. Choose the Python caching default for a subsequent release after those callers
    have explicit alternatives. Then update docs, compatibility notices and tests.
 5. Adopt reviewed configs gradually; archive only after caller and retention audits.

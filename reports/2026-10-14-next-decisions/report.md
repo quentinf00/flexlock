@@ -26,3 +26,12 @@ Next review: accept the project SAR receipt/assembly-path change, or adjust its
 contract. Recommendation: defer public Slurm export and keep profiles/after/job-ID
 submission. Actual SST retained-preparation adoption and Python caching default
 changes remain open; automatic caching has not been removed.
+
+## Subsequent accepted correction
+
+The mandatory SAR receipt proposal was withdrawn after user review. For this
+extractor, exact successful task status plus absent CSV can establish emptiness,
+assuming products were not moved/deleted. The accepted direction uses frozen
+membership, queue evidence and CSV presence with a project coverage gate. The
+proposal helper/tests were removed from active examples; the original experiment
+remains available in commit 684282a. No SAR scientific source was changed.
