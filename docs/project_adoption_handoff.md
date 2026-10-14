@@ -1,7 +1,8 @@
 # Project-owned adoption and central review
 
-Accepted 2026-10-14. The agents owning HAFS-JEPA, MaxSS (including neural-field),
-SAR and SST own scientific workflow adoption. Their existing project boards each
+Accepted 2026-10-14. The agents owning each consuming project own scientific workflow adoption.
+The initial HAFS-JEPA, MaxSS (including neural-field), SAR and SST handoffs
+are extended to all additionally discovered consumers. Their existing project boards each
 contain highest-priority FLEXLOCK-ADOPT; checkout AGENTS files link those boards.
 This document defines the shared handoff, not a second project TODO board.
 
@@ -39,7 +40,9 @@ Keep implementation and detailed evidence in the owning project, preferably
 
 `/ontap/user/qfebvre/flexlock-execution-validation/reports/project-adoption/<project>/report.md`
 
-Project keys: `hafs-jepa`, `maxss-ml`, `sar-ml`, `sst-ml`. Each agent writes only its
+Initial project keys: `hafs-jepa`, `maxss-ml`, `sar-ml`, `sst-ml`. Additional keys
+and owning boards are in the [handoff inventory](../reports/2026-10-14-all-project-handoffs/report.md).
+Each agent writes only its
 own report directory. Do not commit the central checkout, modify other reports,
 or change core defaults unilaterally; the central reviewer integrates submissions.
 

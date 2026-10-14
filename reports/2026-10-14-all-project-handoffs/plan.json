@@ -1,0 +1,170 @@
+[
+  {
+    "project": "2507_galeio--biomass_explo_app",
+    "root": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app",
+    "board": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app/AGENTS.md",
+    "local": "Freeze listing membership and check per-item coverage before aggregation; preserve existing feature/model bindings and historical batch products."
+  },
+  {
+    "project": "2508_nextgems--nextgems_tc",
+    "root": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc",
+    "board": "/scale/user/qfebvre/projects/2508_nextgems/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc/AGENTS.md",
+    "local": "Keep smoke/full/subset month sweep files and explicit membership; do not create one config per month. Preserve existing data paths."
+  },
+  {
+    "project": "250930_maxss_era5pp--tcwind_benchtools",
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools",
+    "board": "/scale/user/qfebvre/projects/250930_maxss_era5pp/plans/todo.md",
+    "agents": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools/AGENTS.md",
+    "local": "Coordinate with MaxSS on shared dependencies and retained diagnostic products; do not duplicate or supersede its accepted adoption task."
+  },
+  {
+    "project": "2509_GSD_TC--geosplat_diffusion",
+    "root": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion",
+    "board": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "2509_flexlock--my_awesome_project",
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/my_awesome_project",
+    "board": "/scale/user/qfebvre/projects/2509_flexlock/my_awesome_project/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/my_awesome_project/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "2509_flexlock--project_template",
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/project_template",
+    "board": "/scale/user/qfebvre/projects/2509_flexlock/project_template/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/project_template/AGENTS.md",
+    "local": "Audit malformed/duplicate dependency tables and pin drift before syncing the environment; update template-generated examples without inventing scientific workloads."
+  },
+  {
+    "project": "2509_flexlock--sample_project",
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/sample_project",
+    "board": "/scale/user/qfebvre/projects/2509_flexlock/sample_project/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/sample_project/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "2509_flexlock--temp_project",
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/temp_project",
+    "board": "/scale/user/qfebvre/projects/2509_flexlock/temp_project/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/temp_project/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "2509_flexlock--test_project",
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/test_project",
+    "board": "/scale/user/qfebvre/projects/2509_flexlock/test_project/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/test_project/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "2509_flexlock--tmpl_smoke",
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke",
+    "board": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "2509_sar_ml--fix_colloc",
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/fix_colloc",
+    "board": "/scale/user/qfebvre/projects/2509_sar_ml/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2509_sar_ml/fix_colloc/AGENTS.md",
+    "local": "Coordinate with the SAR owner and preserve worktree-specific science. Audit suppressed processing exceptions; strict failure versus partial-error accounting needs the pending user decision. No mandatory outcome JSON receipts."
+  },
+  {
+    "project": "2509_sar_ml--sar-ml",
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml",
+    "board": "/scale/user/qfebvre/projects/2509_sar_ml/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml/AGENTS.md",
+    "local": "Coordinate with the SAR owner and preserve worktree-specific science. Audit suppressed processing exceptions; strict failure versus partial-error accounting needs the pending user decision. No mandatory outcome JSON receipts."
+  },
+  {
+    "project": "251014_cookiecutter--my_awesome_project",
+    "root": "/scale/user/qfebvre/projects/251014_cookiecutter/my_awesome_project",
+    "board": "/scale/user/qfebvre/projects/251014_cookiecutter/my_awesome_project/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/251014_cookiecutter/my_awesome_project/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "251023_perceiver_da--perda",
+    "root": "/scale/user/qfebvre/projects/251023_perceiver_da/perda",
+    "board": "/scale/user/qfebvre/projects/251023_perceiver_da/perda/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/251023_perceiver_da/perda/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "251029_winddir--sarwinddir",
+    "root": "/scale/user/qfebvre/projects/251029_winddir/sarwinddir",
+    "board": "/scale/user/qfebvre/projects/251029_winddir/sarwinddir/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/251029_winddir/sarwinddir/AGENTS.md",
+    "local": "Coordinate with the SAR owner and preserve worktree-specific science. Audit suppressed processing exceptions; strict failure versus partial-error accounting needs the pending user decision. No mandatory outcome JSON receipts."
+  },
+  {
+    "project": "251029_winddir--winddir360",
+    "root": "/scale/user/qfebvre/projects/251029_winddir/winddir360",
+    "board": "/scale/user/qfebvre/projects/251029_winddir/winddir360/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/251029_winddir/winddir360/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "260324_jepa--geo-jepa",
+    "root": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa",
+    "board": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa/AGENTS.md",
+    "local": "Start with retained-checkpoint evaluation and concrete corpus/split bindings; preserve training/evaluation protocols."
+  },
+  {
+    "project": "260324_jepa--le-tc-wm",
+    "root": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm",
+    "board": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm/AGENTS.md",
+    "local": "Start with retained-checkpoint evaluation and concrete corpus/split bindings; preserve training/evaluation protocols."
+  },
+  {
+    "project": "260505_soba--soba_bench",
+    "root": "/scale/user/qfebvre/projects/260505_soba/soba_bench",
+    "board": "/scale/user/qfebvre/projects/260505_soba/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/260505_soba/soba_bench/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "260506_hafs--confild",
+    "root": "/scale/user/qfebvre/projects/260506_hafs/confild",
+    "board": "/scale/user/qfebvre/projects/260506_hafs/confild/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/260506_hafs/confild/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "260506_hafs--hafs_tools",
+    "root": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools",
+    "board": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "260506_hafs--omnihafs",
+    "root": "/scale/user/qfebvre/projects/260506_hafs/omnihafs",
+    "board": "/scale/user/qfebvre/projects/260506_hafs/omnihafs/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/260506_hafs/omnihafs/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  },
+  {
+    "project": "260617_biomass--biomass_proc",
+    "root": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc",
+    "board": "/scale/user/qfebvre/projects/260617_biomass/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/AGENTS.md",
+    "local": "Freeze listing membership and check per-item coverage before aggregation; preserve existing feature/model bindings and historical batch products."
+  },
+  {
+    "project": "260626_tcdemo--tc_demo",
+    "root": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo",
+    "board": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo/plans/TODO.md",
+    "agents": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo/AGENTS.md",
+    "local": "Start with one retained-input or small-fixture workflow; audit active callable/CLI/worker entrypoints before reorganizing configs."
+  }
+]
