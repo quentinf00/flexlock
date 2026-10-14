@@ -7,6 +7,14 @@ workflow adoption are incremental; an upgraded package does not establish either
 
 ## SAR: queue status and CSV presence before assembly
 
+Adoption prerequisite found on subsequent source inspection: enhanced
+`sar_ml/data/prepare_l1c.py` catches read exceptions in `iter_safe_ds` and feature
+exceptions in `safe_feats`, logging and continuing. Thus current success can hide
+failed reads or partial processing. The accepted status/presence rule below assumes
+errors propagate; applying it to real SAR extraction requires strict failure
+handling or explicit partial-error accounting. That project decision is pending.
+Mandatory receipts would not themselves fix suppressed exceptions.
+
 Accepted correction: mandatory per-SAFE outcome receipts are unnecessary for the
 current extractor. Its normal return with no CSV denotes no usable extracted
 features. An exception is a failed task. Successful tasks with a CSV may have
@@ -41,6 +49,12 @@ with each selected process member's exact `task_id`, absolute `safe` and absolut
 do not define completeness by enumerating only the tasks that happened to exist
 after execution. Exclusions remain in the campaign's frozen membership evidence,
 outside this process-only manifest. Run after old workers have stopped:
+
+`bind_membership(database, expected_items, extractor_target, output)` now binds
+the already frozen SAFE/destination pairs to exact queue IDs, refuses missing or
+ambiguous matches, and writes a new manifest exclusively. Binding and gate checks
+now have 15 passing real-SQLite fixtures. These establish queue plumbing, not the
+current scientific extractor's error semantics.
 
 ```bash
 python -m examples.slimmer_workflows.sar_coverage campaign.json coverage.json

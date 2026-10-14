@@ -413,3 +413,9 @@ Data snapshots should reference the effective stage argument, so overrides updat
 For SAR-style file processing, freeze membership before scheduling and give each item its own receipt directory. Bind frozen SAFE membership to exact queue tasks and CSV paths, then check accepted cohort coverage before dataset assembly. For the current SAR extractor, successful task status plus an absent CSV establishes an empty extraction if products were not moved/deleted. Missing CSV alone does not. Failed or unfinished tasks block assembly; existing CSV reuse requires deliberate provenance checks. Mandatory outcome receipts are not required. The current SAR assembler silently skips missing CSVs and needs this workflow gate before adoption.
 
 For separate Slurm resources, keep the small orchestration script and --after dependencies. Capture accepted job IDs and persist them immediately; a frontend reporting failure after submission must not trigger automatic resubmission. The --print-job-id CLI output is a submission receipt, not a completed execution result.
+
+SAR adoption prerequisite: the enhanced extractor's `iter_safe_ds` and `safe_feats`
+currently catch read/feature exceptions and continue. Successful status therefore
+cannot yet certify legitimate emptiness or complete processing. Propagate errors,
+or explicitly account for partial errors, before applying the status/presence rule
+to actual extraction. Mandatory outcome receipts do not repair suppressed errors.

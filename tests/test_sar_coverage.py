@@ -3,7 +3,7 @@ import pytest
 
 from flexlock import taskdb
 from flexlock.record import list_task_records
-from examples.slimmer_workflows.sar_coverage import check_coverage
+from examples.slimmer_workflows.sar_coverage import check_coverage, bind_membership
 
 
 def campaign(tmp_path):
@@ -30,6 +30,33 @@ def test_done_present_and_done_empty_are_accepted(tmp_path):
     assert report['ready']
     assert report['empty'] == [tasks[1]['safe']]
     assert report['present'][0]['safe'] == tasks[0]['safe']
+
+
+def test_binding_uses_frozen_membership_and_refuses_overwrite(tmp_path):
+    manifest, tasks = campaign(tmp_path)
+    expected = [dict(safe=t['safe'], save_dir=t['save_dir']) for t in tasks]
+    output = tmp_path / 'campaign.json'
+    bound = bind_membership(tmp_path / 'run.lock.tasks.db', expected,
+                            manifest['extractor_target'], output)
+    assert {i['task_id'] for i in bound['items']} == {i['task_id'] for i in manifest['items']}
+    with pytest.raises(FileExistsError):
+        bind_membership(tmp_path / 'run.lock.tasks.db', expected, manifest['extractor_target'], output)
+
+
+@pytest.mark.parametrize('damage', ['missing', 'ambiguous', 'duplicate'])
+def test_binding_cannot_shrink_or_guess_expected_cohort(tmp_path, damage):
+    manifest, tasks = campaign(tmp_path)
+    expected = [dict(safe=t['safe'], save_dir=t['save_dir']) for t in tasks]
+    if damage == 'missing':
+        expected.append(dict(safe=str(tmp_path / 'absent.SAFE'), save_dir=str(tmp_path / 'absent')))
+    elif damage == 'ambiguous':
+        taskdb.queue_tasks(tmp_path / 'run.lock.tasks.db', [dict(tasks[0], cwaves=False)])
+    else:
+        expected.append(expected[0])
+    output = tmp_path / 'campaign.json'
+    with pytest.raises(ValueError):
+        bind_membership(tmp_path / 'run.lock.tasks.db', expected, manifest['extractor_target'], output)
+    assert not output.exists()
 
 
 @pytest.mark.parametrize('status', ['pending', 'running', 'failed', 'interrupted'])

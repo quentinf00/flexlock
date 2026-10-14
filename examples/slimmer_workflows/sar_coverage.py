@@ -2,12 +2,47 @@
 
 Run after workers stop, before assembly. Files must not be moved/deleted between
 extraction and checking. A present CSV needs separate scientific/reuse acceptance.
+Scientific errors must propagate. Current SAR helpers suppress some errors;
+real adoption needs strict handling or explicit partial-error accounting first.
 """
 import argparse
 import json
 from pathlib import Path
 
 from flexlock.record import list_task_records
+
+
+def bind_membership(database, expected_items, extractor_target, output):
+    """Bind already frozen process membership to queue IDs before execution.
+
+    expected_items contains safe/save_dir pairs; queue membership never defines
+    the expected cohort. Refuse missing/ambiguous matches and write exclusively.
+    """
+    database = Path(database)
+    if not database.is_absolute() or not database.is_file():
+        raise ValueError('Existing absolute authoritative database required')
+    expected_items = list(expected_items)
+    if len({item['safe'] for item in expected_items}) != len(expected_items):
+        raise ValueError('Duplicate frozen SAFE membership')
+    rows = list_task_records(database)
+    by_binding = {}
+    for row in rows:
+        cfg = row.get('config', {})
+        key = (cfg.get('_target_'), cfg.get('safe'), cfg.get('save_dir'))
+        by_binding.setdefault(key, []).append(row['task_id'])
+    items = []
+    for item in expected_items:
+        safe, directory = item['safe'], item['save_dir']
+        if not Path(safe).is_absolute() or not Path(directory).is_absolute():
+            raise ValueError('Frozen SAFE and destination paths must be absolute')
+        matches = by_binding.get((extractor_target, safe, directory), [])
+        if len(matches) != 1:
+            raise ValueError(f'{safe}: expected exactly one matching queued invocation')
+        items.append(dict(safe=safe, save_dir=directory, task_id=matches[0]))
+    manifest = dict(database=str(database), extractor_target=extractor_target, items=items)
+    with Path(output).open('x') as stream:
+        json.dump(manifest, stream, indent=2)
+    return manifest
 
 
 def check_coverage(manifest):
