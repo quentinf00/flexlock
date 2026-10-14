@@ -1,0 +1,26 @@
+[
+  {
+    "project": "hafs-jepa",
+    "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/plans/TODO.md",
+    "before_sha256": "81f4aafb4464f9808c1af8e3ed06a4faaa8ab762eeaf9a70c4c3d5887dcba8b6",
+    "after_sha256": "39f95e933e285a777eb11191530962f704341daf28247055f198393128f712cb"
+  },
+  {
+    "project": "maxss-ml",
+    "path": "/scale/user/qfebvre/projects/250930_maxss_era5pp/plans/todo.md",
+    "before_sha256": "b680bee760e77f4855e164f9a55cfb7f76acba27c330c2f415067f0f2e285e65",
+    "after_sha256": "e3be9daffa0202988cc7bde5751a39196670efec462bd88db31c856d4cefd4f3"
+  },
+  {
+    "project": "sar-ml",
+    "path": "/scale/user/qfebvre/projects/2509_sar_ml/plans/TODO.md",
+    "before_sha256": "1254604dd85fee481ad7e32f28c2f0975406d119a832f0513ae37446dfb3d932",
+    "after_sha256": "d069fa75a0b91612b7e1961958690482f4f8335ab5b4106ae444bde6cb44114d"
+  },
+  {
+    "project": "sst-ml",
+    "path": "/scale/user/qfebvre/projects/251218_sst/plans/TODO.md",
+    "before_sha256": "25375567fe7fb00f00cb203693336e44c24013a4f8820d2c336d9905003d4844",
+    "after_sha256": "38536a7563930c39f7a2c84edffa5b83368f0e0068764eb6519dadc8b20547da"
+  }
+]
