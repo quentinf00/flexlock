@@ -179,6 +179,34 @@ def load_task_record(db_path, task_id) -> Optional[dict]:
     return next(iter(list_task_records(db_path, _task_id=task_id)), None)
 
 
+def _completed_composite_owner(run_dir):
+    """Identify only the running pipeline owner of an already completed stage.
+
+    Other queue reservations must still be checked. A marker alone, a pending
+    row or a missing/mismatched authoritative stage snapshot is insufficient.
+    """
+    directory = Path(run_dir).resolve()
+    if not (directory / 'run.complete').is_file():
+        return None
+    marker = read_marker(directory)
+    if not marker:
+        return None
+    db = marker_db(directory, marker).resolve()
+    row = load_task_record(db, marker['task_id'])
+    if not row or row['status'] != 'running' or not row['task'].get('_stages_'):
+        return None
+    selected = [s for s in row['snapshot'].get('stages', {}).values()
+                if Path(s.get('record_dir') or s.get('config', {}).get('save_dir', '.')).resolve() == directory]
+    record = load_record(directory)
+    if len(selected) != 1 or not record or selected[0].get('config') != record.get('config'):
+        return None
+    owners = [s for s in row['task']['_stages_']
+              if s.get('save_dir') and Path(s['save_dir']).resolve() == directory]
+    if len(owners) != 1:
+        return None
+    return db, marker['task_id']
+
+
 def is_task_record(lock: Optional[dict]) -> bool:
     """True for a ``run.lock`` written by a worker for one task (dir mode)."""
     return bool(lock) and "task_id" in lock

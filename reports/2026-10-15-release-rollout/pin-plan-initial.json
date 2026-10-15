@@ -1,0 +1,192 @@
+[
+  {
+    "root": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app",
+    "manifest": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/2507_galeio/biomass_explo_app"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc",
+    "manifest": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/2508_nextgems/nextgems_tc"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml",
+    "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": true,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/250930_maxss_era5pp/maxss-ml"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field",
+    "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": true,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools",
+    "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": true,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/250930_maxss_era5pp/tcwind_benchtools"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion",
+    "manifest": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/2509_GSD_TC/geosplat_diffusion"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke",
+    "manifest": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/2509_flexlock/tmpl_smoke"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced",
+    "manifest": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/2509_sar_ml/sar-ml-enhanced"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251023_perceiver_da/perda",
+    "manifest": "/scale/user/qfebvre/projects/251023_perceiver_da/perda/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/251023_perceiver_da/perda/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/251023_perceiver_da/perda"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping",
+    "manifest": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/251218_sst/sst_ml_mapping"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch",
+    "manifest": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/251218_sst/sst_ml_zarrpatch"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa",
+    "manifest": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/260324_jepa/geo-jepa"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa",
+    "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/260324_jepa/hafs-jepa"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm",
+    "manifest": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/260324_jepa/le-tc-wm"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/confild",
+    "manifest": "/scale/user/qfebvre/projects/260506_hafs/confild/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/260506_hafs/confild/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/260506_hafs/confild"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools",
+    "manifest": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/260506_hafs/hafs_tools"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/omnihafs",
+    "manifest": "/scale/user/qfebvre/projects/260506_hafs/omnihafs/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/260506_hafs/omnihafs/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/260506_hafs/omnihafs"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc",
+    "manifest": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/260617_biomass/biomass_proc"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo",
+    "manifest": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/260626_tcdemo/tc_demo"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260505_soba/soba_bench",
+    "manifest": "/scale/user/qfebvre/projects/260505_soba/soba_bench/pixi.toml",
+    "lock": "/scale/user/qfebvre/projects/260505_soba/soba_bench/pixi.lock",
+    "old_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-12-pandas-removal/flexlock-0.9.2-py3-none-any.whl",
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/260505_soba/soba_bench"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/project_template",
+    "manifest": "/scale/user/qfebvre/projects/2509_flexlock/project_template/pyproject.toml",
+    "lock": "/scale/user/qfebvre/projects/2509_flexlock/project_template/pixi.lock",
+    "old_wheel": null,
+    "new_wheel": "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/flexlock-0.9.3-py3-none-any.whl",
+    "defer": false,
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed/2509_flexlock/project_template",
+    "legacy_provider_migration": true
+  }
+]

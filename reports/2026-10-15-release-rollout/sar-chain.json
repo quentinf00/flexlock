@@ -1,0 +1,41 @@
+{
+  "root": "/tmp/sar093-chain-e_j0qy7s/run",
+  "coverage_ready": true,
+  "produced": 4,
+  "empty": 1,
+  "stage_results": {
+    "split": {
+      "result": null
+    },
+    "membership": {
+      "manifest_path": "/tmp/sar093-chain-e_j0qy7s/run/membership/membership.json",
+      "n_safes": 5
+    },
+    "extract": {
+      "bindings_path": "/tmp/sar093-chain-e_j0qy7s/run/extract/bindings.json",
+      "job_ids": [],
+      "statuses": [
+        "SUCCESS",
+        "SUCCESS",
+        "SUCCESS",
+        "SUCCESS",
+        "SUCCESS"
+      ]
+    },
+    "dataset/train": {
+      "dataset_path": "/tmp/sar093-chain-e_j0qy7s/run/dataset/train/train_dataset.csv",
+      "produced_safes": 2,
+      "empty_safes": 1
+    },
+    "dataset/val": {
+      "dataset_path": "/tmp/sar093-chain-e_j0qy7s/run/dataset/val/val_dataset.csv",
+      "produced_safes": 1,
+      "empty_safes": 0
+    },
+    "dataset/test": {
+      "dataset_path": "/tmp/sar093-chain-e_j0qy7s/run/dataset/test/test_dataset.csv",
+      "produced_safes": 1,
+      "empty_safes": 0
+    }
+  }
+}

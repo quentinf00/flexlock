@@ -1,0 +1,6 @@
+JOBID STATE NAME WORK_DIR
+1489863 PENDING t20_iterate_eval /scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch
+1000069 RUNNING dev_cpu_tmux /home/qfebvre
+1489800 PENDING t20_iterate_infer /scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch
+1489637 RUNNING t20_continuation /scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch
+1489624 RUNNING t20_continuation /scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch

@@ -70,15 +70,28 @@ def _destination_resolver():
     """
     parents = {}
 
+    def canonical(path):
+        # Python 3.13 no longer raises for loops with strict=False. Preserve
+        # rejection while still permitting genuinely missing destinations.
+        try:
+            return path.resolve(strict=True)
+        except FileNotFoundError:
+            return path.resolve()
+        except OSError as exc:
+            import errno
+            if exc.errno == errno.ELOOP:
+                raise RuntimeError(f"Symlink loop in destination: {path}") from exc
+            raise
+
     def resolve(value):
         path = Path(value)
         if not path.name or path.name == '..':
-            return str(path.resolve())
+            return str(canonical(path))
         parent = path.parent
         if parent not in parents:
-            parents[parent] = parent.resolve()
+            parents[parent] = canonical(parent)
         candidate = parents[parent] / path.name
-        return str(candidate.resolve() if candidate.is_symlink() else candidate)
+        return str(canonical(candidate) if candidate.is_symlink() else candidate)
 
     return resolve
 
@@ -143,18 +156,23 @@ def _open_controller_lock(path):
     return (directory / CONTROLLER_LOCK).open('a+')
 
 
-def _active_rows(db):
+def _active_rows(db, *, exclude_task_id=None):
     # Do not open/create a task DB through the mutating taskdb connection cache.
     if not db.exists():
         return []
     try:
         with sqlite3.connect(db.resolve().as_uri() + '?mode=ro', uri=True) as conn:
-            return conn.execute("SELECT task_info FROM tasks WHERE status IN ('pending', 'running')").fetchall()
+            sql = "SELECT task_info FROM tasks WHERE status IN ('pending', 'running')"
+            params = ()
+            if exclude_task_id is not None:
+                sql += " AND task_id != ?"
+                params = (exclude_task_id,)
+            return conn.execute(sql, params).fetchall()
     except sqlite3.Error as exc:
         raise FlexLockValidationError(f'Cannot establish destination ownership from {db}: {exc}') from exc
 
 
-def has_active_destination(path):
+def has_active_destination(path, *, _ignore_owner=None):
     """Read a selected producer's queue reservation, without creating a DB.
 
     A queued placeholder is promised work, not a finished producer binding.
@@ -167,7 +185,10 @@ def has_active_destination(path):
                      if (db := _existing_database(candidate)) is not None)
     resolve = _destination_resolver()
     for db in databases:
-        for (raw,) in _active_rows(db):
+        excluded = (_ignore_owner[1] if _ignore_owner and
+                    db.resolve() == _ignore_owner[0] else None)
+        rows = _active_rows(db) if excluded is None else _active_rows(db, exclude_task_id=excluded)
+        for (raw,) in rows:
             destinations = _row_destinations(raw, resolve)
             if not destinations or str(directory) in destinations:
                 return True

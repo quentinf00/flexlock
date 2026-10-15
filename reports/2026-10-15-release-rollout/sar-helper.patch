@@ -1,0 +1,11 @@
+--- a/sar_ml/pipelines/safe_preprocessing.py
++++ b/sar_ml/pipelines/safe_preprocessing.py
+@@ -54,7 +54,7 @@
+             raise ValueError(f"Producer has no authoritative queue row: {directory}")
+         if row["task"].get("_stages_"):
+             stages = row["snapshot"].get("stages", {}).values()
+-            if not any(s.get("config") == cfg and s.get("record_dir") == str(directory)
++            if not any(s.get("config") == cfg and (s.get("record_dir") or s.get("config", {}).get("save_dir")) == str(directory)
+                        for s in stages):
+                 raise ValueError(f"No authoritative completed stage: {directory}")
+         elif row["status"] != "done":

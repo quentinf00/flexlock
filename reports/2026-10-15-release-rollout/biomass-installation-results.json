@@ -1,0 +1,42 @@
+[
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/a1dbe387bd884438.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/resolvers.py:210: UserWarning: register_new_resolver() is deprecated and will be removed in a future release.\nUse register_resolver() instead.\nSee https://github.com/hydra-ecosystem/omegaconf/issues/426 for migration instructions.\n\n  OmegaConf.register_new_resolver(\"now\", now_resolver)\n/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/resolvers.py:211: UserWarning: register_new_resolver() is deprecated and will be removed in a future release.\nUse register_resolver() instead.\nSee https://github.com/hydra-ecosystem/omegaconf/issues/426 for migration instructions.\n\n  OmegaConf.register_new_resolver(\"vinc\", vinc_resolver)\n/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/resolvers.py:212: UserWarning: register_new_resolver() is deprecated and will be removed in a future release.\nUse register_resolver() instead.\nSee https://github.com/hydra-ecosystem/omegaconf/issues/426 for migration instructions.\n\n  OmegaConf.register_new_resolver(\"latest\", latest_resolver, use_cache=False)\n/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/resolvers.py:213: UserWarning: register_new_resolver() is deprecated and will be removed in a future release.\nUse register_resolver() instead.\nSee https://github.com/hydra-ecosystem/omegaconf/issues/426 for migration instructions.\n\n  OmegaConf.register_new_resolver(\"run_lock\", run_lock_resolver, use_cache=False)\n/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/resolvers.py:214: UserWarning: register_new_resolver() is deprecated and will be removed in a future release.\nUse register_resolver() instead.\nSee https://github.com/hydra-ecosystem/omegaconf/issues/426 for migration instructions.\n\n  OmegaConf.register_new_resolver(\"run\", run_resolver, use_cache=False)\n",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-14742073660771720561/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/4c30f6cd7b5de830.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/biomass_pipeline-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-15162692178169221427/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/4bd1fa40d0dc09c3.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/biomass_pipeline-15162692178169221427/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/biomass_proc-14742073660771720561/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/f9c3ed735acc0513.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/biomass_proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  }
+]

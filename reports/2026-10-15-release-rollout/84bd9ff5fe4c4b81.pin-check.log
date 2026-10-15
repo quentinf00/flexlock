@@ -1,0 +1,7 @@
+Error:   × failed to solve the pypi requirements of environment 'default' for
+  │ platform 'linux-64'
+  ├─▶ error while canonicalization /scale/user/qfebvre/
+  │   projects/260617_biomass/biomass_proc/../../260318_model_registry/
+  │   mlflow_pixi
+  ╰─▶ No such file or directory (os error 2)
+

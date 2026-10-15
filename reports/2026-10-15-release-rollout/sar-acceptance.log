@@ -1,0 +1,407 @@
+2026-10-15 12:02:29.727 | INFO     | flexlock.api:submit:934 - Executing configuration...
+2026-10-15 12:02:29.734 | INFO     | sar_ml.stages.data:split_safes:94 - Writing test safes in /tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt (1)
+2026-10-15 12:02:29.736 | INFO     | sar_ml.stages.data:split_safes:161 - Splitting 4 into 1 val safes with seed 1234
+2026-10-15 12:02:29.736 | INFO     | sar_ml.stages.data:_log_leakage:35 - Leakage [random]: 0 datatakes straddle train/val (0.0% of all datatakes)
+2026-10-15 12:02:29.736 | INFO     | sar_ml.stages.data:split_safes:173 - Writing train safe list in /tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt (3 SAFEs)
+2026-10-15 12:02:29.736 | INFO     | sar_ml.stages.data:split_safes:178 - Writing val safe list in /tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt (1 SAFEs)
+2026-10-15 12:02:31.863 | INFO     | flexlock.api:submit:934 - Executing configuration...
+2026-10-15 12:02:34.158 | INFO     | flexlock.api:submit:934 - Executing configuration...
+2026-10-15 12:02:34.213 | INFO     | flexlock.api:_submit_sweep:1898 - Executing 5 sweep configs with ParallelExecutor
+2026-10-15 12:02:34.238 | INFO     | flexlock.parallel:__init__:238 - Queued 5 tasks (tag='extract')
+2026-10-15 12:02:34.412 | INFO     | flexlock.parallel:run:480 - Use 'flexlock-status /tmp/sar-flexlock-acceptance-jlktiyie/run/extract/queue/run.lock.tasks.db' to monitor task progress
+2026-10-15 12:02:34.412 | INFO     | flexlock.parallel:run:486 - Running locally (pull-from-DB)
+2026-10-15 12:02:35.572 | INFO     | sar_ml.stages.data:extract_features:227 - Extracting features cwaves and ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'] from /tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21.SAFE
+2026-10-15 12:02:35.895 | INFO     | sar_ml.stages.data:extract_features:296 - Writing features to /tmp/sar-flexlock-acceptance-jlktiyie/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21/feats/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21_features.csv
+2026-10-15 12:02:35.900 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21', '_snapshot_': {'data': {'membership': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21.SAFE'}, 'run_lock_reads': [{'path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership', 'field': 'config.manifest_path', 'value': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'used_default': False, 'record_sha256': '42bcb6f29d35c331ef895001c42a0f71815865af6ac37e0ebad53ae563441e85', 'binding': 'submit'}], 'run_lock_records': {'/tmp/sar-flexlock-acceptance-jlktiyie/run/membership': {'config': {'_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'listing_path': '/tmp/sar-flexlock-acceptance-jlktiyie/listing.csv', 'split_record': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split', 'train_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt', 'val_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt', 'test_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': ['intraburst', 'interburst'], 'pols': ['VV', 'VH'], 'strict_errors': True}, 'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', '_snapshot_': {'data': {'listing': '/tmp/sar-flexlock-acceptance-jlktiyie/listing.csv', 'train': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt', 'val': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt', 'test': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt'}}, '_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}}, 'timestamp': '2026-10-15T12:02:31.652434', 'repos': {'sar_ml': {'commit': '81d007fc22974102f997310fb83f9d31bb66f718', 'tree': '45bacb13815441c2c19498727905da1942e8769a', 'is_dirty': True, 'include': ['sar_ml/pipelines/safe_preprocessing.py'], 'module': 'sar_ml', 'path': '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced'}}, 'fingerprint': 'e745c5309fc13b5190119727ad4d11415bbe3575dc6a0f599a59f3f05421cdd0'}}}, '_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21.SAFE', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'manifest_sha256': '0c340601f5a70ff35efc928ad4ffdb51a7dc3fce1e9a29ee09d070b19fc37da9', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': ['intraburst', 'interburst'], 'pols': ['VV', 'VH'], 'strict_errors': True}}
+2026-10-15 12:02:37.863 | INFO     | sar_ml.stages.data:extract_features:227 - Extracting features cwaves and ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'] from /tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000001_20220101T000031_000001_000001_0001_A21.SAFE
+2026-10-15 12:02:37.864 | ERROR    | sar_ml.stages.data:extract_features:292 - No feature extracted, not writing file for safe /tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000001_20220101T000031_000001_000001_0001_A21.SAFE
+2026-10-15 12:02:37.864 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000001_20220101T000031_000001_000001_0001_A21', '_snapshot_': {'data': {'membership': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000001_20220101T000031_000001_000001_0001_A21.SAFE'}, 'run_lock_reads': [{'path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership', 'field': 'config.manifest_path', 'value': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'used_default': False, 'record_sha256': '42bcb6f29d35c331ef895001c42a0f71815865af6ac37e0ebad53ae563441e85', 'binding': 'submit'}], 'run_lock_records': {'/tmp/sar-flexlock-acceptance-jlktiyie/run/membership': {'config': {'_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'listing_path': '/tmp/sar-flexlock-acceptance-jlktiyie/listing.csv', 'split_record': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split', 'train_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt', 'val_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt', 'test_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': ['intraburst', 'interburst'], 'pols': ['VV', 'VH'], 'strict_errors': True}, 'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', '_snapshot_': {'data': {'listing': '/tmp/sar-flexlock-acceptance-jlktiyie/listing.csv', 'train': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt', 'val': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt', 'test': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt'}}, '_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}}, 'timestamp': '2026-10-15T12:02:31.652434', 'repos': {'sar_ml': {'commit': '81d007fc22974102f997310fb83f9d31bb66f718', 'tree': '45bacb13815441c2c19498727905da1942e8769a', 'is_dirty': True, 'include': ['sar_ml/pipelines/safe_preprocessing.py'], 'module': 'sar_ml', 'path': '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced'}}, 'fingerprint': 'e745c5309fc13b5190119727ad4d11415bbe3575dc6a0f599a59f3f05421cdd0'}}}, '_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000001_20220101T000031_000001_000001_0001_A21.SAFE', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'manifest_sha256': '0c340601f5a70ff35efc928ad4ffdb51a7dc3fce1e9a29ee09d070b19fc37da9', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': ['intraburst', 'interburst'], 'pols': ['VV', 'VH'], 'strict_errors': True}}
+2026-10-15 12:02:39.719 | INFO     | sar_ml.stages.data:extract_features:227 - Extracting features cwaves and ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'] from /tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.SAFE
+2026-10-15 12:02:39.928 | INFO     | sar_ml.stages.data:extract_features:296 - Writing features to /tmp/sar-flexlock-acceptance-jlktiyie/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21/feats/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21_features.csv
+2026-10-15 12:02:39.933 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21', '_snapshot_': {'data': {'membership': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.SAFE'}, 'run_lock_reads': [{'path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership', 'field': 'config.manifest_path', 'value': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'used_default': False, 'record_sha256': '42bcb6f29d35c331ef895001c42a0f71815865af6ac37e0ebad53ae563441e85', 'binding': 'submit'}], 'run_lock_records': {'/tmp/sar-flexlock-acceptance-jlktiyie/run/membership': {'config': {'_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'listing_path': '/tmp/sar-flexlock-acceptance-jlktiyie/listing.csv', 'split_record': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split', 'train_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt', 'val_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt', 'test_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': ['intraburst', 'interburst'], 'pols': ['VV', 'VH'], 'strict_errors': True}, 'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', '_snapshot_': {'data': {'listing': '/tmp/sar-flexlock-acceptance-jlktiyie/listing.csv', 'train': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt', 'val': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt', 'test': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt'}}, '_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}}, 'timestamp': '2026-10-15T12:02:31.652434', 'repos': {'sar_ml': {'commit': '81d007fc22974102f997310fb83f9d31bb66f718', 'tree': '45bacb13815441c2c19498727905da1942e8769a', 'is_dirty': True, 'include': ['sar_ml/pipelines/safe_preprocessing.py'], 'module': 'sar_ml', 'path': '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced'}}, 'fingerprint': 'e745c5309fc13b5190119727ad4d11415bbe3575dc6a0f599a59f3f05421cdd0'}}}, '_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.SAFE', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'manifest_sha256': '0c340601f5a70ff35efc928ad4ffdb51a7dc3fce1e9a29ee09d070b19fc37da9', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': ['intraburst', 'interburst'], 'pols': ['VV', 'VH'], 'strict_errors': True}}
+2026-10-15 12:02:41.697 | INFO     | sar_ml.stages.data:extract_features:227 - Extracting features cwaves and ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'] from /tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21.SAFE
+2026-10-15 12:02:41.906 | INFO     | sar_ml.stages.data:extract_features:296 - Writing features to /tmp/sar-flexlock-acceptance-jlktiyie/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21/feats/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21_features.csv
+2026-10-15 12:02:41.912 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21', '_snapshot_': {'data': {'membership': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21.SAFE'}, 'run_lock_reads': [{'path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership', 'field': 'config.manifest_path', 'value': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'used_default': False, 'record_sha256': '42bcb6f29d35c331ef895001c42a0f71815865af6ac37e0ebad53ae563441e85', 'binding': 'submit'}], 'run_lock_records': {'/tmp/sar-flexlock-acceptance-jlktiyie/run/membership': {'config': {'_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'listing_path': '/tmp/sar-flexlock-acceptance-jlktiyie/listing.csv', 'split_record': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split', 'train_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt', 'val_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt', 'test_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': ['intraburst', 'interburst'], 'pols': ['VV', 'VH'], 'strict_errors': True}, 'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', '_snapshot_': {'data': {'listing': '/tmp/sar-flexlock-acceptance-jlktiyie/listing.csv', 'train': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt', 'val': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt', 'test': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt'}}, '_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}}, 'timestamp': '2026-10-15T12:02:31.652434', 'repos': {'sar_ml': {'commit': '81d007fc22974102f997310fb83f9d31bb66f718', 'tree': '45bacb13815441c2c19498727905da1942e8769a', 'is_dirty': True, 'include': ['sar_ml/pipelines/safe_preprocessing.py'], 'module': 'sar_ml', 'path': '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced'}}, 'fingerprint': 'e745c5309fc13b5190119727ad4d11415bbe3575dc6a0f599a59f3f05421cdd0'}}}, '_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21.SAFE', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'manifest_sha256': '0c340601f5a70ff35efc928ad4ffdb51a7dc3fce1e9a29ee09d070b19fc37da9', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': ['intraburst', 'interburst'], 'pols': ['VV', 'VH'], 'strict_errors': True}}
+2026-10-15 12:02:43.990 | INFO     | sar_ml.stages.data:extract_features:227 - Extracting features cwaves and ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'] from /tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21.SAFE
+2026-10-15 12:02:44.199 | INFO     | sar_ml.stages.data:extract_features:296 - Writing features to /tmp/sar-flexlock-acceptance-jlktiyie/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21/feats/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21_features.csv
+2026-10-15 12:02:44.205 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21', '_snapshot_': {'data': {'membership': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21.SAFE'}, 'run_lock_reads': [{'path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership', 'field': 'config.manifest_path', 'value': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'used_default': False, 'record_sha256': '42bcb6f29d35c331ef895001c42a0f71815865af6ac37e0ebad53ae563441e85', 'binding': 'submit'}], 'run_lock_records': {'/tmp/sar-flexlock-acceptance-jlktiyie/run/membership': {'config': {'_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'listing_path': '/tmp/sar-flexlock-acceptance-jlktiyie/listing.csv', 'split_record': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split', 'train_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt', 'val_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt', 'test_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': ['intraburst', 'interburst'], 'pols': ['VV', 'VH'], 'strict_errors': True}, 'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', '_snapshot_': {'data': {'listing': '/tmp/sar-flexlock-acceptance-jlktiyie/listing.csv', 'train': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt', 'val': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt', 'test': '/tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt'}}, '_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}}, 'timestamp': '2026-10-15T12:02:31.652434', 'repos': {'sar_ml': {'commit': '81d007fc22974102f997310fb83f9d31bb66f718', 'tree': '45bacb13815441c2c19498727905da1942e8769a', 'is_dirty': True, 'include': ['sar_ml/pipelines/safe_preprocessing.py'], 'module': 'sar_ml', 'path': '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced'}}, 'fingerprint': 'e745c5309fc13b5190119727ad4d11415bbe3575dc6a0f599a59f3f05421cdd0'}}}, '_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21.SAFE', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/run/membership/membership.json', 'manifest_sha256': '0c340601f5a70ff35efc928ad4ffdb51a7dc3fce1e9a29ee09d070b19fc37da9', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': ['intraburst', 'interburst'], 'pols': ['VV', 'VH'], 'strict_errors': True}}
+2026-10-15 12:02:46.175 | INFO     | flexlock.worker:worker_loop:375 - All tasks finished.
+test_01_real_extraction_and_empty (test_safe_preprocessing.PreprocessingAcceptance.test_01_real_extraction_and_empty) ... ok
+test_02_authoritative_db_records_and_lineage (test_safe_preprocessing.PreprocessingAcceptance.test_02_authoritative_db_records_and_lineage) ... ok
+test_03_assembly_preserves_existing_preprocessing (test_safe_preprocessing.PreprocessingAcceptance.test_03_assembly_preserves_existing_preprocessing) ... 2026-10-15 12:02:48.474 | INFO     | flexlock.api:submit:934 - Executing configuration...
+2026-10-15 12:02:48.486 | INFO     | sar_ml.stages.data:prepare_dataset:314 - Preparing dataset for stage train
+2026-10-15 12:02:48.486 | INFO     | sar_ml.stages.data:prepare_dataset:316 - Found 3 paths in listing /tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt
+2026-10-15 12:02:48.489 | INFO     | sar_ml.stages.data:prepare_dataset:335 - Loaded 2 feature files from 
+2026-10-15 12:02:48.490 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_azimuth_cutoff at 0x7f11ffc8a520>)
+2026-10-15 12:02:48.490 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_hs at 0x7f11ffc8a480>)
+2026-10-15 12:02:48.491 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_hs0 at 0x7f11ffc8a3e0>)
+2026-10-15 12:02:48.491 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function eq_hist at 0x7f11ffc8a2a0>, q=50, i=10000)
+2026-10-15 12:02:48.501 | INFO     | sar_ml.stages.data:prepare_dataset:351 - Writing dataset to /tmp/sar-flexlock-acceptance-jlktiyie/run/dataset/train/train_dataset.csv
+2026-10-15 12:02:50.252 | INFO     | sar_ml.stages.data:prepare_dataset:314 - Preparing dataset for stage train
+2026-10-15 12:02:50.253 | INFO     | sar_ml.stages.data:prepare_dataset:316 - Found 3 paths in listing /tmp/sar-flexlock-acceptance-jlktiyie/run/split/train.txt
+2026-10-15 12:02:50.256 | INFO     | sar_ml.stages.data:prepare_dataset:335 - Loaded 2 feature files from 
+2026-10-15 12:02:50.256 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_azimuth_cutoff at 0x7f11ffc8a520>)
+2026-10-15 12:02:50.257 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_hs at 0x7f11ffc8a480>)
+2026-10-15 12:02:50.257 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_hs0 at 0x7f11ffc8a3e0>)
+2026-10-15 12:02:50.257 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function eq_hist at 0x7f11ffc8a2a0>, q=50, i=10000)
+2026-10-15 12:02:50.265 | INFO     | sar_ml.stages.data:prepare_dataset:351 - Writing dataset to /tmp/sar-flexlock-acceptance-jlktiyie/baseline/train/train_dataset.csv
+2026-10-15 12:02:50.539 | INFO     | flexlock.api:submit:934 - Executing configuration...
+2026-10-15 12:02:50.551 | INFO     | sar_ml.stages.data:prepare_dataset:314 - Preparing dataset for stage val
+2026-10-15 12:02:50.551 | INFO     | sar_ml.stages.data:prepare_dataset:316 - Found 1 paths in listing /tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt
+2026-10-15 12:02:50.553 | INFO     | sar_ml.stages.data:prepare_dataset:335 - Loaded 1 feature files from 
+2026-10-15 12:02:50.553 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_azimuth_cutoff at 0x7f11ffc8a520>)
+2026-10-15 12:02:50.554 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_hs at 0x7f11ffc8a480>)
+2026-10-15 12:02:50.554 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_hs0 at 0x7f11ffc8a3e0>)
+2026-10-15 12:02:50.554 | INFO     | sar_ml.stages.data:prepare_dataset:351 - Writing dataset to /tmp/sar-flexlock-acceptance-jlktiyie/run/dataset/val/val_dataset.csv
+2026-10-15 12:02:52.552 | INFO     | sar_ml.stages.data:prepare_dataset:314 - Preparing dataset for stage val
+2026-10-15 12:02:52.552 | INFO     | sar_ml.stages.data:prepare_dataset:316 - Found 1 paths in listing /tmp/sar-flexlock-acceptance-jlktiyie/run/split/val.txt
+2026-10-15 12:02:52.554 | INFO     | sar_ml.stages.data:prepare_dataset:335 - Loaded 1 feature files from 
+2026-10-15 12:02:52.554 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_azimuth_cutoff at 0x7f11ffc8a520>)
+2026-10-15 12:02:52.555 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_hs at 0x7f11ffc8a480>)
+2026-10-15 12:02:52.555 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_hs0 at 0x7f11ffc8a3e0>)
+2026-10-15 12:02:52.555 | INFO     | sar_ml.stages.data:prepare_dataset:351 - Writing dataset to /tmp/sar-flexlock-acceptance-jlktiyie/baseline/val/val_dataset.csv
+2026-10-15 12:02:52.859 | INFO     | flexlock.api:submit:934 - Executing configuration...
+2026-10-15 12:02:52.870 | INFO     | sar_ml.stages.data:prepare_dataset:314 - Preparing dataset for stage test
+2026-10-15 12:02:52.870 | INFO     | sar_ml.stages.data:prepare_dataset:316 - Found 1 paths in listing /tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt
+2026-10-15 12:02:52.872 | INFO     | sar_ml.stages.data:prepare_dataset:335 - Loaded 1 feature files from 
+2026-10-15 12:02:52.872 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_azimuth_cutoff at 0x7f11ffc8a520>)
+2026-10-15 12:02:52.873 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_hs at 0x7f11ffc8a480>)
+2026-10-15 12:02:52.873 | INFO     | sar_ml.stages.data:prepare_dataset:351 - Writing dataset to /tmp/sar-flexlock-acceptance-jlktiyie/run/dataset/test/test_dataset.csv
+2026-10-15 12:02:54.652 | INFO     | sar_ml.stages.data:prepare_dataset:314 - Preparing dataset for stage test
+2026-10-15 12:02:54.652 | INFO     | sar_ml.stages.data:prepare_dataset:316 - Found 1 paths in listing /tmp/sar-flexlock-acceptance-jlktiyie/run/split/test.txt
+2026-10-15 12:02:54.655 | INFO     | sar_ml.stages.data:prepare_dataset:335 - Loaded 1 feature files from 
+2026-10-15 12:02:54.655 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_azimuth_cutoff at 0x7f11ffc8a520>)
+2026-10-15 12:02:54.656 | INFO     | sar_ml.stages.data:prepare_dataset:345 - Applying preprocessing function functools.partial(<function filter_nan_hs at 0x7f11ffc8a480>)
+2026-10-15 12:02:54.656 | INFO     | sar_ml.stages.data:prepare_dataset:351 - Writing dataset to /tmp/sar-flexlock-acceptance-jlktiyie/baseline/test/test_dataset.csv
+ok
+test_04_missing_csv_is_not_empty (test_safe_preprocessing.PreprocessingAcceptance.test_04_missing_csv_is_not_empty) ... ok
+test_05_changed_csv_blocks_coverage (test_safe_preprocessing.PreprocessingAcceptance.test_05_changed_csv_blocks_coverage) ... ok
+test_06_missing_completion_blocks_coverage (test_safe_preprocessing.PreprocessingAcceptance.test_06_missing_completion_blocks_coverage) ... ok
+test_07_missing_task_blocks_coverage (test_safe_preprocessing.PreprocessingAcceptance.test_07_missing_task_blocks_coverage) ... ok
+test_08_duplicate_task_and_membership_rejected (test_safe_preprocessing.PreprocessingAcceptance.test_08_duplicate_task_and_membership_rejected) ... ok
+test_09_wrong_binding_blocks_coverage (test_safe_preprocessing.PreprocessingAcceptance.test_09_wrong_binding_blocks_coverage) ... ok
+test_10_read_and_feature_exceptions_propagate (test_safe_preprocessing.PreprocessingAcceptance.test_10_read_and_feature_exceptions_propagate) ... 2026-10-15 12:02:54.708 | ERROR    | sar_ml.data.prepare_l1c:iter_safe_ds:129 - Failed to read /tmp/sar-flexlock-acceptance-jlktiyie/corrupt.SAFE/bad-dv.nc: Unable to synchronously open file (file signature not found)
+2026-10-15 12:02:54.708 | ERROR    | sar_ml.data.prepare_l1c:iter_safe_ds:129 - Failed to read /tmp/sar-flexlock-acceptance-jlktiyie/corrupt.SAFE/bad-dv.nc: Unable to synchronously open file (file signature not found)
+2026-10-15 12:02:54.753 | ERROR    | sar_ml.data.prepare_l1c:safe_feats:143 - Failed to load features from /tmp/sar-flexlock-acceptance-jlktiyie/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.SAFE, S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.SAFE: broken features
+ok
+test_11_root_and_direct_override_propagate (test_safe_preprocessing.PreprocessingAcceptance.test_11_root_and_direct_override_propagate) ... ok
+test_12_pending_failed_interrupted_block_assembly (test_safe_preprocessing.PreprocessingAcceptance.test_12_pending_failed_interrupted_block_assembly) ... ok
+test_13_unexpected_products_block_coverage (test_safe_preprocessing.PreprocessingAcceptance.test_13_unexpected_products_block_coverage) ... ok
+test_14_corrupt_netcdf_fails_queue_and_blocks_reducer (test_safe_preprocessing.PreprocessingAcceptance.test_14_corrupt_netcdf_fails_queue_and_blocks_reducer) ... 2026-10-15 12:02:55.460 | INFO     | flexlock.api:submit:934 - Executing configuration...
+2026-10-15 12:02:55.462 | INFO     | sar_ml.stages.data:split_safes:94 - Writing test safes in /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/test.txt (1)
+2026-10-15 12:02:55.464 | INFO     | sar_ml.stages.data:split_safes:161 - Splitting 4 into 1 val safes with seed 1234
+2026-10-15 12:02:55.464 | INFO     | sar_ml.stages.data:_log_leakage:35 - Leakage [random]: 0 datatakes straddle train/val (0.0% of all datatakes)
+2026-10-15 12:02:55.464 | INFO     | sar_ml.stages.data:split_safes:173 - Writing train safe list in /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/train.txt (3 SAFEs)
+2026-10-15 12:02:55.464 | INFO     | sar_ml.stages.data:split_safes:178 - Writing val safe list in /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/val.txt (1 SAFEs)
+2026-10-15 12:02:57.730 | INFO     | flexlock.api:submit:934 - Executing configuration...
+2026-10-15 12:02:59.912 | INFO     | flexlock.api:submit:934 - Executing configuration...
+2026-10-15 12:02:59.957 | INFO     | flexlock.api:_submit_sweep:1898 - Executing 5 sweep configs with ParallelExecutor
+2026-10-15 12:02:59.978 | INFO     | flexlock.parallel:__init__:238 - Queued 5 tasks (tag='extract')
+2026-10-15 12:03:00.155 | INFO     | flexlock.parallel:run:480 - Use 'flexlock-status /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/run.lock.tasks.db' to monitor task progress
+2026-10-15 12:03:00.155 | INFO     | flexlock.parallel:run:486 - Running locally (pull-from-DB)
+2026-10-15 12:03:05.191 | INFO     | sar_ml.stages.data:extract_features:227 - Extracting features cwaves and ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'] from /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21.SAFE
+2026-10-15 12:03:05.244 | INFO     | sar_ml.stages.data:extract_features:296 - Writing features to /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21/feats/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21_features.csv
+2026-10-15 12:03:05.248 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21', '_snapshot_': {'data': {'membership': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21.SAFE'}, 'run_lock_reads': [{'path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership', 'field': 'config.manifest_path', 'value': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'used_default': False, 'record_sha256': '378b82122ed832ebb5f1dabf7a9513cebad00d6ca070ef0b06130bb9a8aa72e1', 'binding': 'submit'}], 'run_lock_records': {'/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership': {'config': {'_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'listing_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/listing.csv', 'split_record': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split', 'train_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/train.txt', 'val_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/val.txt', 'test_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/test.txt', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': None, 'pols': None, 'strict_errors': True}, 'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', '_snapshot_': {'data': {'listing': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/listing.csv', 'train': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/train.txt', 'val': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/val.txt', 'test': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/test.txt'}}, '_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}}, 'timestamp': '2026-10-15T12:02:57.501802', 'repos': {'sar_ml': {'commit': '8b9fa50faf621cbeeeed2c3486f801ca4727e657', 'tree': '45bacb13815441c2c19498727905da1942e8769a', 'is_dirty': True, 'include': ['sar_ml/pipelines/safe_preprocessing.py'], 'module': 'sar_ml', 'path': '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced'}}, 'fingerprint': '4a73e8463d574d08d79b4e0739335f852025430dc67653934387bcd2e46f4112'}}}, '_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21.SAFE', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'manifest_sha256': '5b34bc7fec3ed3855ecbff797ec65527ce3b8840c560e2676bd71451acf44d81', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': None, 'pols': None, 'strict_errors': True}}
+2026-10-15 12:03:07.351 | INFO     | sar_ml.stages.data:extract_features:227 - Extracting features cwaves and ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'] from /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000001_20220101T000031_000001_000001_0001_A21.SAFE
+2026-10-15 12:03:07.353 | ERROR    | sar_ml.stages.data:extract_features:292 - No feature extracted, not writing file for safe /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000001_20220101T000031_000001_000001_0001_A21.SAFE
+2026-10-15 12:03:07.353 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000001_20220101T000031_000001_000001_0001_A21', '_snapshot_': {'data': {'membership': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000001_20220101T000031_000001_000001_0001_A21.SAFE'}, 'run_lock_reads': [{'path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership', 'field': 'config.manifest_path', 'value': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'used_default': False, 'record_sha256': '378b82122ed832ebb5f1dabf7a9513cebad00d6ca070ef0b06130bb9a8aa72e1', 'binding': 'submit'}], 'run_lock_records': {'/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership': {'config': {'_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'listing_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/listing.csv', 'split_record': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split', 'train_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/train.txt', 'val_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/val.txt', 'test_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/test.txt', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': None, 'pols': None, 'strict_errors': True}, 'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', '_snapshot_': {'data': {'listing': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/listing.csv', 'train': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/train.txt', 'val': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/val.txt', 'test': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/test.txt'}}, '_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}}, 'timestamp': '2026-10-15T12:02:57.501802', 'repos': {'sar_ml': {'commit': '8b9fa50faf621cbeeeed2c3486f801ca4727e657', 'tree': '45bacb13815441c2c19498727905da1942e8769a', 'is_dirty': True, 'include': ['sar_ml/pipelines/safe_preprocessing.py'], 'module': 'sar_ml', 'path': '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced'}}, 'fingerprint': '4a73e8463d574d08d79b4e0739335f852025430dc67653934387bcd2e46f4112'}}}, '_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000001_20220101T000031_000001_000001_0001_A21.SAFE', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'manifest_sha256': '5b34bc7fec3ed3855ecbff797ec65527ce3b8840c560e2676bd71451acf44d81', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': None, 'pols': None, 'strict_errors': True}}
+2026-10-15 12:03:09.257 | INFO     | sar_ml.stages.data:extract_features:227 - Extracting features cwaves and ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'] from /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.SAFE
+2026-10-15 12:03:09.258 | ERROR    | sar_ml.data.prepare_l1c:iter_safe_ds:129 - Failed to read /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.SAFE/fixture-dv.nc: Unable to synchronously open file (file signature not found)
+2026-10-15 12:03:11.371 | ERROR    | flexlock.worker:_run_one_task:506 - Task failed: Unable to synchronously open file (file signature not found)
+Traceback (most recent call last):
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/xarray/backends/file_manager.py", line 219, in _acquire_with_cache_info
+    file = self._cache[self._key]
+           │    │      │    └ [<class 'h5netcdf.core.File'>, ('/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101...
+           │    │      └ CachingFileManager(<class 'h5netcdf.core.File'>, '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_2022010...
+           │    └ <xarray.backends.lru_cache.LRUCache object at 0x7f133873d440>
+           └ CachingFileManager(<class 'h5netcdf.core.File'>, '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_2022010...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/xarray/backends/lru_cache.py", line 56, in __getitem__
+    value = self._cache[key]
+            │    │      └ [<class 'h5netcdf.core.File'>, ('/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101...
+            │    └ <member '_cache' of 'LRUCache' objects>
+            └ <xarray.backends.lru_cache.LRUCache object at 0x7f133873d440>
+
+KeyError: [<class 'h5netcdf.core.File'>, ('/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.SAFE/fixture-dv.nc',), 'r', (('decode_vlen_strings', True), ('driver', None), ('format', 'NETCDF4'), ('invalid_netcdf', None), ('phony_dims', 'access')), 'e54aaa3f-79fb-4ef2-a1e0-e5b26482efd7']
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/__main__.py", line 18, in <module>
+    main(module=None)
+    └ <class 'unittest.main.TestProgram'>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/main.py", line 102, in __init__
+    self.runTests()
+    │    └ <function TestProgram.runTests at 0x7f134ee07880>
+    └ <unittest.main.TestProgram object at 0x7f134f4de750>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/main.py", line 274, in runTests
+    self.result = testRunner.run(self.test)
+    │             │          │   │    └ <unittest.suite.TestSuite tests=[<unittest.suite.TestSuite tests=[<unittest.suite.TestSuite tests=[None, None, None, None, No...
+    │             │          │   └ <unittest.main.TestProgram object at 0x7f134f4de750>
+    │             │          └ <function TextTestRunner.run at 0x7f134ee071a0>
+    │             └ <unittest.runner.TextTestRunner object at 0x7f11fcd6ea10>
+    └ <unittest.main.TestProgram object at 0x7f134f4de750>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/runner.py", line 217, in run
+    test(result)
+    │    └ <unittest.runner.TextTestResult run=14 errors=0 failures=0>
+    └ <unittest.suite.TestSuite tests=[<unittest.suite.TestSuite tests=[<unittest.suite.TestSuite tests=[None, None, None, None, No...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+           │    │    │       └ {}
+           │    │    └ (<unittest.runner.TextTestResult run=14 errors=0 failures=0>,)
+           │    └ <function TestSuite.run at 0x7f134efbbba0>
+           └ <unittest.suite.TestSuite tests=[<unittest.suite.TestSuite tests=[<unittest.suite.TestSuite tests=[None, None, None, None, No...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/suite.py", line 122, in run
+    test(result)
+    │    └ <unittest.runner.TextTestResult run=14 errors=0 failures=0>
+    └ <unittest.suite.TestSuite tests=[<unittest.suite.TestSuite tests=[None, None, None, None, None, None, None, None, None, None,...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+           │    │    │       └ {}
+           │    │    └ (<unittest.runner.TextTestResult run=14 errors=0 failures=0>,)
+           │    └ <function TestSuite.run at 0x7f134efbbba0>
+           └ <unittest.suite.TestSuite tests=[<unittest.suite.TestSuite tests=[None, None, None, None, None, None, None, None, None, None,...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/suite.py", line 122, in run
+    test(result)
+    │    └ <unittest.runner.TextTestResult run=14 errors=0 failures=0>
+    └ <unittest.suite.TestSuite tests=[None, None, None, None, None, None, None, None, None, None, None, None, None, <test_safe_pre...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+           │    │    │       └ {}
+           │    │    └ (<unittest.runner.TextTestResult run=14 errors=0 failures=0>,)
+           │    └ <function TestSuite.run at 0x7f134efbbba0>
+           └ <unittest.suite.TestSuite tests=[None, None, None, None, None, None, None, None, None, None, None, None, None, <test_safe_pre...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/suite.py", line 122, in run
+    test(result)
+    │    └ <unittest.runner.TextTestResult run=14 errors=0 failures=0>
+    └ <test_safe_preprocessing.PreprocessingAcceptance testMethod=test_14_corrupt_netcdf_fails_queue_and_blocks_reducer>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/case.py", line 678, in __call__
+    return self.run(*args, **kwds)
+           │    │    │       └ {}
+           │    │    └ (<unittest.runner.TextTestResult run=14 errors=0 failures=0>,)
+           │    └ <function TestCase.run at 0x7f134efb8540>
+           └ <test_safe_preprocessing.PreprocessingAcceptance testMethod=test_14_corrupt_netcdf_fails_queue_and_blocks_reducer>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/case.py", line 623, in run
+    self._callTestMethod(testMethod)
+    │    │               └ <bound method PreprocessingAcceptance.test_14_corrupt_netcdf_fails_queue_and_blocks_reducer of <test_safe_preprocessing.Prepr...
+    │    └ <function TestCase._callTestMethod at 0x7f134efb8360>
+    └ <test_safe_preprocessing.PreprocessingAcceptance testMethod=test_14_corrupt_netcdf_fails_queue_and_blocks_reducer>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/unittest/case.py", line 579, in _callTestMethod
+    if method() is not None:
+       └ <bound method PreprocessingAcceptance.test_14_corrupt_netcdf_fails_queue_and_blocks_reducer of <test_safe_preprocessing.Prepr...
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/tests/test_safe_preprocessing.py", line 239, in test_14_corrupt_netcdf_fails_queue_and_blocks_reducer
+    result = project.submit(project.get(key), smart_run=False)
+             │       │      │       │   └ 'extract'
+             │       │      │       └ <function Project.get at 0x7f13330a1b20>
+             │       │      └ <flexlock.api.Project object at 0x7f11fafbcf50>
+             │       └ <function Project.submit at 0x7f13330a20c0>
+             └ <flexlock.api.Project object at 0x7f11fafbcf50>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py", line 941, in submit
+    result = run_func(config)
+             │        └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.run_extraction', 'n_jobs': 1, 'slurm_config': None, 'manifest_record': '/tm...
+             └ <function instantiate at 0x7f13336265c0>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py", line 920, in instantiate
+    return target_class(*all_args, **init_args)
+           │             │           └ {'n_jobs': 1, 'slurm_config': None, 'manifest_record': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership', '...
+           │             └ []
+           └ <function run_extraction at 0x7f11fcd37f60>
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/pipelines/safe_preprocessing.py", line 189, in run_extraction
+    results = Project().submit(config, sweep=sweep, sweep_root=str(directory / "queue"),
+              │                │             │                     └ PosixPath('/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract')
+              │                │             └ [{'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_...
+              │                └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': None, 'manifest_path': '${run_lock:/tmp/sar-flexlock...
+              └ <class 'flexlock.api.Project'>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py", line 743, in submit
+    return self._submit_sweep(
+           │    └ <function Project._submit_sweep at 0x7f13330a28e0>
+           └ <flexlock.api.Project object at 0x7f11fb0ba510>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py", line 1961, in _submit_sweep
+    success = executor.run(wait=wait, timeout=timeout)
+              │        │        │             └ None
+              │        │        └ True
+              │        └ <function ParallelExecutor.run at 0x7f11fc276480>
+              └ <flexlock.parallel.ParallelExecutor object at 0x7f11fb23e590>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py", line 487, in run
+    self._run_locally()
+    │    └ <function ParallelExecutor._run_locally at 0x7f11fc277ba0>
+    └ <flexlock.parallel.ParallelExecutor object at 0x7f11fb23e590>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py", line 258, in _run_locally
+    worker_loop(self.func, self.cfg, self.task_target, self.db_path,
+    │           │    │     │    │    │    │            │    └ PosixPath('/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/run.lock.tasks.db')
+    │           │    │     │    │    │    │            └ <flexlock.parallel.ParallelExecutor object at 0x7f11fb23e590>
+    │           │    │     │    │    │    └ None
+    │           │    │     │    │    └ <flexlock.parallel.ParallelExecutor object at 0x7f11fb23e590>
+    │           │    │     │    └ {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue', '_snapshot_': {'data': {'membership': '/...
+    │           │    │     └ <flexlock.parallel.ParallelExecutor object at 0x7f11fb23e590>
+    │           │    └ <function instantiate at 0x7f13336265c0>
+    │           └ <flexlock.parallel.ParallelExecutor object at 0x7f11fb23e590>
+    └ <function worker_loop at 0x7f11fc276020>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py", line 391, in worker_loop
+    _run_one_task(
+    └ <function _run_one_task at 0x7f11fc277880>
+
+> File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py", line 498, in _run_one_task
+    _, result = _run_stage(
+                └ <function _run_stage at 0x7f11fc277420>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py", line 200, in _run_stage
+    result = func(stage_cfg)
+             │    └ {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000002_202...
+             └ <function instantiate at 0x7f13336265c0>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py", line 920, in instantiate
+    return target_class(*all_args, **init_args)
+           │             │           └ {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000002_202...
+           │             └ []
+           └ <function extract_safe at 0x7f11fcd37e20>
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/pipelines/safe_preprocessing.py", line 148, in extract_safe
+    extract_features(safe=safe, save_dir=str(directory), **extract_options)
+    │                     │                  │             └ {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitud...
+    │                     │                  └ PosixPath('/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000002_202201...
+    │                     └ '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.S...
+    └ <function extract_features at 0x7f11ffc89940>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/flexcli.py", line 127, in wrapper
+    return fn(*args, **kwargs)
+           │   │       └ {'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0...
+           │   └ ()
+           └ <function extract_features at 0x7f11ffc89760>
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/stages/data.py", line 289, in extract_features
+    features_df = _extract_for_group(kws)
+                  │                  └ {'group': 'intraburst', 'strict_errors': True}
+                  └ <function extract_features.<locals>._extract_for_group at 0x7f11fc3e3420>
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/stages/data.py", line 251, in _extract_for_group
+    feats = sar_ml.data.prepare_l1c.safe_feats(
+            │      │    │           └ <function safe_feats at 0x7f11ffc35b20>
+            │      │    └ <module 'sar_ml.data.prepare_l1c' from '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/data/prepare_l1c.py'>
+            │      └ <module 'sar_ml.data' from '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/data/__init__.py'>
+            └ <module 'sar_ml' from '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/__init__.py'>
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/data/prepare_l1c.py", line 136, in safe_feats
+    for ds in iter_safe_ds(safe, **kws):
+              │            │       └ {'preprocess': functools.partial(<function Dataset.sel at 0x7f1338654680>, pol='VV'), 'group': 'intraburst', 'strict_errors':...
+              │            └ '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.S...
+              └ <function iter_safe_ds at 0x7f11ffbc02c0>
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/data/prepare_l1c.py", line 124, in iter_safe_ds
+    ds = xr.open_dataset(p, group=group, engine="h5netcdf").load()
+         │  │            │        └ 'intraburst'
+         │  │            └ PosixPath('/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_...
+         │  └ <function open_dataset at 0x7f1333ae96c0>
+         └ <module 'xarray' from '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packag...
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/xarray/backends/api.py", line 606, in open_dataset
+    backend_ds = backend.open_dataset(
+                 │       └ <function H5netcdfBackendEntrypoint.open_dataset at 0x7f133857b2e0>
+                 └ <H5netcdfBackendEntrypoint>
+                     Open netCDF (.nc, .nc4 and .cdf) and most HDF5 files using h5netcdf in Xarray
+                     Learn more at h...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/xarray/backends/h5netcdf_.py", line 540, in open_dataset
+    store = H5NetCDFStore.open(
+            │             └ <classmethod(<function H5NetCDFStore.open at 0x7f133857a700>)>
+            └ <class 'xarray.backends.h5netcdf_.H5NetCDFStore'>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/xarray/backends/h5netcdf_.py", line 242, in open
+    return cls(
+           └ <class 'xarray.backends.h5netcdf_.H5NetCDFStore'>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/xarray/backends/h5netcdf_.py", line 152, in __init__
+    self._filename = find_root_and_group(self.ds)[0].filename
+    │    │           │                   │    └ <property object at 0x7f1338563bf0>
+    │    │           │                   └ <xarray.backends.h5netcdf_.H5NetCDFStore object at 0x7f11fc329060>
+    │    │           └ <function find_root_and_group at 0x7f1338729f80>
+    │    └ <member '_filename' of 'H5NetCDFStore' objects>
+    └ <xarray.backends.h5netcdf_.H5NetCDFStore object at 0x7f11fc329060>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/xarray/backends/h5netcdf_.py", line 260, in ds
+    return self._acquire()
+           │    └ <function H5NetCDFStore._acquire at 0x7f133857a7a0>
+           └ <xarray.backends.h5netcdf_.H5NetCDFStore object at 0x7f11fc329060>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/xarray/backends/h5netcdf_.py", line 252, in _acquire
+    with self._manager.acquire_context(needs_lock) as root:
+         │    │                        └ True
+         │    └ <member '_manager' of 'H5NetCDFStore' objects>
+         └ <xarray.backends.h5netcdf_.H5NetCDFStore object at 0x7f11fc329060>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+                │    └ <generator object CachingFileManager.acquire_context at 0x7f11fc3b9210>
+                └ <contextlib._GeneratorContextManager object at 0x7f11faf903d0>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/xarray/backends/file_manager.py", line 207, in acquire_context
+    file, cached = self._acquire_with_cache_info(needs_lock)
+                   │    │                        └ True
+                   │    └ <function CachingFileManager._acquire_with_cache_info at 0x7f133855e520>
+                   └ CachingFileManager(<class 'h5netcdf.core.File'>, '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_2022010...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/xarray/backends/file_manager.py", line 225, in _acquire_with_cache_info
+    file = self._opener(*self._args, **kwargs)
+           │    │        │    │        └ {'invalid_netcdf': None, 'decode_vlen_strings': True, 'driver': None, 'phony_dims': 'access', 'format': 'NETCDF4', 'mode': 'r'}
+           │    │        │    └ ('/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21....
+           │    │        └ CachingFileManager(<class 'h5netcdf.core.File'>, '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_2022010...
+           │    └ <class 'h5netcdf.core.File'>
+           └ CachingFileManager(<class 'h5netcdf.core.File'>, '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_2022010...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/h5netcdf/core.py", line 1907, in __init__
+    self.__h5file, self._preexisting_file, self._close_h5file = _open_h5py(
+    │              │    │                  │    │               └ <function _open_h5py at 0x7f11fc3e0a40>
+    │              │    │                  │    └ True
+    │              │    │                  └ <Closed h5netcdf.File>
+    │              │    └ True
+    │              └ <Closed h5netcdf.File>
+    └ <Closed h5netcdf.File>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/h5netcdf/core.py", line 1800, in _open_h5py
+    h5file = h5py.File(path, mode, **kwargs)
+             │    │    │     │       └ {'driver': None}
+             │    │    │     └ 'r'
+             │    │    └ '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21.S...
+             │    └ <class 'h5py._hl.files.File'>
+             └ <module 'h5py' from '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/h5py/_hl/files.py", line 555, in __init__
+    fid = make_fid(name, mode, userblock_size, fapl, fcpl, swmr=swmr)
+          │        │     │     │               │     │          └ False
+          │        │     │     │               │     └ <h5py.h5p.PropFCID object at 0x7f11f9c86340>
+          │        │     │     │               └ <h5py.h5p.PropFAID object at 0x7f11f9c863e0>
+          │        │     │     └ None
+          │        │     └ 'r'
+          │        └ b'/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21....
+          └ <function make_fid at 0x7f11fc3d3740>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/h5py/_hl/files.py", line 232, in make_fid
+    fid = h5f.open(name, flags, fapl=fapl)
+          │   │    │     │           └ <h5py.h5p.PropFAID object at 0x7f11f9c863e0>
+          │   │    │     └ 0
+          │   │    └ b'/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000002_20220101T000032_000001_000002_0002_A21....
+          │   └ <cyfunction open at 0x7f11fc82d300>
+          └ <module 'h5py.h5f' from '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-pack...
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5f.pyx", line 104, in h5py.h5f.open
+
+OSError: Unable to synchronously open file (file signature not found)
+2026-10-15 12:03:11.488 | INFO     | sar_ml.stages.data:extract_features:227 - Extracting features cwaves and ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'] from /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21.SAFE
+2026-10-15 12:03:11.541 | INFO     | sar_ml.stages.data:extract_features:296 - Writing features to /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21/feats/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21_features.csv
+2026-10-15 12:03:11.545 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21', '_snapshot_': {'data': {'membership': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21.SAFE'}, 'run_lock_reads': [{'path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership', 'field': 'config.manifest_path', 'value': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'used_default': False, 'record_sha256': '378b82122ed832ebb5f1dabf7a9513cebad00d6ca070ef0b06130bb9a8aa72e1', 'binding': 'submit'}], 'run_lock_records': {'/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership': {'config': {'_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'listing_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/listing.csv', 'split_record': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split', 'train_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/train.txt', 'val_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/val.txt', 'test_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/test.txt', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': None, 'pols': None, 'strict_errors': True}, 'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', '_snapshot_': {'data': {'listing': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/listing.csv', 'train': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/train.txt', 'val': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/val.txt', 'test': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/test.txt'}}, '_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}}, 'timestamp': '2026-10-15T12:02:57.501802', 'repos': {'sar_ml': {'commit': '8b9fa50faf621cbeeeed2c3486f801ca4727e657', 'tree': '45bacb13815441c2c19498727905da1942e8769a', 'is_dirty': True, 'include': ['sar_ml/pipelines/safe_preprocessing.py'], 'module': 'sar_ml', 'path': '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced'}}, 'fingerprint': '4a73e8463d574d08d79b4e0739335f852025430dc67653934387bcd2e46f4112'}}}, '_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000003_20220101T000033_000001_000003_0003_A21.SAFE', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'manifest_sha256': '5b34bc7fec3ed3855ecbff797ec65527ce3b8840c560e2676bd71451acf44d81', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': None, 'pols': None, 'strict_errors': True}}
+2026-10-15 12:03:13.527 | INFO     | sar_ml.stages.data:extract_features:227 - Extracting features cwaves and ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'] from /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21.SAFE
+2026-10-15 12:03:13.578 | INFO     | sar_ml.stages.data:extract_features:296 - Writing features to /tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21/feats/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21_features.csv
+2026-10-15 12:03:13.582 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/extract/queue/items/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21', '_snapshot_': {'data': {'membership': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21.SAFE'}, 'run_lock_reads': [{'path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership', 'field': 'config.manifest_path', 'value': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'used_default': False, 'record_sha256': '378b82122ed832ebb5f1dabf7a9513cebad00d6ca070ef0b06130bb9a8aa72e1', 'binding': 'submit'}], 'run_lock_records': {'/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership': {'config': {'_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'listing_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/listing.csv', 'split_record': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split', 'train_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/train.txt', 'val_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/val.txt', 'test_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/test.txt', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': None, 'pols': None, 'strict_errors': True}, 'save_dir': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', '_snapshot_': {'data': {'listing': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/listing.csv', 'train': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/train.txt', 'val': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/val.txt', 'test': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/split/test.txt'}}, '_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}}, 'timestamp': '2026-10-15T12:02:57.501802', 'repos': {'sar_ml': {'commit': '8b9fa50faf621cbeeeed2c3486f801ca4727e657', 'tree': '45bacb13815441c2c19498727905da1942e8769a', 'is_dirty': True, 'include': ['sar_ml/pipelines/safe_preprocessing.py'], 'module': 'sar_ml', 'path': '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced'}}, 'fingerprint': '4a73e8463d574d08d79b4e0739335f852025430dc67653934387bcd2e46f4112'}}}, '_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/S1A_IW_XSP__1SDV_20220101T000004_20220101T000034_000001_000004_0004_A21.SAFE', 'manifest_path': '/tmp/sar-flexlock-acceptance-jlktiyie/failure-case/run/membership/membership.json', 'manifest_sha256': '5b34bc7fec3ed3855ecbff797ec65527ce3b8840c560e2676bd71451acf44d81', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': None, 'pols': None, 'strict_errors': True}}
+2026-10-15 12:03:15.352 | INFO     | flexlock.worker:worker_loop:375 - All tasks finished.
+2026-10-15 12:03:17.640 | INFO     | flexlock.api:submit:934 - Executing configuration...
+ok
+test_15_recover_bindings_without_resubmission (test_safe_preprocessing.PreprocessingAcceptance.test_15_recover_bindings_without_resubmission) ... 2026-10-15 12:03:19.755 | INFO     | flexlock.api:submit:934 - Executing configuration...
+ok
+test_16_missing_database_is_reported (test_safe_preprocessing.PreprocessingAcceptance.test_16_missing_database_is_reported) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 52.961s
+
+OK

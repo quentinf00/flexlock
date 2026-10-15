@@ -1,0 +1,218 @@
+.............................F.......................................... [  6%]
+........................................................................ [ 13%]
+........................................................................ [ 20%]
+........................................................................ [ 27%]
+........................................................................ [ 34%]
+........................................................................ [ 41%]
+...................................................ss................... [ 47%]
+........................................................................ [ 54%]
+........................................................................ [ 61%]
+........................................................................ [ 68%]
+........................................................................ [ 75%]
+........................................................................ [ 82%]
+........................................................................ [ 88%]
+........................................................................ [ 95%]
+...x........................................                             [100%]
+=================================== FAILURES ===================================
+__________________ test_submit_chained_warns_on_missing_attr ___________________
+
+tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0')
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7ff3a63b0d70>
+
+    def test_submit_chained_warns_on_missing_attr(tmp_path, caplog):
+        """A wiring attr that doesn't exist on the result is logged, not crashed."""
+        proj = _make_proj_with_defaults()
+        base = OmegaConf.create({"save_dir": str(tmp_path / "x"), "x": 0})
+    
+        with patch("flexlock.api.snapshot"), patch(
+            "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
+        ), patch("flexlock.api.instantiate", return_value={}):
+            # Wiring references an attr the result doesn't have
+>           proj.submit_chained(
+                base,
+                sweep=[{"save_dir": str(tmp_path / "x" / "a")}],
+                downstream=[("encode_val", {"cnf_run_dir": "totally_made_up_attr"})],
+            )
+
+tests/test_chained_and_paths.py:221: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flexlock/api.py:1645: in submit_chained
+    result = self.submit(stage_key, **downstream_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+flexlock/api.py:811: in submit
+    if apply_save_dir_policy(config, guard_policy, force=force) == SKIP:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cfg = {'data_dir': 'outputs/cnf_train/run_0001/data', 'save_dir': 'outputs/encode/outputs/cnf_train/run_0001'}
+policy = None, force = False
+
+    def apply_save_dir_policy(
+        cfg: DictConfig,
+        policy: "str | None",
+        force: bool = False,
+    ) -> str:
+        """Apply the save_dir policy once, in place; say whether to run.
+    
+        Naming policies (``increment``/``timestamp``) rewrite ``cfg.save_dir`` to
+        a fresh directory — ``increment`` **atomically claims** it with
+        ``mkdir(exist_ok=False)`` + retry, fixing the concurrent-submit race the
+        old ``${vinc:}`` resolver could not.
+    
+        Guard policies decide what to do when ``cfg.save_dir`` is occupied
+        (contains ``run.lock``):
+    
+        - ``None`` / ``"raise"``: raise ``FlexLockValidationError`` — unless
+          ``force=True`` (explicit in-place rerun).
+        - ``"overwrite"``: delete the directory's contents. Only fires on an
+          *occupied* dir — a mistyped ``save_dir`` pointing at a plain data
+          directory (no ``run.lock``) is never wiped.
+        - ``"skip"``: return :data:`SKIP` if the occupant is complete; raise if it
+          is a crashed/in-flight run (there is no result to return).
+        - ``"unsafe"``: no check.
+    
+        Sweeps don't use this guard path — items are guarded individually in
+        ``_submit_sweep`` after the per-item cache check (where ``skip`` means
+        resume). Only the naming policies apply here to a sweep root.
+    
+        Returns:
+            :data:`RUN` to proceed with execution, :data:`SKIP` when the caller
+            should return the occupant's cached result instead.
+        """
+        from .exceptions import FlexLockValidationError
+    
+        validate_policy(policy)
+    
+        resolve_save_dir(cfg)
+        if "save_dir" not in cfg or cfg.get("save_dir") is None:
+            return RUN
+    
+        base = str(cfg.save_dir)
+    
+        if policy == "timestamp":
+            from datetime import datetime
+    
+            ts = datetime.now().strftime(config.TIMESTAMP_FORMAT)
+            with open_dict(cfg):
+                cfg.save_dir = str(Path(base) / ts)
+            return RUN
+    
+        if policy == "increment":
+            # Compute the next version, then claim it atomically. On collision
+            # (another submit claimed it first) recompute and retry.
+            for _ in range(1000):
+                candidate = next_versioned_path(base)
+                try:
+                    Path(candidate).mkdir(parents=True, exist_ok=False)
+                except FileExistsError:
+                    continue
+                with open_dict(cfg):
+                    cfg.save_dir = candidate
+                return RUN
+            raise RuntimeError(
+                f"apply_save_dir_policy: could not claim an incremented save_dir "
+                f"under {base!r} after 1000 attempts."
+            )
+    
+        # Guard policies from here on.
+        if policy == "unsafe":
+            return RUN
+    
+        if not is_occupied(base):
+            return RUN
+    
+        if policy == "overwrite":
+            clean_run_dir(base)
+            return RUN
+    
+        if policy == "skip":
+            if is_complete(base):
+                return SKIP
+            raise FlexLockValidationError(
+                f"save_dir_policy='skip': {base!r} holds an incomplete run "
+                f"({LOCK_NAME} without {COMPLETE_MARKER}) — no result to return. "
+                f"Re-run with force=True or save_dir_policy='overwrite'."
+            )
+    
+        # policy in (None, "raise")
+        if force:
+            # Explicit in-place rerun: run.complete was already invalidated by
+            # the caller; keep outputs and run.lock, let the run overwrite.
+            return RUN
+>       raise occupied_error(base)
+E       flexlock.exceptions.FlexLockValidationError: save_dir 'outputs/encode/outputs/cnf_train/run_0001' already contains a run (run.lock present, complete). Refusing to run into it (save_dir_policy='raise' is the default). Options: force=True / --force (rerun in place), or save_dir_policy='increment' (fresh versioned dir), 'overwrite' (clean then run), 'skip' (reuse the existing result), 'unsafe' (no guard).
+
+flexlock/save_dir.py:237: FlexLockValidationError
+----------------------------- Captured stderr call -----------------------------
+2026-10-15 12:01:24.152 | WARNING  | flexlock.api:_find_matching_run:350 - smart_run=True but search_dirs=None. Defaulting to parent of save_dir. This may not find all cached runs. Set FLEXLOCK_WARN_SMART_RUN=0 to disable this warning.
+2026-10-15 12:01:24.152 | DEBUG    | flexlock.api:_find_matching_run:365 - Searching for matching runs in: /tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0/x
+2026-10-15 12:01:24.152 | INFO     | flexlock.api:_submit_sweep:1898 - Executing 1 sweep configs with ParallelExecutor
+2026-10-15 12:01:24.154 | DEBUG    | flexlock.taskdb:_conn:169 - Created new connection for /tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0/x/a/run.lock.tasks.db in thread 140684756493376
+2026-10-15 12:01:24.155 | INFO     | flexlock.parallel:__init__:238 - Queued 1 tasks (tag='8d045fbe1360')
+2026-10-15 12:01:24.156 | INFO     | flexlock.parallel:run:480 - Use 'flexlock-status /tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0/x/a/run.lock.tasks.db' to monitor task progress
+2026-10-15 12:01:24.156 | INFO     | flexlock.parallel:run:486 - Running locally (pull-from-DB)
+2026-10-15 12:01:27.408 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'save_dir': '/tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0/x/a', '_snapshot_': {}, 'x': 0}
+2026-10-15 12:01:27.410 | INFO     | flexlock.worker:worker_loop:375 - All tasks finished.
+2026-10-15 12:01:27.410 | DEBUG    | flexlock.taskdb:dump_to_yaml:484 - using <sqlite3.Connection object at 0x7ff3a5f88d60> for /tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0/x/a/run.lock.tasks.db
+2026-10-15 12:01:27.410 | DEBUG    | flexlock.taskdb:dump_to_yaml:498 - dumping [('{}\n', 'save_dir: /tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0/x/a\nx: 0\n', 'done')] to /tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0/x/a/run.lock.tasks
+2026-10-15 12:01:27.411 | DEBUG    | flexlock.taskdb:dump_to_yaml:484 - using <sqlite3.Connection object at 0x7ff3a5f88d60> for /tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0/x/a/run.lock.tasks.db
+2026-10-15 12:01:27.411 | DEBUG    | flexlock.taskdb:dump_to_yaml:498 - dumping [('{}\n', 'save_dir: /tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0/x/a\nx: 0\n', 'done')] to /tmp/pytest-of-qfebvre/pytest-65/test_submit_chained_warns_on_m0/x/a/run.lock.tasks
+2026-10-15 12:01:27.412 | WARNING  | flexlock.api:submit_chained:1639 - submit_chained: parent result has no 'totally_made_up_attr' attribute; anchor 'cnf_run_dir' not updated.
+=============================== warnings summary ===============================
+tests/test_utils.py:244
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_utils.py:244: PytestCollectionWarning: cannot collect test class 'TestInstantiationClass' because it has a __init__ constructor (from: tests/test_utils.py)
+    class TestInstantiationClass:
+
+tests/test_utils.py:251
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_utils.py:251: PytestCollectionWarning: cannot collect test class 'TestClassWithPositionalArgs' because it has a __init__ constructor (from: tests/test_utils.py)
+    class TestClassWithPositionalArgs:
+
+tests/test_multistage_config.py: 4 warnings
+tests/test_resolvers.py: 17 warnings
+  /scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages/omegaconf/omegaconf.py:445: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    ret = resolver(*args, **kwargs)
+
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-single]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-single]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-pipeline]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-pipeline]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-cli]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-cli]
+  /scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages/omegaconf/grammar_visitor.py:253: UserWarning: In the sequence `prespkg.xps.train_a,main,,strict` some elements are missing: please replace them with empty quoted strings. See https://github.com/omry/omegaconf/issues/572 for details.
+    warnings.warn(
+
+tests/test_resolvers.py::test_now_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:13: DeprecationWarning: ${now:} is deprecated; use save_dir_policy='timestamp' on submit()/run instead of embedding ${now:} in save_dir.
+    timestamp = now_resolver()
+
+tests/test_resolvers.py::test_now_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:21: DeprecationWarning: ${now:} is deprecated; use save_dir_policy='timestamp' on submit()/run instead of embedding ${now:} in save_dir.
+    timestamp_custom = now_resolver(fmt="%Y%m%d")
+
+tests/test_resolvers.py::test_vinc_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:34: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path1 = vinc_resolver(str(base_path))
+
+tests/test_resolvers.py::test_vinc_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:39: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path2 = vinc_resolver(str(base_path))
+
+tests/test_resolvers.py::test_vinc_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:47: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path3 = vinc_resolver(str(base_path))
+
+tests/test_resolvers.py::test_vinc_resolver_with_custom_format
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:57: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path1 = vinc_resolver(str(base_path), fmt=fmt)
+
+tests/test_resolvers.py::test_vinc_resolver_with_custom_format
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:62: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path2 = vinc_resolver(str(base_path), fmt=fmt)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_chained_and_paths.py::test_submit_chained_warns_on_missing_attr
+1 failed, 1048 passed, 2 skipped, 1 xfailed, 39 warnings in 384.75s (0:06:24)

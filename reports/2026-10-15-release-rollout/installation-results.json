@@ -1,0 +1,522 @@
+[
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/a1dbe387bd884438.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/resolvers.py:210: UserWarning: register_new_resolver() is deprecated and will be removed in a future release.\nUse register_resolver() instead.\nSee https://github.com/hydra-ecosystem/omegaconf/issues/426 for migration instructions.\n\n  OmegaConf.register_new_resolver(\"now\", now_resolver)\n/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/resolvers.py:211: UserWarning: register_new_resolver() is deprecated and will be removed in a future release.\nUse register_resolver() instead.\nSee https://github.com/hydra-ecosystem/omegaconf/issues/426 for migration instructions.\n\n  OmegaConf.register_new_resolver(\"vinc\", vinc_resolver)\n/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/resolvers.py:212: UserWarning: register_new_resolver() is deprecated and will be removed in a future release.\nUse register_resolver() instead.\nSee https://github.com/hydra-ecosystem/omegaconf/issues/426 for migration instructions.\n\n  OmegaConf.register_new_resolver(\"latest\", latest_resolver, use_cache=False)\n/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/resolvers.py:213: UserWarning: register_new_resolver() is deprecated and will be removed in a future release.\nUse register_resolver() instead.\nSee https://github.com/hydra-ecosystem/omegaconf/issues/426 for migration instructions.\n\n  OmegaConf.register_new_resolver(\"run_lock\", run_lock_resolver, use_cache=False)\n/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/resolvers.py:214: UserWarning: register_new_resolver() is deprecated and will be removed in a future release.\nUse register_resolver() instead.\nSee https://github.com/hydra-ecosystem/omegaconf/issues/426 for migration instructions.\n\n  OmegaConf.register_new_resolver(\"run\", run_resolver, use_cache=False)\n",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/62680eaa3d3951bf.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-14742073660771720561/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/4c30f6cd7b5de830.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/biomass_pipeline-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/biomass_pipeline-15162692178169221427/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/4bd1fa40d0dc09c3.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/biomass_pipeline-15162692178169221427/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/biomass_proc-14742073660771720561/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/f9c3ed735acc0513.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/biomass_proc-14742073660771720561/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/8f52db2afc8e8062.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/build/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/b930085a3abbe4f4.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/92a64014d398bf1c.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/flexlock-10306215727219876235/envs/docs/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/flexlock-13731226562123482784/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/b97c1b0c8b49bb6d.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/flexlock-13731226562123482784/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/flexlock-16974564074017050279/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/3b540e43e6f306a2.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/flexlock-16974564074017050279/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/flexlock-3660010703751928665/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/552ef7da072b4765.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/flexlock-3660010703751928665/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/flexlock-3726440498292266968/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/d5f3655cbe017c94.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/flexlock-3726440498292266968/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/flexlock-5005236116905148094/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/5d8835e08ac86821.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/flexlock-5005236116905148094/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/build",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/74f9fc7f6a1eb1bd.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/build/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/1846a8ab0552c240.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/flexlock-500792665612011643/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/289e69dea9e55046.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/geosplat-diffusion-5123862402727346974/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/f7c0d5b17d11b074.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/geosplat-diffusion-5123862402727346974/envs/default/lib/python3.13/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/9956de5d7ad25bab.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default/lib/python3.12/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/d514364f8b7efffd.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc/lib/python3.12/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/2935a0fdf0065a2e.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default/lib/python3.12/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/5edb78335cbe6aed.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default/lib/python3.12/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/190a34eb4d94ac61.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/hpc",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/3e8c5890c2ed39c7.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/hpc/lib/python3.13/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/2c81a112a5b3cb50.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/5fbef2858541890d.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default",
+    "status": "deferred",
+    "reason": "project pin validation failed; manifest/lock restored"
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/nextgems_tc-13266959035230603531/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/05c4381ab67c05b0.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/nextgems_tc-13266959035230603531/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/27d7415acec0c320.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/aa5c7691e88f3671.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/4d08eed24e946253.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/9bcc2ce119778096.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/814bde8eb64c6f4d.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sample_project-4955893711133568813/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/9c8a5e017872cea2.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sample_project-4955893711133568813/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/5fecf7de29165b4c.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/fe898a070f857241.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sar_ml_xps-10072538238150628067/envs/jupyter/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/86b134b9008609c2.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/dec3c67ac7f0e950.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/9ad1d4e6fd7254de.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/77175a28680e578d.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/d09b28f665015a41.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/soba-bench-12618292729968530394/envs/default",
+    "status": "deferred",
+    "reason": "project pin validation failed; manifest/lock restored"
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/35541249186d0190.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/fa102eb9922877b7.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/3e3f074da5be34b4.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/835ef01017980da8.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/438ed90742d6a1be.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/cc9bbfaa60974704.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/d7a3f13b38b7237e.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/b439bf8469cd18e3.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/hpc",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/ec317e4c86e3579e.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/hpc/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/jepa-hpc",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/676f472e069c958d.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/tc-demo-5903087017422042152/envs/jepa-hpc/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/tcwind-benchtools-17047569021062202688/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/61df05216352a3ed.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/tcwind-benchtools-17047569021062202688/envs/default/lib/python3.14/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/temp_project-16482461194144082308/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/af9abdd03caac43c.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/temp_project-16482461194144082308/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  }
+]

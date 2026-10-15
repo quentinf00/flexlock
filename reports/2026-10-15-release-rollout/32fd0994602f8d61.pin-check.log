@@ -1,0 +1,13 @@
+ WARN Encountered 1 warning while parsing the manifest:
+  ⚠ the `[system-requirements]` table is deprecated in favor of virtual
+  │ packages on `platforms`
+    ╭─[/scale/user/qfebvre/projects/260506_hafs/confild/pyproject.toml:13:1]
+ 12 │     
+ 13 │ ╭─▶ [tool.pixi.system-requirements]
+ 14 │ ├─▶ cuda = '12'
+    · ╰──── declare these on the `platforms` entries instead
+ 15 │     
+    ╰────
+  help: e.g. platforms = [{ platform = "linux-64", cuda = "12" }]
+
+✔ Lock-file was already up-to-date

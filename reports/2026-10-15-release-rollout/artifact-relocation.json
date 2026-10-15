@@ -1,0 +1,5 @@
+{
+  "/ontap/user/qfebvre/flexlock-migration-backups-20261015-093": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups",
+  "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/proposed",
+  "/ontap/user/qfebvre/flexlock-execution-validation/reports/2026-10-15-release-rollout/pins-before": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before"
+}

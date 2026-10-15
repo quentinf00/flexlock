@@ -23,8 +23,10 @@ def test_partial_overrides_keep_master_output_contracts_and_queue_payloads(tmp_p
     executor = ParallelExecutor(func=lambda cfg: None, cfg=cfg, tasks=tasks,
                                 task_target=target)
     assert executor.shared_save_dirs == [str(product.resolve())]
-    pointer = json.loads((product/'.flexlock-queue.json').read_text())
-    assert pointer['task_db'] == str(executor.db_path.resolve())
+    # Layout 2 discovers nested queues through their ancestor, without a pointer.
+    assert not (product/'.flexlock-queue.json').exists()
+    from flexlock.destination_guard import has_active_destination
+    assert has_active_destination(product)
     rows = get_all_tasks(executor.db_path)
     assert sorted(plain(row['task'])['item'] for row in rows) == [1, 2]
     assert all(set(plain(row['task'])) == {'item'} and row['status'] == 'pending' for row in rows)

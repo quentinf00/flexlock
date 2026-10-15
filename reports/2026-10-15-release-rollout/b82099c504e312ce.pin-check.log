@@ -1,0 +1,19 @@
+ WARN Encountered 1 warning while parsing the manifest:
+  ⚠ the `[system-requirements]` table is deprecated in favor of virtual
+  │ packages on `platforms`
+    ╭─[/scale/user/qfebvre/projects/2509_flexlock/project_template/pyproject.toml:66:1]
+ 65 │     # by pixi 0.72 yet
+ 66 │ ╭─▶ [tool.pixi.feature.gpu.system-requirements]
+ 67 │ ├─▶ cuda = "12"
+    · ╰──── declare these on the `platforms` entries instead
+ 68 │     
+    ╰────
+  help: e.g. platforms = [{ platform = "linux-64", cuda = "12" }]
+
+Error:   × failed to solve the pypi requirements of environment 'cpu' for platform
+  │ 'linux-64'
+  ├─▶ failed to resolve pypi dependencies
+  ╰─▶ Because only better-exceptions<=0.3.3 is available and you require
+      better-exceptions>=0.4.0,<0.5, we can conclude that your requirements
+      are unsatisfiable.
+

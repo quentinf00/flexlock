@@ -1,0 +1,178 @@
+[
+  {
+    "root": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app",
+    "manifest": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/17f1a36b4c28c9cf",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc",
+    "manifest": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/1b5eb7328ff3dab7",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml",
+    "status": "deferred-active"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field",
+    "status": "deferred-active"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools",
+    "status": "deferred-active"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion",
+    "manifest": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/f14351d54a2aab1b",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke",
+    "manifest": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/59f687e270cd92be",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced",
+    "manifest": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/60602187ee14fd3e",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251023_perceiver_da/perda",
+    "manifest": "/scale/user/qfebvre/projects/251023_perceiver_da/perda/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/a00e8a08c5095514",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping",
+    "manifest": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/3807b0bdaf1bd19e",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch",
+    "manifest": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/c000279009abff3d",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa",
+    "manifest": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/3e31b4bd79962c8d",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa",
+    "manifest": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/02b5c20f46e99628",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm",
+    "manifest": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/c050bca2f97045b0",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/confild",
+    "manifest": "/scale/user/qfebvre/projects/260506_hafs/confild/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/32fd0994602f8d61",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools",
+    "manifest": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/97ae84df0b068f73",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/omnihafs",
+    "manifest": "/scale/user/qfebvre/projects/260506_hafs/omnihafs/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/bd827c9fb8c287ac",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc",
+    "manifest": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/biomass-retry",
+    "status": "pinned",
+    "pixi_check_exit": 0,
+    "non_flexlock_lock_unchanged": true,
+    "project_dependency_repair_preserved": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo",
+    "manifest": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/167030f9c9feedcc",
+    "status": "pinned",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 0,
+    "pixi_check_changed_lock": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260505_soba/soba_bench",
+    "manifest": "/scale/user/qfebvre/projects/260505_soba/soba_bench/pixi.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/7202038c521f5275",
+    "status": "restored-review-required",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 1,
+    "pixi_check_changed_lock": false,
+    "reason": "Pixi check did not accept the reviewed lock unchanged"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/project_template",
+    "manifest": "/scale/user/qfebvre/projects/2509_flexlock/project_template/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/pins-before/b82099c504e312ce",
+    "status": "restored-review-required",
+    "non_flexlock_lock_unchanged": true,
+    "pixi_check_exit": 1,
+    "pixi_check_changed_lock": false,
+    "reason": "Pixi check did not accept the reviewed lock unchanged"
+  }
+]

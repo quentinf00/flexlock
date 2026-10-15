@@ -1,0 +1,389 @@
+2026-10-15 12:20:16.015 | INFO     | flexlock.runner:run:786 - Loaded root config: {'run_dir': '/tmp/sar093-chain-f4hwn5vy/run', 'listing_path': '/tmp/sar093-chain-f4hwn5vy/listing.csv', 'split_record': '${run_dir}/split', 'membership_record': '${run_dir}/membership', 'bindings_record': '${run_dir}/extract', 'queue_database': '${run_dir}/extract/queue/run.lock.tasks.db', 'items_root': '${run_dir}/extract/queue/items', 'extract_options': {'cwaves': True, 'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'polygon': True, 'kws': {'group': 'intraburst'}, 'groups': None, 'pols': None, 'strict_errors': True}, 'split_options': {'seed': 1234, 'val_prop': 0.25, 'stratify_by_season': False, 'group_by_datatake': False, 'holdout_months': None}, 'extract_slurm_config': None, 'extract_n_jobs': 1, 'split': {'_target_': 'sar_ml.stages.data.split_safes', 'val_prop': '${split_options.val_prop}', 'save_dir': '${run_dir}/split', 'train_safe_path': '${.save_dir}/train.txt', 'val_safe_path': '${.save_dir}/val.txt', 'test_safe_path': '${.save_dir}/test.txt', 'seed': '${split_options.seed}', 'stratify_by_season': '${split_options.stratify_by_season}', 'group_by_datatake': '${split_options.group_by_datatake}', 'holdout_months': '${split_options.holdout_months}', 'safes_listing_path': '${listing_path}', '_snapshot_': {'data': {'listing': '${...safes_listing_path}'}}, '_outputs_': {'train': {'path': 'train.txt', 'sha256': True}, 'val': {'path': 'val.txt', 'sha256': True}, 'test': {'path': 'test.txt', 'sha256': True}}}, 'freeze': {'_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'listing_path': '${listing_path}', 'split_record': '${split_record}', 'train_path': '${run_lock:${split_record},config.train_safe_path}', 'val_path': '${run_lock:${split_record},config.val_safe_path}', 'test_path': '${run_lock:${split_record},config.test_safe_path}', 'extract_options': '${extract_options}', 'save_dir': '${run_dir}/membership', 'manifest_path': '${.save_dir}/membership.json', '_snapshot_': {'data': {'listing': '${...listing_path}', 'train': '${...train_path}', 'val': '${...val_path}', 'test': '${...test_path}'}}, '_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}}, 'extract': {'_target_': 'sar_ml.pipelines.safe_preprocessing.run_extraction', 'n_jobs': '${extract_n_jobs}', 'slurm_config': '${extract_slurm_config}', 'manifest_record': '${membership_record}', 'manifest_path': '${run_lock:${membership_record},config.manifest_path}', 'save_dir': '${run_dir}/extract', 'bindings_path': '${.save_dir}/bindings.json', '_snapshot_': {'data': {'membership': '${...manifest_path}'}}, '_outputs_': {'bindings': {'path': 'bindings.json', 'sha256': True}}}, 'bind_existing': {'_target_': 'sar_ml.pipelines.safe_preprocessing.bind_existing_queue', 'manifest_record': '${membership_record}', 'manifest_path': '${run_lock:${membership_record},config.manifest_path}', 'database': '${queue_database}', 'items_root': '${items_root}', 'save_dir': '${run_dir}/bindings', 'bindings_path': '${.save_dir}/bindings.json', '_snapshot_': {'data': {'membership': '${...manifest_path}'}}, '_outputs_': {'bindings': {'path': 'bindings.json', 'sha256': True}}}, 'coverage': {'_target_': 'sar_ml.pipelines.safe_preprocessing.coverage_report', 'bindings_path': '${run_lock:${bindings_record},config.bindings_path}', 'save_dir': '${run_dir}/coverage', '_snapshot_': {'data': {'bindings': '${...bindings_path}'}}, '_outputs_': {'coverage': {'path': 'coverage.json', 'sha256': True}}}, 'local': {'_target_': 'sar_ml.pipelines.safe_preprocessing.run_local_preprocessing', 'n_jobs': '${extract_n_jobs}', 'listing_path': '${listing_path}', 'extract_options': '${extract_options}', 'split_options': '${split_options}', 'save_dir': '${run_dir}', '_snapshot_': {'data': {'listing': '${...listing_path}'}}, '_outputs_': {'train': {'path': 'dataset/train/train_dataset.csv', 'sha256': True}, 'val': {'path': 'dataset/val/val_dataset.csv', 'sha256': True}, 'test': {'path': 'dataset/test/test_dataset.csv', 'sha256': True}}}, 'prepare_train': {'_target_': 'sar_ml.pipelines.safe_preprocessing.assemble_dataset', 'bindings_record': '${bindings_record}', 'bindings_path': '${run_lock:${bindings_record},config.bindings_path}', 'stage': 'train', 'pp_fns': [{'_target_': 'sar_ml.data.utils.filter_nan_azimuth_cutoff', '_partial_': True}, {'_target_': 'sar_ml.data.utils.filter_nan_hs', '_partial_': True}, {'_target_': 'sar_ml.data.utils.filter_nan_hs0', '_partial_': True}, {'_target_': 'sar_ml.data.utils.eq_hist', 'q': 50, 'i': 10000, '_partial_': True}], 'save_dir': '${run_dir}/dataset/train', '_snapshot_': {'data': {'bindings': '${...bindings_path}'}}, '_outputs_': {'dataset': {'path': 'train_dataset.csv', 'sha256': True}, 'coverage': {'path': 'coverage.json', 'sha256': True}}}, 'prepare_val': {'_target_': 'sar_ml.pipelines.safe_preprocessing.assemble_dataset', 'bindings_record': '${bindings_record}', 'bindings_path': '${run_lock:${bindings_record},config.bindings_path}', 'stage': 'val', 'pp_fns': [{'_target_': 'sar_ml.data.utils.filter_nan_azimuth_cutoff', '_partial_': True}, {'_target_': 'sar_ml.data.utils.filter_nan_hs', '_partial_': True}, {'_target_': 'sar_ml.data.utils.filter_nan_hs0', '_partial_': True}], 'save_dir': '${run_dir}/dataset/val', '_snapshot_': {'data': {'bindings': '${...bindings_path}'}}, '_outputs_': {'dataset': {'path': 'val_dataset.csv', 'sha256': True}, 'coverage': {'path': 'coverage.json', 'sha256': True}}}, 'prepare_test': {'_target_': 'sar_ml.pipelines.safe_preprocessing.assemble_dataset', 'bindings_record': '${bindings_record}', 'bindings_path': '${run_lock:${bindings_record},config.bindings_path}', 'stage': 'test', 'pp_fns': [{'_target_': 'sar_ml.data.utils.filter_nan_azimuth_cutoff', '_partial_': True}, {'_target_': 'sar_ml.data.utils.filter_nan_hs', '_partial_': True}], 'save_dir': '${run_dir}/dataset/test', '_snapshot_': {'data': {'bindings': '${...bindings_path}'}}, '_outputs_': {'dataset': {'path': 'test_dataset.csv', 'sha256': True}, 'coverage': {'path': 'coverage.json', 'sha256': True}}}}
+2026-10-15 12:20:16.144 | INFO     | flexlock.parallel:__init__:238 - Queued 1 tasks (tag='e02c5b221255')
+2026-10-15 12:20:16.516 | INFO     | flexlock.parallel:run:480 - Use 'flexlock-status /tmp/sar093-chain-f4hwn5vy/run/run.lock.tasks.db' to monitor task progress
+2026-10-15 12:20:16.516 | INFO     | flexlock.parallel:run:486 - Running locally (pull-from-DB)
+2026-10-15 12:20:17.574 | INFO     | flexlock.worker:_run_composite:305 - [stage 1/6 split] running → /tmp/sar093-chain-f4hwn5vy/run/split
+2026-10-15 12:20:22.916 | INFO     | sar_ml.stages.data:split_safes:94 - Writing test safes in /tmp/sar093-chain-f4hwn5vy/run/split/test.txt (1)
+2026-10-15 12:20:22.917 | INFO     | sar_ml.stages.data:split_safes:161 - Splitting 4 into 1 val safes with seed 1234
+2026-10-15 12:20:22.918 | INFO     | sar_ml.stages.data:_log_leakage:35 - Leakage [random]: 0 datatakes straddle train/val (0.0% of all datatakes)
+2026-10-15 12:20:22.918 | INFO     | sar_ml.stages.data:split_safes:173 - Writing train safe list in /tmp/sar093-chain-f4hwn5vy/run/split/train.txt (3 SAFEs)
+2026-10-15 12:20:22.918 | INFO     | sar_ml.stages.data:split_safes:178 - Writing val safe list in /tmp/sar093-chain-f4hwn5vy/run/split/val.txt (1 SAFEs)
+2026-10-15 12:20:22.923 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'_outputs_': {'test': {'path': 'test.txt', 'sha256': True}, 'train': {'path': 'train.txt', 'sha256': True}, 'val': {'path': 'val.txt', 'sha256': True}}, '_preset_': {'defaults': 'sar_ml.pipelines.preprocessing_cfg:cfg', 'merges': [], 'overrides': ['run_dir=/tmp/sar093-chain-f4hwn5vy/run', 'listing_path=/tmp/sar093-chain-f4hwn5vy/listing.csv'], 'overrides_after_select': [], 'select': 'split'}, '_snapshot_': {'data': {'listing': '/tmp/sar093-chain-f4hwn5vy/listing.csv'}}, '_target_': 'sar_ml.stages.data.split_safes', 'group_by_datatake': False, 'holdout_months': None, 'safes_listing_path': '/tmp/sar093-chain-f4hwn5vy/listing.csv', 'save_dir': '/tmp/sar093-chain-f4hwn5vy/run/split', 'seed': 1234, 'stratify_by_season': False, 'test_safe_path': '/tmp/sar093-chain-f4hwn5vy/run/split/test.txt', 'train_safe_path': '/tmp/sar093-chain-f4hwn5vy/run/split/train.txt', 'val_prop': 0.25, 'val_safe_path': '/tmp/sar093-chain-f4hwn5vy/run/split/val.txt'}
+2026-10-15 12:20:25.203 | INFO     | flexlock.worker:_run_composite:305 - [stage 2/6 membership] running → /tmp/sar093-chain-f4hwn5vy/run/membership
+2026-10-15 12:20:25.327 | INFO     | flexlock.worker:_run_stage:217 - Task successful: {'_outputs_': {'membership': {'path': 'membership.json', 'sha256': True}}, '_preset_': {'defaults': 'sar_ml.pipelines.preprocessing_cfg:cfg', 'merges': [], 'overrides': ['run_dir=/tmp/sar093-chain-f4hwn5vy/run', 'listing_path=/tmp/sar093-chain-f4hwn5vy/listing.csv'], 'overrides_after_select': [], 'select': 'freeze'}, '_snapshot_': {'data': {'listing': '/tmp/sar093-chain-f4hwn5vy/listing.csv', 'test': '/tmp/sar093-chain-f4hwn5vy/run/split/test.txt', 'train': '/tmp/sar093-chain-f4hwn5vy/run/split/train.txt', 'val': '/tmp/sar093-chain-f4hwn5vy/run/split/val.txt'}, 'run_lock_reads': [{'path': '/tmp/sar093-chain-f4hwn5vy/run/split', 'field': 'config.test_safe_path', 'value': '/tmp/sar093-chain-f4hwn5vy/run/split/test.txt', 'used_default': False, 'record_sha256': 'bc0d719552c8c32baa0ac5641b81a3ca29ec6930217c337c0c2e8a659c79b7ff'}, {'path': '/tmp/sar093-chain-f4hwn5vy/run/split', 'field': 'config.train_safe_path', 'value': '/tmp/sar093-chain-f4hwn5vy/run/split/train.txt', 'used_default': False, 'record_sha256': 'bc0d719552c8c32baa0ac5641b81a3ca29ec6930217c337c0c2e8a659c79b7ff'}, {'path': '/tmp/sar093-chain-f4hwn5vy/run/split', 'field': 'config.val_safe_path', 'value': '/tmp/sar093-chain-f4hwn5vy/run/split/val.txt', 'used_default': False, 'record_sha256': 'bc0d719552c8c32baa0ac5641b81a3ca29ec6930217c337c0c2e8a659c79b7ff'}], 'run_lock_records': {'/tmp/sar093-chain-f4hwn5vy/run/split': {'config': {'_outputs_': {'test': {'path': 'test.txt', 'sha256': True}, 'train': {'path': 'train.txt', 'sha256': True}, 'val': {'path': 'val.txt', 'sha256': True}}, '_preset_': {'defaults': 'sar_ml.pipelines.preprocessing_cfg:cfg', 'merges': [], 'overrides': ['run_dir=/tmp/sar093-chain-f4hwn5vy/run', 'listing_path=/tmp/sar093-chain-f4hwn5vy/listing.csv'], 'overrides_after_select': [], 'select': 'split'}, '_snapshot_': {'data': {'listing': '/tmp/sar093-chain-f4hwn5vy/listing.csv'}}, '_target_': 'sar_ml.stages.data.split_safes', 'group_by_datatake': False, 'holdout_months': None, 'safes_listing_path': '/tmp/sar093-chain-f4hwn5vy/listing.csv', 'save_dir': '/tmp/sar093-chain-f4hwn5vy/run/split', 'seed': 1234, 'stratify_by_season': False, 'test_safe_path': '/tmp/sar093-chain-f4hwn5vy/run/split/test.txt', 'train_safe_path': '/tmp/sar093-chain-f4hwn5vy/run/split/train.txt', 'val_prop': 0.25, 'val_safe_path': '/tmp/sar093-chain-f4hwn5vy/run/split/val.txt'}, 'timestamp': '2026-10-15T12:20:22.895000', 'repos': {'sar_ml': {'commit': 'e152cf61a76116c8b75309be0f6e2c472be0574f', 'tree': '24cee87a639d28be7d1976113b27a81ea040be45', 'is_dirty': True, 'include': ['sar_ml/data/utils.py', 'sar_ml/pipelines/safe_preprocessing.py', 'sar_ml/stages/data.py'], 'module': 'sar_ml', 'path': '/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced'}}, 'parent': '/tmp/sar093-chain-f4hwn5vy/run/run.lock', 'fingerprint': 'a91bc94e90ca3db7f31fa78d0f1ddf934e5b5945db9ae0729a07e3efc7a71a5f', 'task_id': 'f408ad9919e5fe1c207c1e1341b5ca28dea6731d'}}}, '_target_': 'sar_ml.pipelines.safe_preprocessing.freeze_membership', 'extract_options': {'cols': ['sigma0_filt', 'normalized_variance_filt', 'incidence', 'azimuth_cutoff', 'uwnd', 'vwnd', 'longitude', 'latitude', 'hs', 'phs0', 't0m1'], 'cwaves': True, 'groups': None, 'kws': {'group': 'intraburst'}, 'pols': None, 'polygon': True, 'strict_errors': True}, 'listing_path': '/tmp/sar093-chain-f4hwn5vy/listing.csv', 'manifest_path': '/tmp/sar093-chain-f4hwn5vy/run/membership/membership.json', 'save_dir': '/tmp/sar093-chain-f4hwn5vy/run/membership', 'split_record': '/tmp/sar093-chain-f4hwn5vy/run/split', 'test_path': '/tmp/sar093-chain-f4hwn5vy/run/split/test.txt', 'train_path': '/tmp/sar093-chain-f4hwn5vy/run/split/train.txt', 'val_path': '/tmp/sar093-chain-f4hwn5vy/run/split/val.txt'}
+2026-10-15 12:20:27.660 | INFO     | flexlock.worker:_run_composite:305 - [stage 3/6 extract] running → /tmp/sar093-chain-f4hwn5vy/run/extract
+2026-10-15 12:20:30.355 | ERROR    | flexlock.worker:_run_composite:315 - [stage 3/6 extract] failed: FlexLockValidationError raised while resolving interpolation: Selected producer has pending/running work: /tmp/sar093-chain-f4hwn5vy/run/membership. Pair its concrete path with after/--after.
+    full_key: manifest_path
+    object_type=dict — aborting remaining stages
+Traceback (most recent call last):
+
+  File "/tmp/validate_sar093_chain.py", line 10, in <module>
+    FlexLockRunner().run(['-d','sar_ml.pipelines.preprocessing_cfg.cfg','-s','split','freeze','extract','prepare_train','prepare_val','prepare_test','-o',f'run_dir={root}',f'listing_path={listing}'])
+    └ <class 'flexlock.runner.FlexLockRunner'>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/runner.py", line 792, in run
+    return self._run_multi(args, root_cfg, base_cfg, selects)
+           │    │          │     │         │         └ ['split', 'freeze', 'extract', 'prepare_train', 'prepare_val', 'prepare_test']
+           │    │          │     │         └ None
+           │    │          │     └ {'run_dir': '/tmp/sar093-chain-f4hwn5vy/run', 'listing_path': '/tmp/sar093-chain-f4hwn5vy/listing.csv', 'split_record': '${ru...
+           │    │          └ Namespace(help=False, print_config=False, check=False, dump=False, edit_config=False, enqueue=None, defaults='sar_ml.pipeline...
+           │    └ <function FlexLockRunner._run_multi at 0x7f7dc5e22de0>
+           └ <flexlock.runner.FlexLockRunner object at 0x7f7dc65f6250>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/runner.py", line 613, in _run_multi
+    results = proj.submit_pipeline(
+              │    └ <function Project.submit_pipeline at 0x7f7db9d00cc0>
+              └ <flexlock.api.Project object at 0x7f7c74f3e910>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py", line 1567, in submit_pipeline
+    executor.run(wait=wait, timeout=timeout)
+    │        │        │             └ None
+    │        │        └ True
+    │        └ <function ParallelExecutor.run at 0x7f7c7461d760>
+    └ <flexlock.parallel.ParallelExecutor object at 0x7f7c745f2c90>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py", line 487, in run
+    self._run_locally()
+    │    └ <function ParallelExecutor._run_locally at 0x7f7c7461d620>
+    └ <flexlock.parallel.ParallelExecutor object at 0x7f7c745f2c90>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/parallel.py", line 258, in _run_locally
+    worker_loop(self.func, self.cfg, self.task_target, self.db_path,
+    │           │    │     │    │    │    │            │    └ PosixPath('/tmp/sar093-chain-f4hwn5vy/run/run.lock.tasks.db')
+    │           │    │     │    │    │    │            └ <flexlock.parallel.ParallelExecutor object at 0x7f7c745f2c90>
+    │           │    │     │    │    │    └ None
+    │           │    │     │    │    └ <flexlock.parallel.ParallelExecutor object at 0x7f7c745f2c90>
+    │           │    │     │    └ {'save_dir': '/tmp/sar093-chain-f4hwn5vy/run', '_snapshot_': {}}
+    │           │    │     └ <flexlock.parallel.ParallelExecutor object at 0x7f7c745f2c90>
+    │           │    └ <function instantiate at 0x7f7dc5e205e0>
+    │           └ <flexlock.parallel.ParallelExecutor object at 0x7f7c745f2c90>
+    └ <function worker_loop at 0x7f7c7461cea0>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py", line 391, in worker_loop
+    _run_one_task(
+    └ <function _run_one_task at 0x7f7c7461d300>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py", line 493, in _run_one_task
+    _run_composite(
+    └ <function _run_composite at 0x7f7c7461ce00>
+
+> File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py", line 307, in _run_composite
+    stage_dir, result = _run_stage(
+    │                   └ <function _run_stage at 0x7f7c7461ccc0>
+    └ PosixPath('/tmp/sar093-chain-f4hwn5vy/run/membership')
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py", line 200, in _run_stage
+    result = func(stage_cfg)
+             │    └ {'_outputs_': {'bindings': {'path': 'bindings.json', 'sha256': True}}, '_preset_': {'defaults': 'sar_ml.pipelines.preprocessi...
+             └ <function instantiate at 0x7f7dc5e205e0>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py", line 920, in instantiate
+    return target_class(*all_args, **init_args)
+           │             │           └ {'bindings_path': '/tmp/sar093-chain-f4hwn5vy/run/extract/bindings.json', 'manifest_path': '/tmp/sar093-chain-f4hwn5vy/run/me...
+           │             └ []
+           └ <function run_extraction at 0x7f7db9d03600>
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/pipelines/safe_preprocessing.py", line 189, in run_extraction
+    results = Project().submit(config, sweep=sweep, sweep_root=str(directory / "queue"),
+              │                │             │                     └ PosixPath('/tmp/sar093-chain-f4hwn5vy/run/extract')
+              │                │             └ [{'safe': '/tmp/sar093-chain-f4hwn5vy/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21.SAFE', 'save_di...
+              │                └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': None, 'manifest_path': '${run_lock:/tmp/sar093-chain...
+              └ <class 'flexlock.api.Project'>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py", line 743, in submit
+    return self._submit_sweep(
+           │    └ <function Project._submit_sweep at 0x7f7db9d01080>
+           └ <flexlock.api.Project object at 0x7f7c73283ed0>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py", line 1795, in _submit_sweep
+    merged_items = compile_sweep(base_config, sweep, sweep_target, after=bool(after))
+                   │             │            │      │                        └ []
+                   │             │            │      └ None
+                   │             │            └ [{'safe': '/tmp/sar093-chain-f4hwn5vy/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21.SAFE', 'save_di...
+                   │             └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': None, 'manifest_path': '${run_lock:/tmp/sar093-chain...
+                   └ <function compile_sweep at 0x7f7c7461f100>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/sweep_compile.py", line 102, in compile_sweep
+    return [(i, _compile_item(base, override, target, after))
+                │             │               │       └ False
+                │             │               └ None
+                │             └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': None, 'manifest_path': '${run_lock:/tmp/sar093-chain...
+                └ <function _compile_item at 0x7f7c7461f2e0>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/sweep_compile.py", line 102, in <listcomp>
+    return [(i, _compile_item(base, override, target, after))
+             │  │             │     │         │       └ False
+             │  │             │     │         └ None
+             │  │             │     └ {'safe': '/tmp/sar093-chain-f4hwn5vy/S1A_IW_XSP__1SDV_20220101T000000_20220101T000030_000001_000000_0000_A21.SAFE', 'save_dir...
+             │  │             └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': None, 'manifest_path': '${run_lock:/tmp/sar093-chain...
+             │  └ <function _compile_item at 0x7f7c7461f2e0>
+             └ 0
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/sweep_compile.py", line 33, in _compile_item
+    return _freeze_and_bind(cfg, allow_future=after)
+           │                │                 └ False
+           │                └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar093-chain-f4hwn5vy/S1A_IW_XSP__1SDV_2022010...
+           └ <function _freeze_and_bind at 0x7f7dc6122de0>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/freeze.py", line 77, in _freeze_and_bind
+    return _bind_detached_run_locks(detached, allow_future=allow_future)
+           │                        │                      └ False
+           │                        └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar093-chain-f4hwn5vy/S1A_IW_XSP__1SDV_2022010...
+           └ <function _bind_detached_run_locks at 0x7f7db9cf99e0>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/resolvers.py", line 374, in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               │         │            └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar093-chain-f4hwn5vy/S1A_IW_XSP__1SDV_2022010...
+               │         └ <staticmethod(<function OmegaConf.to_container at 0x7f7dc6121080>)>
+               └ <class 'omegaconf.omegaconf.OmegaConf'>
+
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/omegaconf.py", line 573, in to_container
+    return BaseContainer._to_content(
+           │             └ <staticmethod(<function BaseContainer._to_content at 0x7f7dc60cd9e0>)>
+           └ <class 'omegaconf.basecontainer.BaseContainer'>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 292, in _to_content
+    value = get_node_value(key)
+            │              └ 'manifest_path'
+            └ <function BaseContainer._to_content.<locals>.get_node_value at 0x7f7c7461dda0>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 244, in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+    │    │                     └ 'manifest_path'
+    │    └ <function Node._format_and_raise at 0x7f7dc60c7420>
+    └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar093-chain-f4hwn5vy/S1A_IW_XSP__1SDV_2022010...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 231, in _format_and_raise
+    format_and_raise(
+    └ <function format_and_raise at 0x7f7dc60c5ee0>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/_utils.py", line 899, in format_and_raise
+    _raise(ex, cause)
+    │      │   └ InterpolationResolutionError('FlexLockValidationError raised while resolving interpolation: Selected producer has pending/run...
+    │      └ InterpolationResolutionError('FlexLockValidationError raised while resolving interpolation: Selected producer has pending/run...
+    └ <function _raise at 0x7f7dc60c5e40>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/_utils.py", line 797, in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+          │  │              │   └ <built-in function exc_info>
+          │  │              └ <module 'sys' (built-in)>
+          │  └ <method 'with_traceback' of 'BaseException' objects>
+          └ InterpolationResolutionError('FlexLockValidationError raised while resolving interpolation: Selected producer has pending/run...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 242, in get_node_value
+    node = node._dereference_node()
+           │    └ <function Node._dereference_node at 0x7f7dc60c7560>
+           └ '${run_lock:/tmp/sar093-chain-f4hwn5vy/run/membership,config.manifest_path}'
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 246, in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           │    └ <function Node._dereference_node_impl at 0x7f7dc60c76a0>
+           └ '${run_lock:/tmp/sar093-chain-f4hwn5vy/run/membership,config.manifest_path}'
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 277, in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+           │      └ <function Container._resolve_interpolation_from_parse_tree at 0x7f7dc60a8e00>
+           └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar093-chain-f4hwn5vy/S1A_IW_XSP__1SDV_2022010...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 584, in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+               │    └ <function Container.resolve_parse_tree at 0x7f7dc60cc0e0>
+               └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar093-chain-f4hwn5vy/S1A_IW_XSP__1SDV_2022010...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 769, in resolve_parse_tree
+    raise InterpolationResolutionError(
+          └ <class 'omegaconf.errors.InterpolationResolutionError'>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 764, in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           │       │     └ <omegaconf.grammar.gen.OmegaConfGrammarParser.OmegaConfGrammarParser.ConfigValueContext object at 0x7f7c745e91d0>
+           │       └ <function ParseTreeVisitor.visit at 0x7f7dc630f6a0>
+           └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           │    │      └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+           │    └ <function OmegaConfGrammarParser.ConfigValueContext.accept at 0x7f7dc61aa840>
+           └ <omegaconf.grammar.gen.OmegaConfGrammarParser.OmegaConfGrammarParser.ConfigValueContext object at 0x7f7c745e91d0>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 206, in accept
+    return visitor.visitConfigValue(self)
+           │       │                └ <omegaconf.grammar.gen.OmegaConfGrammarParser.OmegaConfGrammarParser.ConfigValueContext object at 0x7f7c745e91d0>
+           │       └ <function GrammarVisitor.visitConfigValue at 0x7f7dc60416c0>
+           └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 101, in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           │    │     │   └ <function ParserRuleContext.getChild at 0x7f7dc6335d00>
+           │    │     └ <omegaconf.grammar.gen.OmegaConfGrammarParser.OmegaConfGrammarParser.ConfigValueContext object at 0x7f7c745e91d0>
+           │    └ <function ParseTreeVisitor.visit at 0x7f7dc630f6a0>
+           └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           │    │      └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+           │    └ <function OmegaConfGrammarParser.TextContext.accept at 0x7f7dc61ab4c0>
+           └ <omegaconf.grammar.gen.OmegaConfGrammarParser.OmegaConfGrammarParser.TextContext object at 0x7f7c745e92b0>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 342, in accept
+    return visitor.visitText(self)
+           │       │         └ <omegaconf.grammar.gen.OmegaConfGrammarParser.OmegaConfGrammarParser.TextContext object at 0x7f7c745e92b0>
+           │       └ <function GrammarVisitor.visitText at 0x7f7dc6042020>
+           └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 298, in visitText
+    return self.visitInterpolation(c)
+           │    │                  └ <omegaconf.grammar.gen.OmegaConfGrammarParser.OmegaConfGrammarParser.InterpolationContext object at 0x7f7c745e9240>
+           │    └ <function GrammarVisitor.visitInterpolation at 0x7f7dc6041940>
+           └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 125, in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           │    │     │   └ <function ParserRuleContext.getChild at 0x7f7dc6335d00>
+           │    │     └ <omegaconf.grammar.gen.OmegaConfGrammarParser.OmegaConfGrammarParser.InterpolationContext object at 0x7f7c745e9240>
+           │    └ <function ParseTreeVisitor.visit at 0x7f7dc630f6a0>
+           └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           │    │      └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+           │    └ <function OmegaConfGrammarParser.InterpolationResolverContext.accept at 0x7f7dc603a480>
+           └ <omegaconf.grammar.gen.OmegaConfGrammarParser.OmegaConfGrammarParser.InterpolationResolverContext object at 0x7f7c745e9390>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 1041, in accept
+    return visitor.visitInterpolationResolver(self)
+           │       │                          └ <omegaconf.grammar.gen.OmegaConfGrammarParser.OmegaConfGrammarParser.InterpolationResolverContext object at 0x7f7c745e9390>
+           │       └ <function GrammarVisitor.visitInterpolationResolver at 0x7f7dc6041a80>
+           └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 179, in visitInterpolationResolver
+    return self.resolver_interpolation_callback(
+           │    └ <function Container.resolve_parse_tree.<locals>.resolver_interpolation_callback at 0x7f7c7461f880>
+           └ <omegaconf.grammar_visitor.GrammarVisitor object at 0x7f7c733f5f90>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 750, in resolver_interpolation_callback
+    return self._evaluate_custom_resolver(
+           │    └ <function Container._evaluate_custom_resolver at 0x7f7dc60a0fe0>
+           └ {'_target_': 'sar_ml.pipelines.safe_preprocessing.extract_safe', 'safe': '/tmp/sar093-chain-f4hwn5vy/S1A_IW_XSP__1SDV_2022010...
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 694, in _evaluate_custom_resolver
+    return resolver(
+           └ <function OmegaConf.register_new_resolver.<locals>.resolver_wrapper at 0x7f7c7461fd80>
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/omegaconf.py", line 445, in resolver_wrapper
+    ret = resolver(*args, **kwargs)
+          │         │       └ {}
+          │         └ ('/tmp/sar093-chain-f4hwn5vy/run/membership', 'config.manifest_path')
+          └ <function _bind_detached_run_locks.<locals>.bind at 0x7f7c7461dd00>
+
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/resolvers.py", line 358, in bind
+    raise FlexLockValidationError(
+          └ <class 'flexlock.exceptions.FlexLockValidationError'>
+
+omegaconf.errors.InterpolationResolutionError: FlexLockValidationError raised while resolving interpolation: Selected producer has pending/running work: /tmp/sar093-chain-f4hwn5vy/run/membership. Pair its concrete path with after/--after.
+    full_key: manifest_path
+    object_type=dict
+2026-10-15 12:20:30.374 | INFO     | flexlock.worker:worker_loop:375 - All tasks finished.
+Traceback (most recent call last):
+  File "/tmp/validate_sar093_chain.py", line 10, in <module>
+    FlexLockRunner().run(['-d','sar_ml.pipelines.preprocessing_cfg.cfg','-s','split','freeze','extract','prepare_train','prepare_val','prepare_test','-o',f'run_dir={root}',f'listing_path={listing}'])
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/runner.py", line 792, in run
+    return self._run_multi(args, root_cfg, base_cfg, selects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/runner.py", line 631, in _run_multi
+    _raise_on_failure(results)
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/runner.py", line 42, in _raise_on_failure
+    _raise_on_failure(item)
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/runner.py", line 42, in _raise_on_failure
+    _raise_on_failure(item)
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/runner.py", line 39, in _raise_on_failure
+    outcome.raise_on_failure()
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py", line 184, in raise_on_failure
+    raise FlexLockExecutionError(
+flexlock.exceptions.FlexLockExecutionError: Run at /tmp/sar093-chain-f4hwn5vy/run/extract ended FAILED: [stage 3/6 extract] Traceback (most recent call last):
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py", line 307, in _run_composite
+    stage_dir, result = _run_stage(
+                        ^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/worker.py", line 200, in _run_stage
+    result = func(stage_cfg)
+             ^^^^^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/utils.py", line 920, in instantiate
+    return target_class(*all_args, **init_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/sar_ml/pipelines/safe_preprocessing.py", line 189, in run_extraction
+    results = Project().submit(config, sweep=sweep, sweep_root=str(directory / "queue"),
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py", line 743, in submit
+    return self._submit_sweep(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/api.py", line 1795, in _submit_sweep
+    merged_items = compile_sweep(base_config, sweep, sweep_target, after=bool(after))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/sweep_compile.py", line 102, in compile_sweep
+    return [(i, _compile_item(base, override, target, after))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/sweep_compile.py", line 102, in <listcomp>
+    return [(i, _compile_item(base, override, target, after))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/sweep_compile.py", line 33, in _compile_item
+    return _freeze_and_bind(cfg, allow_future=after)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/freeze.py", line 77, in _freeze_and_bind
+    return _bind_detached_run_locks(detached, allow_future=allow_future)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/resolvers.py", line 374, in _bind_detached_run_locks
+    resolved = OmegaConf.to_container(detached, resolve=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/omegaconf.py", line 573, in to_container
+    return BaseContainer._to_content(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 292, in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 244, in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 231, in _format_and_raise
+    format_and_raise(
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/_utils.py", line 899, in format_and_raise
+    _raise(ex, cause)
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/_utils.py", line 797, in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 242, in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 246, in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 277, in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 584, in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 769, in resolve_parse_tree
+    raise InterpolationResolutionError(
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 764, in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 206, in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 101, in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 342, in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 298, in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 125, in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 1041, in accept
+    return visitor.visitInterpolationResolver(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 179, in visitInterpolationResolver
+    return self.resolver_interpolation_callback(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 750, in resolver_interpolation_callback
+    return self._evaluate_custom_resolver(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/base.py", line 694, in _evaluate_custom_resolver
+    return resolver(
+           ^^^^^^^^^
+  File "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/.pixi/envs/default/lib/python3.11/site-packages/omegaconf/omegaconf.py", line 445, in resolver_wrapper
+    ret = resolver(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/ontap/user/qfebvre/flexlock-execution-validation/flexlock/resolvers.py", line 358, in bind
+    raise FlexLockValidationError(
+omegaconf.errors.InterpolationResolutionError: FlexLockValidationError raised while resolving interpolation: Selected producer has pending/running work: /tmp/sar093-chain-f4hwn5vy/run/membership. Pair its concrete path with after/--after.
+    full_key: manifest_path
+    object_type=dict
+

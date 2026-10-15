@@ -1,0 +1,13 @@
+ WARN Encountered 1 warning while parsing the manifest:
+  ⚠ the `[system-requirements]` table is deprecated in favor of virtual
+  │ packages on `platforms`
+    ╭─[/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke/pyproject.toml:45:1]
+ 44 │     # by pixi 0.72 yet
+ 45 │ ╭─▶ [tool.pixi.feature.gpu.system-requirements]
+ 46 │ ├─▶ cuda = "12"
+    · ╰──── declare these on the `platforms` entries instead
+ 47 │     
+    ╰────
+  help: e.g. platforms = [{ platform = "linux-64", cuda = "12" }]
+
+✔ Lock-file was already up-to-date

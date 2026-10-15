@@ -10,6 +10,10 @@ products, decides whether preparation still suits a changed model, and checks co
 coverage. A successful invocation is evidence that it finished and passed declared
 output checks. The project decides whether its result answers the scientific question.
 
+The [connected lifecycle recipes](workflow_lifecycle.md) extend this convention to
+shared datasets, model releases and batch inference, using SAR as the concrete
+example. Track/arm/run is optional; processing products need not be experiment arms.
+
 ## Organize choices as track / arm / run
 
 Use these as plain project names, not FlexLock object types:

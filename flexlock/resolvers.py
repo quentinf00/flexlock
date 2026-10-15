@@ -352,7 +352,13 @@ def _bind_detached_run_locks(detached, *, allow_future=False, future_paths=()):
         path = str(Path(run_dir).resolve())
         if default is _MISSING:
             from .destination_guard import has_active_destination
-            if has_active_destination(path):
+            active = has_active_destination(path)
+            if active:
+                from .record import _completed_composite_owner
+                owner = _completed_composite_owner(path)
+                if owner is not None:
+                    active = has_active_destination(path, _ignore_owner=owner)
+            if active:
                 if not allow_future:
                     from .exceptions import FlexLockValidationError
                     raise FlexLockValidationError(

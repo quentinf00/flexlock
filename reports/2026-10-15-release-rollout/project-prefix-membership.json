@@ -1,0 +1,347 @@
+[
+  {
+    "root": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/biomass_explo_app-313972477027069846/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc/.pixi/envs/default",
+        "inventoried": false
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml",
+    "envs": [
+      {
+        "name": "hpc",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc",
+        "inventoried": true
+      },
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field",
+    "envs": [],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/tcwind-benchtools-17047569021062202688/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/geosplat-diffusion-5123862402727346974/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/my_awesome_project",
+    "envs": [],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/project_template",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/myproject-4338210930413058184/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/sample_project",
+    "envs": [],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/temp_project",
+    "envs": [],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/test_project",
+    "envs": [],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke",
+    "envs": [
+      {
+        "name": "cpu",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/cpu",
+        "inventoried": true
+      },
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/smokeproj-10299563164677282597/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/fix_colloc",
+    "envs": [],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml",
+    "envs": [],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced",
+    "envs": [
+      {
+        "name": "inference",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/inference",
+        "inventoried": true
+      },
+      {
+        "name": "jupyter",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/jupyter",
+        "inventoried": true
+      },
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sar_ml_xps-2016771191224382922/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251014_cookiecutter/my_awesome_project",
+    "envs": [],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251023_perceiver_da/perda",
+    "envs": [
+      {
+        "name": "gpu",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/gpu",
+        "inventoried": true
+      },
+      {
+        "name": "cpu",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/cpu",
+        "inventoried": true
+      },
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/perda-15264032336992630805/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251029_winddir/sarwinddir",
+    "envs": [],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251029_winddir/winddir360",
+    "envs": [],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping",
+    "envs": [
+      {
+        "name": "container",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/container",
+        "inventoried": false
+      },
+      {
+        "name": "gpu",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/gpu",
+        "inventoried": true
+      },
+      {
+        "name": "cpu",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/cpu",
+        "inventoried": false
+      },
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-3358132491341012083/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch",
+    "envs": [
+      {
+        "name": "container",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/container",
+        "inventoried": false
+      },
+      {
+        "name": "gpu",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/gpu",
+        "inventoried": true
+      },
+      {
+        "name": "cpu",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/cpu",
+        "inventoried": true
+      },
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sst_ml_mapping-2243048252751700758/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa",
+    "envs": [
+      {
+        "name": "container",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/container",
+        "inventoried": false
+      },
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/geo-jepa-15410504257383785689/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa",
+    "envs": [
+      {
+        "name": "hpc",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/hpc",
+        "inventoried": true
+      },
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/hafs-jepa-13109999023680504881/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/le-tc-wm-3786028001769815507/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260505_soba/soba_bench",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/soba-bench-12618292729968530394/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": false
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/confild",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sample_project-13749058373436323556/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/hafs_tools-2734281772214221060/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/omnihafs",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/sample_project-13358489078920711658/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc",
+    "envs": [
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/biomass-proc-14742073660771720561/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo",
+    "envs": [
+      {
+        "name": "hpc",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/hpc",
+        "inventoried": true
+      },
+      {
+        "name": "default",
+        "prefix": "/scale/scratch/qfebvre/pixienvs/tc-demo-17165244868301950311/envs/default",
+        "inventoried": true
+      }
+    ],
+    "manifest_pinned": true
+  }
+]

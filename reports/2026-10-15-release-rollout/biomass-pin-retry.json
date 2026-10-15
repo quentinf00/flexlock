@@ -1,0 +1,9 @@
+{
+  "root": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc",
+  "manifest": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/pyproject.toml",
+  "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/biomass-retry",
+  "status": "pinned",
+  "pixi_check_exit": 0,
+  "non_flexlock_lock_unchanged": true,
+  "project_dependency_repair_preserved": true
+}

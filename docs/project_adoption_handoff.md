@@ -13,11 +13,16 @@ configuration resolution, scheduler acceptance or a successful toy test.
 
 ## Scope and evidence
 
-Read the [shared recipes](workflow_guidelines.md) and [release scope](release_0_9_2.md).
+Read the [shared recipes](workflow_guidelines.md) and [current release scope](release_0_9_3.md).
 Inventory active CLI/Python/script entrypoints and retained-product readers. Record
 which use implicit caching, detached-config mutation, pipeline markers or direct
 queue-pointer reads. Keep supported config/override/sweep usage; migrate toward
 concrete selected artifacts and explicit resource orchestration where applicable.
+The 0.9.3 [rollout report](../reports/2026-10-15-release-rollout/report.md) records
+installed versions, project feedback and dependency blockers. Check the actual
+project version before writing new result records; package rollout does not close
+scientific adoption.
+
 Start with one useful workflow, then list remaining active callers and their status.
 Do not impose track/arm/run folders or split every config into many modules.
 

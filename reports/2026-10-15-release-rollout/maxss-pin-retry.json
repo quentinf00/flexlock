@@ -1,0 +1,29 @@
+[
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml",
+    "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/maxss-retry/0",
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/maxss-retry/0/proposed",
+    "status": "pinned",
+    "pixi_check_exit": 0,
+    "non_flexlock_lock_unchanged": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field",
+    "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/maxss-retry/1",
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/maxss-retry/1/proposed",
+    "status": "pinned",
+    "pixi_check_exit": 0,
+    "non_flexlock_lock_unchanged": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools",
+    "manifest": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools/pyproject.toml",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/maxss-retry/2",
+    "proposed": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/maxss-retry/2/proposed",
+    "status": "pinned",
+    "pixi_check_exit": 0,
+    "non_flexlock_lock_unchanged": true
+  }
+]

@@ -1,0 +1,301 @@
+[
+  {
+    "root": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app",
+    "agents": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc",
+    "agents": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml",
+    "agents": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field",
+    "agents": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field/AGENTS.md",
+    "hits": [
+      "src/maxss_diff/nf_seq_inversion.py:355:    \"\"\"Score frame t of each window per arm; writes per_sample.csv / summary.csv / results.json.",
+      "src/maxss_diff/nf_seq_inversion.py:497:    (save / \"results.json\").write_text(json.dumps(dict(",
+      "src/maxss_diff/nf_markov_diagnostic.py:395:    \"\"\"Writes acf.csv / onestep.csv / kstep.csv / window_nll.csv / vmax_kstep.csv / acf.png / results.json.\"\"\"",
+      "src/maxss_diff/nf_markov_diagnostic.py:447:    (save / \"results.json\").write_text(json.dumps(dict("
+    ],
+    "rg_exit": 0,
+    "disposition": "preserve callable-owned scientific products; no direct core-only reader found",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools",
+    "agents": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion",
+    "agents": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/my_awesome_project",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/my_awesome_project/AGENTS.md",
+    "hits": [
+      "03_mlflow_logging/train.py:87:        results_file = save_path / \"results.json\"",
+      "03_mlflow_logging/diagnose.py:58:        results_file = save_path / \"results.json\"",
+      "07_pipeline/stages.py:236:        results_file = save_path / \"results.json\"",
+      "07_pipeline/stages.py:263:    results_file = Path(save_dir) / \"results.json\"",
+      "07_pipeline/stages.py:318:        results_file = Path(model_dir) / \"results.json\""
+    ],
+    "rg_exit": 0,
+    "disposition": "preserve callable-owned scientific products; no direct core-only reader found",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/project_template",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/project_template/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/sample_project",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/sample_project/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/temp_project",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/temp_project/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/test_project",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/test_project/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke",
+    "agents": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/fix_colloc",
+    "agents": "/scale/user/qfebvre/projects/2509_sar_ml/fix_colloc/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml",
+    "agents": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced",
+    "agents": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251014_cookiecutter/my_awesome_project",
+    "agents": "/scale/user/qfebvre/projects/251014_cookiecutter/my_awesome_project/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251023_perceiver_da/perda",
+    "agents": "/scale/user/qfebvre/projects/251023_perceiver_da/perda/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251029_winddir/sarwinddir",
+    "agents": "/scale/user/qfebvre/projects/251029_winddir/sarwinddir/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251029_winddir/winddir360",
+    "agents": "/scale/user/qfebvre/projects/251029_winddir/winddir360/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping",
+    "agents": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch",
+    "agents": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa",
+    "agents": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa/AGENTS.md",
+    "hits": [
+      "src/geo_jepa/stages/linear_probe.py:9:  - {save_dir}/results.json \u2014 all metrics",
+      "src/geo_jepa/stages/linear_probe.py:218:        {save_dir}/results.json",
+      "src/geo_jepa/stages/linear_probe.py:384:    out = Path(save_dir) / \"results.json\""
+    ],
+    "rg_exit": 0,
+    "disposition": "preserve callable-owned scientific products; no direct core-only reader found",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa",
+    "agents": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/AGENTS.md",
+    "hits": [
+      "scripts/band_floors.py:161:    # flexcli owns results.json (it stores the return value) \u2014 hence floors.json.",
+      "scripts/context_length_probe.py:136:    (out / \"results.json\").write_text(json.dumps(res, indent=2, default=float))",
+      "src/hafs_jepa/stages/ri_probe.py:427:    out = Path(save_dir) / \"results.json\"",
+      "scripts/dense_probe.py:238:    df.to_json(out / \"dense_results.json\", orient=\"records\", indent=1)   # flexcli writes results.json itself",
+      "scripts/tcprimed_unseen_probe.py:116:        (out / \"unseen_results.json\").write_text(json.dumps(results, indent=1, default=str))",
+      "scripts/tcprimed_probe.py:177:        (out / \"results.json\").write_text(json.dumps(results, indent=2))",
+      "src/hafs_jepa/stages/supervised.py:297:    with open(Path(save_dir) / \"results.json\", \"w\") as f:",
+      "src/hafs_jepa/stages/supervised.py:307:    logger.info(f\"\\nbest epoch {best_epoch}  mean_val_R\u00b2={best_mean_r2:.3f}  \u2192 {save_dir}/results.json\")",
+      "src/hafs_jepa/stages/linear_probe.py:603:        {save_dir}/results.json",
+      "src/hafs_jepa/stages/linear_probe.py:931:    out = Path(save_dir) / \"results.json\"",
+      "src/hafs_jepa/stages/sat_to_wind_decoder.py:363:    Key metrics in results.json:",
+      "src/hafs_jepa/stages/sat_to_wind_decoder.py:426:    with open(save_path / \"results.json\", \"w\") as f:",
+      "src/hafs_jepa/stages/sat_to_wind_decoder.py:428:    logger.info(f\"Results \u2192 {save_dir}/results.json\")",
+      "src/hafs_jepa/stages/wind_decoder.py:318:    with open(Path(save_dir) / \"results.json\", \"w\") as f:",
+      "src/hafs_jepa/stages/wind_decoder.py:320:    logger.info(f\"Results \u2192 {save_dir}/results.json\")",
+      "src/hafs_jepa/stages/cross_modal_probe.py:485:    out_json = Path(save_dir) / \"results.json\""
+    ],
+    "rg_exit": 0,
+    "disposition": "preserve callable-owned scientific products; no direct core-only reader found",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm",
+    "agents": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm/AGENTS.md",
+    "hits": [
+      "src/le_tc_wm/stages/linear_probe.py:129:        {save_dir}/results.json",
+      "src/le_tc_wm/stages/linear_probe.py:287:    out_json = Path(save_dir) / \"results.json\"",
+      "src/le_tc_wm/stages/diagnostics.py:331:        {save_dir}/results.json        \u2014 all metrics",
+      "src/le_tc_wm/stages/diagnostics.py:482:    out_json = Path(save_dir) / \"results.json\""
+    ],
+    "rg_exit": 0,
+    "disposition": "preserve callable-owned scientific products; no direct core-only reader found",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260505_soba/soba_bench",
+    "agents": "/scale/user/qfebvre/projects/260505_soba/soba_bench/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/confild",
+    "agents": "/scale/user/qfebvre/projects/260506_hafs/confild/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools",
+    "agents": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/omnihafs",
+    "agents": "/scale/user/qfebvre/projects/260506_hafs/omnihafs/AGENTS.md",
+    "hits": [],
+    "rg_exit": 1,
+    "disposition": "no literal result-sidecar references in audited source",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc",
+    "agents": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/AGENTS.md",
+    "hits": [
+      "src/biomass_proc/retained_assessment.py:31:def select_retained(results_path, prediction_path, model_path, metadata_path,",
+      "src/biomass_proc/retained_assessment.py:35:    paths=dict(results=results_path,predictions=prediction_path,model=model_path,",
+      "src/biomass_proc/retained_assessment.py:39:    rows=pd.read_csv(results_path)",
+      "configs/adoption.py:22:    results_path=str(GRID/'results_embed_s0.csv'),",
+      "configs/adoption.py:28:        results_path='${results_path}',prediction_path='${prediction_path}',model_path='${model_path}',",
+      "configs/adoption.py:31:        _snapshot_=snapshot({k:'${...'+k+'}' for k in ['results_path','prediction_path','model_path','metadata_path','dataset_manifest_path','source_evidence']}),"
+    ],
+    "rg_exit": 0,
+    "disposition": "preserve callable-owned scientific products; no direct core-only reader found",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo",
+    "agents": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo/AGENTS.md",
+    "hits": [
+      "backfill_catalog.sh:22:    # Skip if generate results.json not present (run incomplete)",
+      "backfill_catalog.sh:23:    if [ ! -f \"$GEN/results.json\" ]; then",
+      "backfill_catalog.sh:24:        echo \"Skipping $DATE \u2014 no generate/results.json\"",
+      "src/tc_demo/generate_verification.py:104:        <save_dir>/verification_results.json",
+      "src/tc_demo/generate_verification.py:189:    (out_root / \"verification_results.json\").write_text(json.dumps(all_results, indent=2))",
+      "src/tc_demo/reconstruct.py:406:    (out_root / \"reconstruct_results.json\").write_text(json.dumps(results, indent=2))",
+      "src/tc_demo/forecast.py:267:        <save_dir>/forecast_results.json",
+      "src/tc_demo/forecast.py:386:    (out_root / \"forecast_results.json\").write_text(json.dumps(results, indent=2))",
+      "src/tc_demo/build_report.py:306:    _raw       = json.loads((gen_root / \"results.json\").read_text())",
+      "src/tc_demo/build_report.py:326:        grj = gen_recon_root / \"results.json\"",
+      "src/tc_demo/build_report.py:335:        frj = forecast_root / \"forecast_results.json\"",
+      "src/tc_demo/build_report.py:343:        vrj = verification_root / \"verification_results.json\"",
+      "src/tc_demo/generate.py:940:    results_file = out / \"results.json\"",
+      "src/tc_demo/generate.py:1151:    results_file = out / \"results.json\""
+    ],
+    "rg_exit": 0,
+    "disposition": "preserve callable-owned scientific products; no direct core-only reader found",
+    "coverage": "Python, YAML, TOML, shell; excludes generated outputs/reports/vendor and nested libraries; not arbitrary notebooks or external services"
+  }
+]

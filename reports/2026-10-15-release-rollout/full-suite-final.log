@@ -1,0 +1,71 @@
+........................................................................ [  6%]
+........................................................................ [ 13%]
+........................................................................ [ 20%]
+........................................................................ [ 27%]
+........................................................................ [ 34%]
+........................................................................ [ 41%]
+...................................................ss................... [ 47%]
+........................................................................ [ 54%]
+........................................................................ [ 61%]
+........................................................................ [ 68%]
+........................................................................ [ 75%]
+........................................................................ [ 82%]
+........................................................................ [ 88%]
+........................................................................ [ 95%]
+...x........................................                             [100%]
+=============================== warnings summary ===============================
+tests/test_utils.py:244
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_utils.py:244: PytestCollectionWarning: cannot collect test class 'TestInstantiationClass' because it has a __init__ constructor (from: tests/test_utils.py)
+    class TestInstantiationClass:
+
+tests/test_utils.py:251
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_utils.py:251: PytestCollectionWarning: cannot collect test class 'TestClassWithPositionalArgs' because it has a __init__ constructor (from: tests/test_utils.py)
+    class TestClassWithPositionalArgs:
+
+tests/test_multistage_config.py: 4 warnings
+tests/test_resolvers.py: 17 warnings
+  /scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages/omegaconf/omegaconf.py:445: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    ret = resolver(*args, **kwargs)
+
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-single]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-single]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-pipeline]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-pipeline]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-cli]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-cli]
+  /scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages/omegaconf/grammar_visitor.py:253: UserWarning: In the sequence `prespkg.xps.train_a,main,,strict` some elements are missing: please replace them with empty quoted strings. See https://github.com/omry/omegaconf/issues/572 for details.
+    warnings.warn(
+
+tests/test_resolvers.py::test_now_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:13: DeprecationWarning: ${now:} is deprecated; use save_dir_policy='timestamp' on submit()/run instead of embedding ${now:} in save_dir.
+    timestamp = now_resolver()
+
+tests/test_resolvers.py::test_now_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:21: DeprecationWarning: ${now:} is deprecated; use save_dir_policy='timestamp' on submit()/run instead of embedding ${now:} in save_dir.
+    timestamp_custom = now_resolver(fmt="%Y%m%d")
+
+tests/test_resolvers.py::test_vinc_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:34: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path1 = vinc_resolver(str(base_path))
+
+tests/test_resolvers.py::test_vinc_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:39: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path2 = vinc_resolver(str(base_path))
+
+tests/test_resolvers.py::test_vinc_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:47: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path3 = vinc_resolver(str(base_path))
+
+tests/test_resolvers.py::test_vinc_resolver_with_custom_format
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:57: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path1 = vinc_resolver(str(base_path), fmt=fmt)
+
+tests/test_resolvers.py::test_vinc_resolver_with_custom_format
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:62: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path2 = vinc_resolver(str(base_path), fmt=fmt)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1049 passed, 2 skipped, 1 xfailed, 39 warnings in 377.09s (0:06:17)

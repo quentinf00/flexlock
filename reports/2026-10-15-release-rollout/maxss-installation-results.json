@@ -1,0 +1,52 @@
+[
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/190a34eb4d94ac61.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/default/lib/python3.11/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/hpc",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/3e8c5890c2ed39c7.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/maxss-ml-15028595582187275307/envs/hpc/lib/python3.13/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/2c81a112a5b3cb50.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/default/lib/python3.13/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/5fbef2858541890d.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  },
+  {
+    "prefix": "/scale/scratch/qfebvre/pixienvs/tcwind-benchtools-17047569021062202688/envs/default",
+    "backup": "/scale/scratch/qfebvre/flexlock093-rollout-preserved/prefix-backups/61df05216352a3ed.tar.gz",
+    "install_exit": 0,
+    "status": "installed",
+    "probe_exit": 0,
+    "probe_output": "{\"version\": \"0.9.3\", \"source\": \"/scale/scratch/qfebvre/pixienvs/tcwind-benchtools-17047569021062202688/envs/default/lib/python3.14/site-packages/flexlock/__init__.py\", \"record_results\": true, \"legacy_read\": true, \"queue_guard\": true}\n",
+    "probe_error": "",
+    "other_distribution_names_unchanged": true
+  }
+]

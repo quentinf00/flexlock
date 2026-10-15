@@ -1,0 +1,14 @@
+ WARN Encountered 1 warning while parsing the manifest:
+  ⚠ the `[system-requirements]` table is deprecated in favor of virtual
+  │ packages on `platforms`
+    ╭─[/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc/pyproject.toml:16:1]
+ 15 │     
+ 16 │ ╭─▶ [tool.pixi.system-requirements]
+ 17 │ ├─▶ cuda = "12"
+    · ╰──── declare these on the `platforms` entries instead
+ 18 │     
+    ╰────
+  help: e.g. platforms = [{ platform = "linux-64", cuda = "12" }]
+
+ WARN Environments found in '/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc/.pixi/envs', this will be ignored and the environment will be installed in the 'detached-environments' directory: '/scale/scratch/qfebvre/pixienvs/nextgems_tc-13266959035230603531'. It's advised to remove the .pixi/envs folder from the default directory to avoid confusion as a symlink can be made, please re-install after removal..
+✔ Lock-file was already up-to-date

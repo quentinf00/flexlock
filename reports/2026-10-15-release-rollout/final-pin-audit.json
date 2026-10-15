@@ -1,0 +1,126 @@
+[
+  {
+    "root": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251023_perceiver_da/perda",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/confild",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/omnihafs",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo",
+    "status": "pinned",
+    "manifest_matches": true,
+    "lock_matches": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260505_soba/soba_bench",
+    "status": "restored-review-required",
+    "deferred": true
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/project_template",
+    "status": "restored-review-required",
+    "deferred": true
+  }
+]

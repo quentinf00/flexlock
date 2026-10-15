@@ -1,0 +1,54 @@
+{
+  "hafs": {
+    "run": "/tmp/flexlock093-project-check-42vbkohm/hafs",
+    "scopes": {
+      "main": {
+        "tree": "ff6550c88bb0dea940faf70e2ded3d60860696aa",
+        "files": 112,
+        "include": [
+          "src/",
+          "scripts/"
+        ]
+      },
+      "geo_jepa": {
+        "tree": "d84c9f1b4dbf80373ffc7dd958a456c153e968a9",
+        "files": 26,
+        "include": [
+          "src/"
+        ]
+      }
+    },
+    "result_in_record": true
+  },
+  "biomass": {
+    "run": "/tmp/flexlock093-project-check-42vbkohm/biomass",
+    "scopes": {
+      "main": {
+        "tree": "f3f98e44b85be490b2e9b01523a40cba171fa45a",
+        "files": 22,
+        "include": [
+          "src/",
+          "configs/",
+          "workflows/",
+          "pipeline.py"
+        ]
+      }
+    },
+    "result_in_record": true
+  },
+  "sst_retained_reader": {
+    "path": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch/reports/flexlock-adoption/runs/20261014-retained003/reassess",
+    "result_type": "dict",
+    "record_read": true
+  },
+  "hafs_retained_reader": {
+    "path": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa/runs/retained-eval/bs_shared8_cont/v1/irar_eval",
+    "result_type": "dict",
+    "record_read": true
+  },
+  "biomass_retained_reader": {
+    "path": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc/reports/flexlock-adoption/runs/retained-wave-checked004/assess",
+    "result_type": "dict",
+    "record_read": true
+  }
+}

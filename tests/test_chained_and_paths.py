@@ -209,8 +209,11 @@ def test_submit_chained_requires_sweep_and_downstream(tmp_path):
         proj.submit_chained(base, downstream=[("encode_val", {})])
 
 
-def test_submit_chained_warns_on_missing_attr(tmp_path, caplog):
+def test_submit_chained_warns_on_missing_attr(tmp_path, caplog, monkeypatch):
     """A wiring attr that doesn't exist on the result is logged, not crashed."""
+    # Its legacy defaults contain relative output paths; keep repeated suite
+    # runs isolated even when snapshot() is mocked but result records are real.
+    monkeypatch.chdir(tmp_path)
     proj = _make_proj_with_defaults()
     base = OmegaConf.create({"save_dir": str(tmp_path / "x"), "x": 0})
 

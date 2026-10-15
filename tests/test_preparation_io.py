@@ -108,5 +108,6 @@ def test_reservation_failure_prevents_scheduler_submission(tmp_path, monkeypatch
     with pytest.raises(OSError, match='injected reservation failure'):
         Project().submit(cfg, sweep=[dict(value=1,save_dir=str(tmp_path/'products/a')),
                                   dict(value=2,save_dir=str(tmp_path/'products/b'))],
+                         sweep_root=str(tmp_path/'queue'),
                          slurm_config=str(profile), smart_run=False, wait=False)
     backend.submit.assert_not_called()
