@@ -57,7 +57,8 @@ def _run(*argv):
 
 
 def _result(save_dir):
-    return json.loads((save_dir / "results.json").read_text())
+    from flexlock.run_record import RunRecord
+    return RunRecord(save_dir).load_results()
 
 
 def test_swap_replaces_node(pkg):

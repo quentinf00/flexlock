@@ -2,7 +2,7 @@
 
 ``RunRecord`` is the *one* owner of the files that define a run on disk —
 ``run.lock`` (the snapshot written before execution), ``run.complete`` (the
-success marker), and ``results.json`` (the return payload). Every writer —
+success marker). Return payloads live in the record; legacy results.json is read. Every writer —
 the serial ``Project.submit`` path, the sweep ``worker``, and the legacy
 ``write_complete_marker`` helper — routes through it, so the driver and worker
 are structurally identical and there is a single place to hook the
@@ -72,14 +72,21 @@ class RunRecord:
     # ── writers ──
     def write_lock(self, snapshot_data: dict) -> Path:
         """Write ``run.lock`` (the snapshot) atomically before execution."""
+        snapshot_data = dict(snapshot_data, result_storage="record")
         return _atomic_write(self.lock_path, OmegaConf.to_yaml(snapshot_data))
 
-    def write_results(self, result: Any) -> Path:
-        """Write ``results.json`` with the run's return payload."""
+    @staticmethod
+    def result_payload(result):
+        """Keep the historical dict/scalar return-payload convention."""
         payload = result if isinstance(result, dict) else {"result": result}
-        return _atomic_write(
-            self.results_path, json.dumps(payload, indent=2, default=str)
-        )
+        return json.loads(json.dumps(payload, default=str))
+
+    def write_results(self, result: Any) -> Path:
+        """Finalize the return payload inside run.lock, never a product file."""
+        from .record import read_lock
+        record = read_lock(self.save_dir) or {}
+        record.update(result=self.result_payload(result), result_storage="record")
+        return self.write_lock(record)
 
     def mark_complete(self, result: Any = None) -> Path:
         """Write ``run.complete`` after the user function returns successfully.
@@ -138,10 +145,17 @@ class RunRecord:
         """Return the parsed ``run.lock`` snapshot, or ``None`` if absent."""
         if not self.lock_path.exists():
             return None
-        return OmegaConf.to_container(OmegaConf.load(self.lock_path), resolve=True)
+        from .record import read_lock
+        return read_lock(self.save_dir)
 
     def load_results(self) -> Optional[Any]:
-        """Return the parsed ``results.json`` payload, or ``None`` if absent."""
+        """Read the authoritative record, falling back to legacy results.json."""
+        from .record import load_record
+        record = load_record(self.save_dir) or {}
+        if "result" in record:
+            return record["result"]
+        if record.get("result_storage") == "record":
+            return None
         if not self.results_path.exists():
             return None
         with open(self.results_path) as f:
@@ -164,9 +178,8 @@ class RunRecord:
         return self.lock_path.exists() and self.complete_path.exists()
 
     def is_complete_task(self) -> bool:
-        """Completeness for a sweep-task dir, which carries ``run.complete`` and
-        ``results.json`` but no ``run.lock`` (its snapshot lives in the task DB)."""
-        return self.complete_path.exists() and self.results_path.exists()
+        """A completed task with a recorded payload (or legacy result file)."""
+        return self.complete_path.exists() and self.load_results() is not None
 
     @property
     def status(self) -> str:

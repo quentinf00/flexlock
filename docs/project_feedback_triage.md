@@ -1,5 +1,12 @@
 # Project feedback and core follow-ups — 2026-10-14
 
+2026-10-15 update: user approved in-record return values and shared capture/
+comparison scopes. C1/C3/C4 below are implemented in the validation checkout,
+with tests and migration notes in
+[record_and_source_scope_migration.md](record_and_source_scope_migration.md).
+The table retains the original findings/proposals; it is not the current release
+contract. No updated project installation is implied.
+
 Project acceptance applies to a concrete recipe and declared evidence scope.
 Core proposals are handled independently: reproduce, identify the contract and
 affected callers, choose a bounded fix or an explicit API/release decision, add
@@ -24,7 +31,7 @@ validation-branch changes into project environments.
 | G2 / docs | Hidden FlexLock indexes misclassified as campaign items | HAFS-tools fixed own gate | Audit shared example; exclude specifically owned control entries rather than blindly accepting arbitrary extras. |
 | G3 / docs | Processing/release terminology and portable inference | SAR FLEXLOCK-LIFECYCLE queued | Review project implementation/evidence and proposed guideline patch; track/arm/run stays optional. |
 
-Repository discovery today follows the selected stage's **top-level** _target_.
+Repository discovery in installed 0.9.2 follows the selected stage's **top-level** _target_.
 collect_target_include_patterns recursively walks nested targets for cache
 comparison file scopes; it is not repository provenance discovery. Ordinary
 imports inside a callable and subprocess imports require explicit repository

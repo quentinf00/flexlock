@@ -588,8 +588,8 @@ print(result.result)
 ```
 
 **Result loading:**
-- Tries `results.json` first
-- Falls back to `run.lock` if available
+- Reads the authoritative run record's `result` section
+- Falls back to `results.json` only for historical records
 - Returns `ExecutionResult` with `status="CACHED"`
 
 ---

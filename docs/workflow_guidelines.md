@@ -112,9 +112,13 @@ dependencies that cannot be derived from arguments, but remove redundant/stale o
 
 Keep lightweight automatic discovery. _snapshot_.discover accepts repos and prevs
 boolean flags, both defaulting to True. Repository discovery follows the callable's
-top-level _target_; nested _target_ repositories and ordinary imports currently
-need explicit declarations. The recursive target helper used for cache comparison
-does not add repositories to provenance. An explicit entry for a canonical checkout prevents a second unfiltered
+configured _target_ nodes, including nested ones, when their modules resolve to
+Git checkouts (including editable/src installs). Ordinary imports inside callables
+still need explicit declarations. Auto-discovered scopes contain the target source
+files; include helper files explicitly when required. Capture and cache comparison
+use the same per-repository include/exclude scope, applied before Git staging.
+An explicit repository entry without include captures the full non-ignored checkout;
+an explicit include can select a broader package subtree. An explicit entry for a canonical checkout prevents a second unfiltered
 alias. Explicit declarations cover extra repositories/scopes. No discovered repository
 means absent evidence and a visible warning, not proof that imports were captured.
 Disable discovery explicitly for deliberate untracked targets.

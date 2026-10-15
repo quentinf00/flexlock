@@ -1,6 +1,9 @@
 # Urgent fixes: compatibility proposals for review
 
-2026-10-14. These are proposals, not installed changes.
+2026-10-14 proposals, superseded by the user's 2026-10-15 decision: use
+in-record results and shared source scopes. See the implemented, unreleased
+[migration contract](record_and_source_scope_migration.md). The proposals below
+are retained as decision history, not current implementation guidance.
 
 ## Return payload versus callable-owned products
 

@@ -331,11 +331,8 @@ class Project:
         Returns:
             Path to matching run directory, or None if no match found
         """
-        # Auto-populate match_include from _target_ modules if not provided
-        if match_include is None:
-            from .utils import collect_target_include_patterns
-
-            match_include = collect_target_include_patterns(cfg) or None
+        # extract_tracking_info supplies each repository's effective target or
+        # explicit scope; a global inferred include would mix different repos.
 
         # Compute the pure fingerprint digest — the index key. Both sweep tasks
         # and serial runs record under this same key, so a config first run as a
@@ -487,21 +484,7 @@ class Project:
             )
         product_dir = record.get('config', {}).get('save_dir', str(match_dir)) if record.get('record_dir') else str(match_dir)
         validate_outputs(cfg, product_dir, record_dir=match_dir)
-        result_data = None
-
-        # Try results.json
-        results_file = match_dir / "results.json"
-        if results_file.exists():
-            with open(results_file, "r") as f:
-                result_data = json.load(f)
-
-        # Fall back to the run record (run.lock or task DB)
-        if result_data is None:
-            from .record import load_record
-
-            lock_data = load_record(match_dir)
-            if lock_data is not None:
-                result_data = lock_data.get("result", {})
+        result_data = RunRecord(match_dir).load_results()
 
         return ExecutionResult(
             save_dir=str(product_dir), status="CACHED", result=result_data, cfg=cfg,
@@ -973,10 +956,9 @@ class Project:
                     record = RunRecord(save_dir)
                     try:
                         record.write_results(result)
-                    except Exception as e:
-                        logger.warning(
-                            f"Could not save results to {record.results_path}: {e}"
-                        )
+                    except Exception as exc:
+                        record.write_error(exc)
+                        raise
                     record_code_drift(save_dir)
                     from .outputs import validate_outputs
 
@@ -1482,7 +1464,6 @@ class Project:
                     for sd in self._pipeline_stage_dirs(item):
                         d = Path(sd)
                         (d / "run.complete").unlink(missing_ok=True)
-                        (d / "results.json").unlink(missing_ok=True)
                 _reset_task_db(master_root)
                 logger.info(
                     f"Force flag enabled: reset pipeline task DB under {master_root}"
@@ -1752,7 +1733,6 @@ class Project:
             if "save_dir" in cfg:
                 d = Path(cfg.save_dir)
                 (d / "run.complete").unlink(missing_ok=True)
-                (d / "results.json").unlink(missing_ok=True)
 
         # Task DB (its pending_count==0 short-circuit would otherwise resume).
         db_dir = self._sweep_db_dir(merged_items, sweep_root)

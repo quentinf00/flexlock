@@ -448,7 +448,7 @@ def test_chained_nested_run_lock(down, held_scheduler):
     root = down / "results" / "nested"
     cfg.save_dir = str(root)
     cfg.model = "${run_lock:${run:xps.train_a,main},config.x}"
-    cfg._snapshot_ = {"data": {"upstream": "${run:xps.train_a,main}/results.json"}}
+    cfg._snapshot_ = {"data": {"upstream": "${run:xps.train_a,main}/run.lock"}}
     Project().submit(cfg, slurm_config=held_scheduler, after=[42], wait=False)
     _train()
     worker_loop(instantiate, OmegaConf.create({"save_dir": str(root)}), None,

@@ -58,7 +58,8 @@ def collect_target_include_patterns(cfg, repo_path=None):
 def _walk_targets(cfg, out):
     """Recursively collect _target_ strings from a nested config."""
     if isinstance(cfg, (dict, DictConfig)):
-        for key, val in cfg.items():
+        entries = cfg.items_ex(resolve=False) if isinstance(cfg, DictConfig) else cfg.items()
+        for key, val in entries:
             if key == "_snapshot_":
                 continue
             if key == "_target_" and isinstance(val, str):
@@ -196,35 +197,38 @@ def extract_tracking_info(cfg) -> Tuple[Dict, Dict, List]:
     ):
         raise FlexLockConfigError('_snapshot_.discover accepts boolean repos and prevs flags')
 
-    # Auto-populate repo from _target_ using top-level module name
-    if "_target_" in cfg and discovery.get("repos", True):
-        try:
-            target_str = (
-                cfg._target_ if isinstance(cfg, DictConfig) else cfg["_target_"]
-            )
-            top_level_module = target_str.split(".")[0]
-            if top_level_module not in repos:
+    # Discover configured targets, not arbitrary transitive Python imports.
+    # Explicit canonical repo declarations own their scope (None means full).
+    if discovery.get("repos", True):
+        explicit_paths = {Path(info["path"]).resolve() for info in repos.values()}
+        explicit_names = set(repos)
+        targets = set()
+        _walk_targets(cfg, targets)
+        for target_str in sorted(targets):
+            try:
+                if target_str.split('.')[0] in explicit_names:
+                    continue
                 module_name, _ = target_str.rsplit(".", 1)
-                resolved_path = resolve_module_to_repo_path(module_name)
-                # Explicit scopes are authoritative. Do not add a second,
-                # unfiltered alias of the same checkout under the module name.
-                if not any(Path(info['path']).resolve() == Path(resolved_path).resolve()
-                           for info in repos.values()):
-                    repos[top_level_module] = {
-                        "path": resolved_path,
-                        "module": top_level_module,
-                    }
-                    logger.debug(
-                        f"Auto-populated repos['{top_level_module}'] from _target_ '{target_str}': {resolved_path}"
+                resolved_path = Path(resolve_module_to_repo_path(module_name)).resolve()
+                if resolved_path in explicit_paths:
+                    continue
+                alias = next((name for name, info in repos.items()
+                              if Path(info["path"]).resolve() == resolved_path), None)
+                if alias is None:
+                    base = target_str.split(".")[0]
+                    alias = base
+                    while alias in repos:
+                        alias += "_repo"
+                    repos[alias] = dict(path=str(resolved_path), module=base,
+                        include=collect_target_include_patterns(cfg, str(resolved_path)) or None)
+                    logger.debug(f"Discovered target repository {resolved_path}")
+            except Exception:
+                if target_str == cfg.get('_target_'):
+                    logger.warning(
+                        f"No repository discovered for target {target_str}; "
+                        "source evidence is absent unless declared explicitly. "
+                        "Set _snapshot_.discover.repos=False for deliberate untracked targets."
                     )
-                else:
-                    logger.debug(f"Using explicit checkout scope for target '{target_str}': {resolved_path}")
-        except Exception:
-            logger.warning(
-                f"No repository discovered for target {cfg.get('_target_')}; "
-                "source evidence is absent unless declared explicitly. "
-                "Set _snapshot_.discover.repos=False for deliberate untracked targets."
-            )
 
     # "prevs_from_data": Walk up from each data path to find the nearest
     # run.lock, resolving data files to their containing flexlock run dir.
@@ -274,7 +278,9 @@ def collect_task_repos(cfg, tasks, task_to=None) -> Dict:
         if isinstance(controller, dict):
             controller = {key: value for key, value in controller.items()
                           if key not in ('data', 'prevs')}
-        key = (str(target), str(controller if '${' not in str((target, controller)) else snap))
+        targets = set()
+        _walk_targets(node, targets)
+        key = (str(sorted(targets)), str(controller if '${' not in str((target, controller)) else snap))
         if key in seen:
             continue
         seen.add(key)
@@ -289,7 +295,20 @@ def collect_task_repos(cfg, tasks, task_to=None) -> Dict:
             logger.debug(f"Could not extract repos from task {target}: {exc}")
             continue
         for name, info in task_repos.items():
-            repos.setdefault(name, info)
+            canonical = Path(info['path']).resolve()
+            alias = next((n for n, r in repos.items()
+                          if Path(r['path']).resolve() == canonical), None)
+            if alias is None:
+                while name in repos:
+                    name += '_repo'
+                repos[name] = dict(info)
+            else:
+                # The master captures the union required by all stages/items.
+                current = repos[alias]
+                current['include'] = (sorted(set(current['include']) | set(info['include']))
+                                      if current.get('include') and info.get('include') else None)
+                current['exclude'] = sorted(set(current.get('exclude') or []) &
+                                            set(info.get('exclude') or []))
     return repos
 
 

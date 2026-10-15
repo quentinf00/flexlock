@@ -108,11 +108,10 @@ def test_task_location_first_class(tmp_path, monkeypatch):
     task = {'save_dir': str(task_dir)}
     task_id = _hash_task(task)
     rec = RunRecord(task_dir)
-    rec.write_results({"acc": 0.5})
     rec.mark_complete(result={"acc": 0.5})
     db_path = sweep_root / "run.lock.tasks.db"
     queue_tasks(db_path, [task])
-    update_task_snapshot(db_path, task_id, {'config': task, 'fingerprint': 'fp-task'})
+    update_task_snapshot(db_path, task_id, {'config': task, 'fingerprint': 'fp-task', 'result': {'acc': 0.5}, 'result_storage': 'record'})
     finish_task(db_path, task, result={'acc': 0.5})
     (task_dir / '.flexlock_marker').write_text(json.dumps({'db': str(db_path), 'task_id': task_id}))
 

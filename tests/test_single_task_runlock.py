@@ -121,7 +121,7 @@ def test_owner_records_repos_and_survives_git_failure(tmp_path, monkeypatch):
     snap_mod = sys.modules["flexlock.snapshot"]  # name shadowed by flexlock.snapshot()
     monkeypatch.setattr(
         snap_mod, "create_shadow_snapshot",
-        lambda path, ref_name=None: {"commit": "c0ffee", "tree": "t", "is_dirty": False},
+        lambda path, ref_name=None, include=None, exclude=None: {"commit": "c0ffee", "tree": "t", "is_dirty": False},
     )
     monkeypatch.setattr("flexlock.worker.compute_fingerprint", lambda *a, **k: "fp")
     _submit_hpc(_cfg(tmp_path / "a"), tmp_path)
@@ -274,4 +274,5 @@ def test_force_reruns_single_task_submission(tmp_path, mode):
     submit(force=True)
     assert tick.read_text() == "11"
     assert (save_dir / "run.complete").exists()
-    assert json.loads((save_dir / "results.json").read_text()) == {"n": 2}
+    from flexlock.run_record import RunRecord
+    assert RunRecord(save_dir).load_results() == {"n": 2}

@@ -707,10 +707,12 @@ flexlock-status outputs/job/run.lock.tasks.db --all
 
 ### Results Not Loading
 
-**Verify results file exists:**
-```bash
-ls outputs/job/results.json
+**Read the authoritative return payload:**
+```python
+from flexlock.run_record import RunRecord
+print(RunRecord("outputs/job").load_results())
 ```
+New records store the return value internally; historical sidecars remain readable.
 
 **If missing:**
 - Check if job actually completed

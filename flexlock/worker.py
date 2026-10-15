@@ -166,7 +166,7 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
             # Appending another campaign can replace the master. Retain the
             # source/env/note actually used by this item in its DB snapshot.
             snapshot_data = materialize(snapshot_data, master)
-            snapshot_data.update(record_version=2, task_record=master.get('task_record', 'legacy'))
+            snapshot_data.update(record_version=2, result_storage="record", task_record=master.get('task_record', 'legacy'))
             if receipt_dir != task_save_dir:
                 snapshot_data['record_dir'] = str(receipt_dir.resolve())
             _store_stage_snapshot(db_path, task_id, snapshot_data, snapshots)
@@ -200,10 +200,16 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
         result = func(stage_cfg)
 
         record = RunRecord(receipt_dir)
-        try:
-            record.write_results(result)
-        except Exception as e:
-            logger.warning(f"Could not write results.json at {task_save_dir}: {e}")
+        # Persist the completed stage payload before its completion marker. DB
+        # mode owns no extra lock file; dir mode mirrors the same snapshot.
+        if snapshot_data is None:
+            snapshot_data = dict(config=OmegaConf.to_container(stage_cfg, resolve=False),
+                                 record_version=2)
+        snapshot_data.update(result=RunRecord.result_payload(result), result_storage="record")
+        _store_stage_snapshot(db_path, task_id, snapshot_data, snapshots)
+        if lock_record is not None:
+            lock_record.update(result=snapshot_data["result"], result_storage="record")
+            record.write_lock(lock_record)
 
         from .outputs import validate_outputs
 

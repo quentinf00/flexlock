@@ -1,0 +1,73 @@
+.F...........ss....FFFFFF..                                              [100%]
+=================================== FAILURES ===================================
+__________ test_symlink_loop_is_not_treated_as_a_literal_destination ___________
+/tmp/flexlock-scope-results-baseline/tests/test_destination_resolution.py:29: in test_symlink_loop_is_not_treated_as_a_literal_destination
+    with pytest.raises(RuntimeError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'RuntimeError'>
+__________ test_reservation_failure_prevents_scheduler_submission[1] ___________
+/tmp/flexlock-scope-results-baseline/tests/test_preparation_io.py:108: in test_reservation_failure_prevents_scheduler_submission
+    with pytest.raises(OSError, match='injected reservation failure'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'OSError'>
+__________ test_reservation_failure_prevents_scheduler_submission[2] ___________
+/tmp/flexlock-scope-results-baseline/tests/test_preparation_io.py:108: in test_reservation_failure_prevents_scheduler_submission
+    with pytest.raises(OSError, match='injected reservation failure'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'OSError'>
+__________ test_reservation_failure_prevents_scheduler_submission[4] ___________
+/tmp/flexlock-scope-results-baseline/tests/test_preparation_io.py:108: in test_reservation_failure_prevents_scheduler_submission
+    with pytest.raises(OSError, match='injected reservation failure'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE <class 'OSError'>
+_ test_partial_overrides_keep_master_output_contracts_and_queue_payloads[None] _
+/tmp/flexlock-scope-results-baseline/tests/test_preparation_reuse.py:26: in test_partial_overrides_keep_master_output_contracts_and_queue_payloads
+    pointer = json.loads((product/'.flexlock-queue.json').read_text())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:537: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-qfebvre/pytest-62/test_partial_overrides_keep_ma0/products/.flexlock-queue.json'
+__ test_partial_overrides_keep_master_output_contracts_and_queue_payloads[.] ___
+/tmp/flexlock-scope-results-baseline/tests/test_preparation_reuse.py:26: in test_partial_overrides_keep_master_output_contracts_and_queue_payloads
+    pointer = json.loads((product/'.flexlock-queue.json').read_text())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:537: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-qfebvre/pytest-62/test_partial_overrides_keep_ma1/products/.flexlock-queue.json'
+_ test_partial_overrides_keep_master_output_contracts_and_queue_payloads[payload] _
+/tmp/flexlock-scope-results-baseline/tests/test_preparation_reuse.py:26: in test_partial_overrides_keep_master_output_contracts_and_queue_payloads
+    pointer = json.loads((product/'.flexlock-queue.json').read_text())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:537: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-qfebvre/pytest-62/test_partial_overrides_keep_ma2/products/.flexlock-queue.json'
+=========================== short test summary info ============================
+FAILED ../../../../tmp/flexlock-scope-results-baseline/tests/test_destination_resolution.py::test_symlink_loop_is_not_treated_as_a_literal_destination
+FAILED ../../../../tmp/flexlock-scope-results-baseline/tests/test_preparation_io.py::test_reservation_failure_prevents_scheduler_submission[1]
+FAILED ../../../../tmp/flexlock-scope-results-baseline/tests/test_preparation_io.py::test_reservation_failure_prevents_scheduler_submission[2]
+FAILED ../../../../tmp/flexlock-scope-results-baseline/tests/test_preparation_io.py::test_reservation_failure_prevents_scheduler_submission[4]
+FAILED ../../../../tmp/flexlock-scope-results-baseline/tests/test_preparation_reuse.py::test_partial_overrides_keep_master_output_contracts_and_queue_payloads[None]
+FAILED ../../../../tmp/flexlock-scope-results-baseline/tests/test_preparation_reuse.py::test_partial_overrides_keep_master_output_contracts_and_queue_payloads[.]
+FAILED ../../../../tmp/flexlock-scope-results-baseline/tests/test_preparation_reuse.py::test_partial_overrides_keep_master_output_contracts_and_queue_payloads[payload]
+7 failed, 18 passed, 2 skipped in 0.43s

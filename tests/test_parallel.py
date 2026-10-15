@@ -362,8 +362,8 @@ def test_keyboard_interrupt_handling():
         assert success is False
 
 
-def test_worker_writes_results_json(base_cfg):
-    """Each task's return value lands in <task_save_dir>/results.json.
+def test_worker_writes_record_result(base_cfg):
+    """Each task's return value lands in its authoritative record.
 
     Without this, parallel sweeps and isolated runs come back with
     ExecutionResult.result=None even though the function returned a value.
@@ -387,14 +387,14 @@ def test_worker_writes_results_json(base_cfg):
     assert executor.run() is True
 
     for sub, tid in [(sub_a, 0), (sub_b, 1)]:
-        results_file = sub / "results.json"
-        assert results_file.exists(), f"missing results.json under {sub}"
-        payload = json.loads(results_file.read_text())
+        from flexlock.run_record import RunRecord
+        assert not (sub / "results.json").exists()
+        payload = RunRecord(sub).load_results()
         assert payload["task"] == tid
         assert payload["status"] == "completed"
 
 
-def test_worker_results_json_wraps_non_dict(base_cfg):
+def test_worker_record_result_wraps_non_dict(base_cfg):
     """Non-dict return values are wrapped as {'result': ...}."""
     import json
 
@@ -413,7 +413,8 @@ def test_worker_results_json_wraps_non_dict(base_cfg):
     )
     executor.run()
 
-    payload = json.loads((sub / "results.json").read_text())
+    from flexlock.run_record import RunRecord
+    payload = RunRecord(sub).load_results()
     assert payload == {"result": 0.95}
 
 

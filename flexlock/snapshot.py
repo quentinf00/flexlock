@@ -88,6 +88,8 @@ class RunTracker:
             path = repo_info["path"]
             snapshot_data = create_shadow_snapshot(
                 path,
+                include=repo_info.get("include"),
+                exclude=repo_info.get("exclude"),
                 ref_name=str(self.save_dir) + f"_{uuid.uuid1().hex}",
             )
             # Store metadata for comparison-time filtering

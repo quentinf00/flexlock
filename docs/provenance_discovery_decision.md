@@ -34,7 +34,10 @@ readable; transient capture buffers are omitted from persisted callable config.
 
 `_snapshot_.discover` accepts `repos` and `prevs` boolean flags, both True by default.
 
-- Repository discovery follows `_target_`. An explicit declaration for the same
+- Repository discovery follows configured `_target_` nodes recursively. As of
+  the unreleased 2026-10-15 implementation, capture and comparison share the
+  per-repository target-file or explicit include/exclude scope; see the
+  [migration contract](record_and_source_scope_migration.md). An explicit declaration for the same
   canonical checkout suppresses an extra unfiltered automatic alias; explicitly
   named scopes remain authoritative. Additional repositories must be declared.
   Discovery failures warn that source evidence is absent. For deliberate untracked

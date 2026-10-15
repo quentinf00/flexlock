@@ -1,0 +1,391 @@
+........................................................................ [  6%]
+........................................................................ [ 13%]
+........................F............................................... [ 20%]
+........................................................................ [ 27%]
+........................................................................ [ 34%]
+........................................................................ [ 41%]
+...................................................ss....FFFFFF......... [ 47%]
+........................................................................ [ 54%]
+........................................................................ [ 61%]
+........................................................................ [ 68%]
+........................................................................ [ 75%]
+........................................................................ [ 82%]
+........................................................................ [ 88%]
+........................................................................ [ 95%]
+...x......F.................................                             [100%]
+=================================== FAILURES ===================================
+__________ test_symlink_loop_is_not_treated_as_a_literal_destination ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-58/test_symlink_loop_is_not_treat0')
+
+    def test_symlink_loop_is_not_treated_as_a_literal_destination(tmp_path):
+        loop = tmp_path/'loop';loop.symlink_to('loop')
+>       with pytest.raises(RuntimeError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'RuntimeError'>
+
+tests/test_destination_resolution.py:29: Failed
+__________ test_reservation_failure_prevents_scheduler_submission[1] ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0ea8ac4830>
+workers = 1
+
+    def test_reservation_failure_prevents_scheduler_submission(tmp_path, monkeypatch, workers):
+        from unittest.mock import MagicMock
+        from omegaconf import OmegaConf
+        from flexlock.api import Project
+        backend = MagicMock()
+        monkeypatch.setattr('flexlock.parallel.SlurmBackend', lambda **kw: backend)
+        def fail(*args):
+            raise OSError('injected reservation failure')
+        monkeypatch.setattr(guard, '_write_reservation', fail)
+        cfg = OmegaConf.create(dict(_target_='tests.test_save_dir_guard.guard_stage',
+            save_dir=str(tmp_path/'products'), value=1,
+            _snapshot_=dict(discover=dict(repos=False, prevs=False))))
+        profile = tmp_path/'slurm.yaml'
+        profile.write_text('startup_lines: []\n')
+>       with pytest.raises(OSError, match='injected reservation failure'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'OSError'>
+
+tests/test_preparation_io.py:108: Failed
+----------------------------- Captured stderr call -----------------------------
+2026-10-15 10:55:54.786 | INFO     | flexlock.api:_submit_sweep:1898 - Executing 2 sweep configs with ParallelExecutor
+2026-10-15 10:55:54.790 | DEBUG    | flexlock.taskdb:_conn:169 - Created new connection for /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve0/products/run.lock.tasks.db in thread 139700953179200
+2026-10-15 10:55:54.791 | INFO     | flexlock.parallel:__init__:238 - Queued 2 tasks (tag='62781271af40')
+2026-10-15 10:55:54.795 | INFO     | flexlock.parallel:run:480 - Use 'flexlock-status /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve0/products/run.lock.tasks.db' to monitor task progress
+2026-10-15 10:55:54.796 | INFO     | flexlock.parallel:run:511 - Submitted MagicMock job <MagicMock name='mock.submit().job_id' id='139700599191072'>
+2026-10-15 10:55:54.796 | INFO     | flexlock.parallel:run:519 - Job submitted (not waiting for completion)
+2026-10-15 10:55:54.796 | DEBUG    | flexlock.taskdb:dump_to_yaml:484 - using <sqlite3.Connection object at 0x7f0e87e472e0> for /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve0/products/run.lock.tasks.db
+2026-10-15 10:55:54.796 | DEBUG    | flexlock.taskdb:dump_to_yaml:498 - dumping [] to /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve0/products/run.lock.tasks
+__________ test_reservation_failure_prevents_scheduler_submission[2] ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0e948a2900>
+workers = 2
+
+    def test_reservation_failure_prevents_scheduler_submission(tmp_path, monkeypatch, workers):
+        from unittest.mock import MagicMock
+        from omegaconf import OmegaConf
+        from flexlock.api import Project
+        backend = MagicMock()
+        monkeypatch.setattr('flexlock.parallel.SlurmBackend', lambda **kw: backend)
+        def fail(*args):
+            raise OSError('injected reservation failure')
+        monkeypatch.setattr(guard, '_write_reservation', fail)
+        cfg = OmegaConf.create(dict(_target_='tests.test_save_dir_guard.guard_stage',
+            save_dir=str(tmp_path/'products'), value=1,
+            _snapshot_=dict(discover=dict(repos=False, prevs=False))))
+        profile = tmp_path/'slurm.yaml'
+        profile.write_text('startup_lines: []\n')
+>       with pytest.raises(OSError, match='injected reservation failure'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'OSError'>
+
+tests/test_preparation_io.py:108: Failed
+----------------------------- Captured stderr call -----------------------------
+2026-10-15 10:55:54.803 | INFO     | flexlock.api:_submit_sweep:1898 - Executing 2 sweep configs with ParallelExecutor
+2026-10-15 10:55:54.805 | DEBUG    | flexlock.taskdb:_conn:169 - Created new connection for /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve1/products/run.lock.tasks.db in thread 139700953179200
+2026-10-15 10:55:54.807 | INFO     | flexlock.parallel:__init__:238 - Queued 2 tasks (tag='2daeb230d5c3')
+2026-10-15 10:55:54.810 | INFO     | flexlock.parallel:run:480 - Use 'flexlock-status /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve1/products/run.lock.tasks.db' to monitor task progress
+2026-10-15 10:55:54.810 | INFO     | flexlock.parallel:run:511 - Submitted MagicMock job <MagicMock name='mock.submit().job_id' id='139700598149808'>
+2026-10-15 10:55:54.810 | INFO     | flexlock.parallel:run:519 - Job submitted (not waiting for completion)
+2026-10-15 10:55:54.810 | DEBUG    | flexlock.taskdb:dump_to_yaml:484 - using <sqlite3.Connection object at 0x7f0e87e46980> for /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve1/products/run.lock.tasks.db
+2026-10-15 10:55:54.810 | DEBUG    | flexlock.taskdb:dump_to_yaml:498 - dumping [] to /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve1/products/run.lock.tasks
+__________ test_reservation_failure_prevents_scheduler_submission[4] ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f0e87c6d5c0>
+workers = 4
+
+    def test_reservation_failure_prevents_scheduler_submission(tmp_path, monkeypatch, workers):
+        from unittest.mock import MagicMock
+        from omegaconf import OmegaConf
+        from flexlock.api import Project
+        backend = MagicMock()
+        monkeypatch.setattr('flexlock.parallel.SlurmBackend', lambda **kw: backend)
+        def fail(*args):
+            raise OSError('injected reservation failure')
+        monkeypatch.setattr(guard, '_write_reservation', fail)
+        cfg = OmegaConf.create(dict(_target_='tests.test_save_dir_guard.guard_stage',
+            save_dir=str(tmp_path/'products'), value=1,
+            _snapshot_=dict(discover=dict(repos=False, prevs=False))))
+        profile = tmp_path/'slurm.yaml'
+        profile.write_text('startup_lines: []\n')
+>       with pytest.raises(OSError, match='injected reservation failure'):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'OSError'>
+
+tests/test_preparation_io.py:108: Failed
+----------------------------- Captured stderr call -----------------------------
+2026-10-15 10:55:54.817 | INFO     | flexlock.api:_submit_sweep:1898 - Executing 2 sweep configs with ParallelExecutor
+2026-10-15 10:55:54.820 | DEBUG    | flexlock.taskdb:_conn:169 - Created new connection for /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve2/products/run.lock.tasks.db in thread 139700953179200
+2026-10-15 10:55:54.822 | INFO     | flexlock.parallel:__init__:238 - Queued 2 tasks (tag='7b33c51ca844')
+2026-10-15 10:55:54.824 | INFO     | flexlock.parallel:run:480 - Use 'flexlock-status /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve2/products/run.lock.tasks.db' to monitor task progress
+2026-10-15 10:55:54.824 | INFO     | flexlock.parallel:run:511 - Submitted MagicMock job <MagicMock name='mock.submit().job_id' id='139700598147456'>
+2026-10-15 10:55:54.824 | INFO     | flexlock.parallel:run:519 - Job submitted (not waiting for completion)
+2026-10-15 10:55:54.824 | DEBUG    | flexlock.taskdb:dump_to_yaml:484 - using <sqlite3.Connection object at 0x7f0e949f3e20> for /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve2/products/run.lock.tasks.db
+2026-10-15 10:55:54.825 | DEBUG    | flexlock.taskdb:dump_to_yaml:498 - dumping [] to /tmp/pytest-of-qfebvre/pytest-58/test_reservation_failure_preve2/products/run.lock.tasks
+_ test_partial_overrides_keep_master_output_contracts_and_queue_payloads[None] _
+
+tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma0')
+target = None
+
+    @pytest.mark.parametrize('target', [None, '.', 'payload'])
+    def test_partial_overrides_keep_master_output_contracts_and_queue_payloads(tmp_path, target):
+        product = tmp_path/'products'
+        item = '${payload.item}' if target == 'payload' else '${item}'
+        cfg = OmegaConf.create(dict(save_dir=str(product), item=0, payload=dict(item=0),
+            _outputs_=dict(part=dict(path='${save_dir}/part_'+item+'.json'))))
+        tasks = [dict(item=1), dict(item=2)]
+        before = plain(cfg)
+        executor = ParallelExecutor(func=lambda cfg: None, cfg=cfg, tasks=tasks,
+                                    task_target=target)
+        assert executor.shared_save_dirs == [str(product.resolve())]
+>       pointer = json.loads((product/'.flexlock-queue.json').read_text())
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_preparation_reuse.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma0/products/.flexlock-queue.json')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma0/products/.flexlock-queue.json'
+
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+----------------------------- Captured stderr call -----------------------------
+2026-10-15 10:55:54.832 | DEBUG    | flexlock.taskdb:_conn:169 - Created new connection for /tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma0/products/run.lock.tasks.db in thread 139700953179200
+2026-10-15 10:55:54.833 | INFO     | flexlock.parallel:__init__:238 - Queued 2 tasks (tag='42a3dfcbed14')
+__ test_partial_overrides_keep_master_output_contracts_and_queue_payloads[.] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma1')
+target = '.'
+
+    @pytest.mark.parametrize('target', [None, '.', 'payload'])
+    def test_partial_overrides_keep_master_output_contracts_and_queue_payloads(tmp_path, target):
+        product = tmp_path/'products'
+        item = '${payload.item}' if target == 'payload' else '${item}'
+        cfg = OmegaConf.create(dict(save_dir=str(product), item=0, payload=dict(item=0),
+            _outputs_=dict(part=dict(path='${save_dir}/part_'+item+'.json'))))
+        tasks = [dict(item=1), dict(item=2)]
+        before = plain(cfg)
+        executor = ParallelExecutor(func=lambda cfg: None, cfg=cfg, tasks=tasks,
+                                    task_target=target)
+        assert executor.shared_save_dirs == [str(product.resolve())]
+>       pointer = json.loads((product/'.flexlock-queue.json').read_text())
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_preparation_reuse.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma1/products/.flexlock-queue.json')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma1/products/.flexlock-queue.json'
+
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+----------------------------- Captured stderr call -----------------------------
+2026-10-15 10:55:54.853 | DEBUG    | flexlock.taskdb:_conn:169 - Created new connection for /tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma1/products/run.lock.tasks.db in thread 139700953179200
+2026-10-15 10:55:54.855 | INFO     | flexlock.parallel:__init__:238 - Queued 2 tasks (tag='5fa122243756')
+_ test_partial_overrides_keep_master_output_contracts_and_queue_payloads[payload] _
+
+tmp_path = PosixPath('/tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma2')
+target = 'payload'
+
+    @pytest.mark.parametrize('target', [None, '.', 'payload'])
+    def test_partial_overrides_keep_master_output_contracts_and_queue_payloads(tmp_path, target):
+        product = tmp_path/'products'
+        item = '${payload.item}' if target == 'payload' else '${item}'
+        cfg = OmegaConf.create(dict(save_dir=str(product), item=0, payload=dict(item=0),
+            _outputs_=dict(part=dict(path='${save_dir}/part_'+item+'.json'))))
+        tasks = [dict(item=1), dict(item=2)]
+        before = plain(cfg)
+        executor = ParallelExecutor(func=lambda cfg: None, cfg=cfg, tasks=tasks,
+                                    task_target=target)
+        assert executor.shared_save_dirs == [str(product.resolve())]
+>       pointer = json.loads((product/'.flexlock-queue.json').read_text())
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_preparation_reuse.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma2/products/.flexlock-queue.json')
+mode = 'r', buffering = -1, encoding = 'locale', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma2/products/.flexlock-queue.json'
+
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+----------------------------- Captured stderr call -----------------------------
+2026-10-15 10:55:54.871 | DEBUG    | flexlock.taskdb:_conn:169 - Created new connection for /tmp/pytest-of-qfebvre/pytest-58/test_partial_overrides_keep_ma2/products/run.lock.tasks.db in thread 139700953179200
+2026-10-15 10:55:54.873 | INFO     | flexlock.parallel:__init__:238 - Queued 2 tasks (tag='a0951694aebe')
+____________ test_extract_tracking_info_auto_detect_skips_if_exists ____________
+
+self = <MagicMock name='resolve_module_to_repo_path' id='139700598151152'>
+
+    def assert_not_called(self):
+        """assert that the mock was never called.
+        """
+        if self.call_count != 0:
+            msg = ("Expected '%s' to not have been called. Called %s times.%s"
+                   % (self._mock_name or 'mock',
+                      self.call_count,
+                      self._calls_repr()))
+>           raise AssertionError(msg)
+E           AssertionError: Expected 'resolve_module_to_repo_path' to not have been called. Called 1 times.
+E           Calls: [call('my_pkg.trainer'), call().__fspath__()].
+
+/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/unittest/mock.py:940: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+    def test_extract_tracking_info_auto_detect_skips_if_exists():
+        """Test that auto-detection doesn't override an explicitly set repo."""
+        from flexlock.utils import extract_tracking_info
+        from unittest.mock import patch
+    
+        cfg = OmegaConf.create({
+            '_target_': 'my_pkg.trainer.Trainer',
+            '_snapshot_': {
+                'repos': {
+                    'my_pkg': '/explicit/path',
+                }
+            }
+        })
+    
+        with patch('flexlock.utils.resolve_module_to_repo_path') as mock_resolve:
+            repos, data, prevs = extract_tracking_info(cfg)
+    
+        assert repos['my_pkg']['path'] == '/explicit/path'
+>       mock_resolve.assert_not_called()
+E       AssertionError: Expected 'resolve_module_to_repo_path' to not have been called. Called 1 times.
+E       Calls: [call('my_pkg.trainer'), call().__fspath__()].
+E       
+E       pytest introspection follows:
+E       
+E       Args:
+E       assert ('my_pkg.trainer',) == ()
+E         
+E         Left contains one more item: 'my_pkg.trainer'
+E         Use -v to get more diff
+
+tests/test_utils.py:889: AssertionError
+----------------------------- Captured stderr call -----------------------------
+2026-10-15 10:59:21.787 | DEBUG    | flexlock.utils:extract_tracking_info:221 - Discovered target repository /ontap/user/qfebvre/flexlock-execution-validation/MagicMock/resolve_module_to_repo_path()/139700598157872
+=============================== warnings summary ===============================
+tests/test_utils.py:244
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_utils.py:244: PytestCollectionWarning: cannot collect test class 'TestInstantiationClass' because it has a __init__ constructor (from: tests/test_utils.py)
+    class TestInstantiationClass:
+
+tests/test_utils.py:251
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_utils.py:251: PytestCollectionWarning: cannot collect test class 'TestClassWithPositionalArgs' because it has a __init__ constructor (from: tests/test_utils.py)
+    class TestClassWithPositionalArgs:
+
+tests/test_multistage_config.py: 4 warnings
+tests/test_resolvers.py: 17 warnings
+  /scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages/omegaconf/omegaconf.py:445: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    ret = resolver(*args, **kwargs)
+
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-single]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-single]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-sweep]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-pipeline]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-pipeline]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-cli]
+tests/test_presets.py::test_chained_run_binds_on_worker_and_records_lineage[,strict-cli]
+  /scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/lib/python3.13/site-packages/omegaconf/grammar_visitor.py:253: UserWarning: In the sequence `prespkg.xps.train_a,main,,strict` some elements are missing: please replace them with empty quoted strings. See https://github.com/omry/omegaconf/issues/572 for details.
+    warnings.warn(
+
+tests/test_resolvers.py::test_now_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:13: DeprecationWarning: ${now:} is deprecated; use save_dir_policy='timestamp' on submit()/run instead of embedding ${now:} in save_dir.
+    timestamp = now_resolver()
+
+tests/test_resolvers.py::test_now_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:21: DeprecationWarning: ${now:} is deprecated; use save_dir_policy='timestamp' on submit()/run instead of embedding ${now:} in save_dir.
+    timestamp_custom = now_resolver(fmt="%Y%m%d")
+
+tests/test_resolvers.py::test_vinc_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:34: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path1 = vinc_resolver(str(base_path))
+
+tests/test_resolvers.py::test_vinc_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:39: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path2 = vinc_resolver(str(base_path))
+
+tests/test_resolvers.py::test_vinc_resolver
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:47: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path3 = vinc_resolver(str(base_path))
+
+tests/test_resolvers.py::test_vinc_resolver_with_custom_format
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:57: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path1 = vinc_resolver(str(base_path), fmt=fmt)
+
+tests/test_resolvers.py::test_vinc_resolver_with_custom_format
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_resolvers.py:62: DeprecationWarning: ${vinc:} is deprecated; use save_dir_policy='increment' on submit()/run instead of embedding ${vinc:} in save_dir. The policy also claims the directory atomically, fixing the concurrent-submit race.
+    path2 = vinc_resolver(str(base_path), fmt=fmt)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_destination_resolution.py::test_symlink_loop_is_not_treated_as_a_literal_destination
+FAILED tests/test_preparation_io.py::test_reservation_failure_prevents_scheduler_submission[1]
+FAILED tests/test_preparation_io.py::test_reservation_failure_prevents_scheduler_submission[2]
+FAILED tests/test_preparation_io.py::test_reservation_failure_prevents_scheduler_submission[4]
+FAILED tests/test_preparation_reuse.py::test_partial_overrides_keep_master_output_contracts_and_queue_payloads[None]
+FAILED tests/test_preparation_reuse.py::test_partial_overrides_keep_master_output_contracts_and_queue_payloads[.]
+FAILED tests/test_preparation_reuse.py::test_partial_overrides_keep_master_output_contracts_and_queue_payloads[payload]
+FAILED tests/test_utils.py::test_extract_tracking_info_auto_detect_skips_if_exists
+8 failed, 1041 passed, 2 skipped, 1 xfailed, 39 warnings in 362.43s (0:06:02)

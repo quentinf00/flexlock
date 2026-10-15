@@ -297,9 +297,13 @@ never masks the original exception (which still propagates unwrapped).
 `KeyboardInterrupt` is deliberately not captured — a bare `run.lock` with no
 `run.complete`/`run.error` is the interrupted signature.
 
-### `results.json` (JSON)
+### Return payload: record `result` section
 
-The user function's return payload (`{"result": value}` when it isn't a dict).
+New executions store the user function's return payload in `run.lock.result`
+(or the authoritative DB stage snapshot). Non-dictionaries retain the historical
+`{"result": value}` wrapper. Historical `results.json` remains readable; new core
+execution does not create or overwrite that file. See the
+[unreleased migration contract](record_and_source_scope_migration.md).
 
 For the JSON contracts of the query commands (`show`, `graph`, `why`), see
 [Agentic Workflows](agentic_workflows.md).

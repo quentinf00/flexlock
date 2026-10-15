@@ -43,10 +43,30 @@ def sanitize_ref_name(name: str) -> str:
     return name
 
 
+def _stage_source_scope(repo, env, include=None, exclude=None):
+    """Use identical clean-index pathspecs for capture and comparison.
+
+    Exclusions are applied by git add before blobs are written, rather than
+    removing already staged large files afterwards.
+    """
+    repo.git.read_tree("--empty", env=env)
+    pathspec = list(include or ["."])
+    pathspec.extend(":(exclude)" + pattern for pattern in (exclude or []))
+    repo.git.add("--all", "--", *pathspec, env=env)
+
+
+def _working_tree_dirty(repo):
+    # Status may otherwise refresh stat metadata in the real user index.
+    with repo.git.custom_environment(GIT_OPTIONAL_LOCKS="0"):
+        return bool(repo.git.status("--porcelain", "--untracked-files=normal"))
+
+
 def create_shadow_snapshot(
     repo_path: str = ".",
     ignore_patterns: list | None = None,
     ref_name: str | None = None,
+    include: list | None = None,
+    exclude: list | None = None,
 ) -> dict:
     """
     Creates a Shadow Commit.
@@ -58,21 +78,8 @@ def create_shadow_snapshot(
     with shadow_index(repo) as shadow_env:
         git = repo.git
 
-        # 1. Stage everything (Modified + Untracked) into Shadow Index
-        git.add("--all", env=shadow_env)
-
-        # 2. Remove ignored patterns from Shadow Index
-        if ignore_patterns:
-            try:
-                git.rm(
-                    "--cached",
-                    "-r",
-                    "--ignore-unmatch",
-                    *ignore_patterns,
-                    env=shadow_env,
-                )
-            except Exception:
-                pass
+        _stage_source_scope(repo, shadow_env, include,
+                            list(exclude or []) + list(ignore_patterns))
 
         # 3. Write Tree (This is the content fingerprint)
         tree_hash = git.write_tree(env=shadow_env)
@@ -91,7 +98,7 @@ def create_shadow_snapshot(
         return {
             "commit": shadow_commit,
             "tree": tree_hash,  # <--- The key for Equality Checks
-            "is_dirty": repo.is_dirty(untracked_files=True),
+            "is_dirty": _working_tree_dirty(repo),
         }
 
 
@@ -130,28 +137,14 @@ def _create_shadow_tree(repo_path, include=None, exclude=None, *, check_dirty):
     with shadow_index(repo) as shadow_env:
         git = repo.git
 
-        # 1. Stage into the shadow index. Restrict to `include` when provided so
-        #    the tree hash only reflects the relevant subtree.
-        if include:
-            git.add("--", *include, env=shadow_env)
-        else:
-            git.add("--all", env=shadow_env)
-
-        # 2. Drop excluded patterns from the shadow index.
-        if exclude:
-            try:
-                git.rm(
-                    "--cached", "-r", "--ignore-unmatch", *exclude, env=shadow_env
-                )
-            except Exception:
-                pass
+        _stage_source_scope(repo, shadow_env, include, exclude)
 
         # 3. Write the tree — the content fingerprint. No commit, no ref.
         tree_hash = git.write_tree(env=shadow_env)
 
         result = {"tree": tree_hash}
         if check_dirty:
-            result['is_dirty'] = repo.is_dirty(untracked_files=True)
+            result['is_dirty'] = _working_tree_dirty(repo)
         return result
 
 

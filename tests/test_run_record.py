@@ -63,7 +63,7 @@ def test_writes_are_atomic_no_tmp_left(tmp_path):
     rec.write_results({"a": 1})
     rec.mark_complete()
     leftovers = [p.name for p in (tmp_path / "run").iterdir()]
-    assert sorted(leftovers) == ["results.json", "run.complete", "run.lock"]
+    assert sorted(leftovers) == ["run.complete", "run.lock"]
 
 
 # ── run.error (Phase A1) ──

@@ -76,10 +76,8 @@ After the run, `outputs/train/` contains:
 
 ```
 outputs/train/
-├── run.lock         # config + git tree hash + data hashes, written before exec
-├── run.complete     # written after the function returns; cache-hit marker
-├── results.json     # the function's return value (if dict-shaped)
-└── snapshot/        # filtered git tree if you snapshot repos / data
+├── run.lock         # config/source/data before exec; result added before completion
+└── run.complete     # written after output checks; cache-hit marker
 ```
 
 `run.lock` is the canonical record. `run.complete` is what
@@ -248,7 +246,7 @@ flexlock-run --help                        # prints argparse help + compiled con
 ```
 
 You get an `ExecutionResult.result` back (the dict), `run.lock`,
-`run.complete`, and `results.json` on disk.
+`run.complete` on disk; the return payload is the record's `result` section.
 
 Pass `--note` (CLI) or `note="…"` (`proj.submit(cfg, note=…)`) to record a
 free-text intent in `run.lock`. It never affects caching and shows up in
@@ -442,10 +440,11 @@ if __name__ == "__main__":
   or the children will recursively re-launch.
 - Notebooks and REPL contexts are fine.
 
-After a parallel or `isolated=True` run, workers write
-`results.json` into each per-task `save_dir`. The driver loads them
-back and populates `ExecutionResult.result`, so the return value is
-available downstream just like in serial execution.
+After a parallel or `isolated=True` run, workers retain each return payload in
+its authoritative record (directory or DB). The driver populates
+`ExecutionResult.result`, just as in serial execution. New executions do not
+create a core `results.json`; historical sidecars remain readable. See the
+[unreleased migration contract](record_and_source_scope_migration.md).
 
 ---
 
@@ -623,7 +622,7 @@ Mechanism:
    directory **or** a sweep task `(task_db, task_id)`, so sweep items are
    first-class cache entries.
 3. On a hit, verify the pointed-to run still exists and is complete
-   (`run.complete`, or the task's `results.json`). A stale pointer self-prunes
+   (`run.complete` plus its authoritative record/payload). A stale pointer self-prunes
    and is treated as a miss. Only `status='done'` runs are ever served.
 4. On an index miss, fall back to the legacy `**/run.lock` glob scan +
    `RunDiff` (controlled by `FLEXLOCK_INDEX_FALLBACK`, default on) and backfill
@@ -1149,7 +1148,7 @@ possible future enhancement.
 - Sweeping over `pipeline_dir` fans one stage out across experiments; sweeping
   over `params.*` fans one experiment across hyperparameters.
 - The result tree *is* the index: `results/<xp>/<stage>/` is browsable, and
-  each stage dir carries its own `run.lock` / `run.complete` / `results.json`.
+  each stage has an authoritative record with `result` and its `run.complete` marker.
 
 **Scope — use this when**
 
@@ -1218,10 +1217,11 @@ complete-marker phase would land in different dirs (each call would
 advance the version counter). FlexLock resolves it once at submit time
 and freezes the string.
 
-**`results.json` is empty after my sweep — what happened?**
-The user function returned `None` or a non-dict value. `results.json`
-gets `{"result": <value>}` when the return value isn't already a dict.
-The driver still loads it back into `ExecutionResult.result`.
+**Where is the return value after my sweep?**
+Read `ExecutionResult.result` or `RunRecord(directory).load_results()`.
+New executions store it in the record, with `{"result": <value>}` for non-dicts.
+Historical sidecars remain readable. A scientific `results.json` belongs to the
+callable and is not a new core return-payload file.
 
 **`_target_` fails to import on workers — why?**
 Workers re-import the target's module from scratch. If the target lives

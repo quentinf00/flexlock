@@ -57,7 +57,7 @@ DB row; otherwise `run.complete` → `complete`, `run.error` → `failed`, `run.
 ```
 
 `id` is a resolved absolute path. `metrics` are the top-level numeric keys of
-`results.json`. Edges pointing outside the scanned tree materialise `kind:
+the authoritative return payload (including legacy `results.json`). Edges pointing outside the scanned tree materialise `kind:
 external` stub nodes so the graph is closed. `--groups` adds size-≥2 clusters of
 nodes sharing identical tree hashes / data dicts.
 

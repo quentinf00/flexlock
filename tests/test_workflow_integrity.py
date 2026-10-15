@@ -154,13 +154,14 @@ def test_missing_output_fails_completion(tmp_path):
 
 
 @pytest.mark.parametrize("pipeline", [False, True])
-def test_generated_results_can_be_a_required_output(tmp_path, pipeline):
+def test_return_payload_does_not_satisfy_a_declared_scientific_output(tmp_path, pipeline):
     cfg = stage(tmp_path / "run", _outputs_=["results.json"])
     if pipeline:
-        assert Project().submit_pipeline([[cfg]])[0][0].status == "SUCCESS"
+        assert Project().submit_pipeline([[cfg]])[0][0].status == "FAILED"
     else:
-        assert Project().submit(cfg, smart_run=False).status == "SUCCESS"
-    validate_outputs(cfg)
+        with pytest.raises(FlexLockValidationError):
+            Project().submit(cfg, smart_run=False)
+    assert not Path(cfg.save_dir, "run.complete").exists()
 
 
 def test_checksum_and_count_validator(tmp_path):

@@ -307,8 +307,8 @@ def verify_and_resolve(base, row: IndexRow) -> Optional[Path]:
         if save_dir and RunRecord(save_dir).is_complete:
             return save_dir
     elif row.location_kind == LOCATION_TASK:
-        # Task is complete iff its results.json is present (the worker writes it
-        # via RunRecord.mark_complete just before recording the index row).
+        # Tasks require completion plus an authoritative record return payload
+        # (or a historical result sidecar).
         if save_dir and RunRecord(save_dir).is_complete_task():
             return save_dir
 
