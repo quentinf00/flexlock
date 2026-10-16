@@ -14,6 +14,9 @@ The [connected lifecycle recipes](workflow_lifecycle.md) extend this convention 
 shared datasets, model releases and batch inference, using SAR as the concrete
 example. Track/arm/run is optional; processing products need not be experiment arms.
 
+See the [unreleased project-feedback follow-up](project_feedback_followup.md) for
+CLI diagnostics, module targets, legacy adapters and source-ref retention limits.
+
 ## Organize choices as track / arm / run
 
 Use these as plain project names, not FlexLock object types:
@@ -308,6 +311,43 @@ reduction, whose report is retained. It does not mean eyeballing a directory cou
 If automated after the worker pool, put the checker and reducer in the same
 consumer script so a failed check exits before the reducer. afterok only ensures
 successful upstream job execution; it does not establish scientific completeness.
+
+### Several files per queue task
+
+A chunked task can write one declared, hashed `outcomes.json` containing a row per
+input member. Freeze chunk-to-member assignments and concrete producer paths before
+submission; reduction must check that frozen membership, not just enumerate the
+chunks that finished. NextGEMS storm preprocessing uses this pattern. Its month
+sweeps belong to the separate nextgems_tc_tracking project.
+
+```python
+frozen_chunks = [dict(chunk_id='chunk001',
+    producer_record='/shared/runs/storms/campaign001/chunk001',
+    items=['storm001', 'storm002'])]
+# Producer config: chunk_id='chunk001', outcomes_path='.../outcomes.json',
+# _outputs_=dict(outcomes=dict(path='outcomes.json', sha256=True))
+# outcomes.json:
+# {"chunk_id":"chunk001", "items":[
+#   {"item_id":"storm001", "outcome":"ok"},
+#   {"item_id":"storm002", "outcome":"missing_zarr"}]}
+from examples.slimmer_workflows.chunk_coverage import check_chunk_coverage
+
+report = check_chunk_coverage(frozen_chunks)  # missing_zarr blocks by default
+if report['issues']:
+    raise RuntimeError(report['issues'])  # retain this report; do not aggregate
+```
+
+Only after a project decision can a caller pass
+`accepted_outcomes=['missing_zarr']`. The report retains named accepted non-OK
+members; they do not become OK products. Missing/duplicate/unexpected member rows,
+unfinished chunks and changed output manifests block acceptance. The example
+checks manifest integrity and accounting, not the contents of each scientific
+product: add the project's schema, existence and byte-identity checks as needed.
+It does not reconstruct missing historical input/source evidence.
+
+The single-item directory checker skips exactly the internal `.flexlock` directory;
+other unexpected directories still count as issues. Prefer shared record readers
+over inferring task outcomes from the directory layout.
 
 ## Continue a queue or a model explicitly
 

@@ -77,10 +77,14 @@ def test_manifest_campaign_checks_empty_excluded_missing_and_corrupt(tmp_path, m
     campaign.export_queue(manifest, root, queue)
     assert len(campaign.check_coverage(manifest, root)['issues']) == 2
     FlexLockRunner().run(['--sweep-file', str(queue), '--sweep-root', str(root), '--n_jobs', '1'])
+    (root/'items/.flexlock').mkdir()
     report = campaign.check_coverage(manifest, root)
     assert report['produced'] == ['one'] and report['empty'] == ['empty']
     assert report['excluded'] == [{'item_id': 'excluded', 'reason': 'outside cohort'}]
     assert not report['issues']
+    (root/'items/.unexpected').mkdir()
+    assert campaign.check_coverage(manifest, root)['issues'] == ['Unexpected item directory: .unexpected']
+    (root/'items/.unexpected').rmdir()
     (root/'items/one/product.json').write_text('{}')
     assert any('one:' in issue for issue in campaign.check_coverage(manifest, root)['issues'])
     (root/'items/empty/run.complete').unlink()

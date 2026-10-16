@@ -1,0 +1,14 @@
+...................................................................x.... [ 43%]
+........................................................................ [ 87%]
+.....................                                                    [100%]
+=============================== warnings summary ===============================
+tests/test_utils.py:244
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_utils.py:244: PytestCollectionWarning: cannot collect test class 'TestInstantiationClass' because it has a __init__ constructor (from: tests/test_utils.py)
+    class TestInstantiationClass:
+
+tests/test_utils.py:251
+  /ontap/user/qfebvre/flexlock-execution-validation/tests/test_utils.py:251: PytestCollectionWarning: cannot collect test class 'TestClassWithPositionalArgs' because it has a __init__ constructor (from: tests/test_utils.py)
+    class TestClassWithPositionalArgs:
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+164 passed, 1 xfailed, 2 warnings in 77.76s (0:01:17)

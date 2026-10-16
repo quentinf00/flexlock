@@ -1,0 +1,28 @@
+{
+  "a": {
+    "declared_include": [
+      "a.py"
+    ],
+    "captured_include": [
+      "a.py",
+      "b.py"
+    ],
+    "captured_files": [
+      "a.py",
+      "b.py"
+    ]
+  },
+  "b": {
+    "declared_include": [
+      "b.py"
+    ],
+    "captured_include": [
+      "a.py",
+      "b.py"
+    ],
+    "captured_files": [
+      "a.py",
+      "b.py"
+    ]
+  }
+}

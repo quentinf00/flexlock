@@ -4,6 +4,8 @@ import inspect
 import importlib
 import sys
 import functools
+import re
+import yaml
 from pathlib import Path
 from typing import Any, Tuple, Dict, List
 from omegaconf import OmegaConf, DictConfig, ListConfig, open_dict
@@ -399,8 +401,15 @@ def py2cfg(obj, /, *pos, **overrides):
 
     # If the module is __main__ the _target_ won't import correctly in a
     # Slurm/PBS worker or any subprocess that doesn't run the user's script
-    # as the entry point.  Try to resolve the real dotted module path from the
-    # file's location relative to CWD (which run_cli adds to sys.path).
+    # as the entry point. Prefer the module spec for python -m; otherwise
+    # fall back to the file relative to CWD (which run_cli adds to sys.path).
+    if target.startswith("__main__."):
+        spec = getattr(sys.modules.get('__main__'), '__spec__', None)
+        module_name = getattr(spec, 'name', None)
+        if module_name and module_name != '__main__':
+            # python -m knows the installed module name, including src layouts.
+            # Deriving it from CWD instead can invent e.g. src.pkg.module.
+            target = f"{module_name}.{obj.__qualname__}"
     if target.startswith("__main__."):
         try:
             file_path = Path(inspect.getfile(obj)).resolve()
@@ -815,7 +824,27 @@ def apply_overrides(cfg: DictConfig, overrides, module=None) -> None:
 
     def flush():
         if batch:
-            cfg.merge_with(OmegaConf.from_dotlist(batch))
+            parsed = OmegaConf.from_dotlist(batch)
+            for entry in batch:
+                key, separator, raw = entry.partition('=')
+                if not separator:
+                    continue
+                # Check only ambiguous scalar spellings. Inspect the literal,
+                # not the merged node: a later override may replace this key
+                # with a deferred interpolation, which must not fire here.
+                literal = raw.strip()
+                if not (re.fullmatch(r'[+-]?[0-9][0-9_]*', literal) and
+                        ('_' in literal or len(literal.lstrip('+-')) >= 16)):
+                    continue
+                value = yaml.safe_load(literal)
+                if isinstance(value, (int, float)):
+                    warnings.warn(
+                        f"Override '{key}' was parsed as a number. If this is an "
+                        "identifier or digest, preserve YAML quotes inside the "
+                        f"shell argument, e.g. -o '{key}=\"{literal}\"'.",
+                        UserWarning, stacklevel=3,
+                    )
+            cfg.merge_with(parsed)
             batch.clear()
 
     for key, value in items:

@@ -18,3 +18,14 @@ snapshot over the 20 GB arrays until a safe scope policy is reviewed. Full produ
 execution, subprocess drift and broad archive/scientific compatibility remain open.
 
 Local project feedback is mirrored in `reports/flexlock-adoption/central-feedback.md`.
+
+## Release/follow-up status — 2026-10-16
+
+The reviewed scoped capture policy shipped in 0.9.3. A bounded fresh source
+record with the explicit Biomass scope passes capture/comparison equality checks;
+this does not rewrite the retained-wave recipe's historical file-evidence exception
+or certify subprocess model provenance. The project owner's dependency repair
+was preserved during the successful runtime upgrade.
+
+See [rollout evidence](../../2026-10-15-release-rollout/report.md) and
+[unreleased follow-up](../../../docs/project_feedback_followup.md).

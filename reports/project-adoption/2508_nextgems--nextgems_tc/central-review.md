@@ -41,3 +41,12 @@ checks establish presence/nonzero size rather than full byte identity. Full repa
 production integrity and unrelated plain-script workflows remain outside scope.
 
 Local project feedback is mirrored in `reports/flexlock-adoption/central-feedback.md`.
+
+## Release/follow-up status — 2026-10-16
+
+The unreleased follow-up adds an executable chunk-outcome coverage helper and
+retention guidance. It preserves explicit named acceptance of non-OK outcomes and
+does not certify per-storm product bytes. Snapshot refs are not automatically pruned.
+
+See [rollout evidence](../../2026-10-15-release-rollout/report.md) and
+[unreleased follow-up](../../../docs/project_feedback_followup.md).

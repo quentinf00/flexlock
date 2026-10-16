@@ -936,6 +936,24 @@ flexlock-run \
 
 ## Advanced Override Options
 
+### String identifiers and numeric-looking hashes
+
+Dotlist overrides use YAML scalar parsing. For both `-o` and `-O`, `183_3`
+becomes the integer `1833`; an all-digit hash can also become a number and lose
+leading zeros. A callable's `str` annotation does not change this parsing.
+Preserve YAML quotes *inside* the shell argument:
+
+```bash
+flexlock-run -d myproject.cfg -s main -O 'identifier="183_3"'
+flexlock-run -d myproject.cfg -s main -o 'digest="0000000000000000000000000000000000000000000000000000000000000000"'
+```
+
+Shell quotes alone (`-O identifier='183_3'`) are removed by the shell and do not
+protect the YAML value. Use quoted strings in sweep/config YAML too. Inspect
+`--dump` before submitting. The next release warns for underscore-separated or
+long digit-only numeric overrides; it preserves existing parsing and does not
+coerce values from callable annotations. Quoted strings do not trigger that warning.
+
 ### `--merge`, `-m`
 Merge a YAML/JSON file into the root config (before selection). Useful when you have a set of overrides stored in a file that apply at the top level.
 

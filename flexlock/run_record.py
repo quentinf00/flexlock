@@ -99,7 +99,7 @@ class RunRecord:
         # through RunRecord, this single hook implements "a completed run has no
         # run.error" for the serial, sweep-worker, and legacy marker paths.
         self.clear_error()
-        payload = {"ts": datetime.now().isoformat(), "version": COMPLETE_VERSION}
+        payload = {"ts": datetime.now().astimezone().isoformat(), "version": COMPLETE_VERSION}
         if result is not None:
             payload["has_result"] = True
         return _atomic_write(self.complete_path, json.dumps(payload))
@@ -120,7 +120,7 @@ class RunRecord:
                 "traceback": "".join(
                     traceback.format_exception(type(exc), exc, exc.__traceback__)
                 ),
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now().astimezone().isoformat(),
             }
             if task_id is not None:
                 payload["task_id"] = task_id

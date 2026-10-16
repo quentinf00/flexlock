@@ -18,3 +18,14 @@ Core findings are centrally tracked; do not change existing CLI parsing or disk
 contracts independently. Preserve shared stores and historical missing provenance.
 
 Local project feedback is mirrored in `reports/flexlock-adoption/central-feedback.md`.
+
+## Release/follow-up status — 2026-10-16
+
+The unreleased follow-up fixes module target identity under python -m, adds
+numeric-identifier override warnings, gives array workers separate default logs,
+adds offsets to new run timestamps and corrects the campaign helper's .flexlock
+scan. These changes are not in installed 0.9.3; production/current-store coverage
+and scientific acceptance limits above are unchanged.
+
+See [rollout evidence](../../2026-10-15-release-rollout/report.md) and
+[unreleased follow-up](../../../docs/project_feedback_followup.md).

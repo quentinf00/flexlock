@@ -20,3 +20,14 @@ The results.json overwrite is reproduced centrally; avoid that product filename
 until an approved compatibility fix ships. No proposed core API change is installed.
 
 Local project feedback is mirrored in `reports/flexlock-adoption/central-feedback.md`.
+
+## Release/follow-up status — 2026-10-16
+
+The 0.9.3 rollout fixes return/product collisions and implements nested-target
+repository discovery with shared capture/comparison scopes. Explicit ordinary
+imports such as geo-jepa still need declarations; historical gaps remain. The
+unreleased follow-up adds numeric-identifier diagnostics and the legacy-adapter
+guidance; it does not infer types from annotations.
+
+See [rollout evidence](../../2026-10-15-release-rollout/report.md) and
+[unreleased follow-up](../../../docs/project_feedback_followup.md).

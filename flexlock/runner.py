@@ -854,6 +854,15 @@ class FlexLockRunner:
             # references for the worker once the scheduler dependency completes.
             freeze_run_refs(node_cfg, defer_unpinned=bool(args.after))
 
+        # Export paths exit before Project.submit applies selected-node edits.
+        # Apply them here too, in the same merge-then-override order. Root-anchor
+        # sweeps have already applied and cleared these options above.
+        if args.dump or args.enqueue:
+            if args.merge_after_select:
+                node_cfg.merge_with(OmegaConf.load(args.merge_after_select))
+            apply_overrides(node_cfg, args.overrides_after_select,
+                            module=defaults_module(args.defaults))
+
         # --edit-config / -e: open compiled config in $EDITOR before running.
         if args.edit_config:
             import subprocess

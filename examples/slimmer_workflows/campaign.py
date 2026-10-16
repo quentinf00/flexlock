@@ -51,7 +51,8 @@ def check_coverage(manifest, root, *, check_current_inputs=False):
     rows = read_manifest(manifest)
     root = Path(root).resolve()
     expected = {row['item_id'] for row in rows if row['disposition'] == 'process'}
-    observed = {p.name for p in (root / 'items').iterdir() if p.is_dir()} if (root / 'items').exists() else set()
+    observed = {p.name for p in (root / 'items').iterdir()
+                if p.is_dir() and p.name != '.flexlock'} if (root / 'items').exists() else set()
     issues = [f'Unexpected item directory: {i}' for i in sorted(observed - expected)]
     summary = {'produced': [], 'empty': [], 'excluded': [], 'issues': issues}
     for row in rows:

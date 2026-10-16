@@ -1,0 +1,23 @@
+{
+  "two_field_calls": [
+    {
+      "path": "a",
+      "bytes": 32768
+    },
+    {
+      "path": "b",
+      "bytes": 32768
+    },
+    {
+      "path": "a",
+      "bytes": 32768
+    },
+    {
+      "path": "b",
+      "bytes": 32768
+    }
+  ],
+  "total_bytes": 131072,
+  "unique_product_bytes": 65536,
+  "unchanged_record_does_not_hide_product_mutation": true
+}

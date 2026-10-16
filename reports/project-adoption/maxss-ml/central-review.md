@@ -56,3 +56,12 @@ stage recipe. Add unknown-stage rejection to the orchestrator; preserve manual
 inspection after any uncertain submission result.
 
 Local project feedback is mirrored in `reports/flexlock-adoption/central-feedback.md`.
+
+## Release/follow-up status — 2026-10-16
+
+The absolute-interpreter warning fix is installed in 0.9.3. The campaign source
+union versus per-stage attribution and large-product rehashing questions remain
+separate investigations. No record-only integrity shortcut has been accepted.
+
+See [rollout evidence](../../2026-10-15-release-rollout/report.md) and
+[unreleased follow-up](../../../docs/project_feedback_followup.md).

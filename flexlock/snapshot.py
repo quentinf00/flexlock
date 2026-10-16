@@ -63,7 +63,7 @@ class RunTracker:
     def __init__(self, save_dir, parent_lock=None, note=None):
         self.save_dir = Path(save_dir)
         self.parent_lock = Path(parent_lock) if parent_lock else None
-        self.data = {"timestamp": datetime.now().isoformat()}
+        self.data = {"timestamp": datetime.now().astimezone().isoformat()}
         self._lineage_by_path = {}
 
         # Free-text intent recorded alongside run metadata (sibling of

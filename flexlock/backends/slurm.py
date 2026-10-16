@@ -182,10 +182,13 @@ class SlurmBackend(Backend):
         # SBATCH directives must all come before any shell commands —
         # Slurm stops parsing directives at the first non-comment, non-blank line.
         if self.configure_logging:
+            is_array = any(re.search(r'^\s*#SBATCH\s+(?:--array(?:=|\s)|-a(?:\s|[0-9]))', line)
+                           for line in self.startup_lines)
+            log_name = 'slurm-%A_%a' if is_array else 'slurm'
             lines.extend(
                 [
-                    f"#SBATCH --output={self.folder.absolute() / 'slurm.out'}",
-                    f"#SBATCH --error={self.folder.absolute() / 'slurm.err'}",
+                    f"#SBATCH --output={self.folder.absolute() / (log_name + '.out')}",
+                    f"#SBATCH --error={self.folder.absolute() / (log_name + '.err')}",
                 ]
             )
         lines.extend(self.startup_lines)
