@@ -1,9 +1,50 @@
 """Diff utilities for FlexLock."""
 
 import os
+from pathlib import Path
 from typing import Any, Dict, Set
 from omegaconf import OmegaConf, DictConfig, ListConfig
 from loguru import logger
+
+
+def _capture_name(captured, name, scope):
+    """A campaign may name the same repository differently from this stage."""
+    path = scope.get('path')
+    if path is None:
+        return name if name in captured else None
+    canonical = Path(path).resolve()
+    names = [name] + [other for other in captured if other != name]
+    return next((alias for alias in names
+                 if (info := captured.get(alias)) and info.get('path') and
+                 Path(info['path']).resolve() == canonical), None)
+
+
+def _source_repos(record):
+    captured = record.get('repos') or {}
+    if 'source_scope' not in record:
+        return captured  # Historical capture semantics; never rediscover imports.
+    selected = {}
+    for name, scope in record['source_scope'].items():
+        alias = _capture_name(captured, name, scope)
+        info = captured.get(alias) or {}
+        # Missing source evidence must not become a match just because both
+        # sides have identical scope declarations or missing tree hashes.
+        selected[name] = (dict(info, **scope) if info.get('tree') else None)
+    return selected
+
+
+def _source_env(record):
+    env = record.get('env')
+    if env is None or 'source_scope' not in record:
+        return env
+    selected = {}
+    for name, scope in record['source_scope'].items():
+        alias = _capture_name(record.get('repos') or {}, name, scope)
+        if alias is not None:
+            prefix = alias + '/'
+            selected.update({name + '/' + key[len(prefix):]: value
+                             for key, value in env.items() if key.startswith(prefix)})
+    return selected
 
 
 class RunDiff:
@@ -93,8 +134,8 @@ class RunDiff:
     def compare_git(self):
         """Compare git tree hashes, with optional include/exclude filtering."""
         diff = []
-        c_repos = self.current.get("repos", {})
-        t_repos = self.target.get("repos", {})
+        c_repos = _source_repos(self.current)
+        t_repos = _source_repos(self.target)
 
         # Iterate the union so a repo present on only one side is flagged
         # symmetrically (issue 9) instead of being silently ignored.
@@ -112,12 +153,17 @@ class RunDiff:
             if c_info.get("tree") != t_info.get("tree"):
                 # Trees differ — check if RELEVANT files changed
                 # Priority: RunDiff-level override > snapshot-level patterns
-                include = (
-                    self.match_include or c_info.get("include") or t_info.get("include")
-                )
-                exclude = (
-                    self.match_exclude or c_info.get("exclude") or t_info.get("exclude")
-                )
+                if 'source_scope' in self.current:
+                    scope = c_info
+                elif 'source_scope' in self.target:
+                    scope = t_info
+                else:
+                    scope = {key: c_info.get(key) or t_info.get(key)
+                             for key in ('include', 'exclude')}
+                include = (self.match_include if self.match_include is not None
+                           else scope.get('include'))
+                exclude = (self.match_exclude if self.match_exclude is not None
+                           else scope.get('exclude'))
 
                 if include or exclude:
                     repo_path = c_info.get("path") or t_info.get("path")
@@ -257,8 +303,8 @@ class RunDiff:
         is treated as a match so existing caches keep working (the index
         backfill then records the run under its env-aware fingerprint).
         """
-        c_env = self.current.get("env") or {}
-        t_env = self.target.get("env")
+        c_env = _source_env(self.current) or {}
+        t_env = _source_env(self.target)
         if t_env is None or c_env == t_env:
             return True
         detail = []

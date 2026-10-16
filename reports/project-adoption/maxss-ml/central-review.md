@@ -65,3 +65,15 @@ separate investigations. No record-only integrity shortcut has been accepted.
 
 See [rollout evidence](../../2026-10-15-release-rollout/report.md) and
 [unreleased follow-up](../../../docs/project_feedback_followup.md).
+
+## Source-scope follow-up — 2026-10-16, unreleased
+
+The shared-capture/effective-scope approach is implemented centrally. Stage records
+retain the campaign capture in repos and their own configured source_scope separately;
+source/environment comparisons and show/report views respect that distinction.
+Directory and DB trials cover exclusions, repository alias collisions, unrelated
+stage changes and missing capture evidence. No new config option or per-stage
+snapshot is required; broad shared source scopes remain the recommended default.
+See the [contract](../../../docs/source_attribution.md) and
+[validation report](../../2026-10-16-source-attribution/report.md).
+Installed 0.9.3 environments are unchanged. Repeated product hashing remains separate.

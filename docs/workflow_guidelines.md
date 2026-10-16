@@ -146,6 +146,12 @@ alias. Explicit declarations cover extra repositories/scopes. No discovered repo
 means absent evidence and a visible warning, not proof that imports were captured.
 Disable discovery explicitly for deliberate untracked targets.
 
+For ordinary projects, reuse a broad explicit scope such as src/, configs/ and
+scripts/ across stages. Introduce stage-specific includes only for a concrete need.
+The unreleased [source-attribution contract](source_attribution.md) preserves shared
+campaign capture in repos and exposes each invocation's effective source_scope in
+records/readers. These are output metadata fields; _snapshot_.repos syntax is unchanged.
+
 Data-ancestor discovery only examines declared data paths and labels its evidence
 as data_ancestor in the record's discovery section. Containment is an inferred
 association, not output ownership or scientific acceptance. discover.prevs=False

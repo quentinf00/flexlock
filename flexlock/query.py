@@ -249,6 +249,7 @@ def load_run_summary(run_dir, scan_root=None, downstream=True) -> dict:
         "config": config,
         "results": RunRecord(run_dir).load_results() or {},
         "repos": repos,
+        "source_scope": lock.get("source_scope"),
         "data": lock.get("data") or {},
         "tasks": st.get("tasks"),
         "lineage": {
@@ -480,6 +481,7 @@ def build_graph(results_root, include_groups=False) -> dict:
             fingerprint=lock.get("fingerprint"),
             tag=tag_map.get(node_id),
             tree_hashes={n: (i or {}).get("tree") for n, i in repos.items()},
+            source_scope=lock.get("source_scope"),
             data_hashes=lock.get("data") or {},
             metrics=_numeric_metrics(results),
         )
@@ -494,19 +496,23 @@ def build_graph(results_root, include_groups=False) -> dict:
         st = run_status(task_dir)
         db_path = _resolve_marker_db(task_dir, marker)
         results = RunRecord(task_dir).load_results()
+        lock = load_record(task_dir) or {}
+        config = lock.get('config') or {}
+        repos = lock.get('repos') or {}
         _node(
             node_id,
             id=node_id,
             label=task_dir.name,
             kind="sweep_task",
             status=st["status"],
-            timestamp=None,
-            note=None,
-            target=None,
-            fingerprint=None,
+            timestamp=lock.get('timestamp'),
+            note=lock.get('note'),
+            target=config.get('_target_'),
+            fingerprint=lock.get('fingerprint'),
             tag=tag_map.get(node_id),
-            tree_hashes={},
-            data_hashes={},
+            tree_hashes={name: (info or {}).get('tree') for name, info in repos.items()},
+            source_scope=lock.get('source_scope'),
+            data_hashes=lock.get('data') or {},
             metrics=_numeric_metrics(results),
         )
         # sweep-item edge from the master (task DB's parent dir).
@@ -699,6 +705,15 @@ def format_summary_md(summary: dict) -> str:
         lines.append("")
 
     config = summary.get("config") or {}
+    if summary.get('repos'):
+        import yaml as _yaml
+        trees = {name: info.get('tree') for name, info in summary['repos'].items()}
+        lines += ['## Captured source trees (may cover the campaign)', '', '```yaml',
+                  _yaml.safe_dump(trees, sort_keys=False).rstrip(), '```', '']
+    if summary.get('source_scope') is not None:
+        import yaml as _yaml
+        lines += ['## Effective configured source scope', '', '```yaml',
+                  _yaml.safe_dump(summary['source_scope'], sort_keys=False).rstrip(), '```', '']
     if config:
         import yaml as _yaml
 

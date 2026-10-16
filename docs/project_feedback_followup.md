@@ -76,15 +76,13 @@ A safe retention/pruning tool remains a separate proposal.
 
 ## Investigations kept separate
 
-**Composite source attribution.** Queued stage snapshots are materialized with the
-campaign master's captured repositories. That union is captured source evidence;
-it is not proof that every stage imports every captured repo. A stage fingerprint
-is still computed from that stage's tracking configuration. Shared capture/comparison
-scopes in 0.9.3 do not turn the union into per-stage dependency attribution. The [two-stage reproduction](../reports/2026-10-16-project-feedback/composite-attribution.json)
-confirms a.py/b.py are captured together while each config declares one. Before
-changing record fields, reproduce differing stage scopes (including two scopes of
-the same repository) and distinguish captured trees from declared dependencies in
-readers/reports. Do not drop the union and accidentally omit reconstructible source.
+**Composite source attribution — implemented, unreleased.** Following the user's
+scope decision, shared capture remains in repos and each invocation records its
+effective source_scope separately. Config syntax is unchanged; broad shared project
+scopes are recommended before narrower stage scopes. Readers/reports expose both,
+and source/environment comparisons use the invocation's configured scope rather
+than the campaign union. See the [contract and config examples](source_attribution.md).
+The earlier two-stage reproduction remains historical evidence of the ambiguity.
 
 **Repeated product hashing.** The strict helper validates all declared producer
 outputs on consumption. Several calls for different fields of the same producer

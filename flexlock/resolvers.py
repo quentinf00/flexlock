@@ -319,7 +319,7 @@ def _attach_run_lock_capture(resolved, capture, *, binding=None):
     records = snap.setdefault('run_lock_records', {})
     records.update({
         path: {key: deepcopy(record[key]) for key in
-               ('config', 'timestamp', 'repos', 'parent', 'fingerprint', 'task_id', 'record_dir')
+               ('config', 'timestamp', 'repos', 'source_scope', 'parent', 'fingerprint', 'task_id', 'record_dir')
                if key in record}
         for path, record in capture.records.items() if record is not None
     })

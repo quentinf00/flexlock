@@ -1,0 +1,53 @@
+{
+  "stages": {
+    "a": {
+      "source_scope": {
+        "a": {
+          "path": "/tmp/flexlock-stage-scope-t8prt0d3/source",
+          "include": [
+            "a.py"
+          ],
+          "exclude": []
+        }
+      },
+      "captured_files": [
+        "a.py",
+        "b.py"
+      ]
+    },
+    "b": {
+      "source_scope": {
+        "b": {
+          "path": "/tmp/flexlock-stage-scope-t8prt0d3/source",
+          "include": [
+            "b.py"
+          ],
+          "exclude": []
+        }
+      },
+      "captured_files": [
+        "a.py",
+        "b.py"
+      ]
+    }
+  },
+  "capture_calls": [
+    {
+      "path": "/tmp/flexlock-stage-scope-t8prt0d3/source",
+      "include": [
+        "a.py",
+        "b.py"
+      ]
+    },
+    {
+      "path": "/tmp/flexlock-stage-scope-t8prt0d3/source",
+      "include": [
+        "a.py",
+        "b.py"
+      ]
+    }
+  ],
+  "one_shared_capture_per_campaign": true,
+  "first_stage_matches_after_second_stage_change": true,
+  "second_stage_change_detected": true
+}

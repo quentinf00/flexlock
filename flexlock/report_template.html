@@ -179,6 +179,12 @@
     if (n.config){
       html += "<p><b>config:</b></p><pre>"+esc(JSON.stringify(n.config, null, 2))+"</pre>";
     }
+    if (n.tree_hashes && Object.keys(n.tree_hashes).length){
+      html += "<p><b>Captured source trees (may cover the campaign):</b></p><pre>"+esc(JSON.stringify(n.tree_hashes, null, 2))+"</pre>";
+    }
+    if (n.source_scope != null){
+      html += "<p><b>Effective configured source scope:</b></p><pre>"+esc(JSON.stringify(n.source_scope, null, 2))+"</pre>";
+    }
     d.innerHTML = html;
     render();
   }

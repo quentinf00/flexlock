@@ -1,0 +1,22 @@
+{
+  "base_commit": "67a1334",
+  "status": "unreleased",
+  "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+  "full_suite": {
+    "passed": 1076,
+    "skipped": 2,
+    "xfailed": 1,
+    "warnings": 39,
+    "seconds": 348.64,
+    "sha256": "0e9465237b04c3b99e7b252dc44304c1a4ca58aea7b77982eb9a3eab4502192f"
+  },
+  "focused": {
+    "passed": 132,
+    "warnings": 24,
+    "seconds": 17.24
+  },
+  "config_syntax_changed": false,
+  "additional_stage_snapshots": false,
+  "installed_environments_changed": false,
+  "slurm_jobs_submitted": false
+}

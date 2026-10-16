@@ -59,3 +59,12 @@ Automatic cache search/default policy is unchanged by this migration.
 This supersedes the separate-capture-policy and run.result.json proposals in
 urgent_fix_decisions.md, following the user's 2026-10-15 approval of shared scopes
 and in-record return values. The local release and partial installation rollout are documented in the report above.
+
+## Unreleased attribution follow-up — 2026-10-16
+
+The next change separates inherited captured repos from each invocation's effective
+source_scope, without changing _snapshot_.repos configuration or creating separate
+stage snapshots. Broad project-level scopes are the recommended starting point.
+Source/environment comparison and reader/report semantics are documented in the
+[source-attribution contract](source_attribution.md). This is not in the deployed
+0.9.3 wheel; historical source evidence is not backfilled.

@@ -12,6 +12,14 @@ from loguru import logger
 import uuid
 
 
+def _source_scope(repos):
+    """Effective configured scope, without claiming transitive import capture."""
+    return {name: dict(path=str(Path(info['path']).resolve()),
+                       include=list(info.get('include') or []),
+                       exclude=list(info.get('exclude') or []))
+            for name, info in (repos or {}).items()}
+
+
 def write_complete_marker(save_dir: Path, result=None) -> Path:
     """Write run.complete atomically into ``save_dir``.
 
@@ -63,7 +71,8 @@ class RunTracker:
     def __init__(self, save_dir, parent_lock=None, note=None):
         self.save_dir = Path(save_dir)
         self.parent_lock = Path(parent_lock) if parent_lock else None
-        self.data = {"timestamp": datetime.now().astimezone().isoformat()}
+        self.data = {"timestamp": datetime.now().astimezone().isoformat(),
+                     "source_scope": {}}
         self._lineage_by_path = {}
 
         # Free-text intent recorded alongside run metadata (sibling of
@@ -77,6 +86,7 @@ class RunTracker:
             self.data["parent"] = str(self.parent_lock)
 
     def record_env(self, repos: dict):
+        self.data['source_scope'] = _source_scope(repos)
         # Optimization: If we have a parent, we MIGHT skip recording git
         # IF we are sure code hasn't changed between main process and worker
         # (which is true for multiprocessing/slurm typically).
@@ -276,6 +286,10 @@ def snapshot(
     if evidence_repos is None and parent_lock:
         from .utils import extract_tracking_info
         evidence_repos, _, _ = extract_tracking_info(cfg)
+    # A worker may inherit a larger campaign capture. Keep its own scope rather
+    # than inheriting the master's union or rediscovering it when records are read.
+    if repos is None and evidence_repos is not None:
+        tracker.data['source_scope'] = _source_scope(evidence_repos)
     repo_evidence = {name: dict(path=str(Path(info['path'] if hasattr(info, 'get') else info).resolve()),
         method='explicit' if name in explicit_repos else 'target') for name, info in (evidence_repos or {}).items()}
     if evidence or repo_evidence:
@@ -325,6 +339,8 @@ def snapshot(
                         "repos": snapshot_data.get("repos", {}),
                         "parent": snapshot_data.get("parent"),
                     }
+                    if 'source_scope' in snapshot_data:
+                        stage_info['source_scope'] = snapshot_data['source_scope']
 
                     # Add to lineage
                     tracker.add_lineage(
