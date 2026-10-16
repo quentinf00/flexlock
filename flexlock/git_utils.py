@@ -112,7 +112,7 @@ def create_shadow_tree(
     Unlike :func:`create_shadow_snapshot`, this stages into a throwaway shadow
     index and runs **``write-tree`` only** — it creates no commit object and no
     ``refs/flexlock/runs/*`` ref. It is therefore safe to call on every
-    fingerprint check (smart-run) without accumulating objects/refs in ``.git``.
+    source fingerprint check without accumulating objects/refs in ``.git``.
 
     Args:
         repo_path: Path inside the repository.

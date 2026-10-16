@@ -79,6 +79,8 @@ def make_config(destination, inputs, *, provenance=False, data=False):
 
 
 def run(args):
+    if args.cache_search:
+        raise ValueError('Automatic cache discovery is retired; select concrete producers explicitly.')
     metrics = {}
     case = Path(args.output).resolve()
     case.mkdir(parents=True, exist_ok=False)
@@ -141,7 +143,7 @@ def run(args):
                     kw = dict(slurm_config=str(slurm), wait=False)
                 with timed(metrics, 'submit_and_run' if not kw else 'prepare_submit'):
                     results = Project().submit(cfg, sweep=[dict(item=i) for i in range(n)],
-                        sweep_dir_suffix=True, smart_run=args.cache_search, n_jobs=1,
+                        sweep_dir_suffix=True, n_jobs=1,
                         task_record=args.record, **kw)
             assert len(results) == n
             statuses = {str(r.status) for r in results}

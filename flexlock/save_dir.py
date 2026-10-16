@@ -167,8 +167,8 @@ def apply_save_dir_policy(
     - ``"unsafe"``: no check.
 
     Sweeps don't use this guard path — items are guarded individually in
-    ``_submit_sweep`` after the per-item cache check (where ``skip`` means
-    resume). Only the naming policies apply here to a sweep root.
+    ``_submit_sweep`` with explicit selected-path reuse and recorded queue
+    ownership checks. Only naming policies apply here to a sweep root.
 
     Returns:
         :data:`RUN` to proceed with execution, :data:`SKIP` when the caller

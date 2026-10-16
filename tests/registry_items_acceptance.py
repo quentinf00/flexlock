@@ -23,23 +23,22 @@ def main():
     cfg = config(root)
     cfg._snapshot_.repos = {'flexlock': str(ROOT)}
     first = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], n_jobs=1,
-                             task_record='db', smart_run=False, note='T5 serial acceptance')
+                             task_record='db',  note='T5 serial acceptance')
     before = [(Path(r.record_dir)/'run.complete').read_bytes() for r in first]
     appended = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}, {'item': 3}],
-                                n_jobs=1, task_record='db', smart_run=True,
-                                search_dirs=[str(root)], note='T5 append acceptance')
-    assert [r.status for r in appended] == ['CACHED', 'CACHED', 'SUCCESS']
+                                n_jobs=1, task_record='db', note='T5 append acceptance')
+    assert [r.status for r in appended] == ['SUCCESS', 'SUCCESS', 'SUCCESS']
     assert before == [(Path(r.record_dir)/'run.complete').read_bytes() for r in first]
     assert all(load_record(r.record_dir)['note'] == 'T5 serial acceptance' for r in first)
     parallel_cfg = cfg.copy(); parallel_cfg.save_dir = str(root/'parallel-products')
     parallel = Project().submit(parallel_cfg, sweep=[{'item': 1}, {'item': 2}],
-                                n_jobs=2, task_record='dir', smart_run=False,
+                                n_jobs=2, task_record='dir',
                                 sweep_root=str(root/'parallel-campaign'))
     assert [r.get('item') for r in parallel] == [1, 2]
     assert all(r.is_success for r in parallel)
     bad_cfg = cfg.copy(); bad_cfg.save_dir = str(root/'failure-products')
     failure = Project().submit(bad_cfg, sweep=[{'item': 1, 'fail': True}, {'item': 2}],
-                               n_jobs=1, task_record='db', smart_run=False,
+                               n_jobs=1, task_record='db',
                                sweep_root=str(root/'failure-campaign'))
     assert [r.status for r in failure] == ['FAILED', 'SUCCESS']
     entries = list_task_records(appended[-1].task_db, check_outputs=True)

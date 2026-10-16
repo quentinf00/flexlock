@@ -1,5 +1,11 @@
 # Performance follow-up: core checks, record files and explicit discovery
 
+> Superseded status (2026-10-16): the user approved immediate pre-1.0 removal
+> of automatic cache search, marker-based partial-stage resume and chained fanout.
+> The candidate implements removal, not deprecated opt-in compatibility. Historical
+> inventories below explain prior decisions; use [current migration notes](release_0_10_0rc1.md)
+> and [workflow guidelines](workflow_guidelines.md) for supported calls.
+
 Current status, 2026-10-14: the dated experiments below preserve their original
 scope. Queue layout 2 is implemented in 0.9.1/0.9.2, and all 53 previously
 inventoried environments have been upgraded. The 13.335s nested-pointer prototype

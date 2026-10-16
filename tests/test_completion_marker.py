@@ -88,39 +88,8 @@ def _make_run_dir(path: Path, fingerprint: dict, complete: bool):
         write_complete_marker(path)
 
 
-def test_cache_hit_requires_complete(tmp_path):
-    """A run with run.lock but no run.complete is not a cache hit."""
-    from flexlock.api import Project
-
-    cfg = {"config": {"save_dir": str(tmp_path / "run"), "param": 1}}
-    incomplete_dir = tmp_path / "candidate_incomplete"
-    _make_run_dir(incomplete_dir, cfg, complete=False)
-
-    proj = Project.__new__(Project)
-    proj.defaults = OmegaConf.create({})
-
-    sub = OmegaConf.create(cfg["config"])
-    with patch.object(proj, "_generate_fingerprint", return_value=cfg):
-        match = proj._find_matching_run(sub, search_dirs=[str(tmp_path)])
-    assert match is None
 
 
-def test_cache_hit_with_complete(tmp_path):
-    """A run with both files and a matching fingerprint is a cache hit."""
-    from flexlock.api import Project
-
-    cfg_dict = {"save_dir": str(tmp_path / "run"), "param": 1}
-    fp = {"config": cfg_dict}
-    complete_dir = tmp_path / "candidate_complete"
-    _make_run_dir(complete_dir, fp, complete=True)
-
-    proj = Project.__new__(Project)
-    proj.defaults = OmegaConf.create({})
-
-    sub = OmegaConf.create(cfg_dict)
-    with patch.object(proj, "_generate_fingerprint", return_value=fp):
-        match = proj._find_matching_run(sub, search_dirs=[str(tmp_path)])
-    assert match == complete_dir
 
 
 # --- force=True semantics ---
@@ -141,12 +110,10 @@ def test_force_invalidates_only_marker(tmp_path):
 
     cfg = OmegaConf.create({"save_dir": str(save_dir)})
     # Drive only the force branch — submit short-circuits to local exec, mock it.
-    with patch.object(
-        proj, "_find_matching_run", return_value=None
-    ), patch("flexlock.api.snapshot"), patch(
+    with patch("flexlock.api.snapshot"), patch(
         "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
     ), patch("flexlock.api.instantiate", return_value={"x": 1}):
-        proj.submit(cfg, force=True, smart_run=False, wait=True)
+        proj.submit(cfg, force=True,  wait=True)
 
     assert (save_dir / "run.lock").exists(), "run.lock must be preserved"
     assert (save_dir / "model.pt").exists(), "outputs must be preserved"

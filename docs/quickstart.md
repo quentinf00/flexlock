@@ -38,21 +38,21 @@ Training with lr=0.01 for 10 epochs
 
 That's it! FlexLock automatically:
 - Created a CLI for your function
-- Saved results with auto-versioning
+- Saved the return value in its authoritative run record
 - Tracked the configuration in `run.lock`
 
 ### Step 3: Override Parameters
 
 ```bash
-$ python train.py -o lr=0.1 epochs=20
+$ python train.py -o lr=0.1 epochs=20 save_dir=outputs/second
 Training with lr=0.1 for 20 epochs
-✓ Results saved to: results/train/run_0002/
+✓ Results saved to: outputs/second/
 ```
 
 ### Step 4: Run a Parameter Sweep
 
 ```bash
-$ python train.py --sweep "0.001,0.01,0.1" --sweep-target lr --n_jobs 3
+$ python train.py --sweep "0.001,0.01,0.1" --sweep-target lr --n_jobs 3 --sweep-dir-suffix -o save_dir=outputs/sweep
 ✓ Running 3 experiments in parallel...
 ✓ Sweep complete! Results in results/train/
 ```
@@ -71,7 +71,7 @@ preprocess_result = proj.submit(proj.get('preprocess'))
 
 # Stage 2: Train (uses preprocess output)
 train_cfg = proj.get('train')
-train_cfg.data_dir = preprocess_result.output_dir
+train_cfg.data_dir = preprocess_result.save_dir
 train_result = proj.submit(train_cfg)
 
 # Stage 3: Evaluate
@@ -79,18 +79,14 @@ eval_cfg = proj.get('evaluate')
 eval_cfg.model_dir = train_result.save_dir
 eval_result = proj.submit(eval_cfg)
 
-print(f"Final accuracy: {eval_result.accuracy}")
+print(f"Final accuracy: {eval_result['accuracy']}")
 ```
 
-Run again with the same config? FlexLock automatically skips stages that haven't changed:
-
-```bash
-$ python pipeline.py
-⚡ Cache Hit! Preprocess already done
-⚡ Cache Hit! Training already done
-⚡ Cache Hit! Evaluation already done
-Final accuracy: 0.95
-```
+Choose fresh destinations for new runs. To retain preparation, select its concrete
+run path and bind downstream inputs using `run_lock`. Occupied destinations raise
+before scheduling. Explicit `save_dir_policy='skip'` validates a selected complete
+record and outputs; it does not compare current code or resume partial pipelines.
+See the [workflow recipes](workflow_guidelines.md).
 
 ## Key Concepts
 

@@ -44,16 +44,14 @@ flexlock-run ... --force        # rerun a crashed/stale run in place
 
 Interaction rules:
 
-- **`smart_run` wins first**: a matching complete run is returned from cache
-  before the guard fires — the guard only sees genuine conflicts (crashed
-  runs, changed configs, `smart_run=False`).
-- **`force=True` bypasses the default guard** (it invalidates `run.complete`
-  and reruns in place).
-- **Sweeps**: a naming policy applies once to the sweep root; the guard is
-  enforced *per item* after the per-item cache check. `"skip"` on a sweep
-  means **resume**: complete items are reused, crashed items rerun in place.
-- The policy is applied after `print_config` / `--check` / `dry_run`, which
-  therefore never create or delete anything.
+- Occupied run destinations are guarded before scheduler submission.
+- `force=True` requests an in-place rerun; active ownership still blocks overwrites.
+- Sweeps apply naming policy once to the root, then validate item destinations.
+  `skip` validates selected complete items; incomplete occupied items require
+  recorded pending-queue continuation or explicit recovery into fresh destinations.
+- A partial ordered pipeline cannot resume from markers. Select remaining stages
+  and bind retained producers explicitly.
+- Preview/check modes do not create or delete run artifacts.
 
 ### Migration
 

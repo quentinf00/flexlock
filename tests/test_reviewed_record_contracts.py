@@ -37,9 +37,9 @@ def test_same_item_stage_alias_rejected_before_dispatch(tmp_path, monkeypatch, r
 def test_identical_completed_items_keep_results_across_tags(tmp_path, monkeypatch):
     monkeypatch.setenv('FLEXLOCK_INDEX', str(tmp_path/'.flexlock/index.db'))
     cfg = config(tmp_path)
-    first = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], tag='first', smart_run=False)
+    first = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], tag='first')
     before = [(Path(r.record_dir)/'run.complete').read_bytes() for r in first]
-    second = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], tag='second', smart_run=False)
+    second = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], tag='second')
     assert [r.status for r in second] == ['SUCCESS', 'SUCCESS']
     assert [r.get('item') for r in second] == [1, 2]
     assert [r.task_id for r in second] == [r.task_id for r in first]
@@ -47,7 +47,7 @@ def test_identical_completed_items_keep_results_across_tags(tmp_path, monkeypatc
     # Dedup membership is independent from a cosmetic new tag. Validate old outputs.
     (tmp_path/'products/chunk_1.json').write_text('{}')
     with pytest.raises(FlexLockValidationError, match='SHA256 differs'):
-        Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], tag='third', smart_run=False)
+        Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], tag='third')
 
 
 def test_composite_completed_item_results_across_tags(tmp_path):
@@ -80,14 +80,12 @@ def test_missing_authoritative_database_rejects_cache_receipt(tmp_path, monkeypa
     monkeypatch.setenv('FLEXLOCK_INDEX', str(tmp_path/'.flexlock/index.db'))
     monkeypatch.setenv('FLEXLOCK_INDEX_FALLBACK', '0')
     cfg = config(tmp_path);del cfg['_outputs_']
-    result = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], task_record='db', smart_run=False)[0]
+    result = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], task_record='db')[0]
     assert result.record_dir != result.save_dir
     db = Path(result.task_db);db.unlink()
     proposed = cfg.copy();proposed.item = 1
     with pytest.raises(FlexLockValidationError, match='readable.*record'):
-        Project()._load_cached_result(Path(result.record_dir), proposed)
-    with pytest.raises(ValueError, match='No matching run'):
-        Project().get_result(proposed, search_dirs=[str(tmp_path)])
+        Project()._load_selected_result(Path(result.record_dir), proposed)
     assert not db.exists()
 
 

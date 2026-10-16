@@ -158,6 +158,13 @@ class ParallelExecutor:
         from .backends.dependencies import validate_after
 
         after = validate_after(after, slurm_config, pbs_config)
+        if any(isinstance(task, (dict, DictConfig)) and task.get('_skip_complete_')
+               for task in tasks):
+            from .exceptions import FlexLockValidationError
+            raise FlexLockValidationError(
+                "Marker-based stage resume is retired; select remaining stages "
+                "and bind concrete retained producers. No task was queued."
+            )
         self.func = func
         self.tasks = tasks
         self.task_target = task_target

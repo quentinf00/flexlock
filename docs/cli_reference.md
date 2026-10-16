@@ -593,18 +593,12 @@ flexlock-run -d defaults --sweep-file sweep.yaml --n_jobs 4
 
 ---
 
-### `--check-exists`
-Skip execution if run with matching configuration already exists.
+### Explicit producer selection
 
-**Usage:**
-```bash
-flexlock-run -d defaults --check-exists
-```
-
-**Behavior:**
-- Compares current config with existing `run.lock` files
-- If match found: Skips execution
-- If no match: Runs normally
+Automatic cross-run cache selection has been removed. Use a concrete upstream anchor
+with `run_lock` and fresh downstream destinations. `--save-dir-policy skip` reuses
+only a selected complete path after record/output validation. It cannot resume a
+partially complete stage sequence. See [migration notes](release_0_10_0rc1.md).
 
 ---
 

@@ -17,6 +17,8 @@ FlexLock Documentation
    :caption: User Guide
 
    usage_guide
+   workflow_guidelines
+   source_attribution
    agentic_workflows
    debugging
    hpc_integration
@@ -38,4 +40,5 @@ FlexLock Documentation
 
    README
    changelog
+   release_0_10_0rc1
 

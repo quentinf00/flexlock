@@ -196,7 +196,7 @@ def run_resolver(address, select=None, pin=None, strict=None) -> str:
     """``${run:<preset>[,<select>[,<pin>[,strict]]]}`` → newest complete run dir.
 
     See :func:`flexlock.presets.resolve_run`. Bound by ``freeze_run_refs`` at
-    submit, or at worker stage start for unpinned scheduler-chain references.
+    submit. Scheduler chains require explicit pins or concrete future producer paths.
     """
     from .presets import resolve_run
 

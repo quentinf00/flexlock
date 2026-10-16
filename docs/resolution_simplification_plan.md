@@ -1,5 +1,11 @@
 # Implementation plan: simplify config resolution / interpolation
 
+> Superseded status (2026-10-16): the user approved immediate pre-1.0 removal
+> of automatic cache search, marker-based partial-stage resume and chained fanout.
+> The candidate implements removal, not deprecated opt-in compatibility. Historical
+> inventories below explain prior decisions; use [current migration notes](release_0_10_0rc1.md)
+> and [workflow guidelines](workflow_guidelines.md) for supported calls.
+
 Goal: replace the "three binding times hidden in one `${...}` syntax" design with
 explicit, single-purpose mechanisms, so the InterpolationKeyError bug class and
 the freeze.py grammar parser largely disappear.

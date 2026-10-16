@@ -80,8 +80,7 @@ defaults = {
         config.save_dir = temp_dir
 
         # Submit for single execution - should instantiate the config
-        # Disable smart_run for this test since we don't have git setup
-        result = project.submit(config, smart_run=False)
+        result = project.submit(config)
 
         # Check that result is an ExecutionResult
         assert isinstance(result, ExecutionResult)
@@ -109,41 +108,6 @@ def test_project_get_nonexistent_key():
         Path(temp_file).unlink()
 
 
-def test_project_exists():
-    """Test that Project.exists checks for existing runs."""
-    # Create a temporary directory structure
-    temp_dir = tempfile.mkdtemp()
-    run_dir = Path(temp_dir) / "run_001"
-    run_dir.mkdir()
-
-    # Create a minimal run.lock file
-    import yaml
-    lock_data = {
-        "config": {"lr": 0.01, "epochs": 10},
-        "repos": {"main": {"tree": "abc123"}},
-        "data": {}
-    }
-    with open(run_dir / "run.lock", 'w') as f:
-        yaml.dump(lock_data, f)
-
-    # Create a temporary defaults file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write('defaults = {"test": {"lr": 0.01, "epochs": 10}}\n')
-        temp_file = f.name
-
-    try:
-        project = Project(defaults=f'{temp_file}:defaults')
-        config = project.get("test")
-        config = OmegaConf.create(config)
-        config.save_dir = str(run_dir)
-
-        # Check if run exists (will fail without proper git setup, but tests the API)
-        # For this simple test, we just verify the method is callable
-        result = project.exists(config, search_dirs=[temp_dir])
-        assert isinstance(result, bool)
-    finally:
-        Path(temp_file).unlink()
-        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 def test_execution_result_dict_access():
@@ -230,8 +194,8 @@ defaults = {
             {"lr": 0.1}
         ]
 
-        # Submit sweep (with smart_run disabled and n_jobs=1 for simplicity)
-        results = project.submit(config, sweep=sweep, n_jobs=1, smart_run=False)
+        # Submit sweep with one local worker
+        results = project.submit(config, sweep=sweep, n_jobs=1)
 
         # Check results
         assert isinstance(results, list)
@@ -283,7 +247,7 @@ def test_submit_hpc_resolves_relative_snapshot_refs(snapshot, expected, tmp_path
             return instance
         mock_exec.side_effect = construct
         # Must not raise InterpolationKeyError.
-        project.submit(config, slurm_config="unused.yaml", smart_run=False)
+        project.submit(config, slurm_config="unused.yaml")
 
     captured = mock_exec.call_args.kwargs["cfg"]
     assert OmegaConf.to_container(captured._snapshot_, resolve=True) == expected
@@ -312,7 +276,7 @@ def test_run_stage_basic():
         cfg = OmegaConf.create(cfg)
         cfg.save_dir = temp_dir
 
-        result = project.run_stage(cfg, smart_run=False)
+        result = project.run_stage(cfg)
 
         assert isinstance(result, ExecutionResult)
         assert result.status == "SUCCESS"
@@ -341,7 +305,7 @@ def test_run_stage_infers_stage_name():
         cfg = OmegaConf.create(cfg)
         cfg.save_dir = str(stage_dir)
 
-        result = project.run_stage(cfg, smart_run=False)
+        result = project.run_stage(cfg)
 
         assert isinstance(result, ExecutionResult)
         assert result.status == "SUCCESS"
@@ -350,8 +314,8 @@ def test_run_stage_infers_stage_name():
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-def test_run_stage_auto_search_dirs():
-    """Test that run_stage auto-discovers search_dirs from sibling experiments."""
+def test_run_stage_fresh_destination_with_sibling_directories():
+    """Sibling directories do not select an execution result."""
     temp_dir = tempfile.mkdtemp()
 
     old_train = Path(temp_dir) / "results" / "exp_old" / "train"
@@ -371,7 +335,7 @@ def test_run_stage_auto_search_dirs():
         cfg = OmegaConf.create(cfg)
         cfg.save_dir = str(new_train)
 
-        result = project.run_stage(cfg, smart_run=False)
+        result = project.run_stage(cfg)
         assert result.status == "SUCCESS"
     finally:
         Path(temp_file).unlink()
@@ -453,7 +417,7 @@ def test_serial_failure_writes_run_error_and_propagates():
             {"_target_": "tests.test_api.flaky_func", "fail": True, "save_dir": temp_dir}
         )
         with pytest.raises(ValueError, match="intentional failure"):
-            Project().submit(config, smart_run=False)
+            Project().submit(config)
 
         rec = RunRecord(temp_dir)
         err = rec.load_error()
@@ -464,7 +428,7 @@ def test_serial_failure_writes_run_error_and_propagates():
 
         # Re-run with force=True after fixing → success clears run.error.
         config.fail = False
-        result = Project().submit(config, smart_run=False, force=True)
+        result = Project().submit(config,  force=True)
         assert result.status == "SUCCESS"
         assert rec.complete_path.exists()
         assert rec.load_error() is None

@@ -90,7 +90,7 @@ def test_submit_accepts_str_key(tmp_path):
     with patch("flexlock.api.snapshot"), patch(
         "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
     ), patch("flexlock.api.instantiate", return_value={"ok": True}) as mock_inst:
-        result = proj.submit("stage", smart_run=False)
+        result = proj.submit("stage")
 
     assert result.status == "SUCCESS"
     # The instantiate call should have received the resolved sub-node
@@ -110,7 +110,7 @@ def test_submit_applies_overrides_dict(tmp_path):
     with patch("flexlock.api.snapshot"), patch(
         "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
     ), patch("flexlock.api.instantiate", return_value={}) as mock_inst:
-        proj.submit(cfg, overrides={"lr": 0.5}, smart_run=False)
+        proj.submit(cfg, overrides={"lr": 0.5})
 
     assert mock_inst.call_args[0][0].lr == 0.5
 
@@ -125,7 +125,7 @@ def test_submit_applies_overrides_dotlist(tmp_path):
     with patch("flexlock.api.snapshot"), patch(
         "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
     ), patch("flexlock.api.instantiate", return_value={}) as mock_inst:
-        proj.submit(cfg, overrides=["a.b=99"], smart_run=False)
+        proj.submit(cfg, overrides=["a.b=99"])
 
     assert mock_inst.call_args[0][0].a.b == 99
 
@@ -143,7 +143,7 @@ def test_submit_applies_merge_from_yaml(tmp_path):
     with patch("flexlock.api.snapshot"), patch(
         "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
     ), patch("flexlock.api.instantiate", return_value={}) as mock_inst:
-        proj.submit(cfg, merge=str(merge_path), smart_run=False)
+        proj.submit(cfg, merge=str(merge_path))
 
     final = mock_inst.call_args[0][0]
     assert final.lr == 0.9
@@ -165,7 +165,7 @@ def test_submit_merge_then_overrides_order(tmp_path):
         "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
     ), patch("flexlock.api.instantiate", return_value={}) as mock_inst:
         proj.submit(
-            cfg, merge=str(merge_path), overrides={"lr": 0.99}, smart_run=False
+            cfg, merge=str(merge_path), overrides={"lr": 0.99}
         )
 
     assert mock_inst.call_args[0][0].lr == 0.99
@@ -239,7 +239,7 @@ def test_submit_sweep_target_routes_items(tmp_path):
             cfg,
             sweep=[{"lr": 0.5}, {"lr": 0.9}],
             sweep_target="lit_module",
-            smart_run=False,
+
             n_jobs=1,
         )
 
@@ -277,7 +277,7 @@ def test_module_level_submit(tmp_path):
     with patch("flexlock.api.snapshot"), patch(
         "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
     ), patch("flexlock.api.instantiate", return_value={"ok": True}) as mock_inst:
-        result = flexlock.submit(cfg, smart_run=False)
+        result = flexlock.submit(cfg)
 
     assert result.status == "SUCCESS"
     assert mock_inst.call_args[0][0].x == 1
@@ -291,7 +291,7 @@ def test_project_submit_config_classmethod(tmp_path):
     with patch("flexlock.api.snapshot"), patch(
         "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
     ), patch("flexlock.api.instantiate", return_value={}) as mock_inst:
-        Project.submit_config(cfg, smart_run=False)
+        Project.submit_config(cfg)
 
     assert mock_inst.call_args[0][0].x == 2
 
@@ -318,7 +318,7 @@ def test_submit_without_sweep_target_merges_at_root(tmp_path):
         proj.submit(
             cfg,
             sweep=[{"lr": 0.5}, {"lr": 0.9}],
-            smart_run=False,
+
             n_jobs=1,
         )
 
@@ -355,13 +355,13 @@ def test_forced_sweep_reexecutes_all_items(tmp_path, monkeypatch):
 
     # First run: both items execute.
     proj.submit(
-        cfg, sweep=sweep, n_jobs=1, sweep_dir_suffix=True, search_dirs=[str(base)]
+        cfg, sweep=sweep, n_jobs=1, sweep_dir_suffix=True
     )
     assert len(tick.read_text()) == 2
 
-    # Re-run without force: both cached, no new executions.
+    # Continue the unchanged recorded queue: done rows stay done.
     proj.submit(
-        cfg, sweep=sweep, n_jobs=1, sweep_dir_suffix=True, search_dirs=[str(base)]
+        cfg, sweep=sweep, n_jobs=1, sweep_dir_suffix=True
     )
     assert len(tick.read_text()) == 2
 
@@ -371,7 +371,6 @@ def test_forced_sweep_reexecutes_all_items(tmp_path, monkeypatch):
         sweep=sweep,
         n_jobs=1,
         sweep_dir_suffix=True,
-        search_dirs=[str(base)],
         force=True,
     )
     assert len(tick.read_text()) == 4

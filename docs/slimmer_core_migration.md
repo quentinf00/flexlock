@@ -1,5 +1,11 @@
 # Migration toward a smaller FlexLock core
 
+> Superseded status (2026-10-16): the user approved immediate pre-1.0 removal
+> of automatic cache search, marker-based partial-stage resume and chained fanout.
+> The candidate implements removal, not deprecated opt-in compatibility. Historical
+> inventories below explain prior decisions; use [current migration notes](release_0_10_0rc1.md)
+> and [workflow guidelines](workflow_guidelines.md) for supported calls.
+
 Date: 2026-10-06. Status: accepted direction and staged implementation plan.
 Current status (2026-10-14): the passages below preserve dated milestone evidence.
 All 53 inventoried consumer environments now use 0.9.2; shared recipes are linked

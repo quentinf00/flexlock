@@ -146,50 +146,8 @@ def _payload(lr=0.01, save_dir=None):
     return {"lr": lr, "doubled": lr * 2}
 
 
-def test_end_to_end_index_cache_hit(tmp_path, monkeypatch):
-    """A completed serial submit is found via the index on re-lookup."""
-    monkeypatch.setenv("FLEXLOCK_INDEX", str(tmp_path / "idx.db"))
-    from flexlock.api import Project
-    from omegaconf import OmegaConf
-
-    out = tmp_path / "outputs"
-    cfg = OmegaConf.create(
-        {
-            "_target_": "tests.test_index._payload",
-            "lr": 0.01,
-            "save_dir": str(out / "run_0000"),
-        }
-    )
-    proj = Project()
-    proj.submit(cfg, smart_run=True, search_dirs=[str(out)])
-
-    assert (tmp_path / "idx.db").exists()
-    match = proj._find_matching_run(cfg, search_dirs=[str(out)])
-    assert match == out / "run_0000"
 
 
-def test_index_serves_hit_without_glob_fallback(tmp_path, monkeypatch):
-    """With the glob fallback disabled, the hit must come from the index."""
-    monkeypatch.setenv("FLEXLOCK_INDEX", str(tmp_path / "idx.db"))
-    monkeypatch.setenv("FLEXLOCK_INDEX_FALLBACK", "0")
-    from flexlock.api import Project
-    from omegaconf import OmegaConf
-
-    out = tmp_path / "outputs"
-    cfg = OmegaConf.create(
-        {
-            "_target_": "tests.test_index._payload",
-            "lr": 0.02,
-            "save_dir": str(out / "run_0000"),
-        }
-    )
-    proj = Project()
-    proj.submit(cfg, smart_run=True, search_dirs=[str(out)])
-
-    # get_result resolves the cached run through the index only.
-    res = proj.get_result(cfg, search_dirs=[str(out)])
-    assert res.status == "CACHED"
-    assert res.get("doubled") == 0.04
 
 
 def test_reindex_skips_incomplete_and_unfingerprinted(tmp_path, monkeypatch):

@@ -167,8 +167,8 @@ Missing concrete promised producers paired with --after, or earlier stages in an
 pipeline, resolve at consumer start. A readable existing record with a missing required
 field fails before submission. Explicit defaults bind now, including null. latest
 selection freezes at dispatch; --enqueue merely exports config and is not dispatch.
-Legacy unpinned run references under --after retain worker-time compatibility behavior
-and are outside the concrete-producer recipe. Pending/running queue reservations
+Unpinned run references under --after are rejected before dispatch. Use an explicit
+pin resolved at submit, or a concrete future producer path with run_lock. Pending/running queue reservations
 identify promised producers even when their controller placeholder run.lock exists.
 Pair them with --after; completion is checked by project acceptance code. Directory
 identity rereads selected relative paths and bytes; single-file metadata caching
@@ -239,8 +239,9 @@ flexlock-run -d examples.slimmer_workflows.cfgmod.cfg -s train \
 The stage callable writes inside its save_dir and fails clearly if inputs are
 invalid. Declare required outputs when practical. An empty successful result
 should have an explicit empty outcome, not masquerade as a missing product.
-Avoid automatic cache checks in the fresh recipe: CLI caching is opt-in; Python
-Project.submit currently defaults smart_run=True, so pass smart_run=False.
+Fresh submission performs no automatic cache lookup. Do not pass the retired
+smart_run/search_dirs keywords, including smart_run=False. Select retained producers
+explicitly and use fresh destinations for new work.
 The [thousand-item measurements](../reports/2026-10-07-thousand-items-hydra/report.md)
 show why this matters for fresh file-list campaigns: legacy fallback can repeat
 a directory traversal for each cache miss. Claim batching can reduce queue

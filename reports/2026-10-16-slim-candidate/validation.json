@@ -1,0 +1,75 @@
+{
+  "passed": true,
+  "candidate": "0.10.0rc1",
+  "source_base": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+  "suite": {
+    "passed": 1086,
+    "skipped": 2,
+    "xfailed": 1,
+    "warnings": 34,
+    "seconds": 338.92,
+    "python": "3.13.14",
+    "log": "full-suite.log"
+  },
+  "wheel": {
+    "passed": true,
+    "sha256": "6d93c2bf36b0a5f9a18d6b96a6a40536f871dff50879787fe5dce326865e4129",
+    "package_files": 49,
+    "identity": "wheel-identity.json",
+    "acceptance": "wheel-acceptance.json",
+    "dependencies_unchanged": true
+  },
+  "measurements": "benchmark-measurements.json",
+  "scope": {
+    "installed_project_upgrades": false,
+    "real_scheduler_calls": 0,
+    "scientific_runs": 0,
+    "scientific_acceptance": false,
+    "project_caller_cleanup_pending": true
+  },
+  "limits": [
+    "No Python 3.11/3.12 or real scheduler validation in this candidate check.",
+    "Synthetic benchmarks and workflow recipes do not establish scientific adoption.",
+    "Single-sample timing and shared filesystem/load variation are not a stable throughput guarantee."
+  ],
+  "preparation_final": {
+    "version": "0.10.0rc1",
+    "revision": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+    "count": 1000,
+    "tracked": true,
+    "local": false,
+    "baseline": false,
+    "output_contract": true,
+    "seconds": 9.202756587881595,
+    "files": 1010,
+    "states": [
+      [
+        "pending",
+        1000
+      ]
+    ],
+    "scheduler_calls_mocked": 1,
+    "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-16-slim-candidate/final-tracked-outputs"
+  },
+  "preparation_final_matched": {
+    "version": "0.10.0rc1",
+    "revision": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+    "count": 1000,
+    "tracked": true,
+    "local": false,
+    "baseline": false,
+    "output_contract": false,
+    "seconds": 8.75269060395658,
+    "files": 1010,
+    "states": [
+      [
+        "pending",
+        1000
+      ]
+    ],
+    "scheduler_calls_mocked": 1,
+    "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-16-slim-candidate/final-tracked-no-outputs"
+  }
+}

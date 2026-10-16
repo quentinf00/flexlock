@@ -57,7 +57,10 @@ def test_pipeline_capture_scope_comparison_and_reporting(tmp_path, monkeypatch, 
         assert record['fingerprint'] == fingerprint(cfg, repos=declared, data=data)
         assert repo.git.ls_tree('-r', '--name-only', record['repos']['prep']['tree']).splitlines() == ['a.py','b.py']
         assert set(record['repos']) == {'prep','prep_repo'}
-        proposed = Project()._generate_fingerprint(cfg)
+        from flexlock.snapshot import RunTracker
+        tracker = RunTracker(Path(cfg.save_dir))
+        tracker.record_env(declared)
+        proposed = tracker.finalize(cfg)
         comparison = RunDiff(proposed, record)
         assert comparison.compare_git(), comparison.diffs
         assert comparison.compare_env(), comparison.diffs

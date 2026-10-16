@@ -1,24 +1,9 @@
-"""Project-wide fingerprint index — makes cache lookups O(1) and sweep items
-first-class.
+"""Explicit fingerprint-index maintenance and project registry path resolution.
 
-The index is a **derived cache**: ``run.lock`` (and the task DB) stay
-authoritative and the index can always be deleted and rebuilt with
-``flexlock reindex``. It maps a run :mod:`fingerprint` to *where* a completed
-run lives — either a ``run.lock`` directory (serial/single runs) or a
-``(task_db, task_id)`` pair (sweep tasks) — so a config first run as a sweep
-task cache-hits when re-run serially, and vice-versa.
-
-Only ``status='done'`` rows are ever served, so failed or interrupted runs are
-never returned as cache hits.
-
-Location resolution (see :func:`resolve_index_path`):
-  1. ``$FLEXLOCK_INDEX`` if set;
-  2. the nearest existing ``.flexlock/`` dir walking up from ``base``;
-  3. otherwise ``<base>/.flexlock/index.db``.
-
-Writers on the read and write paths must resolve to the *same* file for a hit
-to land — a project wrapper should set ``search_dirs`` and the index root to
-agree (or set ``$FLEXLOCK_INDEX``).
+Run records and task databases remain authoritative. These inspection utilities
+can rebuild a derived index with ``flexlock reindex``; submission does not use it
+to select or publish equivalent runs. Preset registry paths share the same location
+resolution: FLEXLOCK_INDEX, nearest .flexlock directory, then a local project path.
 """
 
 import os

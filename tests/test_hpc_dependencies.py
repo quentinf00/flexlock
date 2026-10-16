@@ -86,7 +86,7 @@ def test_after_requires_scheduler_before_creating_output(tmp_path):
 def test_single_submission_returns_id_without_waiting(tmp_path, scheduler):
     profile, constructor, backend = scheduler
     result = Project().submit(cfg(tmp_path / "out"), slurm_config=profile,
-                              after=[42, 43], wait=False, smart_run=False)
+                              after=[42, 43], wait=False)
     assert result.status == "SUBMITTED" and result.job_id == "9001"
     assert constructor.call_args.kwargs["after"] == ["42", "43"]
     backend.is_terminal.assert_not_called()
@@ -95,7 +95,7 @@ def test_single_submission_returns_id_without_waiting(tmp_path, scheduler):
 @pytest.mark.parametrize("pipeline", [False, True])
 def test_collection_results_keep_submitted_id(tmp_path, scheduler, pipeline):
     profile, constructor, _ = scheduler
-    kwargs = dict(slurm_config=profile, after=[42], wait=False, smart_run=False)
+    kwargs = dict(slurm_config=profile, after=[42], wait=False)
     if pipeline:
         results = Project().submit_pipeline([
             [cfg(tmp_path / "out" / "i0" / "a"), cfg(tmp_path / "out" / "i0" / "b")],

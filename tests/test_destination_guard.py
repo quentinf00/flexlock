@@ -30,13 +30,13 @@ def backend(tmp_path, monkeypatch):
 def test_pending_held_submission_cannot_be_forced(tmp_path, backend, policy):
     stub, profile = backend
     directory = tmp_path/'run';project = Project()
-    project.submit(cfg(directory), smart_run=False, slurm_config=profile, wait=False)
+    project.submit(cfg(directory),  slurm_config=profile, wait=False)
     assert stub.submit.call_count == 1
     before = (directory/'run.lock').read_bytes()
     # Even a stale completion marker must survive a refused forced launch.
     complete = directory/'run.complete';complete.write_text('old')
     with pytest.raises(FlexLockValidationError, match='pending/running'):
-        project.submit(cfg(directory, 2), smart_run=False, slurm_config=profile,
+        project.submit(cfg(directory, 2),  slurm_config=profile,
                        force=True, save_dir_policy=policy, wait=False)
     assert stub.submit.call_count == 1
     assert (directory/'run.lock').read_bytes() == before
@@ -48,7 +48,7 @@ def test_remote_campaign_reserves_product_before_worker_start(tmp_path, backend)
     product = tmp_path/'products/one';queue = tmp_path/'queues/campaign'
     project = Project()
     project.submit(cfg(product), sweep=[dict(value=1)], sweep_root=str(queue),
-                   smart_run=False, slurm_config=profile, wait=False)
+                    slurm_config=profile, wait=False)
     assert not (product/'run.lock').exists()
     with pytest.raises(FlexLockValidationError, match='pending/running'):
         project.submit(cfg(product, 2), force=True, slurm_config=profile, wait=False)
@@ -58,7 +58,7 @@ def test_remote_campaign_reserves_product_before_worker_start(tmp_path, backend)
 def test_batch_refusal_preserves_earlier_product(tmp_path, backend):
     stub, profile = backend
     first = tmp_path/'products/first';second = tmp_path/'products/second'
-    Project().submit(cfg(first), smart_run=False)
+    Project().submit(cfg(first))
     before = (first/'run.lock').read_bytes()
     db = tmp_path/'queues/active/run.lock.tasks.db'
     queue_tasks(db, [cfg(second)])
@@ -79,7 +79,7 @@ def test_other_controller_refused_and_lock_inode_survives_cleaning(tmp_path):
     with guard_destinations([destination]):
         def attempt():
             try:
-                Project().submit(cfg(destination), force=True, smart_run=False)
+                Project().submit(cfg(destination), force=True)
             except Exception as exc:
                 errors.append(exc)
         thread = threading.Thread(target=attempt);thread.start();thread.join(timeout=5)
@@ -95,7 +95,7 @@ def test_other_controller_refused_and_lock_inode_survives_cleaning(tmp_path):
 @pytest.mark.parametrize('sweep', [False, True])
 def test_force_dry_run_preserves_record_and_completion(tmp_path, backend, sweep):
     stub, profile = backend
-    destination = tmp_path/'run';Project().submit(cfg(destination), smart_run=False)
+    destination = tmp_path/'run';Project().submit(cfg(destination))
     before = {p.name: p.read_bytes() for p in destination.iterdir() if p.is_file()}
     Project().submit(cfg(destination), sweep=[dict(value=2)] if sweep else None,
                      slurm_config=profile, force=True, dry_run=True)
@@ -107,9 +107,11 @@ def test_forced_replacement_cannot_be_found_under_old_fingerprint(tmp_path, monk
     from flexlock import index
     monkeypatch.setenv('FLEXLOCK_INDEX', str(tmp_path/'index.db'))
     destination = tmp_path/'run';project = Project()
-    project.submit(cfg(destination, 1), smart_run=False)
+    project.submit(cfg(destination, 1))
     import yaml
     old = yaml.safe_load((destination/'run.lock').read_text())['fingerprint']
+    # Explicit maintenance indexing remains available; submission no longer publishes it.
+    index.record_run_lock(destination, old)
     old_row = index.lookup(tmp_path, old)
     assert old_row is not None
     project.submit(cfg(destination, 2), force=True)
@@ -121,7 +123,7 @@ def test_pipeline_active_refusal_preserves_every_completion(tmp_path, backend, s
     from flexlock.taskdb import claim_next_task
     stub, profile = backend
     root = tmp_path/'chain';a = cfg(root/'a');b = cfg(root/'b')
-    Project().submit(a, smart_run=False);Project().submit(b, smart_run=False)
+    Project().submit(a);Project().submit(b)
     db = root/'run.lock.tasks.db'
     queue_tasks(db, [dict(_stages_=[dict(a), dict(b)])])
     if state == 'running':
@@ -137,7 +139,7 @@ def test_disjoint_append_cannot_replace_active_queue_master(tmp_path, backend):
     stub, profile = backend
     queue = tmp_path/'campaign';project = Project()
     kwargs = dict(sweep=[dict(value=1)], sweep_root=str(queue),
-                  slurm_config=profile, smart_run=False, wait=False)
+                  slurm_config=profile,  wait=False)
     project.submit(cfg(tmp_path/'products/a'), **kwargs)
     before = (queue/'run.lock').read_bytes()
     with pytest.raises(FlexLockValidationError, match='pending/running'):
@@ -152,7 +154,7 @@ def test_force_hpc_to_local_replacement_removes_stale_worker_reference(tmp_path,
     monkeypatch.setattr('flexlock.worker.time.sleep', lambda _: None)
     stub, profile = backend
     directory = tmp_path/'run';project = Project()
-    project.submit(cfg(directory, 1), slurm_config=profile, wait=False, smart_run=False)
+    project.submit(cfg(directory, 1), slurm_config=profile, wait=False)
     args, kwargs = stub.submit.call_args
     args[0](*args[1:], **kwargs)
     assert load_record(directory)['config']['value'] == 1
@@ -176,13 +178,13 @@ def test_single_queued_failure_never_reports_success(tmp_path, monkeypatch, stat
         return SimpleNamespace(db_path=db, tag='failure', job=None, run=lambda **kw: False)
     monkeypatch.setattr('flexlock.parallel.ParallelExecutor', executor)
     kwargs = dict(isolated=True) if isolated else dict(slurm_config='unused.yaml')
-    result = Project().submit(cfg(directory), smart_run=False, **kwargs)
+    result = Project().submit(cfg(directory),  **kwargs)
     assert result.status == state.upper()
     assert not result.is_success
 
 
 def test_local_callable_without_record_destination_creates_no_directory(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    result = Project().submit(dict(_target_='tests.test_api.dummy_func', a=1, b=2), smart_run=False)
+    result = Project().submit(dict(_target_='tests.test_api.dummy_func', a=1, b=2))
     assert result.status == 'SUCCESS' and result.result['sum'] == 3
     assert list(tmp_path.iterdir()) == []

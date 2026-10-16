@@ -23,11 +23,9 @@ from .presets import (
     has_run_refs,
     validate_chained_paths,
 )
-from .snapshot import snapshot, RunTracker, record_code_drift
+from .snapshot import snapshot, record_code_drift
 from .run_record import RunRecord
 from .fingerprint import fingerprint as compute_fingerprint
-from . import index
-from .diff import RunDiff
 from . import config as flexlock_config
 from .exceptions import FlexLockExecutionError
 
@@ -190,43 +188,33 @@ class ExecutionResult:
         return f"ExecutionResult(save_dir={self.save_dir}, status={self.status})"
 
 
-class ChainedResult:
-    """Return type for :meth:`Project.submit_chained`.
-
-    Attributes:
-        sweep: List of sweep ``ExecutionResult`` objects.
-        downstream: List of lists; ``downstream[i][j]`` is the result of
-            the ``j``-th downstream stage for the ``i``-th sweep item.
-    """
-
-    def __init__(
-        self,
-        sweep: List[ExecutionResult],
-        downstream: List[List[ExecutionResult]],
-    ):
-        self.sweep = sweep
-        self.downstream = downstream
-
-    def __iter__(self):
-        """Iterate (sweep_result, downstream_results) pairs."""
-        return iter(zip(self.sweep, self.downstream))
-
-    def __len__(self):
-        return len(self.sweep)
-
-    def __repr__(self):
-        n_down = len(self.downstream[0]) if self.downstream else 0
-        return (
-            f"ChainedResult(sweep={len(self.sweep)}, "
-            f"downstream_per_item={n_down})"
-        )
-
-
 def _reset_task_db(db_dir: Path) -> None:
     """Delete ``run.lock.tasks.db`` (+ WAL/SHM) under ``db_dir`` for a forced rerun."""
     from .taskdb import reset_db
 
     reset_db(Path(db_dir) / "run.lock.tasks.db")
+
+
+def _recorded_queue_owner(db_path):
+    """Recognize unchanged recorded tasks, without inferring reusable stages."""
+    import sqlite3
+    from .record import read_marker, marker_db
+    from .taskdb import _hash_task
+
+    db_path = Path(db_path).resolve()
+    task_ids = set()
+    if db_path.exists():
+        with sqlite3.connect(f'{db_path.as_uri()}?mode=ro', uri=True) as db:
+            task_ids = {row[0] for row in db.execute('SELECT task_id FROM tasks')}
+
+    def owns(destination, task):
+        marker = read_marker(destination)
+        if not marker or marker_db(destination, marker).resolve() != db_path:
+            return False
+        task_id = marker.get('task_id')
+        return task_id in task_ids and task_id == _hash_task(task)
+
+    return owns
 
 
 class Project:
@@ -289,189 +277,9 @@ class Project:
             attach(node, make_preset(self.defaults_str, key))
         return node
 
-    def _generate_fingerprint(self, cfg: DictConfig) -> dict:
-        """
-        Generate a fingerprint (proposed snapshot) for the given config.
 
-        This is used for smart run logic to check if a run already exists.
-        """
-        repos, data, prevs = extract_tracking_info(cfg)
-
-        # Use RunTracker to generate snapshot without writing to disk
-        # We pass a dummy save_dir since we won't actually save
-        tracker = RunTracker(save_dir=Path("outputs/dummy-ref-smart-run"))
-
-        # Record environment and data
-        if repos:
-            tracker.record_env(repos)
-        if data:
-            tracker.record_data(data)
-
-        # Finalize to get the snapshot dict
-        fingerprint = tracker.finalize(cfg)
-
-        return fingerprint
-
-    def _find_matching_run(
-        self,
-        cfg: DictConfig,
-        search_dirs: List[str] = None,
-        match_include: List[str] = None,
-        match_exclude: List[str] = None,
-    ) -> Optional[Path]:
-        """
-        Search for an existing run that matches the given configuration.
-
-        Args:
-            cfg: Configuration to match
-            search_dirs: List of directories to search (defaults to parent of cfg.save_dir)
-            match_include: Override include patterns for git comparison
-            match_exclude: Override exclude patterns for git comparison
-
-        Returns:
-            Path to matching run directory, or None if no match found
-        """
-        # extract_tracking_info supplies each repository's effective target or
-        # explicit scope; a global inferred include would mix different repos.
-
-        # Compute the pure fingerprint digest — the index key. Both sweep tasks
-        # and serial runs record under this same key, so a config first run as a
-        # sweep task hits here when re-run serially (sweep items are first-class).
-        repos, data, _ = extract_tracking_info(cfg)
-        try:
-            fp = compute_fingerprint(cfg, repos=repos, data=data)
-        except Exception as e:
-            logger.warning(f"Could not compute fingerprint for lookup: {e}")
-            fp = None
-
-        # Determine where to search
-        if search_dirs is None:
-            if flexlock_config.WARN_SMART_RUN_NO_SEARCH_DIRS:
-                logger.warning(
-                    "smart_run=True but search_dirs=None. "
-                    "Defaulting to parent of save_dir. "
-                    "This may not find all cached runs. "
-                    "Set FLEXLOCK_WARN_SMART_RUN=0 to disable this warning."
-                )
-            if "save_dir" in cfg:
-                search_dirs = [str(Path(cfg.save_dir).parent)]
-            else:
-                logger.warning("No save_dir in config and no search_dirs provided")
-                return None
-
-        fallback = flexlock_config.get_env_bool("FLEXLOCK_INDEX_FALLBACK", True)
-
-        for search_root in search_dirs:
-            logger.debug(f"Searching for matching runs in: {search_root}")
-            root_path = Path(search_root)
-
-            # 1. Fast path: single indexed lookup by fingerprint.
-            if fp:
-                row = index.lookup(root_path, fp)
-                if row is not None:
-                    resolved = index.verify_and_resolve(root_path, row)
-                    if resolved is not None:
-                        logger.success(f"⚡ Cache Hit (index)! {resolved}")
-                        return resolved
-
-            # 2. Fallback: legacy glob scan for runs predating the index. On a
-            #    hit, backfill the index so the slow path self-eliminates.
-            if fallback and root_path.exists():
-                match = self._glob_scan_match(
-                    cfg, root_path, match_include, match_exclude
-                )
-                if match is not None:
-                    if fp:
-                        index.record_run_lock(match, fp)
-                    logger.success(f"⚡ Cache Hit (glob)! {match}")
-                    return match
-
-        return None
-
-    def _glob_scan_match(
-        self, cfg, root_path, match_include, match_exclude
-    ) -> Optional[Path]:
-        """Legacy O(N) content scan used only as an index fallback (RunDiff)."""
-        from .record import iter_run_dirs, load_record
-
-        fingerprint = self._generate_fingerprint(cfg)
-        for run_dir in iter_run_dirs(root_path):
-            try:
-                candidate_snapshot = load_record(run_dir)
-                if candidate_snapshot is None:
-                    continue
-
-                proposed_save_dir = fingerprint.get("config", {}).get("save_dir")
-                candidate_save_dir = candidate_snapshot.get("config", {}).get(
-                    "save_dir"
-                )
-
-                differ = RunDiff(
-                    current=fingerprint,
-                    target=candidate_snapshot,
-                    current_save_dir=proposed_save_dir,
-                    target_save_dir=candidate_save_dir,
-                    ignore_keys=["_snapshot_"],
-                    match_include=match_include,
-                    match_exclude=match_exclude,
-                )
-
-                if differ.is_match():
-                    # Require run.complete — interrupted runs are not cache hits.
-                    if not (run_dir / "run.complete").exists():
-                        logger.debug(
-                            f"Match at {run_dir} has no run.complete; skipping"
-                        )
-                        continue
-                    return run_dir
-                else:
-                    logger.debug(f"No match for run at: {run_dir}: {differ.diffs}")
-            except Exception as e:
-                logger.debug(f"Failed to read/compare {run_dir}: {e}")
-                continue
-        return None
-
-    def exists(self, cfg: DictConfig, search_dirs: List[str] = None) -> bool:
-        """
-        Check if a run with the given configuration already exists.
-
-        Args:
-            cfg: Configuration to check
-            search_dirs: Optional list of directories to search
-
-        Returns:
-            True if matching run exists, False otherwise
-        """
-        match = self._find_matching_run(cfg, search_dirs)
-        if match is not None:
-            self._load_cached_result(match, cfg)
-        return match is not None
-
-    def get_result(
-        self, cfg: DictConfig, search_dirs: List[str] = None
-    ) -> ExecutionResult:
-        """
-        Retrieve results from a previously completed run.
-
-        Args:
-            cfg: Configuration to match
-            search_dirs: Optional list of directories to search
-
-        Returns:
-            ExecutionResult object with cached results
-
-        Raises:
-            ValueError: If no matching run is found
-        """
-        match_dir = self._find_matching_run(cfg, search_dirs)
-
-        if match_dir is None:
-            raise ValueError("No matching run found. Use exists() to check first.")
-
-        return self._load_cached_result(match_dir, cfg)
-
-    def _load_cached_result(self, match_dir: Path, cfg: DictConfig) -> ExecutionResult:
-        """Build a CACHED ExecutionResult from an existing run directory."""
+    def _load_selected_result(self, match_dir: Path, cfg: DictConfig) -> ExecutionResult:
+        """Load an explicitly selected complete producer, without searching."""
         from .outputs import validate_outputs
         from .record import load_record, read_marker, marker_db
 
@@ -479,56 +287,35 @@ class Project:
         if not record or not isinstance(record.get('config'), dict):
             from .exceptions import FlexLockValidationError
             raise FlexLockValidationError(
-                f"Cached run at {match_dir} has no readable authoritative record; "
+                f"Selected run at {match_dir} has no readable authoritative record; "
                 "its completion marker/results alone are insufficient."
             )
         product_dir = record.get('config', {}).get('save_dir', str(match_dir)) if record.get('record_dir') else str(match_dir)
-        validate_outputs(cfg, product_dir, record_dir=match_dir)
+        recorded_cfg = OmegaConf.create(record['config'])
+        validate_outputs(recorded_cfg, product_dir, record_dir=match_dir)
+        requested = cfg.get('_outputs_')
+        if OmegaConf.is_config(requested):
+            requested = OmegaConf.to_container(requested, resolve=True)
+        if requested != record['config'].get('_outputs_'):
+            validate_outputs(cfg, product_dir, record_dir=match_dir)
         result_data = RunRecord(match_dir).load_results()
 
         return ExecutionResult(
-            save_dir=str(product_dir), status="CACHED", result=result_data, cfg=cfg,
+            save_dir=str(product_dir), status="CACHED", result=result_data, cfg=recorded_cfg,
             record_dir=str(match_dir), task_id=record.get('task_id') or (read_marker(match_dir) or {}).get('task_id'),
             task_db=str(marker_db(match_dir, read_marker(match_dir))) if read_marker(match_dir) else None,
         )
 
-    def run_stage(
-        self, cfg, stage_name=None, smart_run=True, search_dirs=None, **submit_kwargs
-    ):
+    def run_stage(self, cfg, stage_name=None, **submit_kwargs):
+        """Submit one stage without cache discovery or sibling search.
+
+        stage_name is an optional descriptive label. This wrapper only propagates
+        the result's concrete destination into the selected config.
         """
-        Run a single stage with automatic search_dirs and save_dir propagation.
-
-        Args:
-            cfg: Stage configuration (DictConfig)
-            stage_name: Name of the stage (inferred from save_dir if None)
-            smart_run: If True, checks for cached runs
-            search_dirs: Directories to search for cached runs (auto-discovered if None)
-            **submit_kwargs: Additional arguments passed to submit()
-
-        Returns:
-            ExecutionResult (or list for sweeps)
-        """
-        # Infer stage name from save_dir
-        if stage_name is None and "save_dir" in cfg:
-            stage_name = Path(cfg.save_dir).name
-
-        # Auto-discover search_dirs: look for sibling experiment dirs with same stage name
-        if search_dirs is None and smart_run and stage_name and "save_dir" in cfg:
-            parent = Path(cfg.save_dir).parent.parent
-            if parent.exists():
-                search_dirs = [
-                    str(p) for p in parent.glob(f"*/{stage_name}") if p.is_dir()
-                ]
-
-        result = self.submit(
-            cfg, smart_run=smart_run, search_dirs=search_dirs, **submit_kwargs
-        )
-
-        # For single runs, propagate save_dir back into cfg
-        if isinstance(result, list):
-            return result
-        with open_dict(cfg):
-            cfg.save_dir = result.save_dir
+        result = self.submit(cfg, **submit_kwargs)
+        if result is not None and not isinstance(result, list):
+            with open_dict(cfg):
+                cfg.save_dir = result.save_dir
         return result
 
     def save_snapshot(self, save_dir):
@@ -549,14 +336,10 @@ class Project:
         sweep_target: str = None,
         sweep_root: "str | None" = None,
         n_jobs: int = 1,
-        smart_run: bool = True,
-        search_dirs: List[str] = None,
         wait: bool = True,
         pbs_config: str = None,
         slurm_config: str = None,
         sweep_dir_suffix: bool = False,
-        match_include: List[str] = None,
-        match_exclude: List[str] = None,
         isolated: bool = False,
         force: bool = False,
         overrides: "dict | List[str] | None" = None,
@@ -582,23 +365,18 @@ class Project:
                 item is merged. When ``None``, items merge at the root of
                 ``config``.
             n_jobs: Number of parallel workers (for sweeps).
-            smart_run: If True, checks for an existing cached run before
-                executing.
-            search_dirs: Directories to search for cached runs.
             wait: If True, blocks until completion.
             pbs_config / slurm_config: Path to HPC backend YAML.
             after: Job IDs (sequence or colon-separated string) that must finish
                 successfully before this Slurm/PBS job starts. Requires an HPC
                 backend. Submitted results expose the scheduler ID as ``job_id``.
-                Unpinned run references bind on the worker; pins bind at submit.
+                Pinned run references bind at submit; future producers require concrete paths.
             sweep_dir_suffix: If True, append ``_sweep_{i:04d}`` to each
                 sweep item's ``save_dir``.
-            match_include / match_exclude: Override git path patterns used
-                during ``smart_run`` comparison.
             isolated: If True, run in a spawned subprocess even for a
                 single task (use for GPU stages to confine the CUDA
                 context).
-            force: If True, invalidate the cache marker (``run.complete``)
+            force: If True, invalidate the completion marker (``run.complete``)
                 for this ``save_dir`` and re-execute. Outputs and
                 ``run.lock`` are preserved; the user function overwrites
                 in place.
@@ -625,7 +403,7 @@ class Project:
                 so later campaign appends cannot change earlier item notes.
             save_dir_policy: What to do when ``config.save_dir`` is already
                 occupied by a previous run (contains ``run.lock``), applied
-                once at submit time, after the ``smart_run`` cache check:
+                once at submit time:
                 ``None``/``"raise"`` (default) refuses and raises;
                 ``"increment"`` versions the dir (``run`` → ``run_0000``,
                 claimed atomically); ``"overwrite"`` deletes the occupied
@@ -637,7 +415,8 @@ class Project:
                 default guard (explicit in-place rerun). Replaces the
                 ``${vinc:}`` / ``${now:}`` resolvers. For sweeps the policy
                 applies once to the sweep root; items nest beneath it, and
-                ``"skip"`` means resume (reuse complete items, run the rest).
+                ``"skip"`` explicitly reuses complete selected items; incomplete
+                occupied items require an explicit continuation/repair decision.
             task_record: Where each sweep task's record goes: ``"dir"`` (default,
                 or ``$FLEXLOCK_TASK_RECORD``) writes a full ``run.lock`` into the
                 task's save_dir; ``"db"`` keeps it in the task DB only (fewer
@@ -673,21 +452,18 @@ class Project:
             # "@name" sweep values swap in a named config (replace, not merge).
             sweep = [expand_swaps(item, self.override_module) for item in sweep]
 
-        # Bind run references and record lineage; scheduler chains keep
-        # unpinned calls for the worker, where their upstreams are complete.
+        # Bind explicit selections and record lineage; scheduler chains reject
+        # unpinned selectors and require concrete future producer paths.
         freeze_run_refs(config, defer_unpinned=bool(after))
         if after:
             if not sweep:
                 validate_chained_paths(config)
                 config = freeze_deferred(config, defer_runs=True)
-            if has_run_refs(config):
-                smart_run = False
 
         # Bake save_dir to a concrete string exactly once. Done here (not
         # lazily during config reads) so run.lock and run.complete always land
         # in the same directory. The policy itself (naming / collision guard)
-        # is applied later, after the smart_run cache check and the
-        # side-effect-free previews (print_config / dry_run).
+        # is applied after the side-effect-free previews (print_config / dry_run).
         from .save_dir import SKIP, apply_save_dir_policy, resolve_save_dir
 
         resolve_save_dir(config)
@@ -711,9 +487,6 @@ class Project:
                 _print_compiled_config(config)
             return None
 
-        if force:
-            smart_run = False
-
         # Handle sweep execution
         if sweep:
             # A sweep runs each item in its own worker process; `isolated`
@@ -728,8 +501,7 @@ class Project:
                 )
             # A naming policy fixes the sweep root before items are built;
             # guard policies are enforced per item inside _submit_sweep, after
-            # the per-item cache check ('skip' there means resume: reuse
-            # complete items, rerun crashed ones).
+            # explicit per-item selection ('skip' reuses complete items only).
             from .save_dir import NAMING_POLICIES, validate_policy
 
             validate_policy(save_dir_policy)
@@ -744,14 +516,10 @@ class Project:
                 config,
                 sweep,
                 n_jobs,
-                smart_run,
-                search_dirs,
                 pbs_config,
                 slurm_config,
                 wait,
                 sweep_dir_suffix,
-                match_include,
-                match_exclude,
                 sweep_target=sweep_target,
                 sweep_root=sweep_root,
                 debug=debug,
@@ -765,16 +533,7 @@ class Project:
                 dry_run=dry_run,
             )
 
-        # Single execution path
-        # Check for existing run if smart_run is enabled
-        if smart_run:
-            match_dir = self._find_matching_run(
-                config, search_dirs, match_include, match_exclude
-            )
-            if match_dir:
-                logger.info(f"Skipping execution, using cached result from {match_dir}")
-                return self._load_cached_result(match_dir, config)
-
+        # Single execution path: fresh work or explicit selected-path reuse.
         # Check if using HPC backend
         use_hpc = pbs_config is not None or slurm_config is not None
 
@@ -806,12 +565,11 @@ class Project:
             [guarded_destination] if guarded_destination is not None else [],
             db_dir=guarded_destination,
         ):
-            # Naming / collision-guard policy — after the cache check (a hit never
-            # claims or cleans anything) and after the previews (no side effects).
+            # Naming / collision policy follows previews and active-owner checks.
             if apply_save_dir_policy(config, guard_policy, force=force) == SKIP:
                 match_dir = Path(str(config.save_dir))
                 logger.info(f"save_dir_policy='skip': reusing result from {match_dir}")
-                return self._load_cached_result(match_dir, config)
+                return self._load_selected_result(match_dir, config)
 
             if force and "save_dir" in config:
                 (Path(config.save_dir) / "run.complete").unlink(missing_ok=True)
@@ -971,9 +729,6 @@ class Project:
                     from .presets import link_run
 
                     link_run(save_dir, config)
-                    # Record the completed run in the project-wide index (2.2).
-                    if run_fp:
-                        index.record_run_lock(save_dir, run_fp)
 
                 return ExecutionResult(
                     save_dir=str(save_dir), status="SUCCESS", result=result, cfg=config
@@ -1320,8 +1075,6 @@ class Project:
         items: "List[List[DictConfig]]",
         *,
         n_jobs: int = 1,
-        smart_run: bool = False,
-        search_dirs: List[str] = None,
         slurm_config: str = None,
         pbs_config: str = None,
         wait: bool = True,
@@ -1355,16 +1108,12 @@ class Project:
         Args:
             items: ``items[i][j]`` is the ``j``-th stage config of item ``i``.
             n_jobs: Parallel workers fanning out across items.
-            smart_run: Driver-side cache check — an item whose every stage
-                cache-hits returns CACHED without queueing; partial hits queue
-                the item with stage-level resume (``_skip_complete_``).
-            search_dirs: Directories searched for cached runs (smart_run).
             slurm_config / pbs_config: Path to HPC backend YAML.
             wait: Block until completion (HPC). ``False`` returns SUBMITTED
                 skeleton results.
             after: Scheduler jobs that must finish successfully before this job
                 starts. Each submitted stage result exposes the same ``job_id``.
-                Unpinned run references bind at stage start; pins bind at submit.
+                Pins bind at submit; future producers require concrete paths.
             sweep_root: Override the master root hosting the task DB; also
                 opts out of the containment validation.
             tag / note / timeout: As in :meth:`submit`.
@@ -1372,7 +1121,7 @@ class Project:
                 task DB so all items rerun.
             save_dir_policy: Collision guard applied per stage dir before
                 queueing — ``raise`` (default, unless ``force``),
-                ``overwrite``, ``skip`` (stage-level resume), ``unsafe``.
+                ``overwrite``, ``skip`` (complete-item reuse), ``unsafe``.
                 Naming policies (``increment``/``timestamp``) don't compose
                 with pre-baked cross-stage paths and are rejected.
             debug: Post-mortem debugger (local in-process execution only).
@@ -1410,8 +1159,6 @@ class Project:
                     stages.append(freeze_deferred(stage, defer_runs=True))
                 compiled.append(stages)
             items = compiled
-            if any(has_run_refs(stage) for item in items for stage in item):
-                smart_run = False
 
         from .resolvers import bind_existing_run_locks
         compiled = []
@@ -1468,51 +1215,42 @@ class Project:
                 logger.info(
                     f"Force flag enabled: reset pipeline task DB under {master_root}"
                 )
-                smart_run = False
 
-            # Stage-level resume on the worker: requested via smart_run/check-exists
-            # or the 'skip' guard policy.
-            skip_complete = bool(smart_run) or item_policy == "skip"
-            if skip_complete:
-                from .outputs import validate_outputs
-
-                for item in items:
-                    for stage_cfg in item:
-                        sd = stage_cfg.get("save_dir")
-                        if sd and (Path(sd) / "run.complete").exists():
-                            validate_outputs(stage_cfg, sd)
-
-            # Driver-side cache check: items whose every stage cache-hits return
-            # CACHED without queueing. Partial hits queue with stage-level resume.
-            cached_results: list = []
-            to_queue: list = []  # (index, item)
+            # Explicit selected-path reuse is all-or-nothing for an item.
+            # A partial composite needs a project choice of remaining stages,
+            # not completion-marker inference after config/source changes.
+            from .save_dir import is_complete
+            selected_results = []
+            to_queue = []
             for i, item in enumerate(items):
-                if smart_run:
-                    matches = [
-                        self._find_matching_run(stage_cfg, search_dirs)
-                        for stage_cfg in item
-                    ]
-                    if all(m is not None for m in matches):
-                        logger.info(f"Pipeline item {i}: all stages cached — skipping")
-                        cached_results.append(
-                            (i, [
-                                self._load_cached_result(m, stage_cfg)
-                                for m, stage_cfg in zip(matches, item)
-                            ])
+                dirs = self._pipeline_stage_dirs(item)
+                if item_policy == 'skip' and any(is_occupied(sd) for sd in dirs):
+                    if not all(is_complete(sd) for sd in dirs):
+                        raise FlexLockValidationError(
+                            "Cannot resume a partially complete pipeline with 'skip'. "
+                            "Select the remaining stages explicitly, bind retained "
+                            "producers and use fresh destinations."
                         )
-                        continue
-                to_queue.append((i, item))
+                    selected_results.append((i, [self._load_selected_result(Path(sd), cfg)
+                                               for sd, cfg in zip(dirs, item)]))
+                else:
+                    to_queue.append((i, item))
 
             # Collision guard, per stage dir, driver-side, before queueing.
             if item_policy != "unsafe":
+                owns_recorded = _recorded_queue_owner(master_root / 'run.lock.tasks.db')
                 for i, item in to_queue:
+                    task = {'_stages_': [OmegaConf.to_container(stage, resolve=False,
+                            throw_on_missing=False) for stage in item]}
                     for sd in self._pipeline_stage_dirs(item):
                         if not is_occupied(sd):
                             continue
+                        if owns_recorded(sd, task):
+                            continue  # Same queue row; its persisted state governs continuation.
                         if item_policy == "overwrite":
                             clean_run_dir(sd)
                         elif item_policy == "skip":
-                            pass  # worker resumes past complete stages
+                            pass  # wholly complete items were selected above
                         elif force:
                             pass  # explicit in-place rerun
                         else:
@@ -1531,8 +1269,6 @@ class Project:
                             for stage in item
                         ]
                     }
-                    if skip_complete:
-                        task_dict["_skip_complete_"] = True
                     queued_tasks.append(task_dict)
 
                 executor_cfg = OmegaConf.create(
@@ -1575,78 +1311,10 @@ class Project:
                     job_id=executor.job.job_id if executor.job is not None else None,
                 )
 
-            all_results = cached_results + results
+            all_results = selected_results + results
             all_results.sort(key=lambda x: x[0])
             return [item_results for _, item_results in all_results]
 
-    def submit_chained(
-        self,
-        config=None,
-        *,
-        sweep: "List[Dict] | None" = None,
-        downstream: "List[tuple] | None" = None,
-        sweep_kwargs: "dict | None" = None,
-        downstream_kwargs: "dict | None" = None,
-    ) -> "ChainedResult":
-        """Run a sweep, then chain a sequence of downstream stages per result.
-
-        For each item in ``sweep``, this method submits the base config and
-        then, for each ``(stage_key, anchor_wiring)`` in ``downstream``,
-        propagates the sweep result's attributes into ``proj.defaults`` and
-        submits the downstream stage.
-
-        ``anchor_wiring`` maps an anchor name in ``proj.defaults`` to an
-        attribute of the parent ``ExecutionResult`` (typically
-        ``'save_dir'``).
-
-        Args:
-            config: Base config for the sweep (passed to :meth:`submit`).
-            sweep: List of override dicts for the parameter sweep.
-            downstream: List of ``(stage_key, anchor_wiring)`` tuples
-                describing the stages to run per sweep result.
-            sweep_kwargs: Extra kwargs forwarded to ``submit`` for the
-                sweep itself (e.g. ``slurm_config``, ``smart_run``).
-            downstream_kwargs: Extra kwargs forwarded to ``submit`` for
-                every downstream stage. Defaults to ``smart_run=False`` to
-                avoid stale-cache false hits between iterations.
-
-        Returns:
-            ``ChainedResult`` with ``sweep`` (list) and ``downstream`` (a
-            list of lists, one per sweep item, each inner list aligned to
-            the order of ``downstream``).
-        """
-        if sweep is None or downstream is None:
-            raise ValueError(
-                "submit_chained requires both `sweep` and `downstream` lists. "
-                "Use submit() if you don't need post-sweep chaining."
-            )
-
-        sweep_kwargs = dict(sweep_kwargs or {})
-        downstream_kwargs = {"smart_run": False, **(downstream_kwargs or {})}
-
-        sweep_results = self.submit(config, sweep=sweep, **sweep_kwargs)
-        if not isinstance(sweep_results, list):
-            sweep_results = [sweep_results]
-
-        downstream_results: list[list[ExecutionResult]] = []
-        for parent in sweep_results:
-            per_parent: list[ExecutionResult] = []
-            for entry in downstream:
-                stage_key, anchor_wiring = entry
-                for anchor_name, attr in anchor_wiring.items():
-                    value = getattr(parent, attr, None)
-                    if value is None:
-                        logger.warning(
-                            f"submit_chained: parent result has no '{attr}' "
-                            f"attribute; anchor '{anchor_name}' not updated."
-                        )
-                        continue
-                    OmegaConf.update(self.defaults, anchor_name, value)
-                result = self.submit(stage_key, **downstream_kwargs)
-                per_parent.append(result)
-            downstream_results.append(per_parent)
-
-        return ChainedResult(sweep=sweep_results, downstream=downstream_results)
 
     @classmethod
     def submit_config(cls, config=None, **kwargs):
@@ -1654,7 +1322,7 @@ class Project:
 
         Equivalent to ``Project().submit(config, **kwargs)``. Use this when
         you already have a ``DictConfig`` (from ``py2cfg`` or otherwise) and
-        don't need ``proj.get``/``proj.exists``/``proj.defaults`` plumbing.
+        don't need ``proj.get``/``proj.defaults`` plumbing.
 
         See :func:`flexlock.submit` for the module-level alias.
         """
@@ -1745,14 +1413,10 @@ class Project:
         base_config: DictConfig,
         sweep: List[Dict],
         n_jobs: int,
-        smart_run: bool,
-        search_dirs: List[str],
         pbs_config: str = None,
         slurm_config: str = None,
         wait: bool = True,
         dir_suffix: bool = False,
-        match_include: List[str] = None,
-        match_exclude: List[str] = None,
         sweep_target: str = None,
         sweep_root: "str | None" = None,
         debug: bool = False,
@@ -1772,13 +1436,9 @@ class Project:
             base_config: Base configuration
             sweep: List of override dictionaries
             n_jobs: Number of parallel workers
-            smart_run: Whether to check for cached runs
-            search_dirs: Directories to search for cached runs
             pbs_config: Path to PBS configuration YAML
             slurm_config: Path to Slurm configuration YAML
             wait: Whether to wait for jobs to complete
-            match_include: Override include patterns for git comparison
-            match_exclude: Override exclude patterns for git comparison
 
         Returns:
             List of ExecutionResult objects
@@ -1787,7 +1447,7 @@ class Project:
 
         results = []
         configs_to_run = []
-        cached_results = []
+        selected_results = []
 
         # Build sweep configs first so we can validate save_dir containment
         # in one place, before any execution.
@@ -1828,29 +1488,20 @@ class Project:
             if force:
                 self._reset_sweep_for_force(merged_items, sweep_root)
 
-            # Check each sweep config for cached results
-            for i, sweep_cfg in merged_items:
-                if smart_run and not has_run_refs(sweep_cfg):
-                    match_dir = self._find_matching_run(
-                        sweep_cfg, search_dirs, match_include, match_exclude
-                    )
-                    if match_dir:
-                        logger.info(f"Sweep {i}: Using cached result from {match_dir}")
-                        cached_results.append((i, self._load_cached_result(match_dir, sweep_cfg)))
-                        continue
+            # No cross-run search: only the configured item destinations apply.
+            configs_to_run.extend(merged_items)
 
-                configs_to_run.append((i, sweep_cfg))
-
-            # Collision guard, per item, after the cache check (a cache hit never
-            # trips the guard). Applied here — before anything is queued — so a
+            # Collision guard, per item. Applied here — before anything is queued — so a
             # refusal aborts the whole sweep up front. Items whose save_dir is
             # occupied by a previous run are handled per `item_policy`; items of
             # *this* sweep sharing one save_dir don't trip it (nothing is occupied
             # until execution starts).
             if item_policy != "unsafe":
-                from .record import MARKER_NAME, read_lock, is_task_record
+                from .record import read_lock, is_task_record
                 from .save_dir import clean_run_dir, is_complete, is_occupied, occupied_error
 
+                owns_recorded = (_recorded_queue_owner(db_dir / 'run.lock.tasks.db')
+                                 if db_dir is not None else lambda *_: False)
                 still_to_run = []
                 for i, sweep_cfg in configs_to_run:
                     item_dir = sweep_cfg.get("save_dir")
@@ -1860,7 +1511,7 @@ class Project:
                     if (
                         item_dir is None
                         or not is_occupied(item_dir)
-                        or ((Path(item_dir) / MARKER_NAME).exists() and n_jobs > 1)
+                        or (item_policy != 'skip' and owns_recorded(item_dir, sweep_cfg))
                         or ((Path(item_dir) / 'run.lock.tasks.db').exists()
                             and not is_task_record(read_lock(item_dir)))
                     ):
@@ -1869,19 +1520,18 @@ class Project:
                         clean_run_dir(item_dir)
                         still_to_run.append((i, sweep_cfg))
                     elif item_policy == "skip":
-                        # Resume: reuse complete items, rerun crashed ones in place.
+                        # Reuse only explicitly selected, complete items.
                         if is_complete(item_dir):
                             logger.info(f"Sweep {i}: skip — reusing {item_dir}")
-                            cached_results.append(
-                                (i, self._load_cached_result(Path(item_dir), sweep_cfg))
+                            selected_results.append(
+                                (i, self._load_selected_result(Path(item_dir), sweep_cfg))
                             )
                         else:
-                            from .record import marker_db, read_marker
-                            from .taskdb import reset_completed_task
-                            marker = read_marker(item_dir)
-                            if marker:
-                                reset_completed_task(marker_db(item_dir, marker), marker['task_id'])
-                            still_to_run.append((i, sweep_cfg))
+                            from .exceptions import FlexLockValidationError
+                            raise FlexLockValidationError(
+                                f"Cannot reuse incomplete item {item_dir!r}; "
+                                "continue its recorded pending queue or choose a fresh destination."
+                            )
                     elif force:
                         still_to_run.append((i, sweep_cfg))
                     else:
@@ -1969,7 +1619,7 @@ class Project:
                 )
 
             # Combine cached and new results, sorted by index
-            all_results = cached_results + results
+            all_results = selected_results + results
             all_results.sort(key=lambda x: x[0])
 
             return [result for _, result in all_results]

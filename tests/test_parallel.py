@@ -335,17 +335,17 @@ def test_keyboard_interrupt_handling():
     from pathlib import Path
     import tempfile
     from unittest.mock import patch
-    
+
     # Create a temporary directory for the test
     with tempfile.TemporaryDirectory() as tmpdir:
         cfg = OmegaConf.create({
             'save_dir': tmpdir,
             'model': 'test'
         })
-        
+
         def dummy_func(cfg):
             return cfg.model
-        
+
         executor = ParallelExecutor(
             func=dummy_func,
             tasks=[{'param': 1}],
@@ -353,11 +353,11 @@ def test_keyboard_interrupt_handling():
             cfg=cfg,
             n_jobs=1
         )
-        
+
         # Mock time.sleep to raise KeyboardInterrupt
         with patch('time.sleep', side_effect=KeyboardInterrupt()):
             success = executor._wait_for_completion(timeout=None)
-            
+
         # Should return False and not raise the exception
         assert success is False
 
@@ -504,17 +504,17 @@ def test_config_constants_used():
     from omegaconf import OmegaConf
     from pathlib import Path
     import tempfile
-    
+
     # Create a temporary directory
     with tempfile.TemporaryDirectory() as tmpdir:
         cfg = OmegaConf.create({
             'save_dir': tmpdir,
             'model': 'test'
         })
-        
+
         def dummy_func(cfg):
             return cfg.model
-        
+
         executor = ParallelExecutor(
             func=dummy_func,
             tasks=[],
@@ -522,14 +522,14 @@ def test_config_constants_used():
             cfg=cfg,
             n_jobs=1
         )
-        
+
         # Test that run() accepts None for poll_interval (uses config default)
         # We can't easily test the actual value without running the executor,
         # but we can verify the method signature accepts None
         import inspect
         sig = inspect.signature(executor.run)
         assert sig.parameters['poll_interval'].default is None
-        
+
         # Test _wait_for_completion also accepts None
         sig2 = inspect.signature(executor._wait_for_completion)
         assert sig2.parameters['poll_interval'].default is None
@@ -562,8 +562,7 @@ def test_sweep_reports_failed_status(tmp_path, monkeypatch):
         sweep=sweep,
         n_jobs=2,
         sweep_dir_suffix=True,
-        smart_run=False,
-        search_dirs=[str(base)],
+
     )
     by_x = {r.cfg.x: r for r in res}
     assert by_x[1].status == "SUCCESS"

@@ -1,0 +1,227 @@
+[
+  {
+    "root": "/scale/user/qfebvre/projects/2507_galeio/biomass_explo_app",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2508_nextgems/nextgems_tc",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/maxss-ml/.claude/worktrees/neural-field",
+    "hits": [
+      "./src/maxss_configs/workflows/nf_latent_fm.py:7:No cache search: launch without --save-dir-policy skip/--check-exists; a reused run path fails (raise)."
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/250930_maxss_era5pp/tcwind_benchtools",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_GSD_TC/geosplat_diffusion",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/my_awesome_project",
+    "hits": [
+      "./07_pipeline/pipeline.py:59:    preprocess_result = proj.submit(preprocess_cfg, smart_run=True, search_dirs=[Path(pipeline_dir).parent])",
+      "./07_pipeline/pipeline.py:72:    train_result = proj.submit(train_cfg, smart_run=True, search_dirs=[Path(pipeline_dir).parent])",
+      "./07_pipeline/pipeline.py:85:    eval_result = proj.submit(eval_cfg, smart_run=True, search_dirs=[Path(pipeline_dir).parent])"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/project_template",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/sample_project",
+    "hits": [
+      "./submit_diff.py:7:    smart_run=True,",
+      "./run_guidance_sweep.py:27:        smart_run=True,",
+      "./pipeline.py:160:    submit_kwargs = dict(smart_run=True, wait=True)",
+      "./sweeps/ff_sigma_sweep.py:57:        smart_run=True,",
+      "./configs/defaults.py:7:experiments. Pipeline always runs these with smart_run=True; caching is the"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/temp_project",
+    "hits": [
+      "./test_25_isolated.py:2:# Mentioned in python_api.md \"proj.run_stage()\" example",
+      "./test_34_match_include.py:21:    smart_run=True,",
+      "./test_17_submit_chained.py:1:# Test: proj.submit_chained()",
+      "./test_17_submit_chained.py:29:chained = proj.submit_chained(",
+      "./test_15_force_print_config.py:24:result2 = proj.submit(cfg, smart_run=True)",
+      "./test_14_run_stage.py:1:# Test: proj.run_stage() - convenience method",
+      "./test_14_run_stage.py:2:# Doc snippet: python_api.md \"proj.run_stage()\"",
+      "./test_14_run_stage.py:22:proj.run_stage(prep_cfg)",
+      "./test_14_run_stage.py:29:proj.run_stage(train_cfg)",
+      "./test_06_smart_run.py:19:result1 = proj.submit(cfg, smart_run=True)",
+      "./test_06_smart_run.py:24:result2 = proj.submit(cfg, smart_run=True)",
+      "./test_13_exists_get_result.py:1:# Test: proj.exists() and proj.get_result()",
+      "./test_13_exists_get_result.py:2:# Doc snippet: python_api.md \"proj.exists() and proj.get_result()\"",
+      "./test_13_exists_get_result.py:20:# Test proj.exists()",
+      "./test_13_exists_get_result.py:21:exists = proj.exists(cfg, search_dirs=['outputs/test_13/'])",
+      "./test_13_exists_get_result.py:24:# Test proj.get_result()",
+      "./test_13_exists_get_result.py:25:result = proj.get_result(cfg, search_dirs=['outputs/test_13/'])"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/test_project",
+    "hits": [
+      "./_06_pipeline.py:109:    stage1_result = proj.submit(stage1_cfg, smart_run=True)",
+      "./_06_pipeline.py:119:    stage2_result = proj.submit(stage2_cfg, smart_run=True)"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_flexlock/tmpl_smoke",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/fix_colloc",
+    "hits": [
+      "./sar_ml/stages/collocation.py:51:    Run once per data source; cache with smart_run=True. The manifest enables"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml",
+    "hits": [
+      "./sar_ml/stages/collocation.py:48:    Run once per data source; cache with smart_run=True. The manifest enables"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/2509_sar_ml/sar-ml-enhanced",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251014_cookiecutter/my_awesome_project",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251023_perceiver_da/perda",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251029_winddir/sarwinddir",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251029_winddir/winddir360",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_mapping",
+    "hits": [
+      "./sst_ml_mapping/starter/xps_glob.py:841:        result = proj.run_stage(",
+      "./sst_ml_mapping/starter/pipeline.py:131:        result = proj.submit(cfg, smart_run=True, search_dirs=match_candidates)"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/251218_sst/sst_ml_zarrpatch",
+    "hits": [
+      "./sst_ml_mapping/starter/pipeline.py:181:        result = proj.submit(cfg, smart_run=True, search_dirs=match_candidates)"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/geo-jepa",
+    "hits": [
+      "./src/geo_jepa/pipeline.py:226:        proj.run_stage(cfg, smart_run=(name not in force_set))"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/hafs-jepa",
+    "hits": [
+      "./src/hafs_jepa/pipeline.py:920:        proj.run_stage(cfg, smart_run=(name not in force_set))"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260324_jepa/le-tc-wm",
+    "hits": [
+      "./src/le_tc_wm/pipeline.py:267:        proj.run_stage(cfg, smart_run=(name not in force_set))"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260505_soba/soba_bench",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/confild",
+    "hits": [
+      "./submit_diff.py:16:    smart_run=True,",
+      "./sweeps/ff_sigma_sweep.py:57:        smart_run=True,",
+      "./pipeline.py:163:    submit_kwargs = dict(smart_run=True, wait=True)",
+      "./configs/defaults.py:7:experiments. Pipeline always runs these with smart_run=True; caching is the"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/hafs_tools",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260506_hafs/omnihafs",
+    "hits": [
+      "./sweeps/ff_sigma_sweep.py:57:        smart_run=True,",
+      "./submit_diff.py:16:    smart_run=True,",
+      "./pipeline.py:140:    submit_kwargs = dict(smart_run=True, wait=True)"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260617_biomass/biomass_proc",
+    "hits": [
+      "./pipeline.py:160:    save_dir_policy = \"skip\" if args.resume else None"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/scale/user/qfebvre/projects/260626_tcdemo/tc_demo",
+    "hits": [],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/ontap/user/qfebvre/flexlock-workflow-lab",
+    "hits": [
+      "./scripts/untracked_input.py:9:p.submit(c,smart_run=True,save_dir_policy=\"increment\")",
+      "./scripts/local_journeys.py:71:    run(\"J10-tracked-after\",\"control_full\",[\"prepare\"],mutable,[\"--check-exists\",\"--save-dir-policy\",\"increment\"])"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  },
+  {
+    "root": "/ontap/user/qfebvre/sar-ml-workflow-pilot",
+    "hits": [
+      "./sar_workflow/processing.py:262:            result = project.submit(cfg, smart_run=False, save_dir_policy=\"skip\", debug=False)",
+      "./sar_ml/stages/collocation.py:48:    Run once per data source; cache with smart_run=True. The manifest enables"
+    ],
+    "coverage": "literal Python/shell/YAML; excludes generated reports/results/runs, nested library/vendor/env trees; dynamic use and uninspected notebooks remain outside this audit"
+  }
+]

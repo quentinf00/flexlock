@@ -155,31 +155,6 @@ def test_composite_failure_aborts_remaining_stages(tmp_path):
     assert err["stage"] == "stage 2/3 b"
 
 
-def test_composite_skip_complete_resumes_past_done_stages(tmp_path):
-    root = tmp_path / "xp1"
-    stage_a = _stage("a", root)
-    stage_b = _stage("b", root)
-
-    # Pre-complete stage a on disk (as a previous partial run would leave it).
-    a_dir = Path(stage_a["save_dir"])
-    a_dir.mkdir(parents=True)
-    (a_dir / "run.complete").write_text(json.dumps({"ts": "x", "version": 1}))
-    (a_dir / "results.json").write_text(json.dumps({"name": "a"}))
-
-    task = {"_stages_": [stage_a, stage_b], "_skip_complete_": True}
-    db_path = tmp_path / "run.lock.tasks.db"
-    queue_tasks(db_path, [task])
-
-    _run_worker(db_path)
-
-    # Only b actually executed; a was skipped but its result was collected.
-    assert _read_order(root) == ["b"]
-    row = get_all_tasks(db_path)[0]
-    assert row["status"] == "done"
-    result = _plain(row["result"])
-    assert result[0].get("skipped") is True
-    assert result[0]["result"] == {"name": "a"}
-    assert result[1]["result"]["name"] == "b"
 
 
 def test_composite_without_skip_complete_reruns_all_stages(tmp_path):
@@ -375,20 +350,6 @@ def test_submit_pipeline_dry_run_does_not_touch_db(tmp_path, capsys):
     assert "dry run" in capsys.readouterr().out
 
 
-def test_submit_pipeline_smart_run_all_cached(tmp_path):
-    from flexlock.api import Project
-
-    root = tmp_path / "xp1"
-    item = _item(root)
-    proj = Project()
-    proj.submit_pipeline([item])
-
-    # Re-submit with smart_run: every stage cache-hits -> CACHED, no rerun.
-    results = proj.submit_pipeline(
-        [item], smart_run=True, search_dirs=[str(root)]
-    )
-    assert [r.status for r in results[0]] == ["CACHED", "CACHED"]
-    assert _read_order(root) == ["train", "probe"]
 
 
 # ---------------------------------------------------------------------------

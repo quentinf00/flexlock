@@ -26,7 +26,7 @@ def test_return_and_scientific_product_are_distinct(tmp_path, mode):
         _outputs_=dict(science=dict(path='results.json',sha256=True))))
     project=Project()
     if mode == 'serial':
-        project.submit(cfg,smart_run=False)
+        project.submit(cfg)
     elif mode == 'pipeline':
         second=OmegaConf.create(dict(_target_='tests.test_record_results.consume',
             save_dir=str(tmp_path/'consumer'),
@@ -37,15 +37,15 @@ def test_return_and_scientific_product_are_distinct(tmp_path, mode):
         assert load_record(tmp_path/'consumer')['result']=={'received':42}
     else:
         project.submit(cfg,sweep=[{}],sweep_root=str(tmp_path/'queue'),
-                       smart_run=False,task_record=mode)
+                       task_record=mode)
     assert json.loads((run/'results.json').read_text())=={'science':17}
     assert load_record(run)['result']=={'metric':42}
     assert RunRecord(run).load_results()=={'metric':42}
     assert (run/'run.complete').exists()
     if mode=='serial':
-        cached=project.submit(cfg,smart_run=False,save_dir_policy='skip')
+        cached=project.submit(cfg,save_dir_policy='skip')
         assert cached.result=={'metric':42}
-        project.submit(cfg,smart_run=False,force=True)
+        project.submit(cfg,force=True)
         assert json.loads((run/'results.json').read_text())=={'science':17}
 
 

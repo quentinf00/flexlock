@@ -194,11 +194,6 @@ class FlexLockRunner:
             help="Number of parallel jobs",
         )
         parser.add_argument(
-            "--check-exists",
-            action="store_true",
-            help="Check if run already exists and skip if so.",
-        )
-        parser.add_argument(
             "--debug",
             action="store_true",
             help="Enable debug mode (Post-mortem PDB in scripts, Locals Injection in Notebooks).",
@@ -615,7 +610,6 @@ class FlexLockRunner:
             n_jobs=args.n_jobs,
             after=args.after,
             wait=not args.print_job_id,
-            smart_run=bool(args.check_exists),
             slurm_config=getattr(args, "slurm_config", None),
             pbs_config=getattr(args, "pbs_config", None),
             sweep_root=getattr(args, "sweep_root", None),
@@ -659,6 +653,11 @@ class FlexLockRunner:
         items = []
         for t in sweep_tasks:
             if _is_composite_item(t):
+                if t.get('_skip_complete_'):
+                    raise FlexLockValidationError(
+                        "Marker-based stage resume is retired; select remaining stages "
+                        "with concrete retained producers."
+                    )
                 stages = t["_stages_"]
                 items.append([
                     OmegaConf.create(
@@ -713,7 +712,6 @@ class FlexLockRunner:
             n_jobs=args.n_jobs,
             after=args.after,
             wait=not args.print_job_id,
-            smart_run=bool(args.check_exists),
             slurm_config=getattr(args, "slurm_config", None),
             pbs_config=getattr(args, "pbs_config", None),
             sweep_root=getattr(args, "sweep_root", None),
@@ -976,7 +974,6 @@ class FlexLockRunner:
             n_jobs=args.n_jobs,
             after=args.after,
             wait=not args.print_job_id,
-            smart_run=bool(args.check_exists),
             slurm_config=getattr(args, "slurm_config", None),
             pbs_config=getattr(args, "pbs_config", None),
             overrides=args.overrides_after_select or None,

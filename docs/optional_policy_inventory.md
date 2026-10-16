@@ -1,5 +1,11 @@
 # Optional-policy caller inventory
 
+> Superseded status (2026-10-16): the user approved immediate pre-1.0 removal
+> of automatic cache search, marker-based partial-stage resume and chained fanout.
+> The candidate implements removal, not deprecated opt-in compatibility. Historical
+> inventories below explain prior decisions; use [current migration notes](release_0_10_0rc1.md)
+> and [workflow guidelines](workflow_guidelines.md) for supported calls.
+
 2026-10-07. Audited source: f6beec9, including concrete producer binding 82b09a9.
 This inventory proposes boundaries and adoption steps. It changes no API, default,
 installed package or project source. [Recorded scan and probe](../reports/2026-10-07-optional-policy-inventory/report.md)
@@ -38,7 +44,7 @@ SAR's original data/training/validation/diagnostic/phase pipelines forward a
 `smart_run` argument with default False. They already support fresh execution;
 explicit True reuse should remain a compatibility choice. [The processing pilot](/ontap/user/qfebvre/sar-ml-workflow-pilot/sar_workflow/processing.py:262) is
 more specific: it chooses a product key itself, validates frozen source/config/input
-identity and calls `submit(..., smart_run=False, save_dir_policy='skip')`. Preserve
+identity and calls `submit(..., save_dir_policy='skip')`. Preserve
 that explicit reuse primitive and its coverage barrier. A mechanical replacement of
 all skip uses with fresh execution would discard a useful, intentional workflow.
 
@@ -76,7 +82,7 @@ selected = '/shared/runs/preparation/base/run-A/prepare'
 accept_preparation(selected)
 OmegaConf.update(proj.defaults, 'prepare_data.save_dir', selected)
 consumer = proj.get('compute_climatology')
-result = proj.submit(consumer, smart_run=False)
+result = proj.submit(consumer)
 result.raise_on_failure()
 if not result.is_success:
     raise RuntimeError(f'Consumer is not complete: {result.status}')
@@ -98,7 +104,7 @@ iteration's downstream result:
 from omegaconf import OmegaConf
 from flexlock import Project
 
-parents = proj.submit('train', sweep=items, smart_run=False, wait=True)
+parents = proj.submit('train', sweep=items, wait=True)
 for parent in parents:
     parent.raise_on_failure()
     if not parent.is_success:
@@ -109,7 +115,7 @@ for parent in parents:
     for stage, profile in [('infer', cpu_profile), ('assess', cpu_profile)]:
         OmegaConf.update(branch.defaults, f'{stage}.save_dir',
                          f'{parent.save_dir}/downstream/{stage}')
-        result = branch.submit(stage, smart_run=False, slurm_config=profile, wait=True)
+        result = branch.submit(stage, slurm_config=profile, wait=True)
         result.raise_on_failure()
         if not result.is_success:
             raise RuntimeError(f'{stage} is not complete: {result.status}')

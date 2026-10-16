@@ -1,5 +1,15 @@
 # Remaining migration decisions
 
+Current action: validate the local 0.10.0rc1 wheel and five workflow recipes, then
+coordinate project caller cleanup before any environment upgrade. Do not launch
+scientific reruns as a mechanical replacement for old cache flags.
+
+> Superseded status (2026-10-16): the user approved immediate pre-1.0 removal
+> of automatic cache search, marker-based partial-stage resume and chained fanout.
+> The candidate implements removal, not deprecated opt-in compatibility. Historical
+> inventories below explain prior decisions; use [current migration notes](release_0_10_0rc1.md)
+> and [workflow guidelines](workflow_guidelines.md) for supported calls.
+
 2026-10-14. Review proposals, not installed changes. Shared guidelines and local
 AGENTS links are in place in 21 distinct consumer checkouts. All 53 inventoried
 environment prefixes use FlexLock 0.9.2. Config organization and scientific

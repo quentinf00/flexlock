@@ -94,7 +94,7 @@ def test_worker_cli_failure_exits_nonzero(tmp_path, n_jobs):
     assert get_all_tasks(db)[0]["status"] == "failed"
 
 
-def test_pipeline_cli_failure_and_resume(tmp_path):
+def test_pipeline_cli_failure_and_explicit_remaining_stages(tmp_path):
     cfg = tmp_path / "pipeline.yaml"
     cfg.write_text(OmegaConf.to_yaml(OmegaConf.create({
         "first": stage(tmp_path / "first"),
@@ -110,18 +110,21 @@ def test_pipeline_cli_failure_and_resume(tmp_path):
     # A failed predecessor must still prevent user work and success receipts.
     assert not (tmp_path / "last/predictions.json").exists()
     assert not (tmp_path / "last/run.complete").exists()
-    # Fix the injected failure; legacy skip resumes the healthy first stage.
+    # Partial repair is explicit: retained first stage, fresh remaining stages.
     plan = OmegaConf.load(cfg)
     plan.bad.fail = False
+    plan.bad.save_dir = str(tmp_path/'repair/bad')
+    plan.last.save_dir = str(tmp_path/'repair/last')
     cfg.write_text(OmegaConf.to_yaml(plan))
-    before = (tmp_path / "first/run.complete").read_bytes()
-    success = subprocess.run(command + ["--save-dir-policy", "skip"], capture_output=True, text=True)
+    before = (tmp_path/'first/run.complete').read_bytes()
+    repaired = command[:command.index('-s')+1] + ['bad', 'last']
+    success = subprocess.run(repaired, capture_output=True, text=True)
     assert success.returncode == 0, success.stderr
-    assert (tmp_path / "first/run.complete").read_bytes() == before
-    assert (tmp_path / "last/run.complete").exists()
+    assert (tmp_path/'first/run.complete').read_bytes() == before
+    assert (tmp_path/'repair/last/run.complete').exists()
 
 
-@pytest.mark.parametrize("mode", ["skip", "smart", "pipeline", "serial", "parallel"])
+@pytest.mark.parametrize("mode", ["skip", "pipeline", "serial", "parallel"])
 def test_deleted_output_rejects_reuse(tmp_path, mode):
     cfg = stage(tmp_path / "run")
     proj = Project()
@@ -129,26 +132,24 @@ def test_deleted_output_rejects_reuse(tmp_path, mode):
     if mode == "pipeline":
         proj.submit_pipeline([[cfg]])
     elif mode in ("serial", "parallel"):
-        proj.submit(cfg, sweep=sweep, n_jobs=2 if mode == "parallel" else 1, smart_run=False)
+        proj.submit(cfg, sweep=sweep, n_jobs=2 if mode == "parallel" else 1)
     else:
-        proj.submit(cfg, smart_run=False)
+        proj.submit(cfg)
     Path(cfg.save_dir, "predictions.json").unlink()
     with pytest.raises(FlexLockValidationError, match="required path is missing"):
         if mode == "pipeline":
             proj.submit_pipeline([[cfg]], save_dir_policy="skip")
         elif mode in ("serial", "parallel"):
             proj.submit(cfg, sweep=sweep, n_jobs=2 if mode == "parallel" else 1,
-                        smart_run=False, save_dir_policy="skip")
-        elif mode == "smart":
-            proj.submit(cfg, smart_run=True, search_dirs=[str(tmp_path)])
+                         save_dir_policy="skip")
         else:
-            proj.submit(cfg, smart_run=False, save_dir_policy="skip")
+            proj.submit(cfg,  save_dir_policy="skip")
 
 
 def test_missing_output_fails_completion(tmp_path):
     cfg = stage(tmp_path / "run", omit=True)
     with pytest.raises(FlexLockValidationError, match="required path is missing"):
-        Project().submit(cfg, smart_run=False)
+        Project().submit(cfg)
     assert not Path(cfg.save_dir, "run.complete").exists()
     assert Path(cfg.save_dir, "run.error").exists()
 
@@ -160,7 +161,7 @@ def test_return_payload_does_not_satisfy_a_declared_scientific_output(tmp_path, 
         assert Project().submit_pipeline([[cfg]])[0][0].status == "FAILED"
     else:
         with pytest.raises(FlexLockValidationError):
-            Project().submit(cfg, smart_run=False)
+            Project().submit(cfg)
     assert not Path(cfg.save_dir, "run.complete").exists()
 
 
@@ -169,7 +170,7 @@ def test_checksum_and_count_validator(tmp_path):
         "path": "predictions.json", "sha256": True,
         "validator": {"_target_": "tests.test_workflow_integrity.validate_count", "count": 3},
     }})
-    Project().submit(cfg, smart_run=False)
+    Project().submit(cfg)
     validate_outputs(cfg)
     Path(cfg.save_dir, "predictions.json").write_text('[1, 2, 4]')
     with pytest.raises(FlexLockValidationError, match="SHA256 differs"):
@@ -180,26 +181,19 @@ def test_checksum_and_count_validator(tmp_path):
         validate_outputs(cfg)
 
 
-def test_cache_rebases_outputs_to_candidate_directory(tmp_path):
-    cfg = stage(tmp_path / "old", _outputs_=["${save_dir}/predictions.json"])
-    Project().submit(cfg, smart_run=False)
-    cfg.save_dir = str(tmp_path / "new")
-    result = Project().submit(cfg, smart_run=True, search_dirs=[str(tmp_path)])
-    assert result.status == "CACHED"
-    assert result.save_dir == str(tmp_path / "old")
-    assert not (tmp_path / "new").exists()
 
 
 def test_worker_rejects_corrupt_completed_stage(tmp_path):
     cfg = stage(tmp_path / "done")
-    Project().submit(cfg, smart_run=False)
+    Project().submit(cfg)
     Path(cfg.save_dir, "predictions.json").unlink()
     db = tmp_path / "tasks.db"
     queue_tasks(db, [{"_stages_": [OmegaConf.to_container(cfg)], "_skip_complete_": True}])
     with pytest.raises(WorkerExecutionError):
         worker_loop(None, {}, None, db)
     assert get_all_tasks(db)[0]["status"] == "failed"
-    assert not Path(cfg.save_dir, "run.complete").exists()
+    # A retired resume request must not mutate historical completion evidence.
+    assert Path(cfg.save_dir, "run.complete").exists()
 
 
 def test_done_task_db_validates_outputs_without_resubmitting(tmp_path):

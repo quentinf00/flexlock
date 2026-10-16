@@ -1,6 +1,6 @@
 """FlexLock: A lightweight library for reproducible ML experiments."""
 
-__version__ = "0.9.3"
+__version__ = "0.10.0rc1"
 
 from loguru import logger
 
@@ -20,7 +20,7 @@ def submit(config=None, **kwargs):
     Sugar over ``Project().submit(config, **kwargs)`` — use when you have a
     ready ``DictConfig`` and don't need the multi-stage pipeline plumbing
     (``proj.get``, ``proj.defaults``, etc.). All ``Project.submit`` kwargs
-    (``sweep``, ``slurm_config``, ``smart_run``, ``overrides``, …) are
+    (``sweep``, ``slurm_config``, ``overrides``, …) are
     forwarded as-is.
 
     Example::

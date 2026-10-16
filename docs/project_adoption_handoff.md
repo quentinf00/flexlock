@@ -11,6 +11,14 @@ Workflow adoption requires actual caller/config changes and bounded checks.
 Scientific acceptance is a separate conclusion; do not infer it from installation,
 configuration resolution, scheduler acceptance or a successful toy test.
 
+The local **0.10.0rc1 candidate** now removes automatic cache search, partial-stage
+marker resume and chained fanout. It has not been rolled out. Before a candidate
+upgrade, clean obsolete kwargs (including smart_run=False), select retained producers
+explicitly and check recovery scripts against the
+[breaking-change notes](release_0_10_0rc1.md). Do not mechanically replace cache hits
+with expensive fresh scientific computation. Installed 0.9.3 evidence remains dated
+evidence for that release, not acceptance of the new candidate.
+
 ## Scope and evidence
 
 Read the [shared recipes](workflow_guidelines.md) and [current release scope](release_0_9_3.md).

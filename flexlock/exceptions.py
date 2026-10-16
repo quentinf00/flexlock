@@ -36,7 +36,7 @@ class FlexLockValidationError(FlexLockError):
 
 
 class FlexLockCacheError(FlexLockError):
-    """Raised when there is an error with smart run caching."""
+    """Raised by explicit derived-index maintenance utilities."""
 
     pass
 

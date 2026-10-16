@@ -20,7 +20,7 @@ def dispatch(save_dir,producer):
         save_dir=str(Path(save_dir)/'items/item'),
         value='${run_lock:'+producer+',result.value}',
         _snapshot_=dict(discover=dict(repos=False,prevs=False))))
-    result=Project().submit(cfg,sweep=[{}],sweep_root=str(Path(save_dir)/'queue'),smart_run=False)
+    result=Project().submit(cfg,sweep=[{}],sweep_root=str(Path(save_dir)/'queue'))
     assert result[0].is_success
     return result[0].result
 

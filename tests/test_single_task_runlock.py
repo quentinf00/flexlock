@@ -68,7 +68,7 @@ def _submit_hpc(cfg, tmp_path, **kw):
     slurm_yaml = tmp_path / "slurm.yaml"
     slurm_yaml.write_text("partition: fake\n")
     with patch("flexlock.parallel.SlurmBackend", FakeSlurmBackend):
-        return Project().submit(cfg, slurm_config=str(slurm_yaml), smart_run=False, **kw)
+        return Project().submit(cfg, slurm_config=str(slurm_yaml),  **kw)
 
 
 def _lock(d):
@@ -82,7 +82,7 @@ def test_single_task_writes_full_run_lock(tmp_path, mode):
     if mode == "slurm":
         _submit_hpc(cfg, tmp_path, note="why")
     else:
-        Project().submit(cfg, isolated=True, smart_run=False, note="why")
+        Project().submit(cfg, isolated=True,  note="why")
 
     lock = _lock(save_dir)
     assert not is_placeholder_lock(lock)
@@ -110,7 +110,7 @@ def test_downstream_run_lock_resolver_after_hpc(tmp_path):
             },
         }
     )
-    assert Project().submit(down, smart_run=False).result["stats"] == "/data/stats.json"
+    assert Project().submit(down).result["stats"] == "/data/stats.json"
 
 
 def test_owner_records_repos_and_survives_git_failure(tmp_path, monkeypatch):
@@ -155,7 +155,7 @@ def test_sweep_master_keeps_placeholder_and_items_have_no_lock(tmp_path, monkeyp
             sweep=[{"lr": 1.0}, {"lr": 2.0}],
             sweep_dir_suffix=True,
             slurm_config=str(slurm_yaml),
-            smart_run=False,
+
         )
     master = root / "item"
     assert is_placeholder_lock(_lock(master))  # N tasks → no single config
@@ -267,7 +267,7 @@ def test_force_reruns_single_task_submission(tmp_path, mode):
     def submit(**kw):
         if mode == "slurm":
             return _submit_hpc(cfg.copy(), tmp_path, **kw)
-        return Project().submit(cfg.copy(), isolated=True, smart_run=False, **kw)
+        return Project().submit(cfg.copy(), isolated=True,  **kw)
 
     submit()
     assert tick.read_text() == "1"

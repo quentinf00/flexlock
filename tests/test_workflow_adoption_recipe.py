@@ -31,7 +31,7 @@ def test_explicit_registry_and_logical_items(tmp_path, monkeypatch, n_jobs, reco
     ))
     sweep = [dict(item=i, save_dir=str(project/f'products/item_{i}')) for i in [1, 2]]
     results = Project().submit(cfg, sweep=sweep, n_jobs=n_jobs, task_record=record_mode,
-                               smart_run=False, sweep_root=str(project/'campaign'))
+                                sweep_root=str(project/'campaign'))
     assert [r.status for r in results] == ['SUCCESS', 'SUCCESS']
     assert [r.get('item') for r in results] == [1, 2]
     for i in [1, 2]:
@@ -45,8 +45,8 @@ def test_explicit_registry_and_logical_items(tmp_path, monkeypatch, n_jobs, reco
     for item in sweep:
         proposed = cfg.copy()
         proposed.item = item['item']
-        proposed.save_dir = str(sibling/f"item_{item['item']}")
-        cached = Project().get_result(proposed, search_dirs=[str(sibling)])
+        proposed.save_dir = item['save_dir']
+        cached = Project().submit(proposed, save_dir_policy='skip')
         assert cached.status == 'CACHED'
         assert cached.get('item') == item['item']
         assert cached.save_dir == item['save_dir']

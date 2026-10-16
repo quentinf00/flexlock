@@ -27,7 +27,7 @@ def test_direct_read_without_data_or_prevs_records_external_product(tmp_path):
     producer = make_record(tmp_path/'producer', output_path=str(external))
     cfg = dict(_target_='tests.test_discovery_policy.use', save_dir=str(tmp_path/'consumer'),
                value='${run_lock:'+str(producer)+',config.output_path}')
-    result = Project().submit(cfg, smart_run=False)
+    result = Project().submit(cfg)
     record = yaml.safe_load((Path(result.save_dir)/'run.lock').read_text())
     assert record['config']['value'] == str(external)
     assert record['lineage']['producer']['path'] == str(producer)
@@ -131,7 +131,7 @@ def test_required_reference_fails_before_output_creation(tmp_path, existing):
     consumer = tmp_path/'consumer'
     with pytest.raises(InterpolationResolutionError, match='not found|no run.lock found'):
         Project().submit(dict(_target_='tests.test_discovery_policy.use', save_dir=str(consumer),
-            value='${run_lock:'+str(producer)+',config.required}'), smart_run=False)
+            value='${run_lock:'+str(producer)+',config.required}'))
     assert not consumer.exists()
 
 
@@ -145,7 +145,7 @@ def test_worker_records_known_reference_to_directory_or_database_producer(tmp_pa
     producer = tmp_path/'producer'
     Project().submit(dict(_target_='tests.test_discovery_policy.use', save_dir=str(producer), value=41,
         _snapshot_=dict(discover=dict(repos=False))), sweep=[dict()],
-        smart_run=False, task_record=mode)
+         task_record=mode)
     assert load_record(producer)['config']['value'] == 41
     # Relative DB markers must resolve against the real producer, even when
     # the selected record is a symlink located in another directory.
@@ -159,7 +159,7 @@ def test_worker_records_known_reference_to_directory_or_database_producer(tmp_pa
     result = Project().submit(dict(_target_='tests.test_discovery_policy.use', save_dir=str(consumer),
         value='${run_lock:'+str(producer)+',config.value}',
         _snapshot_=dict(discover=dict(repos=False, prevs=False))),
-        smart_run=False, slurm_config=str(profile), after=['77'], wait=False)
+         slurm_config=str(profile), after=['77'], wait=False)
     assert result.status == 'SUBMITTED'
     args, kwargs = backend.submit.call_args
     args[0](*args[1:], **kwargs)

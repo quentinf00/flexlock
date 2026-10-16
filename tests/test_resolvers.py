@@ -305,7 +305,7 @@ def test_vinc_stable_within_single_submit(tmp_path):
     with patch("flexlock.api.snapshot") as mock_snap, patch(
         "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
     ), patch("flexlock.api.instantiate", return_value={"ok": True}):
-        result = proj.submit(cfg, smart_run=False)
+        result = proj.submit(cfg)
 
     # Both side-effects should target the same resolved dir.
     assert (Path(result.save_dir) / "run.complete").exists()
@@ -337,7 +337,7 @@ def test_vinc_advances_across_submits(tmp_path):
         with patch("flexlock.api.snapshot", side_effect=fake_snap), patch(
             "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
         ), patch("flexlock.api.instantiate", return_value={"ok": True}):
-            proj.submit(cfg, smart_run=False)
+            proj.submit(cfg)
 
     # Each submit advances the counter; resolved dirs are unique.
     assert len(set(saved)) == 3
@@ -386,7 +386,7 @@ def test_vinc_stable_with_cross_tree_refs(tmp_path):
     with patch("flexlock.api.snapshot", side_effect=fake_snap), patch(
         "flexlock.api.extract_tracking_info", return_value=({}, {}, None)
     ), patch("flexlock.api.instantiate", return_value={"ok": True}):
-        result = proj.submit(node_cfg, smart_run=False)
+        result = proj.submit(node_cfg)
 
     assert len(captured) == 1
     snap = captured[0]

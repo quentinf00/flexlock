@@ -1,0 +1,8 @@
+{
+  "backend": "hatchling",
+  "version": "1.32.4",
+  "module": "/scale/scratch/qfebvre/pixienvs/flexlock-11016194704059280778/bld/flexlock/kjzB7yUV1Ek/host_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_pla/lib/python3.14/site-packages/hatchling/__init__.py",
+  "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+  "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=<module site-packages shown above> <python> -m hatchling build -t wheel -d reports/2026-10-16-slim-candidate/dist",
+  "note": "Existing pure-Python build backend read from a Pixi build prefix; no project environment mutation or network access."
+}

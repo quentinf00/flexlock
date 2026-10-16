@@ -29,7 +29,7 @@ def test_sweep_save_dir_outside_root_raises_clearly(tmp_path):
                 {"save_dir": str(sweep_root / "item_a"), "x": 1},
                 {"save_dir": str(tmp_path / "outside_tree"), "x": 2},
             ],
-            smart_run=False,
+
             n_jobs=1,
         )
 
@@ -62,7 +62,7 @@ def test_sweep_save_dir_all_inside_root_runs(tmp_path):
                 {"save_dir": str(sweep_root / "a"), "x": 1},
                 {"save_dir": str(sweep_root / "b"), "x": 2},
             ],
-            smart_run=False,
+
             n_jobs=1,
         )
 
@@ -96,7 +96,7 @@ def test_sweep_root_overrides_validation(tmp_path):
                 {"save_dir": str(common_parent / "exp_b"), "x": 2},
             ],
             sweep_root=str(common_parent),
-            smart_run=False,
+
             n_jobs=1,
         )
 
@@ -116,7 +116,7 @@ def test_sweep_validation_uses_first_item_parent_when_no_base_save_dir(tmp_path)
                 {"save_dir": str(common / "a"), "x": 1},
                 {"save_dir": str(tmp_path / "elsewhere" / "b"), "x": 2},
             ],
-            smart_run=False,
+
             n_jobs=1,
         )
 
@@ -188,7 +188,7 @@ def test_intra_node_save_dir_ref_tracks_sweep_override(tmp_path):
                 {"save_dir": str(sweep_root / "a")},
                 {"save_dir": str(sweep_root / "b")},
             ],
-            smart_run=False,
+
             n_jobs=1,
         )
 
@@ -217,7 +217,7 @@ def test_sweep_dir_suffix_nests_under_base_save_dir(tmp_path):
             base,
             sweep=[{"x": 1}, {"x": 2}],
             sweep_dir_suffix=True,
-            smart_run=False,
+
             n_jobs=1,
         )
 
@@ -282,7 +282,7 @@ def test_sweep_item_key_referenced_by_normal_ref(tmp_path):
             base,
             sweep=["hs", "phs0"],
             sweep_target="variable",
-            smart_run=False,
+
             n_jobs=1,
         )
 

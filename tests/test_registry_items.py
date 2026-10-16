@@ -11,6 +11,8 @@ from flexlock import Project
 from flexlock.exceptions import FlexLockValidationError
 from flexlock.record import list_task_records, load_record, load_task_record
 from flexlock.registry import diagnose, initialize
+from flexlock.run_record import RunRecord
+from flexlock.outputs import validate_outputs
 
 
 def produce(save_dir, item, fail=False):
@@ -89,7 +91,7 @@ def test_shared_items_independent_receipts_payloads_cache_and_reuse(tmp_path, n_
     initialize(tmp_path)
     cfg = config(tmp_path)
     results = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], n_jobs=n_jobs,
-                               task_record=mode, smart_run=False)
+                               task_record=mode)
     assert [r.status for r in results] == ['SUCCESS', 'SUCCESS']
     assert [r.get('item') for r in results] == [1, 2]
     assert len({r.record_dir for r in results}) == 2
@@ -104,12 +106,12 @@ def test_shared_items_independent_receipts_payloads_cache_and_reuse(tmp_path, n_
         assert snapshot['config']['save_dir'] == str(tmp_path/'products')
         assert load_task_record(db, result.task_id)['result'] == {'item': item}
         proposed = cfg.copy(); proposed.item = item
-        cached = Project().get_result(proposed, search_dirs=[str(tmp_path)])
+        cached = Project()._load_selected_result(Path(result.record_dir), proposed)
         assert cached.get('item') == item and cached.record_dir == result.record_dir
         assert cached.save_dir == str(tmp_path/'products')
     before = [(Path(r.record_dir)/'run.complete').stat().st_mtime_ns for r in results]
     again = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], n_jobs=n_jobs,
-                             task_record=mode, smart_run=False)
+                             task_record=mode)
     assert [r.get('item') for r in again] == [1, 2]
     assert before == [(Path(r.record_dir)/'run.complete').stat().st_mtime_ns for r in again]
     raw_db = db.read_bytes()
@@ -122,16 +124,16 @@ def test_shared_items_independent_receipts_payloads_cache_and_reuse(tmp_path, n_
     assert all(e['status'] == 'done' for e in health)
     proposed = cfg.copy(); proposed.item = 1
     with pytest.raises(FlexLockValidationError, match='SHA256 differs'):
-        Project().get_result(proposed, search_dirs=[str(tmp_path)])
+        Project()._load_selected_result(Path(results[0].record_dir), proposed)
     with pytest.raises(FlexLockValidationError, match='SHA256 differs'):
         Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], n_jobs=n_jobs,
-                         task_record=mode, smart_run=False)
+                         task_record=mode)
 
 
 @pytest.mark.parametrize('n_jobs', [1, 2])
 def test_failure_keeps_other_shared_item_receipt_complete(tmp_path, n_jobs):
     results = Project().submit(config(tmp_path), sweep=[{'item': 1, 'fail': True}, {'item': 2}],
-                               n_jobs=n_jobs, smart_run=False)
+                               n_jobs=n_jobs)
     assert [r.status for r in results] == ['FAILED', 'SUCCESS']
     assert results[1].get('item') == 2
     assert (Path(results[1].record_dir)/'run.complete').is_file()
@@ -142,7 +144,7 @@ def test_failure_keeps_other_shared_item_receipt_complete(tmp_path, n_jobs):
 def test_shared_declared_output_collision_rejected_before_execution(tmp_path):
     cfg = config(tmp_path); cfg._outputs_.chunk.path = 'same.json'
     with pytest.raises(FlexLockValidationError, match='overlapping output'):
-        Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], smart_run=False)
+        Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}])
     # Pre-submit guards can create a mutex directory; no work or queue may land.
     assert not (tmp_path/'products/same.json').exists()
     assert not list((tmp_path/'products').glob('chunk_*.json'))
@@ -160,11 +162,11 @@ def test_missing_task_database_is_not_created(tmp_path):
 def test_append_only_campaign_retains_shared_receipt_scope(tmp_path):
     initialize(tmp_path)
     cfg = config(tmp_path)
-    first = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], smart_run=False)
+    first = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}])
     before = [(Path(r.record_dir)/'run.complete').read_bytes() for r in first]
     extended = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}, {'item': 3}],
-                                smart_run=True, search_dirs=[str(tmp_path)])
-    assert [r.status for r in extended] == ['CACHED', 'CACHED', 'SUCCESS']
+                                )
+    assert [r.status for r in extended] == ['SUCCESS', 'SUCCESS', 'SUCCESS']
     assert before == [(Path(r.record_dir)/'run.complete').read_bytes() for r in first]
     assert len({r.record_dir for r in extended}) == 3
     assert all(r.record_dir != r.save_dir for r in extended)
@@ -175,8 +177,7 @@ def test_append_only_campaign_retains_shared_receipt_scope(tmp_path):
 @pytest.mark.parametrize('n_jobs', [1, 2])
 def test_one_item_sweep_keeps_database_and_explicit_record_mode(tmp_path, n_jobs):
     cfg = config(tmp_path)
-    result = Project().submit(cfg, sweep=[{'item': 1}], n_jobs=n_jobs, task_record='db',
-                              smart_run=False)[0]
+    result = Project().submit(cfg, sweep=[{'item': 1}], n_jobs=n_jobs, task_record='db')[0]
     assert result.status == 'SUCCESS' and result.task_id and result.task_db
     assert Path(result.task_db).is_file()
     assert load_record(result.record_dir)['config']['item'] == 1
@@ -186,17 +187,16 @@ def test_one_item_sweep_keeps_database_and_explicit_record_mode(tmp_path, n_jobs
 def test_appending_campaign_does_not_rewrite_prior_item_note(tmp_path):
     cfg = config(tmp_path)
     first = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], task_record='db',
-                             smart_run=False, note='first campaign')
-    Project().submit(cfg, sweep=[{'item': 3}], task_record='db', smart_run=False,
+                              note='first campaign')
+    Project().submit(cfg, sweep=[{'item': 3}], task_record='db',
                      note='appended campaign')
     assert all(load_record(r.record_dir)['note'] == 'first campaign' for r in first)
 
 
 def test_absent_prior_note_does_not_inherit_appended_note_or_mode(tmp_path):
     cfg = config(tmp_path)
-    first = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], task_record='db',
-                             smart_run=False)
-    Project().submit(cfg, sweep=[{'item': 3}], task_record='dir', smart_run=False,
+    first = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], task_record='db')
+    Project().submit(cfg, sweep=[{'item': 3}], task_record='dir',
                      note='appended campaign')
     for result in first:
         assert load_record(result.record_dir).get('note') is None
@@ -208,11 +208,11 @@ def test_nested_shared_receipts_do_not_claim_a_new_project_index(tmp_path):
     initialize(tmp_path)
     cfg = config(tmp_path)
     results = Project().submit(cfg, sweep=[{'item': 1}, {'item': 2}], task_record='db',
-                               sweep_root=str(tmp_path/'campaign'), smart_run=False)
+                               sweep_root=str(tmp_path/'campaign'))
     for result in results:
         assert resolve_index_path(Path(result.record_dir).parent) == tmp_path/'.flexlock/index.db'
         proposed = cfg.copy(); proposed.item = result.get('item')
-        cached = Project().get_result(proposed, search_dirs=[str(tmp_path/'other-root')])
+        cached = Project()._load_selected_result(Path(result.record_dir), proposed)
         assert cached.task_id == result.task_id
 
 

@@ -95,5 +95,9 @@ subsequent changed product is still rejected with an unchanged run.lock. Cross-s
 caches or metadata-only shortcuts would need an explicit integrity-policy decision.
 No hashing guarantee is weakened here.
 
-Python `smart_run` defaults, cache/pipeline retirement, public prepared-job export
-and automatic import tracing remain separate design/release decisions.
+Cache/pipeline simplification is now implemented in the local 0.10.0rc1 candidate:
+automatic cache search, marker-based partial-stage resume and chained fanout are
+removed. See [migration notes](release_0_10_0rc1.md) and the bounded caller inventory.
+Public prepared-job export and transitive import tracing remain deferred. Project
+environments have not been upgraded to the candidate; obsolete False kwargs also
+need cleanup before a rollout.

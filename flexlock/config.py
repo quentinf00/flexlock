@@ -55,10 +55,7 @@ _timeout_str = os.environ.get("FLEXLOCK_DEFAULT_TIMEOUT")
 DEFAULT_TIMEOUT = int(_timeout_str) if _timeout_str else 3600
 
 
-# ==================== Smart Run / Caching ====================
-
-# Whether to warn when smart_run=True but search_dirs=None
-WARN_SMART_RUN_NO_SEARCH_DIRS = get_env_bool("FLEXLOCK_WARN_SMART_RUN", True)
+# ==================== Source / Environment Identity ====================
 
 # Environment lockfiles looked up at the root of each tracked repo. Their
 # content hashes enter the run fingerprint, so a dependency upgrade (numpy,

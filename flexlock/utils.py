@@ -24,7 +24,7 @@ def collect_target_include_patterns(cfg, repo_path=None):
     """
     Recursively walk a config, collect all _target_ values, resolve them to
     source file paths relative to the repo root. Returns a list of relative
-    file paths suitable for use as match_include patterns in smart_run.
+    file paths suitable for source include patterns.
 
     External targets (site-packages, builtins) are silently skipped.
     """

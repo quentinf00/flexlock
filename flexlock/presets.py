@@ -540,11 +540,12 @@ def freeze_run_refs(cfg, *, defer_unpinned=False) -> list:
     (``${.save_dir}/logs``) stay live. The resolved run dirs are appended to
     ``_snapshot_.prevs`` so lineage records them. Returns those dirs.
 
-    With ``defer_unpinned=True``, only explicit pins resolve now; unpinned
-    calls (including ``strict``) remain self-contained interpolations for
-    the worker. Pinned and worker-time bindings both record lineage.
+    With ``defer_unpinned=True`` (scheduler chains), explicit pins resolve now;
+    unpinned worker-time selection is rejected. Future producers require concrete
+    paths, not a newest-run selector.
     """
     from .resolvers import _real_resolvers, _stubbed, defer_unpinned_runs
+    from .exceptions import FlexLockConfigError
 
     if not isinstance(cfg, DictConfig):
         return []
@@ -556,6 +557,12 @@ def freeze_run_refs(cfg, *, defer_unpinned=False) -> list:
     with recording_run_refs() as resolved, _stubbed(others), defer_unpinned_runs(defer_unpinned):
         for parent, key in targets:
             parent[key] = parent[key]
+            if defer_unpinned and '${run:' in str(parent._get_node(key)._value()):
+                raise FlexLockConfigError(
+                    "Worker-time unpinned run selection is retired. For --after, "
+                    "use a concrete future producer path with run_lock, or select "
+                    "an existing producer explicitly before submission."
+                )
     if resolved:
         with open_dict(cfg), defer_unpinned_runs(defer_unpinned):
             if cfg.get("_snapshot_") is None:

@@ -1,5 +1,11 @@
 # Dev plan: composite pipeline tasks — multi-stage × sweep × HPC × enqueue
 
+> Superseded status (2026-10-16): the user approved immediate pre-1.0 removal
+> of automatic cache search, marker-based partial-stage resume and chained fanout.
+> The candidate implements removal, not deprecated opt-in compatibility. Historical
+> inventories below explain prior decisions; use [current migration notes](release_0_10_0rc1.md)
+> and [workflow guidelines](workflow_guidelines.md) for supported calls.
+
 Branch: `pipeline-tasks` (worktree of `flexlock` @ 0a4726d, v0.8.1).
 
 Integration with `env-fingerprint` uses one stage executor for plain and

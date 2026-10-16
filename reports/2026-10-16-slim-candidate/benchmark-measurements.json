@@ -1,0 +1,117 @@
+[
+  {
+    "version": "0.10.0rc1",
+    "revision": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+    "count": 1000,
+    "tracked": true,
+    "local": false,
+    "baseline": false,
+    "output_contract": false,
+    "seconds": 8.75269060395658,
+    "files": 1010,
+    "states": [
+      [
+        "pending",
+        1000
+      ]
+    ],
+    "scheduler_calls_mocked": 1,
+    "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-16-slim-candidate/final-tracked-no-outputs"
+  },
+  {
+    "version": "0.10.0rc1",
+    "revision": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+    "count": 1000,
+    "tracked": true,
+    "local": false,
+    "baseline": false,
+    "output_contract": true,
+    "seconds": 9.202756587881595,
+    "files": 1010,
+    "states": [
+      [
+        "pending",
+        1000
+      ]
+    ],
+    "scheduler_calls_mocked": 1,
+    "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-16-slim-candidate/final-tracked-outputs"
+  },
+  {
+    "version": "0.10.0rc1",
+    "revision": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+    "count": 100,
+    "tracked": true,
+    "local": true,
+    "baseline": false,
+    "seconds": 89.08079865085892,
+    "files": 608,
+    "states": [
+      [
+        "done",
+        100
+      ]
+    ],
+    "scheduler_calls_mocked": 0,
+    "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-16-slim-candidate/local"
+  },
+  {
+    "version": "0.10.0rc1",
+    "revision": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+    "count": 1000,
+    "tracked": false,
+    "local": false,
+    "baseline": false,
+    "seconds": 7.538336074911058,
+    "files": 1007,
+    "states": [
+      [
+        "pending",
+        1000
+      ]
+    ],
+    "scheduler_calls_mocked": 1,
+    "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-16-slim-candidate/plain"
+  },
+  {
+    "version": "0.10.0rc1",
+    "revision": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+    "count": 1000,
+    "tracked": true,
+    "baseline": false,
+    "seconds": 8.593383393017575,
+    "files": 1010,
+    "states": [
+      [
+        "pending",
+        1000
+      ]
+    ],
+    "scheduler_calls_mocked": 1,
+    "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-16-slim-candidate/tracked"
+  },
+  {
+    "version": "0.10.0rc1",
+    "revision": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+    "count": 1000,
+    "tracked": true,
+    "local": false,
+    "baseline": false,
+    "seconds": 64.982732251985,
+    "files": 1010,
+    "states": [
+      [
+        "pending",
+        1000
+      ]
+    ],
+    "scheduler_calls_mocked": 1,
+    "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-16-slim-candidate/tracked-outputs"
+  }
+]

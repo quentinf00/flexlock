@@ -12,7 +12,7 @@ question: *what does this give me, and how do I get it?*
 5. [`py2cfg` — build configs from Python](#5-py2cfg--build-configs-from-python)
 6. [Sweeps](#6-sweeps)
 7. [Snapshots & reproducibility](#7-snapshots--reproducibility)
-8. [Smart run / caching](#8-smart-run--caching)
+8. [Explicit reuse and comparison](#8-explicit-reuse-and-comparison)
 9. [HPC backends](#9-hpc-backends)
 10. [MLflow integration](#10-mlflow-integration)
 11. [Debugging](#11-debugging)
@@ -77,11 +77,11 @@ After the run, `outputs/train/` contains:
 ```
 outputs/train/
 ├── run.lock         # config/source/data before exec; result added before completion
-└── run.complete     # written after output checks; cache-hit marker
+└── run.complete     # written after output checks; completion evidence
 ```
 
 `run.lock` is the canonical record. `run.complete` is what
-`smart_run` looks for to decide a run is a real cache hit (a run with
+explicit selected-path reuse requires (a run with
 only `run.lock` was interrupted).
 
 ---
@@ -287,7 +287,7 @@ result = submit(cfg, slurm_config='configs/slurm_gpu.yaml')
 ```
 
 `submit` is `Project().submit` with all the same kwargs (`sweep`,
-`smart_run`, `overrides`, `force`, `isolated`, ...). Use it for ad-hoc
+`overrides`, `force`, `isolated`, ...). Use it for ad-hoc
 one-offs and library code that takes a config and runs it.
 
 ---
@@ -458,7 +458,7 @@ timestamp: "2026-06-01T14:30:00"
 repos:
   myproject:
     commit: "abc123…"
-    tree: "def456…"               # this is what smart_run compares
+    tree: "def456…"               # source provenance for record comparison
     is_dirty: false
     path: "/abs/path/to/repo"
 data:
@@ -531,8 +531,7 @@ cfg = OmegaConf.load('outputs/train/run.lock').config
 submit(cfg, force=True)   # re-execute, overwriting in place
 ```
 
-`force=True` invalidates `run.complete` (so `smart_run` doesn't short-
-circuit), preserves outputs and `run.lock`, and re-runs the function.
+`force=True` invalidates `run.complete` for an intentional rerun, keeps outputs in place and records the new attempt.
 
 ### Presets: which config produced a run
 
@@ -605,85 +604,26 @@ them their own preset (`train_x_debug = ...`). Full reference:
 
 ---
 
-## 8. Smart run / caching
+## 8. Explicit reuse and comparison
 
-```python
-proj.submit(cfg, smart_run=True, search_dirs=['outputs/train/'])
-```
+Fresh submissions use their configured destination and refuse occupied runs before
+scheduling. There is no automatic equivalent-run search. Select retained artifacts
+through concrete config anchors and `run_lock`, or use `save_dir_policy='skip'` to
+reuse exactly the selected complete path after record/output validation.
 
-Mechanism:
+`skip` returns the producer's recorded config. It does not establish equivalence to
+a proposed config or today's code. Use record comparison (`flexlock-diff`) as evidence
+for a project decision. Source include/exclude scopes and data hashes remain provenance.
 
-1. Compute a stable **fingerprint** from `cfg` (per-repo git *tree* hashes
-   restricted to include/exclude, data hashes, and the resolved config with
-   `save_dir` prefix-normalized so output location doesn't affect it). This
-   uses `git write-tree` only — no commits or refs are created.
-2. Look the fingerprint up in the project-wide index (one indexed `SELECT`).
-   The index maps a fingerprint to where a completed run lives — a `run.lock`
-   directory **or** a sweep task `(task_db, task_id)`, so sweep items are
-   first-class cache entries.
-3. On a hit, verify the pointed-to run still exists and is complete
-   (`run.complete` plus its authoritative record/payload). A stale pointer self-prunes
-   and is treated as a miss. Only `status='done'` runs are ever served.
-4. On an index miss, fall back to the legacy `**/run.lock` glob scan +
-   `RunDiff` (controlled by `FLEXLOCK_INDEX_FALLBACK`, default on) and backfill
-   the index on a hit, so the slow path self-eliminates.
+Unchanged queue continuation preserves done rows and drains pending rows. Failed and
+interrupted rows remain visible. Recover partial pipelines by selecting remaining
+stages, binding exact retained producers and choosing fresh destinations. Old
+marker-based stage resume payloads are rejected. See the
+[candidate migration notes](release_0_10_0rc1.md) and [workflow recipes](workflow_guidelines.md).
 
-Rebuild the index at any time with `flexlock reindex <results_root>`; deleting
-it is always safe.
-
-The index lives in the nearest `.flexlock/` directory above the run (walking up
-from its parent), or `<parent>/.flexlock/` if there is none; `$FLEXLOCK_INDEX`
-overrides both. A `.flexlock/` at the project root therefore collects every
-run in the project, which is what `flexlock runs` and cache lookups from the
-project root expect. The same directory holds the preset links (§7).
-
-### When caches miss
-
-- The git tree hash changed (any tracked file modified, including
-  untracked-but-not-ignored files).
-- A tracked data path's xxh64 changed.
-- The config changed (after resolution, ignoring `_snapshot_`).
-- The candidate run never wrote `run.complete`.
-
-To debug a miss:
-
-```bash
-flexlock-diff dirs outputs/train/run_0001 outputs/train/run_0002
-# exit code: 0 = match, 1 = differ, 2 = error; add --format json for scripting
-flexlock why outputs/train/run_0001 outputs/train/run_0002   # + the commits between them
-```
-
-### Failure records (`run.error`)
-
-When a run's user function raises, FlexLock writes a `run.error` JSON sidecar next
-to `run.lock` (`exc_type`, `exc_message`, full `traceback`, timestamp; plus
-`task_id`/`node` for sweep tasks). The original exception still propagates
-unwrapped — capture never masks it. Triage without opening sqlite:
-
-```bash
-flexlock show outputs/train/run_0001 --format json    # .status == "failed", .error.*
-```
-
-A successful re-run (`force=True` / `--force`) clears the stale `run.error`. See
-[Agentic Workflows](agentic_workflows.md) for the full schema and triage guidance.
-
-### Knobs
-
-| Knob                                | Effect                                     |
-|-------------------------------------|--------------------------------------------|
-| `smart_run=False`                   | Always execute                             |
-| `force=True`                        | Invalidate `run.complete` (and, for sweeps, per-item markers + the task DB), then execute |
-| `FLEXLOCK_NO_CACHE=1`               | Disable the on-disk data-hash cache        |
-| `FLEXLOCK_INDEX=/path/index.db`     | Explicit fingerprint-index location        |
-| `FLEXLOCK_INDEX_FALLBACK=0`         | Skip the legacy glob scan on an index miss |
-| `match_include` / `match_exclude`   | Override git path filters at compare time  |
-| `search_dirs=[...]`                 | Where to look for cached runs              |
-
-Combine with sweeps: re-running a 32-job sweep with `smart_run=True`
-re-executes only the ones whose fingerprints don't match an existing
-completed run.
-
----
+`run.error` records failure; `run.complete` records successful execution. Product
+health and campaign completeness require their separate declared-output and coverage
+checks. Neither a marker alone nor absence of pending work proves scientific acceptance.
 
 ## 9. HPC backends
 
@@ -899,7 +839,6 @@ except ValueError as e:
 | `FLEXLOCK_DEFAULT_N_JOBS`      | `1`                      | Default `--n_jobs` if not given                         |
 | `FLEXLOCK_DEFAULT_TIMEOUT`     | `3600`                   | HPC wait timeout (seconds)                              |
 | `FLEXLOCK_POLL_INTERVAL`       | `10`                     | HPC poll interval (seconds)                             |
-| `FLEXLOCK_WARN_SMART_RUN`      | `true`                   | Warn when `smart_run=True` and `search_dirs=None`       |
 | `FLEXLOCK_TIMESTAMP_FORMAT`    | `%Y-%m-%dT%H-%M-%S`      | Directory timestamp format                              |
 | `FLEXLOCK_CONFIGURE_LOGGING`   | `true`                   | Configure Loguru on import                              |
 
@@ -927,18 +866,20 @@ if __name__ == "__main__":
         sweep=sweep,
         sweep_dir_suffix=True,
         slurm_config='configs/slurm_gpu.yaml',  # set #SBATCH --array=0-15
-        smart_run=True,
+
     )
 
     best = max(results, key=lambda r: r.get('val_accuracy', 0))
     print(f"best: {best.save_dir} → {best['val_accuracy']}")
 ```
 
-### 14b. Resume a partially-finished sweep
+### 14b. Continue an unchanged queue
 
-Re-run the same script. `smart_run=True` skips every completed item
-(has both `run.lock` and `run.complete`); only interrupted items
-re-execute. No special command needed.
+Run workers against the recorded task database to drain pending items. Done items
+remain done; failed/interrupted items need an explicit recovery decision. Reclaim
+stranded running tasks only after confirming their worker is gone. For a composite
+that already produced some stages, explicitly select the remaining stages and fresh
+destinations rather than reclaiming the whole composite blindly.
 
 ### 14c. Re-run only the runs that failed
 
@@ -1001,7 +942,7 @@ DEF=myproject.pipeline.cfg
 flexlock-run -d "$DEF" -s "$(flexlock stages -d "$DEF" --format keys | fzf)"
 ```
 
-### 14f. Multi-stage pipeline with auto-discovery
+### 14f. Multi-stage pipeline with explicit destinations
 
 ```python
 from flexlock import Project
@@ -1020,9 +961,8 @@ proj.run_stage(train_cfg, isolated=True)
 proj.save_snapshot('outputs/exp_001')          # writes pipeline.yaml
 ```
 
-`run_stage` auto-discovers `search_dirs` by scanning sibling experiment
-directories with the same stage name, so re-running with different
-hyperparameters cache-hits where it can.
+`run_stage` submits exactly the selected stage and propagates its concrete
+destination. Select retained upstream runs explicitly when changing hyperparameters.
 
 ---
 
@@ -1102,9 +1042,9 @@ Each sweep item is merged into the **root** config *before* stage selection
 (respecting `--sweep-target` as a root dot-path), then every stage is
 re-selected and re-frozen from that merged root — so `-s train linear_probe
 --sweep-target pipeline_dir --sweep xp1,xp2` builds 2 items × 2 stages, and each
-item's stages land under its own `pipeline_dir`. With `--check-exists`, stages
-already completed for a `pipeline_dir` are skipped, so re-running the sequence
-resumes where it stopped.
+item's stages land under its own `pipeline_dir`. Partial recovery selects the
+remaining stages explicitly and binds retained producer paths; stages are not
+skipped automatically from completion markers.
 
 Multi-stage composes with `--sweep*`, `--slurm-config`/`--pbs-config`, and
 `--enqueue`. It is only incompatible with `-O`/`-M` and `-e`, which target *the*
@@ -1185,17 +1125,12 @@ possible future enhancement.
    - Treat architecture-changing edits as a *new* experiment root rather than
      reusing an old `pipeline_dir`.
 
-2. **`smart_run` and code changes.** Caching is safe here: the fingerprint
-   includes the git tree hash, so "same config text, different code" is a cache
-   *miss*, not a wrong reuse. But that also means a downstream stage won't
-   cache-hit a past run whose code has since changed — expected, and the reason
-   config drift (above) must be handled explicitly, not via the cache.
+2. **Code changes and reuse.** Source/data/config comparisons provide evidence;
+   users and project agents decide whether retained preparation is acceptable.
 
-3. **Anchor vs `search_dirs` for cross-experiment cache hits.** The sweep form
-   runs the *same* stage into *different* `pipeline_dir`s. If you also want a
-   fingerprint-index cache hit across experiments, the index root and
-   `search_dirs` must span all of them (see §8 / `FLEXLOCK_INDEX`). Within a
-   single `pipeline_dir` this is automatic.
+3. **Concrete upstream anchors.** Point consumers at selected producer runs and
+   record those dependencies through `run_lock`. Do not substitute a newer producer
+   at worker start.
 
 4. **`pipeline_dir="???"` is mandatory.** OmegaConf raises if it's left
    unresolved, which is the intended guard — every run must name its experiment.
@@ -1234,11 +1169,9 @@ That happens if you pull the node through `OmegaConf.to_container(...,
 resolve=True)` and rebuild it. `proj.get()` is designed to preserve
 relative refs; manual round-trips are not.
 
-**`smart_run` keeps missing my cache — why?**
-Most common causes: (1) a tracked file in the repo is dirty or
-untracked-but-not-ignored, bumping the git tree hash. (2) A data path
-changed. (3) The candidate run never wrote `run.complete` (interrupted).
-Run `flexlock-diff cur_dir cached_dir` to see exactly what differs.
+**How do I compare two producers?**
+Use `flexlock-diff producer_a producer_b`. Comparison is independent of submission
+and does not automatically choose artifacts for an experiment.
 
 **I used `${main.save_dir}` and sweep overrides don't propagate.**
 Cross-tree refs (`${main.save_dir}`, `${root_anchor}`) are frozen to

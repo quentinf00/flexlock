@@ -30,7 +30,7 @@ def test_retained_preparation_updates_root_before_detached_consumer_selection(tm
                      input_path='${prepare.save_dir}/dataset.json',
                      producer_record='${prepare.save_dir}', _snapshot_=dict(repos={}))
     ))
-    result = proj.submit('prepare', smart_run=False)
+    result = proj.submit('prepare')
     result.raise_on_failure()
     assert result.is_success
     require_product(producer, 'output_path', producer / 'dataset.json')
@@ -42,7 +42,7 @@ def test_retained_preparation_updates_root_before_detached_consumer_selection(tm
     OmegaConf.update(proj.defaults, 'prepare.save_dir', str(producer))
     selected = proj.get('train')
     assert selected.input_path == str(producer / 'dataset.json')
-    result = proj.submit(selected, smart_run=False)
+    result = proj.submit(selected)
     result.raise_on_failure()
     assert result.is_success
     assert not (tmp_path / 'unexecuted/prepare').exists()

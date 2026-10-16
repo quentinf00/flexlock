@@ -194,7 +194,7 @@ result = submit(cfg, slurm_config='configs/slurm_gpu.yaml')
 ```
 
 `flexlock.submit` is a thin wrapper over `Project().submit` — all kwargs
-(`sweep`, `smart_run`, `overrides`, `force`, etc.) are forwarded.
+(`sweep`, `overrides`, `force`, etc.) are forwarded.
 
 **Python module structure:**
 ```python
@@ -231,7 +231,8 @@ When the project was built from an import string
 
 `${run:...}` references are kept as call strings by `get` and resolved by
 `submit`, which records the chosen run in the config and its lineage. With
-`after`, unpinned references instead bind at worker stage start.
+`after`, unpinned references are rejected. Use explicit pins or concrete future
+producer paths with `run_lock`.
 
 ```python
 # Get config by key
@@ -264,7 +265,7 @@ its root refs are already frozen. Re-call `proj.get` to refresh.
 
 ### `proj.submit()`: Execute Configuration
 
-Execute a configuration, with smart caching and HPC support.
+Execute a configuration locally or on HPC, preserving its provenance.
 
 #### Signature
 
@@ -274,14 +275,10 @@ def submit(
     sweep: List[Dict] = None,
     sweep_target: str = None,
     n_jobs: int = 1,
-    smart_run: bool = True,
-    search_dirs: List[str] = None,
     wait: bool = True,
     pbs_config: str = None,
     slurm_config: str = None,
     sweep_dir_suffix: bool = False,
-    match_include: List[str] = None,
-    match_exclude: List[str] = None,
     isolated: bool = False,
     force: bool = False,
     overrides: dict | List[str] = None,
@@ -299,8 +296,6 @@ def submit(
 - `debug`: Wrap the user function with the post-mortem debugger so exceptions drop into PDB.
 - `print_config`: Print the resolved config and return `None` without executing — useful for inspecting sweep-merged or override-merged configs before launching.
 - `sweep_dir_suffix`: When `True`, nests each sweep run under `<save_dir>/sweep_{i:04d}/`. Default `False` (all sweep runs share the base `save_dir`).
-- `match_include`: Override the git path include-patterns used during `smart_run` comparison (takes priority over per-repo patterns stored in `run.lock`).
-- `match_exclude`: Override the git path exclude-patterns used during `smart_run` comparison.
 
 #### CLI/Python parity
 
@@ -338,64 +333,26 @@ print(result.result)        # Return value from function
 print(result['accuracy'])   # Dict-like access (if result is dict)
 ```
 
-#### Smart Run (Caching)
+#### Explicit reuse and protected destinations
+
+Submission executes at the configured destination. Occupied run directories raise
+before scheduler submission. Choose a fresh destination, or use `force=True` for
+an intentional in-place rerun; active ownership still prevents overwrites.
 
 ```python
-# First run: executes
-result = proj.submit(cfg, smart_run=True)  # Runs
-
-# Second run: cache hit
-result = proj.submit(cfg, smart_run=True)  # ⚡ Skipped! Returns cached result
+result = proj.submit(cfg, save_dir_policy='skip')
 ```
 
-**How it works:**
-- Generates fingerprint (code + data + config)
-- Searches `search_dirs` for run directories containing **both** `run.lock`
-  (written before execution) and `run.complete` (written after the user
-  function returns successfully)
-- Returns cached result on a match; runs that have only `run.lock` (previous
-  attempts interrupted before completion) are skipped, not treated as cache
-  hits
+This selects exactly `cfg.save_dir`. FlexLock requires a complete authoritative
+record and validates recorded outputs. The returned config belongs to the producer;
+`CACHED` is the retained status name for this explicit reuse. FlexLock does not
+certify that a proposed config or current source is equivalent to the selected run.
+Missing or incomplete outputs require explicit repair. No other run is searched.
 
-**Custom search:**
-```python
-result = proj.submit(
-    cfg,
-    smart_run=True,
-    search_dirs=['outputs/train/', 'archive/old_runs/']
-)
-```
-
-#### Cache markers and `force=True`
-
-Each completed run leaves two files alongside its outputs:
-
-- `run.lock` — config + provenance, written before execution starts.
-- `run.complete` — JSON with completion timestamp, written after the user
-  function returns. A cache hit requires both.
-
-To force re-execution while keeping prior outputs in place:
-
-```python
-proj.submit(cfg, force=True)   # deletes run.complete, runs again into same dir
-```
-
-`force=True` does **not** delete `save_dir` or `run.lock` — only the
-completion marker. The user function overwrites outputs in place.
-
-**Migrating from older versions:** runs created before this scheme exists
-have only `run.lock` and would be treated as incomplete. Backfill them once:
-
-```bash
-flexlock migrate-cache-markers outputs/
-```
-
-This writes `run.complete` for any dir that has `run.lock` plus at least one
-non-hidden output file. To prune stale lock-only dirs instead:
-
-```bash
-flexlock gc --incomplete outputs/
-```
+A successful execution writes `run.complete`; `run.lock` or task-DB records retain
+config, source/data provenance, declared output evidence and the return value.
+`force=True` invalidates completion and records the new attempt while keeping products
+in place. The callable decides how to replace its outputs.
 
 #### Parameter Sweep
 
@@ -477,38 +434,12 @@ proj.submit(cfg, sweep=sweep, print_config=True)
 # ...
 ```
 
-#### Post-sweep chaining
+#### Post-sweep coordination
 
-After a sweep, downstream stages typically need to run once per sweep
-result, each anchored at the result's `save_dir`. `proj.submit_chained`
-packages this loop:
-
-```python
-chained = proj.submit_chained(
-    base_cfg,
-    sweep=[{'fourier_sigma': s} for s in [1.0, 2.0, 5.0]],
-    downstream=[
-        # (stage_key, anchor_wiring)
-        # anchor_wiring maps anchor name in proj.defaults → result attribute
-        ('encode_val',   {'cnf_run_dir': 'save_dir'}),
-        ('cnf_eval_val', {'cnf_run_dir': 'save_dir'}),
-    ],
-    sweep_kwargs={'slurm_config': 'configs/slurm_gpu.yaml', 'n_jobs': 3},
-    downstream_kwargs={'slurm_config': 'configs/slurm_gpu.yaml'},
-)
-
-# Iterate (sweep_result, downstream_results) pairs:
-for sweep_r, downstream_rs in chained:
-    encode_r, eval_r = downstream_rs
-    print(sweep_r.save_dir, eval_r['val_score'])
-```
-
-For each sweep item, the parent's `save_dir` is written into the named
-anchor on `proj.defaults`, then each downstream stage is fetched via
-`proj.get(key)` (so the new anchor propagates through interpolations)
-and submitted. `downstream_kwargs` defaults to `smart_run=False` to
-avoid stale-cache false hits between iterations — pass
-`{'smart_run': True}` explicitly if you want caching.
+Use a project loop to select accepted producer results, assign fresh downstream
+destinations and submit each branch with its own resources. Inspect terminal status
+and declared outputs before consuming products. See the
+[resource-chain recipe](workflow_guidelines.md) for scheduler IDs and failure handling.
 
 #### HPC Execution (Slurm)
 
@@ -556,105 +487,22 @@ print(result.status)  # "SUBMITTED"
 
 ---
 
-### `proj.exists()`: Check for Cached Run
-
-Check if a run with matching configuration exists.
+### `proj.run_stage()`: Execute a selected stage
 
 ```python
-cfg = proj.get('train')
-
-if proj.exists(cfg, search_dirs=['outputs/train/']):
-    print("Run already exists, using cache")
-    result = proj.get_result(cfg)
-else:
-    print("No cache found, executing")
-    result = proj.submit(cfg)
+result = proj.run_stage(cfg, stage_name='train', slurm_config='slurm_gpu.yaml')
 ```
 
----
+This is a thin wrapper around `submit`. It propagates the result's concrete
+`save_dir` into `cfg` and performs no sibling-directory search. `stage_name` is
+an optional descriptive label. All supported submission arguments are forwarded.
 
-### `proj.get_result()`: Load Cached Results
-
-Load results from a previously completed run.
-
-```python
-cfg = proj.get('train')
-
-# Load cached result (raises ValueError if not found)
-result = proj.get_result(cfg, search_dirs=['outputs/'])
-
-print(result.save_dir)
-print(result.result)
-```
-
-**Result loading:**
-- Reads the authoritative run record's `result` section
-- Falls back to `results.json` only for historical records
-- Returns `ExecutionResult` with `status="CACHED"`
-
----
-
-### `proj.run_stage()`: Execute a Pipeline Stage
-
-Convenience method that wraps `submit()` with automatic `search_dirs` discovery and `save_dir` propagation — the two things you'd otherwise have to do manually in every pipeline.
-
-#### Signature
-
-```python
-def run_stage(
-    cfg: DictConfig,
-    stage_name: str = None,
-    smart_run: bool = True,
-    search_dirs: List[str] = None,
-    **submit_kwargs,
-) -> ExecutionResult
-```
-
-**Parameters:**
-- `cfg`: Stage configuration (DictConfig)
-- `stage_name`: Name of the stage. If `None`, inferred from `cfg.save_dir` (last path component).
-- `smart_run`: Whether to check for cached runs (default `True`)
-- `search_dirs`: Directories to search for cached runs. If `None`, auto-discovered by scanning sibling experiment directories with the same stage name.
-- `**submit_kwargs`: Additional arguments forwarded to `submit()` (e.g., `isolated=True`)
-
-#### Basic Usage
-
-```python
-proj = Project(defaults='pipeline.defaults')
-cfg = proj.get('train')
-cfg.save_dir = 'results/exp_001/train'
-
-# Executes the stage, auto-discovers search_dirs, propagates save_dir
-result = proj.run_stage(cfg)
-
-# cfg.save_dir is now updated to result.save_dir (useful for downstream stages)
-print(cfg.save_dir)  # results/exp_001/train
-```
-
-#### Multi-Stage Pipeline
-
-```python
-proj = Project(defaults='pipeline.defaults')
-
-# Stage 1
-prep_cfg = proj.get('preprocess')
-prep_cfg.save_dir = 'results/exp_001/preprocess'
-proj.run_stage(prep_cfg)
-
-# Stage 2 — uses prep_cfg.save_dir (propagated by run_stage)
-train_cfg = proj.get('train')
-train_cfg.data_dir = prep_cfg.save_dir
-train_cfg.save_dir = 'results/exp_001/train'
-proj.run_stage(train_cfg, isolated=True)  # GPU stage in subprocess
-
-# Save the full pipeline config for reproducibility
-proj.save_snapshot('results/exp_001')
-```
-
-**How auto-discovery works:**
-Given `save_dir = "results/exp_001/train"`, `run_stage` looks at `results/*/train/` for all sibling experiment directories with the same stage name. This means re-running a pipeline with different parameters will automatically find cached stages from previous experiments.
-
----
+For ordered stages on one allocation, use `submit_pipeline(items, ...)` or CLI
+`-s prepare train`. Stages have distinct records; execution stops on failure.
+Parallel workers claim independent items. To recover a partially completed item,
+select the remaining stages explicitly, bind concrete retained producer paths,
+and use fresh destinations. `save_dir_policy='skip'` can reuse a wholly complete
+selected item; it cannot resume part of a pipeline from completion markers.
 
 ### `proj.save_snapshot()`: Save Pipeline Config
 
@@ -731,14 +579,10 @@ eval_result = proj.submit(eval_cfg)
 print(f"Final accuracy: {eval_result['accuracy']}")
 ```
 
-**With smart run:**
-```python
-# Re-run entire pipeline
-# Unchanged stages are automatically skipped
-preprocess_result = proj.submit(preprocess_cfg)  # ⚡ Cached
-train_result = proj.submit(train_cfg)            # ⚡ Cached
-eval_result = proj.submit(eval_cfg)              # ⚡ Cached
-```
+To reuse preparation, select its exact run path and read its authoritative record
+or bind `${run_lock:<path>,config.output_path}`. Decide whether that producer remains
+acceptable, then execute downstream stages into fresh destinations. A saved pipeline
+config is a convenience snapshot; it is not proof that old products match current code.
 
 ---
 
@@ -751,8 +595,9 @@ results = []
 for i, override in enumerate(sweep):
     cfg = proj.get('train')
     cfg.merge_with(override)
+    cfg.save_dir = f'outputs/trial_{i:04d}'
 
-    result = proj.submit(cfg, smart_run=False)
+    result = proj.submit(cfg)
     results.append(result)
 
     # Early stop if accuracy > 0.95
@@ -783,24 +628,17 @@ result = proj.submit(cfg)
 
 ---
 
-### Conditional Execution
+### Explicit producer selection
 
 ```python
-cfg = proj.get('train')
-
-# Only run if not cached
-if not proj.exists(cfg):
-    print("Training model...")
-    result = proj.submit(cfg, smart_run=False)
-else:
-    print("Using cached model")
-    result = proj.get_result(cfg)
-
-# Use result
-model_path = Path(result.save_dir) / 'model.pth'
+from flexlock.record import load_record
+producer = load_record('/shared/runs/preparation/baseline/run1/prepare')
+# Project acceptance verifies the selected producer and cohort before scheduling.
 ```
 
----
+Prefer a config anchor and `run_lock` interpolation for dependencies; it records the
+selected producer identity and rejects a changed producer at consumption time.
+See [workflow guidelines](workflow_guidelines.md).
 
 ## Best Practices
 
@@ -814,15 +652,11 @@ cfg = py2cfg(train, lr=0.01)
 cfg = py2cfg(train, lr=0.01, save_dir='outputs/train_baseline')
 ```
 
-### 2. Use Smart Run by Default
+### 2. Make reuse decisions explicit
 
-```python
-# Let FlexLock handle caching
-result = proj.submit(cfg, smart_run=True)
-
-# Only disable for debugging
-result = proj.submit(cfg, smart_run=False)
-```
+Keep preparation references in named anchors. Use fresh run destinations for changed
+experiments. Same-path `skip` validates a selected producer's record and outputs;
+it does not compare current source/config to establish scientific equivalence.
 
 ### 3. Structure Configs Hierarchically
 
@@ -859,7 +693,7 @@ cfg = py2cfg(
 
 > **Note:** Use `_snapshot_=` inside `py2cfg`. The `snapshot_config=` spelling only works as a parameter to the `@flexcli` decorator.
 
-To track only specific files within a repo (speeds up `smart_run` by ignoring irrelevant changes):
+To track only specific files within a repo (limits captured provenance to the declared scope):
 
 ```python
 _snapshot_=dict(
@@ -898,7 +732,7 @@ results = proj.submit(
     cfg,
     sweep=param_grid,
     n_jobs=8,
-    smart_run=True  # Skip already-run configs
+
 )
 
 # Analyze results

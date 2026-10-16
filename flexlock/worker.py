@@ -27,7 +27,6 @@ from flexlock.resolvers import resolve_deferred
 from flexlock.snapshot import snapshot
 from flexlock.run_record import RunRecord
 from flexlock.fingerprint import fingerprint as compute_fingerprint
-from flexlock import index
 from flexlock import config as _config
 from flexlock.git_utils import code_drift
 from flexlock.presets import link_run
@@ -217,10 +216,6 @@ def _run_stage(func, stage_cfg, db_path, db_dir, master_lock, node, task_id,
         logger.info(f"Task successful: {stage_cfg}")
         record.mark_complete(result=result)
         link_run(receipt_dir, stage_cfg)
-        # Record this sweep task in the project-wide index so it's a
-        # first-class cache entry (issue 1).
-        if task_fp:
-            index.record_task(receipt_dir, db_path, task_id, task_fp)
         return task_save_dir, result
 
     except KeyboardInterrupt:
@@ -260,13 +255,18 @@ def _run_composite(func, task, db_path, db_dir, master_lock, node, task_id, fini
     ``[{"save_dir": ..., "result": ...}, ...]``.
 
     ``KeyboardInterrupt`` propagates to :func:`worker_loop`, which marks the
-    row interrupted; completed stage dirs keep their ``run.complete`` so a
-    reclaim with ``_skip_complete_`` resumes past them.
+    row interrupted. Repairing a partially executed item is a project decision;
+    completion markers do not authorize skipping or rerunning prior stages.
     """
     from .taskdb import get_task_snapshot
 
     stages = task["_stages_"]
-    skip_complete = bool(task.get("_skip_complete_", False))
+    if task.get('_skip_complete_'):
+        from .exceptions import FlexLockValidationError
+        raise FlexLockValidationError(
+            "Marker-based stage resume is retired. Select remaining stages "
+            "explicitly and bind retained producers; this task was not executed."
+        )
     n = len(stages)
     stage_results = []
     stored = get_task_snapshot(db_path, task_id) or {}
@@ -278,29 +278,6 @@ def _run_composite(func, task, db_path, db_dir, master_lock, node, task_id, fini
         stage_name = Path(save_dir).name if save_dir else f"stage_{i}"
         label = f"stage {i + 1}/{n} {stage_name}"
         receipt_dir = stage_record_dir(save_dir, db_dir, _master(master_lock), task_id) if save_dir else None
-
-        if (
-            skip_complete
-            and save_dir is not None
-            and (receipt_dir / "run.complete").exists()
-        ):
-            from .outputs import validate_outputs
-
-            try:
-                validate_outputs(stage_cfg, save_dir, record_dir=receipt_dir)
-            except Exception as exc:
-                RunRecord(receipt_dir).write_error(exc, task_id=task_id, node=node, stage=label)
-                finished.append(dict(task=task, error=f"[{label}] {traceback.format_exc()}"))
-                return
-            logger.info(f"[{label}] {save_dir} already complete — skipping")
-            stage_results.append(
-                {
-                    "save_dir": str(save_dir),
-                    "result": RunRecord(receipt_dir).load_results(),
-                    "skipped": True,
-                }
-            )
-            continue
 
         logger.info(f"[{label}] running → {save_dir}")
         try:

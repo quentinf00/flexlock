@@ -1,0 +1,38 @@
+[
+  {
+    "version": "0.9.3",
+    "revision": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+    "count": 10,
+    "tracked": true,
+    "baseline": true,
+    "seconds": 0.42610519495792687,
+    "files": 20,
+    "states": [
+      [
+        "pending",
+        10
+      ]
+    ],
+    "scheduler_calls_mocked": 1,
+    "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+    "output": "/tmp/flexlock-slim-baseline-smoke"
+  },
+  {
+    "version": "0.9.3",
+    "revision": "0b88a5681a859d9d267ce99cd30d55550e22d10e",
+    "count": 1000,
+    "tracked": true,
+    "baseline": true,
+    "seconds": 8.585869858041406,
+    "files": 1010,
+    "states": [
+      [
+        "pending",
+        1000
+      ]
+    ],
+    "scheduler_calls_mocked": 1,
+    "python": "/scale/scratch/qfebvre/pixienvs/maxss-ml-4964171903838384551/envs/hpc/bin/python",
+    "output": "/ontap/user/qfebvre/flexlock-hydra-benchmark/2026-10-16-slim-baseline/tracked"
+  }
+]

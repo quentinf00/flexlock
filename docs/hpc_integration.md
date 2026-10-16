@@ -433,7 +433,7 @@ Refreshing in 10s... (Ctrl+C to stop)
 
 ### Job Logs (Slurm)
 
-When a job is submitted via Slurm, stdout and stderr are written to `slurm-<JOBID>.out` in the directory where the job was submitted (the project root). The calling process does not relay this output. 
+When a job is submitted via Slurm, stdout and stderr are written to `slurm-<JOBID>.out` in the directory where the job was submitted (the project root). The calling process does not relay this output.
 
 To follow a running job:
 ```bash
@@ -486,69 +486,20 @@ flexlock-status outputs/sweep/run.lock.tasks.db --all --status running
 flexlock-status outputs/sweep/run.lock.tasks.db --all --status failed
 ```
 
-## Smart Caching with HPC
+## Explicit producers and multi-stage jobs
 
-FlexLock's smart run detection works seamlessly with HPC:
+Select accepted preparation runs through concrete config anchors and `run_lock`.
+Submit fresh downstream destinations with a resource profile appropriate to each
+stage. For one allocation, `-s prepare train` executes ordered stages, stops on a
+failure, and keeps distinct records. Different resource needs use separate jobs and
+`--after` scheduler dependencies; concrete future producer paths are required.
 
-```python
-# First run - executes on cluster
-result = proj.submit(
-    config,
-    pbs_config='pbs.yaml',
-    smart_run=True,  # Check cache
-    wait=True
-)
+Submission refuses occupied run destinations before calling the scheduler. Exact
+same-path `save_dir_policy='skip'` requires a complete readable record and healthy
+declared outputs. It does not establish code/config equivalence or search other runs.
 
-# Second run - uses cached results!
-result = proj.submit(
-    config,
-    pbs_config='pbs.yaml',
-    smart_run=True,  # Cache hit!
-    wait=True
-)
-# No job submitted, instant results
-```
-
-**Benefits:**
-- Skip completed work
-- Resume failed sweeps
-- Incremental parameter exploration
-
-## Multi-Stage Pipelines on HPC
-
-Run complex pipelines on the cluster:
-
-```python
-from flexlock.api import Project
-
-proj = Project(defaults='pipeline.defaults')
-
-# Stage 1: Preprocess (on cluster)
-preprocess = proj.submit(
-    proj.get('preprocess'),
-    pbs_config='pbs.yaml',
-    smart_run=True,
-    wait=True  # Wait for preprocessing
-)
-
-# Stage 2: Train (uses preprocessing output)
-train = proj.submit(
-    proj.get('train'),
-    pbs_config='pbs_gpu.yaml',  # Different queue
-    smart_run=True,
-    wait=True
-)
-
-# Stage 3: Evaluate
-evaluate = proj.submit(
-    proj.get('evaluate'),
-    pbs_config='pbs.yaml',
-    smart_run=True,
-    wait=True
-)
-
-print(f"Final accuracy: {evaluate.accuracy}")
-```
+See the [workflow guidelines](workflow_guidelines.md) for a small coordinator,
+accepted-ID ledger, failure checks and manual scheduler controls.
 
 ## Advanced Usage
 
@@ -723,12 +674,12 @@ New records store the return value internally; historical sidecars remain readab
 
 ### ✅ Do:
 
-1. **Test locally first**: Run with `smart_run=True` locally before HPC
+1. **Test locally first**: Validate a small fresh run before HPC
 2. **Use wait=True for pipelines**: Ensures stages complete in order
 3. **Monitor actively**: Use `flexlock-status --watch` for first runs
 4. **Set reasonable walltimes**: Don't request more than needed
 5. **Use containers**: For reproducibility across systems
-6. **Smart caching**: Use `smart_run=True` to skip completed work
+6. **Explicit reuse**: Select accepted producers and fresh downstream destinations
 
 ### ❌ Don't:
 
@@ -750,32 +701,16 @@ proj.submit(cfg, sweep=big_grid, n_jobs=1000)
 proj.submit(cfg, sweep=big_grid, n_jobs=100)
 ```
 
-### 2. Use Smart Caching
+### 2. Select preparation explicitly
 
-```python
-# Skip completed work automatically
-result = proj.submit(
-    cfg,
-    sweep=grid,
-    smart_run=True,  # Critical!
-    pbs_config='pbs.yaml'
-)
-```
+Prepare once, check required products and coverage, then bind that concrete producer
+in downstream configs. Keep provenance for the selected source/data and record the
+upstream reference. Changed code does not automatically invalidate or accept old data.
 
-### 3. Parallel Preprocessing
+### 3. Continue pending work
 
-```python
-# Preprocess once locally
-preprocess = proj.submit(preprocess_cfg, smart_run=True)
-
-# All HPC jobs use same preprocessed data
-results = proj.submit(
-    train_cfg,
-    sweep=grid,
-    pbs_config='pbs.yaml',
-    smart_run=True
-)
-```
+Workers drain an unchanged recorded queue without rerunning done items. Failed or
+interrupted composites require explicit stage selection and retained producer bindings.
 
 ### 4. Choose Right Queue
 
@@ -822,7 +757,7 @@ def main():
         proj.get('train'),
         sweep=sweep_grid,
         pbs_config='configs/pbs_gpu.yaml',
-        smart_run=True,  # Skip completed
+
         wait=True,       # Block until done
         n_jobs=4         # Parallel jobs
     )
@@ -880,13 +815,11 @@ The dependency appears before shell commands in the rendered script and in
 `--dry-run` output. Use either `--after` or a dependency directive in the
 profile's `startup_lines`; specifying both raises an error.
 
-With `--after`, unpinned `${run:preset,select}` references bind at worker stage
-start, after the scheduler dependency succeeds, and record the chosen upstream
-run in lineage. `strict` checks still apply at that point. Explicit pins such
-as `${run:preset,select,0005}` bind at submission. Keep output directories,
-targets, and code repository paths concrete at submission. Automatic cache
-matching is skipped while run references remain deferred; an explicit `skip`
-policy still resumes completed outputs.
+With `--after`, use concrete future producer paths with `run_lock`. Explicit
+`${run:preset,select,0005}` pins resolve at submission. Unpinned run selectors
+are rejected before dispatch. Keep output directories, targets and code repository
+paths concrete. A dependency records scheduler ordering; project acceptance still
+checks producer outputs and cohort completeness.
 
 `--print-job-id` submits without waiting and prints only the scheduler ID on
 stdout, so shell command substitution can capture it. It works for single runs,

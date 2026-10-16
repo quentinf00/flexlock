@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "version": "0.10.0rc1",
+  "module": "/tmp/flexlock-0.10.0rc1-validation/lib/python3.13/site-packages/flexlock/__init__.py",
+  "python": "/tmp/flexlock-0.10.0rc1-validation/bin/python",
+  "products": "/tmp/flexlock-wheel-products-u41uw7g1",
+  "cli_retired_flag_exit": 2,
+  "assertions": [
+    "fresh execution",
+    "CLI consumer and exact lineage",
+    "record return value",
+    "explicit reuse",
+    "collision preservation",
+    "retired keyword/flag rejection",
+    "unchanged queue done-row preservation",
+    "corrupt output rejection"
+  ]
+}

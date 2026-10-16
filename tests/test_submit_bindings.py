@@ -56,7 +56,7 @@ def test_existing_producer_is_frozen_and_checked_before_callable(tmp_path, sched
     producer(source, 41)
     destination = tmp_path/'consumer'
     config = cfg(destination, source)
-    options = dict(slurm_config=profile, after=['77'] if after else None, wait=False, smart_run=False)
+    options = dict(slurm_config=profile, after=['77'] if after else None, wait=False)
     if dispatch == 'single':
         Project().submit(config, **options)
     elif dispatch == 'sweep':
@@ -94,7 +94,7 @@ def test_missing_required_producer_without_after_fails_before_dispatch(tmp_path,
     destination = tmp_path/'consumer'
     from omegaconf.errors import InterpolationResolutionError
     with pytest.raises(InterpolationResolutionError, match='no run.lock found'):
-        Project().submit(cfg(destination, tmp_path/'missing'), slurm_config=profile, smart_run=False)
+        Project().submit(cfg(destination, tmp_path/'missing'), slurm_config=profile)
     backend.submit.assert_not_called()
     assert not destination.exists()
 
@@ -103,7 +103,7 @@ def test_promised_producer_with_after_uses_exact_path(tmp_path, scheduler):
     profile, backend = scheduler
     source = tmp_path/'promised'
     destination = tmp_path/'consumer'
-    Project().submit(cfg(destination, source), slurm_config=profile, after=['77'], smart_run=False)
+    Project().submit(cfg(destination, source), slurm_config=profile, after=['77'])
     producer(tmp_path/'newer', 99)
     producer(source, 41)
     run_submitted(backend)
@@ -137,7 +137,7 @@ def test_pipeline_typo_is_not_treated_as_promised_producer(tmp_path, scheduler):
     from omegaconf.errors import InterpolationResolutionError
     with pytest.raises(InterpolationResolutionError, match='no run.lock found'):
         Project().submit_pipeline([[cfg(tmp_path/'consumer', tmp_path/'typo')]],
-            slurm_config=profile, smart_run=False)
+            slurm_config=profile)
     backend.submit.assert_not_called()
     assert not (tmp_path/'consumer').exists()
 
@@ -153,7 +153,7 @@ def test_latest_selection_is_fixed_when_newer_candidate_appears(tmp_path, schedu
     config = cfg(destination, first)
     choice = '${latest:'+str(first.parent/'*')+'}'
     config.value = '${run_lock:'+choice+',config.value}' if nested else choice
-    Project().submit(config, slurm_config=profile, after=['77'], smart_run=False)
+    Project().submit(config, slurm_config=profile, after=['77'])
     producer(first.parent/'B', 99)
     run_submitted(backend)
     assert (destination/'called').read_text() == ('41' if nested else str(first))
@@ -163,7 +163,7 @@ def test_missing_promised_producer_stops_worker(tmp_path, scheduler):
     profile, backend = scheduler
     destination = tmp_path/'consumer'
     Project().submit(cfg(destination, tmp_path/'promised'), slurm_config=profile,
-                     after=['77'], smart_run=False)
+                     after=['77'])
     with pytest.raises(WorkerExecutionError):
         run_submitted(backend)
     assert not (destination/'called').exists()
@@ -178,7 +178,7 @@ def test_existing_producer_missing_field_is_not_deferred(tmp_path, scheduler):
     config = cfg(tmp_path/'consumer', source)
     config.value = '${run_lock:'+str(source)+',config.typo}'
     with pytest.raises(InterpolationResolutionError, match="key 'config.typo' not found"):
-        Project().submit(config, slurm_config=profile, after=['77'], smart_run=False)
+        Project().submit(config, slurm_config=profile, after=['77'])
     backend.submit.assert_not_called()
     assert not (tmp_path/'consumer').exists()
 
@@ -189,9 +189,9 @@ def test_queued_producer_without_dependency_fails_before_consumer_dispatch(tmp_p
     source = tmp_path/'producer'
     stage = cfg(source, source)
     stage.value = 41
-    Project().submit(stage, slurm_config=profile, smart_run=False, wait=False)
+    Project().submit(stage, slurm_config=profile,  wait=False)
     with pytest.raises(InterpolationResolutionError, match='pending/running work'):
-        Project().submit(cfg(tmp_path/'consumer', source), slurm_config=profile, smart_run=False)
+        Project().submit(cfg(tmp_path/'consumer', source), slurm_config=profile)
     assert backend.submit.call_count == 1
     assert not (tmp_path/'consumer').exists()
 
@@ -208,7 +208,7 @@ def test_pending_sibling_does_not_make_selected_producer_future(tmp_path, schedu
     queue_tasks(db, [dict(save_dir=str(tmp_path/'other'), x=1)])
     reserve_queue([source], db)
     destination = tmp_path/'consumer'
-    Project().submit(cfg(destination, source), slurm_config=profile, after=['77'], smart_run=False)
+    Project().submit(cfg(destination, source), slurm_config=profile, after=['77'])
     producer(source, 99)
     with pytest.raises(WorkerExecutionError):
         run_submitted(backend)
@@ -222,7 +222,7 @@ def test_ordered_pipeline_defers_exact_earlier_stage_path(tmp_path, scheduler):
     prepare = cfg(first, first)
     prepare.value = 41
     Project().submit_pipeline([[prepare, cfg(second, first)]],
-        slurm_config=profile, smart_run=False, wait=False)
+        slurm_config=profile,  wait=False)
     run_submitted(backend)
     assert (first/'called').read_text() == '41'
     assert (second/'called').read_text() == '41'
@@ -242,7 +242,7 @@ def test_isolated_worker_rejects_replacement_and_returns_failed(tmp_path, monkey
 
     monkeypatch.setattr(ParallelExecutor, 'run', replace_before_worker)
     destination = tmp_path/'consumer'
-    result = Project().submit(cfg(destination, source), isolated=True, smart_run=False)
+    result = Project().submit(cfg(destination, source), isolated=True)
     assert result.status == 'FAILED'
     assert 'changed or disappeared after submission' in result.error
     assert not (destination/'called').exists()

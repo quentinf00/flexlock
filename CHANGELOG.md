@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.10.0rc1 (local candidate, 2026-10-16)
+
+- Remove automatic cross-run cache search, submission cache keywords and CLI
+  `--check-exists`, `Project.exists/get_result`, and chained fanout APIs.
+- Reject old marker-based stage-resume payloads and worker-time unpinned run
+  selectors under scheduler dependencies. Keep explicit future producer bindings.
+- Preserve exact-path reuse, authoritative output validation, recorded queue
+  continuation, ordered stages and provenance comparison. Tighten queue ownership
+  checks so foreign queues and changed payloads cannot bypass destination guards.
+- Include the unreleased source-attribution and project-feedback fixes described
+  in [candidate migration notes](docs/release_0_10_0rc1.md).
+
+This is an isolated validation candidate; no project environment upgrade or
+scientific rerun is implied.
+
 ## 0.9.0 (2026-10-02)
 
 ### Added

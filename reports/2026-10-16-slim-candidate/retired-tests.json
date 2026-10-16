@@ -1,0 +1,116 @@
+[
+  {
+    "file": "tests/test_chained_and_paths.py",
+    "test": "test_submit_chained_basic",
+    "sha256": "69b20b36be663ae29d5197b50ccf20b7b806cfbfb0147c44c4f441723758ef7d",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_chained_and_paths.py",
+    "test": "test_submit_chained_anchor_propagation",
+    "sha256": "a137e6b7c13a403a439293d15b23e9aa739d03f1a57b4e9a57ead8d1e7e43b95",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_chained_and_paths.py",
+    "test": "test_submit_chained_iteration_protocol",
+    "sha256": "88fa44b4f16848030a00881a17351d9fbc0a8808263674bd9879453b0397d0f3",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_chained_and_paths.py",
+    "test": "test_submit_chained_requires_sweep_and_downstream",
+    "sha256": "39f5daa5662230ad28c9546c631262127a1a019e4d6876515e22ceb69ed1c4d7",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_chained_and_paths.py",
+    "test": "test_submit_chained_warns_on_missing_attr",
+    "sha256": "200da7a2ea9c4a174f7c6563be497cd4f7402a7cc737979ff70b460e5482ec76",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_completion_marker.py",
+    "test": "test_cache_hit_requires_complete",
+    "sha256": "d387eb6c7914d1bf745de040f580f6671c01d10c7c67c51c1d0396f933c39091",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_completion_marker.py",
+    "test": "test_cache_hit_with_complete",
+    "sha256": "9ef774dcc38dd20ce98040f1ae126a977ed6e349043c62d7358520c9547fab93",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_index.py",
+    "test": "test_end_to_end_index_cache_hit",
+    "sha256": "3ba44d05f830028f52ca4694358830bb49249230a684336e779ccf4849890366",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_index.py",
+    "test": "test_index_serves_hit_without_glob_fallback",
+    "sha256": "e0bd862cd2c2dd4b7b2f211138e3f744c4d9bbc075d3463ae156b190f2d19f44",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_pipeline_tasks.py",
+    "test": "test_composite_skip_complete_resumes_past_done_stages",
+    "sha256": "a3c4d2c5bcfc940da94ccf7e0bf5f0b39b65039a3b539764c24bfb088c9463a2",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_pipeline_tasks.py",
+    "test": "test_submit_pipeline_smart_run_all_cached",
+    "sha256": "bb3e576e54d5a8988e31195a55420baecad5c33469113269bd616bdd2bdd1d49",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_save_dir_guard.py",
+    "test": "test_smart_run_cache_hit_wins_over_guard",
+    "sha256": "d4483f24aa4f585df7094a3eb3923a6ee5b0bac93a49f70c2a81f64ea7f7bc4d",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_save_dir_guard.py",
+    "test": "test_increment_leaves_no_stranded_dir_on_cache_hit",
+    "sha256": "ef267f2be3ff34ba4412dad293224547052444625581bf16e98f327c0217272d",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_workflow_integrity.py",
+    "test": "test_cache_rebases_outputs_to_candidate_directory",
+    "sha256": "9639fd2a6f1715a6f417bdc0bc819c2a4e8709d60baa23c746e4af1f577d2c1c",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_cache_selection_once.py",
+    "test": "test_cache_hit_keeps_selected_producer_and_comparison_filters",
+    "sha256": "8a157f0bad9026df6b2c0e0ab6a019989ebe8ef2ac2777af4c426e2ff739eafb",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_api.py",
+    "test": "test_project_exists",
+    "sha256": "e8ca891362a01b42758c5bb9900bd8106ed887519e9138f1898aecb5f8e53d11",
+    "reason": "retired automatic reuse/fanout behavior; replaced by fresh/exact-path/queue and rejection checks"
+  },
+  {
+    "file": "tests/test_presets.py",
+    "test": "test_chained_mixed_pinned_and_future_refs",
+    "sha256": "29582f512f7ef552d10ead8f6681b4d1035d412f886558e267232cb4e4a4456c",
+    "reason": "Worker-time unpinned selection retired; consolidated into mixed/nested and parameterized single/sweep/pipeline/CLI preflight rejection checks."
+  },
+  {
+    "file": "tests/test_presets.py",
+    "test": "test_chained_nested_run_lock",
+    "sha256": "6742f9b5a8620fe0d172aea5254d8942fece8b821820d8f35729aea2b3229af4",
+    "reason": "Worker-time unpinned selection retired; consolidated into mixed/nested and parameterized single/sweep/pipeline/CLI preflight rejection checks."
+  },
+  {
+    "file": "tests/test_presets.py",
+    "test": "test_chained_missing_upstream_fails_on_worker",
+    "sha256": "b54247ebf88d3584eecc325abb750243c00c22bc8a985330cb24232156d4650f",
+    "reason": "Worker-time unpinned selection retired; consolidated into mixed/nested and parameterized single/sweep/pipeline/CLI preflight rejection checks."
+  }
+]
