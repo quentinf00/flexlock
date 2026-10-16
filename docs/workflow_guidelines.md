@@ -15,7 +15,23 @@ shared datasets, model releases and batch inference, using SAR as the concrete
 example. Track/arm/run is optional; processing products need not be experiment arms.
 
 See the [unreleased project-feedback follow-up](project_feedback_followup.md) for
-CLI diagnostics, module targets, legacy adapters and source-ref retention limits.
+CLI diagnostics, module targets, project-owned historical-product exceptions and
+source-ref retention limits.
+
+## Transition toward fresh pipeline baselines
+
+FlexLock does not provide scientific-producer legacy adapters. During the pre-1.0
+transition, a project can consume historical products with explicitly incomplete
+provenance, keeping any adaptation in project code. Track current input identity
+and describe the gaps; do not invent historical upstream evidence.
+
+After API/workflow stabilization, prefer a fresh whole-pipeline execution using the
+agreed release and current bookkeeping. That new chain should become the baseline
+for future processing and experiments after coverage and scientific validation.
+Existing retained-product examples are useful transition checks, not a requirement
+to support old project conventions indefinitely. See the
+[fresh-baseline handoff](project_adoption_handoff.md#fresh-baselines-after-api-stabilization).
+Compute scope and timing belong to each project; these guidelines launch no reruns.
 
 ## Organize choices as track / arm / run
 

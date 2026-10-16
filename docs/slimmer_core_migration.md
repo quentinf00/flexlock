@@ -34,6 +34,13 @@ passing. [Binding evidence](../reports/2026-10-07-submit-bindings/report.md).
 
 ## Target and compatibility boundary
 
+2026-10-16 clarification: no scientific-producer legacy adapters in the core.
+Projects may declare imperfect historical input provenance and keep exceptions
+locally. After API stabilization, prefer fresh end-to-end pipelines as future
+baselines; see the [handoff policy](project_adoption_handoff.md#fresh-baselines-after-api-stabilization).
+Earlier reader-compatibility milestones below describe shipped behavior, not an
+unlimited pre-1.0 compatibility commitment.
+
 Flex: Python configuration, py2cfg, preset/node loading, @ replacement, overrides.
 Lock: readable evidence of effective configuration, source, declared data and
 concrete upstream bindings. Practical additions: local debug, scheduler dispatch,

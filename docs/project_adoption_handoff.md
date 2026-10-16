@@ -38,6 +38,32 @@ request a concrete decision when science semantics or compute scope would change
 SAR error handling remains pending: current read/feature helpers suppress exceptions.
 Mandatory per-item outcome JSON is not required, and cannot repair those errors.
 
+## Fresh baselines after API stabilization
+
+Decision, 2026-10-16: aim for fresh end-to-end project pipelines once the FlexLock
+API and workflow contracts stabilize, rather than building a permanent layer of
+legacy scientific-producer adapters into FlexLock. Pre-1.0 compatibility work must
+not force the core to preserve every historical project convention.
+
+Until then, consuming an old product with explicitly imperfect provenance is
+acceptable as a project decision. Track the effective input's current identity
+and known origin; state missing historical source/data/environment evidence.
+Project-specific acceptance/adaptation code belongs in that project. Do not
+manufacture an upstream record or rewrite old locks to make the lineage look complete.
+Retained-product pilots establish bounded transition evidence, not the final baseline.
+
+At stabilization, each project should plan its whole pipeline from declared raw
+inputs through downstream products, with a pinned FlexLock version, project
+source/environment, frozen membership and fresh output destinations. Require current
+bookkeeping and concrete upstream bindings throughout that new chain. Check coverage
+and scientifically meaningful outputs against retained references before promoting
+the new execution as the baseline for future work. Preserve useful historical
+artifacts separately; a fresh baseline does not require deleting them.
+
+Full reruns remain project-owned work with their compute scope agreed separately.
+No full scientific rerun is launched by the current package migration or this guidance.
+Existing bounded acceptance and reported evidence gaps remain accurate as dated.
+
 ## Report back
 
 Keep implementation and detailed evidence in the owning project, preferably

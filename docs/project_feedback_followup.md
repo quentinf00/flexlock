@@ -28,33 +28,36 @@ not in the deployed 0.9.3 wheel and have not been synchronized into project envi
   demonstrates frozen membership, hashed outcome manifests and named non-OK acceptance.
   These are project helpers, not new core workflow machinery.
 
-## Legacy producer adapter recipe
+## Historical products: project-owned exceptions, then fresh baselines
 
-A pre-contract producer without `_outputs_` cannot satisfy the strict
-`require_product` example unchanged. Keep the strict helper for new producers;
-put an explicitly named legacy adapter in the consuming project:
+Decision, 2026-10-16: legacy scientific-producer adapters do not belong in the
+FlexLock package or its supported API. None was added by this follow-up; the
+shared require_product example remains strict. FlexLock is pre-1.0: historical
+project layouts and incomplete producer records must not dictate the core design.
+This does not create a permanent compatibility commitment for old record readers;
+reader retention/removal remains an explicit release decision.
 
-1. Select the exact retained producer directory and load it through `load_record`.
-   Require its completion marker and authoritative queue/stage evidence where it
-   belongs to a queue. A marker alone or a readable placeholder is insufficient.
-   For a composite, validate that stage's matching snapshot rather than requiring
-   unrelated later stages to have succeeded.
-2. Resolve the selected product against that producer's original project context.
-   Check its recorded argument against the selected path; do not resolve historical
-   relative paths against the new consumer's working directory.
-3. Supply a consumer-owned, explicit expected-file contract: required files,
-   schema/dimensions/member identities and, where available, trusted retained
-   checksums or a reference comparison. Hashing today's bytes establishes today's
-   identity; it does not prove those bytes existed at historical completion.
-4. Record the selected producer, effective inputs, acceptance method and remaining
-   source/data/environment gaps in the fresh consumer record/report. Keep the
-   original producer lock and products unchanged. Do not backfill `_outputs_` or
-   create historical provenance from current observations.
-5. Test missing/wrong products and mismatched membership as well as the retained
-   successful case. Keep scientific protocol compatibility a project decision.
+During transition, a project may consume a historical product with incomplete
+provenance. It can track the selected file as an external input, recording its
+current identity, known origin and evidence gaps. It need not manufacture a fully
+recorded upstream stage. If additional legacy acceptance logic is needed, keep it
+in that project's code, with the narrower claims explicit. Never rewrite old locks
+or present today's checks as evidence of historical source/environment capture.
+The existing HAFS-JEPA, MaxSS and SST exceptions remain bounded transition evidence,
+not patterns the core must accommodate indefinitely.
 
-HAFS-JEPA, MaxSS and SST already have bounded project adapters reviewed under these
-limits; they are examples of declared exceptions, not blanket legacy acceptance.
+The preferred destination is a fresh end-to-end pipeline run after the API and
+workflow contracts stabilize. Pin the agreed FlexLock version and project
+source/environment, freeze input membership, and rerun project producers and
+consumers into fresh destinations using current records, output contracts and
+upstream bindings. Validate the new chain's coverage and scientific outputs against
+appropriate retained references before adopting it as the baseline for future work.
+Historical products can stay as references; they do not need to be upgraded in place.
+
+Plan these reruns in the owning projects when stabilization and compute scope are
+agreed. This policy does not launch expensive pipelines now, require rerunning on
+every package patch, or imply that unknown historical inputs can be reconstructed.
+See the [project handoff](project_adoption_handoff.md#fresh-baselines-after-api-stabilization).
 
 ## Snapshot-ref retention
 
