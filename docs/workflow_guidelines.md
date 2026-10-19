@@ -1,22 +1,9 @@
-# Workflow guidelines for the smaller FlexLock core — review draft
+# Workflow guidelines
 
-2026-10-06. Review alongside the [M0–M5 migration plan](slimmer_core_migration.md).
-Examples use the current isolated implementation after ebc6d92. Proposed scheduler
-preparation is marked separately; it is not an available CLI option. No production
-migration or job launch is performed by these documents.
-
-FlexLock configures, executes and records a callable. The workflow selects retained
-products, decides whether preparation still suits a changed model, and checks cohort
-coverage. A successful invocation is evidence that it finished and passed declared
-output checks. The project decides whether its result answers the scientific question.
-
-The [connected lifecycle recipes](workflow_lifecycle.md) extend this convention to
-shared datasets, model releases and batch inference, using SAR as the concrete
-example. Track/arm/run is optional; processing products need not be experiment arms.
-
-See the [unreleased project-feedback follow-up](project_feedback_followup.md) for
-CLI diagnostics, module targets, project-owned historical-product exceptions and
-source-ref retention limits.
+These guidelines describe FlexLock 0.10. Use the [migration notes](release_0_10.md)
+when upgrading older callers. Runnable examples are maintained in
+[the example directory](https://github.com/quentinf00/flexlock/tree/v0.10.0/examples/slimmer_workflows).
+Track/arm/run is optional: processing products need not be experiment arms.
 
 ## Transition toward fresh pipeline baselines
 
@@ -148,7 +135,7 @@ Disable discovery explicitly for deliberate untracked targets.
 
 For ordinary projects, reuse a broad explicit scope such as src/, configs/ and
 scripts/ across stages. Introduce stage-specific includes only for a concrete need.
-The unreleased [source-attribution contract](source_attribution.md) preserves shared
+The [source-attribution contract](source_attribution.md) preserves shared
 campaign capture in repos and exposes each invocation's effective source_scope in
 records/readers. These are output metadata fields; _snapshot_.repos syntax is unchanged.
 
@@ -242,7 +229,7 @@ should have an explicit empty outcome, not masquerade as a missing product.
 Fresh submission performs no automatic cache lookup. Do not pass the retired
 smart_run/search_dirs keywords, including smart_run=False. Select retained producers
 explicitly and use fresh destinations for new work.
-The [thousand-item measurements](../reports/2026-10-07-thousand-items-hydra/report.md)
+The thousand-item measurements (internal validation evidence)
 show why this matters for fresh file-list campaigns: legacy fallback can repeat
 a directory traversal for each cache miss. Claim batching can reduce queue
 overhead, but choose it against task duration, load balancing and recovery needs.
@@ -477,7 +464,7 @@ checks cover the supported Project paths; advanced queue mutation requires one c
 
 ## Validated transition examples (2026-10-14)
 
-See the [project transition draft](../reports/2026-10-13-workflow-validation/TRANSITION.md) and [acceptance report](../reports/2026-10-13-workflow-validation/report.md). The SST retained-matchup reassessment and SAR legacy split were executed with installed 0.9.2; neural-field config resolution was checked without training.
+See the project transition draft (internal validation evidence) and acceptance report (internal validation evidence). The SST retained-matchup reassessment and SAR legacy split were executed with installed 0.9.2; neural-field config resolution was checked without training.
 
 Start with one config entrypoint, explicit retained-artifact bindings, and a fresh absolute run root. Add stage or track modules only when actual reuse warrants them. Keep historical receipts and artifacts in place. A historical config.save_dir can be relative: resolve against its original project context or use the selected producer directory explicitly, rather than the new consumer working directory.
 

@@ -88,6 +88,6 @@ jobs:
       - name: Upload to anaconda.org
         if: env.ANACONDA_API_TOKEN != ''
         run: |
-          pixi exec --spec "anaconda-client>=1.14" -- \
-            anaconda -s api.anaconda.org -t "$ANACONDA_API_TOKEN" \
+          pixi exec --spec "anaconda-client>=1.14,<1.16" -- \
+            binstar -s api.anaconda.org -t "$ANACONDA_API_TOKEN" \
             upload --user quentinf00 --label main conda-out/*.conda

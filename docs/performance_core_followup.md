@@ -15,7 +15,7 @@ adoption is now delegated through [review handoffs](project_adoption_handoff.md)
 Further source/output integrity shortcuts require evidence and an explicit policy;
 an unchanged record digest does not prove product bytes are unchanged.
 
-2026-10-07. The [benchmark](../reports/2026-10-07-thousand-items-hydra/report.md)
+2026-10-07. The benchmark (internal validation evidence)
 used FlexLock 0.9.0 from the isolated migration checkout at 9ab83a3, including the
 preceding guard/discovery/directory/binding changes. It was not an unmodified
 published release. df7dfc8 adds benchmark evidence and guidance only. The measured
@@ -143,8 +143,8 @@ workers also import. Override the existing nested yearmonth field directly;
 the project's base config currently contains `${..yearmonth}`, so merely adding
 a root yearmonth would not necessarily fix its scope.
 
-[Isolated composition proof](../reports/2026-10-07-thousand-items-hydra/month_config_reuse.py)
-and [results](../reports/2026-10-07-thousand-items-hydra/month_config_reuse.json)
+Isolated composition proof (internal validation evidence)
+and results (internal validation evidence)
 verify all 720 payloads and four Hydra boundary compositions, including downstream
 filename interpolation. No scientific stages, project imports or jobs executed;
 the original source was only read. Hydra's [override grammar](https://hydra.cc/docs/1.3/advanced/override_grammar/basic/)
@@ -217,7 +217,7 @@ the much larger worker source/drift costs separately. Asynchronous execution is
 not the first remedy. A drop in constructor counts without a material elapsed-time
 improvement is not sufficient acceptance.
 
-The [first preparation slice](../reports/2026-10-08-preparation-reuse/report.md)
+The first preparation slice (internal validation evidence)
 is implemented at 0629889. Effective executor configs are reused across the
 shared-output and destination guard passes, while partial overrides still inherit
 master defaults. Fresh cache-off 1,000-item medians fell from 30.807s to 23.315s
@@ -231,7 +231,7 @@ preparation took 31.500s in one sample; tracked worker costs remain unoptimized.
 The next slice is safe freezing/binding reconstruction reuse. Preparation is still
 too slow; no target time or production scalability is accepted.
 
-That [second slice](../reports/2026-10-08-freeze-binding-reuse/report.md) is now
+That second slice (internal validation evidence) is now
 implemented at a32d227. The sweep compiler reuses freezing's detached config for
 binding and skips binding only after full freezing leaves no interpolation syntax.
 Producer/custom-resolver reads still use the complete guarded binding path.
@@ -245,7 +245,7 @@ collection, with phase timings and preserved tag/resume/record semantics. A new
 fixture exposed an existing escaped-literal limitation in the old two-pass path;
 that separate fix needs a compatibility regression before broad adoption.
 
-The [queue-reader slice](../reports/2026-10-08-queue-record-selection/report.md)
+The queue-reader slice (internal validation evidence)
 at 6211ef6 selects terminal/requested rows before decoding, reuses result hashes,
 and uses optional safe LibYAML parsing with the existing timestamp semantics and
 Python fallback. Final focused acceptance: 155 passes, equivalent queues and 100
@@ -259,7 +259,7 @@ Next deduplicate repeated ancestor probes within destination preflight, preservi
 per-product locks and legacy/current ownership checks; measure with matched fresh
 comparisons and phase timers before accepting further speed claims.
 
-The [bounded I/O pass](../reports/2026-10-08-preparation-io/report.md) is implemented
+The bounded I/O pass (internal validation evidence) is implemented
 at a27a304. Unique ancestor probes are deduplicated; product metadata reads and
 reservation writes use two joined I/O workers under held controller locks.
 Config resolution, lock acquisition and SQLite commits remain coordinated. An
@@ -273,7 +273,7 @@ locks and prevent dispatch. Next investigate configuration reuse/batched process
 compilation with resolver/import/lineage semantics and startup costs explicit;
 these preparation threads do not make current resolver registration thread-safe.
 
-The [configuration-process investigation](../reports/2026-10-08-config-processes/report.md)
+The configuration-process investigation (internal validation evidence)
 confirms that isolated spawned processes can compile batches of canonical configs
 with equivalent captured producer records. Three-repeat 1,000-item compilation
 medians: plain 4.246/3.040/1.790s and producer-bearing 11.043/6.416/3.734s for
@@ -288,7 +288,7 @@ subset/context reproduction, retain serial fallback, investigate the outlier and
 run full-submission acceptance before enabling process compilation. Continue
 avoiding redundant reconstruction; a new general pipeline framework is unnecessary.
 
-The [full process-preparation experiment](../reports/2026-10-08-process-preparation/report.md)
+The full process-preparation experiment (internal validation evidence)
 at fd4428c integrates a private opt-in compiler with pickled OmegaConf transport,
 canonical-config eligibility and serial fallback. Default adoption is rejected.
 Full 1,000-item medians for serial/2/4 processes: plain 19.413/22.406/16.842s,
@@ -301,7 +301,7 @@ Files remain 2,007. Preserve serial defaults; next reduce the executor's repeate
 merge/reconstruction of already-compiled items while retaining public partial
 overrides. Per-worker timing diagnostics are needed before reconsidering pools.
 
-The [compiled-item guard reuse](../reports/2026-10-08-compiled-guard-reuse/report.md)
+The compiled-item guard reuse (internal validation evidence)
 at 1244e70 removes the executor's second merge for Project's frozen configs under
 its minimal wrapper, retaining low-level/default/historical-row merges. Serial
 compilation stays default. Alternating 1,000-item pairs improve plain median
@@ -315,7 +315,7 @@ bookkeeping and remaining preparation phases before further optimization, retain
 durable lock inodes, ownership and historical readers; tracked-worker source costs
 and automatic discovery migration remain separate.
 
-The [bookkeeping inventory](../reports/2026-10-09-bookkeeping-inventory/report.md)
+The bookkeeping inventory (internal validation evidence)
 finds 1,001 mutexes plus 1,000 queue pointers in the 2,007-file prepared fixture.
 A retained prototype omitting nested pointers halves file count but improves the
 matched median only 13.190 → 12.381s (6.1%). Default adoption is rejected: a
@@ -327,7 +327,7 @@ cohort costs before versioned pointer/marker migration. A pointer/marker merger
 saves a completed-item file, not a prepared-item file; stage completion and
 immutable item source evidence cannot be discarded as duplicates.
 
-The [shared queue readers and ancestor guard](../reports/2026-10-09-queue-reference-readers/report.md)
+The shared queue readers and ancestor guard (internal validation evidence)
 at 8ad211c fix required producer binding against active ancestor replacement work,
 including stale terminal pointers. Current/legacy marker readers share a private
 implementation; writers and 2,007 prepared files remain unchanged. Acceptance:
@@ -339,7 +339,7 @@ gain is established. Next profile repeated active-row decoding/path scans before
 writer migration, preserving mutable ownership and historical destination fallbacks.
 The reader fix does not establish compatibility with older installed readers.
 
-The [safe C ownership parser](../reports/2026-10-09-ownership-yaml/report.md)
+The safe C ownership parser (internal validation evidence)
 at 1512422 cuts 100 future bindings against 1,000 pending rows from 13.040 to
 6.490s median (50.2%). 126 focused passes/two expected skips, six equivalent queues,
 6,000 completed and 600 future bindings; no ownership cache or format change.
@@ -349,7 +349,7 @@ remaining active-row lookup. Next reduce repeated scans with fresh status/path
 validation and legacy fallbacks retained. Optional C loader falls back safely;
 files remain 2,007. Pointer reduction still requires older-reader compatibility.
 
-The [scan-local parent reuse](../reports/2026-10-10-destination-resolution/report.md)
+The scan-local parent reuse (internal validation evidence)
 at da91f41 improves the matched pending median 2.600 → 1.919s (26.2%). Full
 fixture Path.resolve calls fall 51,002 → 1,502; rows decoded stay 49,600. Maps
 expire after each scan; final symlinks are inspected individually. 130 passes/two
@@ -359,7 +359,7 @@ result; no stable preparation speed conclusion. All evidence is retained. Next
 evaluate reducing repeated immutable-row decoding/scanning while retaining fresh
 status/path checks and legacy fallbacks, without an ownership-answer cache.
 
-The [immutable row reuse](../reports/2026-10-10-ownership-row-reuse/report.md)
+The immutable row reuse (internal validation evidence)
 at be865f9 adds a process-local LRU of unresolved destination strings keyed by exact
 YAML and loader: 1,024 entries, documents over 4,096 characters bypassed. Status,
 canonical paths and ownership answers are never cached. Pending median improves
@@ -368,13 +368,13 @@ six equivalent queues and bindings. No general preparation speed gain claimed;
 larger working-set throughput is unmeasured. Next isolate full preparation's config,
 serialization, reservation-write and locking phases before more lookup machinery.
 
-The [nested phase accounting](../reports/2026-10-10-preparation-phases/report.md)
+The nested phase accounting (internal validation evidence)
 finds SQLite writes about 0.02s, plain/producer compile 2.585/6.723s, controller
 preflight 2.409/2.492s and reservation writes 1.179/1.217s. Five hashes/item cost
 0.459/0.931s; producer binding costs 3.568s. Nested/worker timings must not be added
 as independent wall costs. Eight equivalent queues / 8,000 configs support diagnosis.
 
-The [bounded lock-handle pass](../reports/2026-10-10-controller-lock-handles/report.md)
+The bounded lock-handle pass (internal validation evidence)
 at 0cb765a opens mutex handles with two I/O workers, retaining sorted main-thread
 flock acquisition and joined failure cleanup. Full plain/producer medians improve
 10.468 → 7.462s / 16.546 → 14.057s; individual regressions remain retained.
@@ -382,7 +382,7 @@ flock acquisition and joined failure cleanup. Full plain/producer medians improv
 local products; files still 2,007. Next source/data-enabled preparation and consumer
 validation before broad adoption; no general cluster/scientific acceptance.
 
-The [tracked follow-up](../reports/2026-10-11-tracked-preparation/report.md) removes
+The tracked follow-up (internal validation evidence) removes
 literal source regrouping across different item data paths and unused Git-status
 work during fingerprinting. Source/data preparation median 18.153 → 16.924s
 (one full-case regression retained); 100 tracked local items 55.556 → 35.150s.
@@ -392,7 +392,7 @@ identities and independent case caches. SST existing contracts and scratch queue
 pass without scientific replay, source capture or project modification. Runtime
 `dbfb288`; benchmark harness `f5f5156`. Public dirty-status helpers remain unchanged.
 
-The [new pointer experiment](../reports/2026-10-11-nested-pointer-prototype/report.md)
+The new pointer experiment (internal validation evidence)
 reduces tracked prepared files 2,007 → 1,007 and median 17.529 → 13.335s in three
 matched pairs, retaining 1,001 mutexes. Six equivalent queues / 6,000 configs;
 current required binding and ownership readers refuse pointerless active work.

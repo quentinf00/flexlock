@@ -13,7 +13,7 @@ that section after successful installed-package verification. Unmapped/orphan
 environment prefixes require project identification before project instructions
 can be changed.
 
-The [2026-10-13 rollout](../reports/2026-10-13-project-migration/report.md)
+The 2026-10-13 rollout (internal validation evidence)
 records the later idle-project installations and durable pins. Check physical
 workspace/environment identities when excluding active jobs: project aliases
 can share both source files and environments. Preserve shared source checkouts

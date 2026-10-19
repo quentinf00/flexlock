@@ -1,7 +1,7 @@
 # Run results and source scope — 0.9.3 migration
 
 2026-10-15. Released as a local 0.9.3 wheel. Installed in 51 inventoried idle
-environments; SOBA and the project template remain blocked. See the [rollout report](../reports/2026-10-15-release-rollout/report.md) for evidence and blockers.
+environments; SOBA and the project template remain blocked. See the rollout report (internal validation evidence) for evidence and blockers.
 
 ## Return payloads
 

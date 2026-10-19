@@ -32,23 +32,23 @@ the **symptom** you'll see if you skip it.
    *Symptom:* stages scatter across unrelated dirs; lineage/gc can't relate them.
 
 5. **Architecture knobs read from upstream via `${run_lock:}`** rather than being
-   re-specified. *Symptom:* silent train/eval config drift; false cache hits.
+   re-specified. *Symptom:* silent train/eval config drift; incorrect comparisons.
 
-5b. **Inputs from another experiment via `${run:<preset>,<select>}`**, never a
-   copied versioned path (`results/train_x_0005`). It resolves to the newest
-   complete run of that preset at submit, is logged and recorded as lineage;
-   pin with a third argument (`,0005`) when a result must stay fixed.
-   *Symptom:* stale hard-coded paths; inference silently using an old model.
+5b. **Select concrete upstream producers.** Put the chosen run in one root
+   anchor and read its config with `${run_lock:${upstream_run},config.field}`.
+   Validate completion and declared products before consumption. Preset lookup
+   helps inspect available runs; newest does not imply scientific suitability.
+   With `--after`, use concrete promised paths or explicit pins, never worker-time
+   unpinned newest selection.
 
 6. **Declare lineage + tracked inputs under `_snapshot_`.**
    ```yaml
    train:
      _snapshot_:
        prevs: [ "${extract.save_dir}" ]   # upstream FlexLock runs
-       data:  { train_csv: "${.input}" }  # hashed data inputs
+       data:  { train_csv: "${...input}" }  # hashed data inputs
    ```
-   *Symptom:* `flexlock show` reports no `lineage`/`data`; downstream runs don't
-   invalidate when upstream changes.
+   *Symptom:* `flexlock show` reports no `lineage`/`data`; upstream selection and input identity cannot be verified.
 
 ## Verify before a real run
 

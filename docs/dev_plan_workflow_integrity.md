@@ -32,14 +32,14 @@ Existing pipeline/task-record tests retain their per-stage error assertions.
 The full suite passed with 724 tests and one expected failure. After the final
 completion-order adjustment (allowing generated `results.json` contracts), all
 36 focused integrity/completion/record tests passed. Logs live under
-`/jobscratch/qfebvre/flexlock-hpc-chaining/p0-{full,completion}-tests.log`.
+`<project-owned evidence path>`.
 
 `tests/slurm_failure_acceptance.py` is an explicit opt-in live CPU test. It
 submits a failed producer and an afterok consumer, checks accounting and absence
 of consumer execution, then cancels the blocked consumer. The first attempt
 (jobs 354473/354474) stayed pending for three minutes; both were cancelled.
 Local bootstrap acceptance passed, but live scheduler failure acceptance remains
-pending. Evidence: `/jobscratch/qfebvre/flexlock-p0-slurm-20261004/acceptance.json`.
+pending. Evidence: `<project-owned evidence path>`.
 
 At the original integration milestone, next work was explicit project registry
 and uniform item/status contracts, then pure
@@ -53,7 +53,7 @@ Commit `cbdcc65` in the execution-validation branch implements explicit registry
 initialization/diagnostics and uniform logical item receipts, including shared
 product roots and append-preserved source/env/note. See
 [contracts](project_registry_items.md) and
-[final report](../reports/2026-10-06-registry-items/report.md).
+final report (internal validation evidence).
 The final full suite passed 751 tests with one expected failure; fresh campaign
 and live Slurm 463136/463137 acceptance passed. The consumer never executed and
 was cancelled. Earlier integration test evidence above remains historical.

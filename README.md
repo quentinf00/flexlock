@@ -8,8 +8,8 @@ FlexLock lets you write a config in Python, select and override it from the CLI,
 and execute locally or through cluster workers. Run records capture configuration,
 declared source/data dependencies, upstream producers, outputs and return values.
 
-The **0.10.0rc1 candidate** removes automatic cross-run cache search and partial-stage
-resume policy. See [breaking changes](docs/release_0_10_0rc1.md).
+The **0.10.0 release** removes automatic cross-run cache search and partial-stage
+resume policy. See [breaking changes](docs/release_0_10.md).
 
 ## Configuration and execution
 
@@ -99,7 +99,7 @@ producers and use fresh destinations. There is no automatic marker-based stage s
 - [Workflow guidelines and five executable recipes](docs/workflow_guidelines.md)
 - [Python API](docs/python_api.md) and [CLI reference](docs/cli_reference.md)
 - [Source attribution](docs/source_attribution.md) and [HPC integration](docs/hpc_integration.md)
-- [Slim-core design](docs/philosophy.md) and [candidate migration notes](docs/release_0_10_0rc1.md)
+- [Slim-core design](docs/philosophy.md) and [migration notes](docs/release_0_10.md)
 
-Install with `pip install flexlock`; the candidate is built locally for validation
-before any project rollout.
+Install this release with `pip install flexlock==0.10.0` or from the
+`quentinf00` Conda channel. See the migration notes before upgrading existing callers.

@@ -28,15 +28,15 @@ configuration/campaign/chain examples, and [Slurm submission proposal](slurm_sub
 Private backend materialization is implemented; a managed prepared-launch
 lifecycle is deferred. --after remains.
 
-[Milestone evidence](../reports/2026-10-06-workflow-guidelines-record-contracts/report.md)
-records implementation scope and passing checks. The [independent-review follow-up](../reports/2026-10-06-independent-review-followup/report.md)
+Milestone evidence (internal validation evidence)
+records implementation scope and passing checks. The independent-review follow-up (internal validation evidence)
 records lineage/coverage/guard changes and 249 compatibility plus 35 overlapping
 focused checks. The [2026-10-07 discovery decision](provenance_discovery_decision.md) retains automatic
 provenance and implements known run_lock reads plus labelled heuristics.
 M2 concrete existing producers now bind before queued dispatch and are checked at
 stage start. 366 distinct selected compatibility/follow-up cases pass, with one existing
 expected failure; this is not the full suite. Directory identity has 70 selected checks
-passing. [Binding evidence](../reports/2026-10-07-submit-bindings/report.md).
+passing. Binding evidence (internal validation evidence).
 
 ## Target and compatibility boundary
 
@@ -63,8 +63,8 @@ code chooses retained products, handles model continuation and validates cohort
 coverage. Mechanical record collisions, wrong paths and misleading success are
 library defects; guidelines cannot excuse them.
 
-[Five-recipe map](/ontap/user/qfebvre/workflow-proposal-2026-10-02/plans/details/flexlock-core-recipes-2026-10-06.md)
-and [usage-test review](/ontap/user/qfebvre/workflow-proposal-2026-10-02/plans/details/flexlock-cli-usage-review-2026-10-06.md)
+Five-recipe map (project-owned example)
+and usage-test review (project-owned example)
 are the source rationale. The older plan/launch/resume facade is deferred.
 
 ## Phases, deliverables and exit checks
@@ -174,7 +174,7 @@ remain deliberate defaults. Content immutability is an additional declared polic
 ### M3 keep / optional / deprecate candidates
 
 The [bounded caller inventory](optional_policy_inventory.md) is complete, with
-[source/revision evidence](../reports/2026-10-07-optional-policy-inventory/report.md).
+source/revision evidence (internal validation evidence).
 SST preparation explicitly relies on cross-run cache selection; SAR pipeline caching
 is default-off, while its pilot relies on bounded explicit skip reuse. Existing
 Python defaults/adapters remain unchanged. Correct detached-config root propagation
@@ -225,7 +225,7 @@ fingerprinting even with smart_run=False: source provenance still costs work. Se
 configuration/queue serialization, source capture, input hashing and scheduler calls
 before choosing amortization or removing optional cache policy.
 
-The [bounded thousand-item comparison with Hydra](../reports/2026-10-07-thousand-items-hydra/report.md)
+The bounded thousand-item comparison with Hydra (internal validation evidence)
 is complete: 56 cases passed and 8,900 local product identities/checksums were
 verified. On NFS, reduced-provenance FlexLock medians were 104 seconds locally
 and 32 seconds for mocked submission, versus native Hydra's 152 and 75 seconds.
@@ -241,28 +241,28 @@ check boundaries, pointer/outcome consolidation, a proposed manual config-search
 command and the verified nextgems month-config replacement. Automatic discovery
 removal is not yet implemented; measured performance is not accepted scalability.
 
-The [first preparation optimization](../reports/2026-10-08-preparation-reuse/report.md)
+The first preparation optimization (internal validation evidence)
 at 0629889 reuses effective executor configs across guard passes. Fresh 1,000-item
 cache-off medians fell from 30.807s to 23.315s (three repeats), with equivalent queue
 payloads and 183 distinct focused cases passing across rechecks. File count remains
 2,007 and peak RSS increased about 7.1 MiB. Next: safe freezing/binding reuse;
 source-worker repetition and bookkeeping consolidation remain separate work.
 
-The [second preparation slice](../reports/2026-10-08-freeze-binding-reuse/report.md)
+The second preparation slice (internal validation evidence)
 at a32d227 reuses freeze/bind working copies and skips binding only when full
 freezing leaves no interpolation. Median is now 20.209s (three repeats); 198 focused
 cases pass, queues remain equivalent, and file count remains 2,007. Next inspect
 repeated queue reads/materialization; escaped-literal compatibility and tracked
 worker source costs remain open. No production scalability acceptance follows.
 
-The [queue-reader slice](../reports/2026-10-08-queue-record-selection/report.md)
+The queue-reader slice (internal validation evidence)
 at 6211ef6 filters before decoding and uses optional safe C record parsing;
 155 focused cases pass. Median 19.948s versus 20.209s establishes no meaningful
 additional elapsed speedup. Unprofiled phase evidence redirects attention to
 merging/freezing and guard/reservation metadata work. Next inspect repeated
 ancestor probes while retaining lock/ownership guarantees and historical readers.
 
-The [bounded preparation I/O pass](../reports/2026-10-08-preparation-io/report.md)
+The bounded preparation I/O pass (internal validation evidence)
 at a27a304 defaults to two joined I/O workers for guarded metadata/reservation
 work. Interleaved original/1/2/4 medians: 16.120/17.724/15.249/15.223s; two matches
 four without its variation. Default focused checks: 120 passes, two expected
@@ -270,7 +270,7 @@ serial-only skips. Locks, active queue ownership and pre-submit failure barriers
 remain intact; file count stays 2,007. Config process compilation still requires
 resolver/context and startup-cost investigation; no production scaling acceptance.
 
-The [process-compilation prototype](../reports/2026-10-08-config-processes/report.md)
+The process-compilation prototype (internal validation evidence)
 shows isolated-process parallelism is viable for the two canonical fixtures:
 plain 1,000-item compilation 4.246s serial → 1.790s with four processes, with
 equivalent configs/provenance and startup included. Parent-only custom resolvers
@@ -280,7 +280,7 @@ serial fallback, CPU budget and end-to-end semantics must precede integration.
 
 ## Rollout and stop rules
 
-The [full process-preparation experiment](../reports/2026-10-08-process-preparation/report.md)
+The full process-preparation experiment (internal validation evidence)
 adds an opt-in canonical-config compiler at fd4428c, preserving OmegaConf transport
 and serial fallback. Default adoption is rejected: plain serial/2/4 total medians
 are 19.413/22.406/16.842s; producer-bearing 28.393/24.363/94.644s, with a 186.817s
@@ -289,7 +289,7 @@ two-worker metadata I/O remain defaults. Next reduce repeated executor merges of
 already-compiled items while preserving public partial-override semantics; avoid
 expanding process/context machinery as a prerequisite for the slimmer core.
 
-The [compiled-item guard reuse](../reports/2026-10-08-compiled-guard-reuse/report.md)
+The compiled-item guard reuse (internal validation evidence)
 at 1244e70 removes repeated executor merges for frozen Project items while keeping
 low-level partial/default/historical merges intact. Matched plain and producer
 medians improve 17.031 → 14.128s and 26.560 → 23.447s; serial compilation remains
@@ -298,7 +298,7 @@ default. Acceptance: 161 distinct passes, two expected skips, 16 equivalent queu
 inventory pointer/marker bookkeeping and remaining preparation phases; preserve
 lock inodes, ownership/history and provenance when considering consolidation.
 
-The [bookkeeping inventory](../reports/2026-10-09-bookkeeping-inventory/report.md)
+The bookkeeping inventory (internal validation evidence)
 rejects a pointerless nested prototype despite halving prepared files (2,007 →
 1,007): median gain is only 6.1%, and current upstream binding can accept an old
 record while an ancestor replacement queue is pending. Keep current writers.
@@ -308,7 +308,7 @@ writer migration. A later pointer/marker merger saves a completed-item file,
 not a prepared-item file. Preserve stage completion and immutable item source
 evidence; do not merge atomically replaced metadata with a stable mutex inode.
 
-The [queue-reader consolidation](../reports/2026-10-09-queue-reference-readers/report.md)
+The queue-reader consolidation (internal validation evidence)
 at 8ad211c now guards required producer bindings against active ancestor queues,
 retains exact allowed future paths and centralizes legacy marker reading. Optional
 resolver policy and writer formats remain unchanged. 166 focused passes, two
@@ -318,7 +318,7 @@ Preparation is essentially unchanged (13.373/13.289s); 100 future bindings again
 decoding and destination lookup with mutable ownership intact. Pointer omission
 still needs older-reader compatibility; no production adoption is established.
 
-The [safe ownership parsing pass](../reports/2026-10-09-ownership-yaml/report.md)
+The safe ownership parsing pass (internal validation evidence)
 at 1512422 reduces the pending cohort median 13.040 → 6.490s with optional
 CSafeLoader and SafeLoader fallback. 126 passes/two expected skips, equivalent
 configs/bindings; status/task edits and symlink changes remain visible. No schema,
@@ -326,7 +326,7 @@ writer or ownership-cache change. Next investigate repeated row scans/destinatio
 resolution; keep file reduction behind older-reader compatibility. Production
 installation unchanged.
 
-The [scan-local destination pass](../reports/2026-10-10-destination-resolution/report.md)
+The scan-local destination pass (internal validation evidence)
 at da91f41 shares parent resolution within each ownership check, inspecting final
 symlinks separately. No map persists across checks. Matched pending median
 2.600 → 1.919s (26.2%); 130 passes/two expected skips, ten equivalent queues.
@@ -334,7 +334,7 @@ Preparation primary/follow-up results conflict, so no stable speed conclusion th
 Next address repeated row decoding/scanning without expanding to a persistent
 index or caching mutable ownership answers. Files remain 2,007; production unchanged.
 
-The [bounded immutable-row pass](../reports/2026-10-10-ownership-row-reuse/report.md)
+The bounded immutable-row pass (internal validation evidence)
 at be865f9 caches only unresolved destination strings from exact YAML/loader keys,
 with 1,024-entry and 4,096-character limits. Fresh status and filesystem resolution
 remain intact. Pending median 3.111 → 1.834s (41.0%); 137 passes/two expected skips,
@@ -342,16 +342,16 @@ matching configs/bindings. No schema/writer change or production adoption. Next
 isolate full-preparation config/metadata costs and verify a representative consumer;
 avoid a persistent destination index without evidence. Files remain 2,007.
 
-The [phase investigation](../reports/2026-10-10-preparation-phases/report.md) identifies
+The phase investigation (internal validation evidence) identifies
 controller metadata work rather than SQLite writes as substantial. The resulting
-[lock-handle pass](../reports/2026-10-10-controller-lock-handles/report.md) at 0cb765a
+lock-handle pass (internal validation evidence) at 0cb765a
 prepares handles with two I/O workers but retains sorted main-thread lock acquisition,
 ownership barriers and cleanup. Plain/producer medians 10.468 → 7.462s /
 16.546 → 14.057s; mixed individual pairs retained. 142 passes/two expected skips,
 12 equivalent queues and 10 local product checks. No writer change; still 2,007
 files. Next source/data-enabled preparation and consumer validation; production unchanged.
 
-The [tracked preparation/source pass](../reports/2026-10-11-tracked-preparation/report.md)
+The tracked preparation/source pass (internal validation evidence)
 at dbfb288 removes literal source regrouping and discarded Git-status work without
 changing public interfaces or fingerprint values. Source/data preparation median
 18.153 → 16.924s; 100 local tracked items 55.556 → 35.150s. 170 distinct focused
@@ -360,7 +360,7 @@ existing contracts/config/scratch queue verified without scientific replay or so
 capture. Child bootstrap tests explicitly select the tested checkout; installed
 project code remains unchanged.
 
-The [updated nested-pointer prototype](../reports/2026-10-11-nested-pointer-prototype/report.md)
+The updated nested-pointer prototype (internal validation evidence)
 saves 1,000 prepared files and improves tracked median 17.529 → 13.335s. Current
 required binding/ownership checks pass, but retained old readers can select a stale
 producer. No writer change accepted yet. The next decision is whether newly

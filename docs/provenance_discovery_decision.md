@@ -71,5 +71,5 @@ Directory identity now rereads selected relative file paths and bytes; data_iden
 records the method. Thousand-item source/queue/discovery overhead still needs measurement.
 
 See [guidelines](workflow_guidelines.md), [migration plan](slimmer_core_migration.md)
-[initial discovery evidence](../reports/2026-10-07-provenance-discovery/report.md)
-and [dispatch-binding evidence](../reports/2026-10-07-submit-bindings/report.md).
+initial discovery evidence (internal validation evidence)
+and dispatch-binding evidence (internal validation evidence).

@@ -8,7 +8,7 @@
 
 2026-10-07. Audited source: f6beec9, including concrete producer binding 82b09a9.
 This inventory proposes boundaries and adoption steps. It changes no API, default,
-installed package or project source. [Recorded scan and probe](../reports/2026-10-07-optional-policy-inventory/report.md)
+installed package or project source. Recorded scan and probe (internal validation evidence)
 retain revisions, dirty-source hashes, locations and search limits.
 
 ## What the callers require
@@ -30,7 +30,7 @@ whether to reuse a result without making FlexLock the decision-maker.
 
 ## Concrete project impact
 
-[SST preparation](/ontap/user/qfebvre/work/projects/251218_sst/sst_ml_zarrpatch/sst_ml_mapping/starter/pipeline.py:181) is a real reuse caller: it enumerates
+SST preparation (project-owned example) is a real reuse caller: it enumerates
 sibling stage paths, submits with explicit cache search, then assigns the returned
 path to its selected config. Downstream configs reference earlier stage directories.
 Removing automatic reuse without replacing those selections would repeat expensive
@@ -42,7 +42,7 @@ call; that does not migrate this older preparation script.
 
 SAR's original data/training/validation/diagnostic/phase pipelines forward a
 `smart_run` argument with default False. They already support fresh execution;
-explicit True reuse should remain a compatibility choice. [The processing pilot](/ontap/user/qfebvre/sar-ml-workflow-pilot/sar_workflow/processing.py:262) is
+explicit True reuse should remain a compatibility choice. The processing pilot (project-owned example) is
 more specific: it chooses a product key itself, validates frozen source/config/input
 identity and calls `submit(..., save_dir_policy='skip')`. Preserve
 that explicit reuse primitive and its coverage barrier. A mechanical replacement of
@@ -52,17 +52,17 @@ Both SAR and SST contain `cfg.save_dir = result.save_dir` after submission. With
 current detached `Project.get` contract, that assignment does not update the root
 used to compile later stages. This is an adoption issue to fix in isolated consumers,
 not a reason to change config selection semantics. The side-effect-free
-[probe](../reports/2026-10-07-optional-policy-inventory/config-probe.json) demonstrates
+probe (internal validation evidence) demonstrates
 that a later stage still sees the fresh path until the root is explicitly updated.
 Do not claim the scientific pipelines were executed or validated by this audit.
 
 Sample/tutorial projects explicitly enable caching; changing only the Python default
-would leave those requests intact. [The sample’s manual resource/anchor loop](/scale/user/qfebvre/projects/2509_flexlock/sample_project/pipeline.py:112) already
+would leave those requests intact. The sample’s manual resource/anchor loop (project-owned example) already
 routes resource profiles and updates project anchors. It is useful replacement
 material for fanout, but needs terminal-result and product-acceptance guards before
 being promoted as the migration recipe.
 
-[The lab scheduler chain](/ontap/user/qfebvre/flexlock-workflow-lab/scripts/slurm_chain.py:12) passes a producer job ID but chooses training via
+The lab scheduler chain (project-owned example) passes a producer job ID but chooses training via
 an unpinned `${run:...}` on the worker. The replacement is a concrete training stage
 path plus that same job ID. Preserve the old journey and its evidence as compatibility
 coverage; add the concrete-path journey before changing the replay entry point.

@@ -25,7 +25,7 @@ errors propagate; applying it to real SAR extraction requires strict failure
 handling or explicit partial-error accounting. The SAR submission records the
 2026-10-14 user decision for strict errors: its new enhanced recipe opts in while
 legacy callers keep their defaults. The bounded recipe is now
-[centrally accepted](../reports/project-adoption/sar-ml/central-review.md);
+centrally accepted (internal validation evidence);
 full campaigns and remaining callers are separate adoption work.
 Mandatory receipts would not themselves fix suppressed exceptions.
 

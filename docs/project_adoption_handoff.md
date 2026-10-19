@@ -26,7 +26,7 @@ Inventory active CLI/Python/script entrypoints and retained-product readers. Rec
 which use implicit caching, detached-config mutation, pipeline markers or direct
 queue-pointer reads. Keep supported config/override/sweep usage; migrate toward
 concrete selected artifacts and explicit resource orchestration where applicable.
-The 0.9.3 [rollout report](../reports/2026-10-15-release-rollout/report.md) records
+The 0.9.3 rollout report (internal validation evidence) records
 installed versions, project feedback and dependency blockers. Check the actual
 project version before writing new result records; package rollout does not close
 scientific adoption.
@@ -77,10 +77,10 @@ Existing bounded acceptance and reported evidence gaps remain accurate as dated.
 Keep implementation and detailed evidence in the owning project, preferably
 `reports/flexlock-adoption/`. Write a concise central summary to:
 
-`/ontap/user/qfebvre/flexlock-execution-validation/reports/project-adoption/<project>/report.md`
+`<project-owned evidence path>`
 
 Initial project keys: `hafs-jepa`, `maxss-ml`, `sar-ml`, `sst-ml`. Additional keys
-and owning boards are in the [handoff inventory](../reports/2026-10-14-all-project-handoffs/report.md).
+and owning boards are in the handoff inventory (internal validation evidence).
 Each agent writes only its
 own report directory. Do not commit the central checkout, modify other reports,
 or change core defaults unilaterally; the central reviewer integrates submissions.

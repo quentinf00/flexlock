@@ -1,3 +1,13 @@
+# 0.10.0
+
+- Retire automatic cross-run cache search, marker-based partial-stage resume and
+  chained fanout; retain explicit producer selection, named sweeps and ordered stages.
+- Record invocation source scopes separately from shared source capture.
+- Preserve authoritative result records, pre-submission ownership guards, scheduler
+  dependencies and matching-worker queue continuation.
+- Publish portable workflow recipes and align shipped agent skills with explicit
+  producer selection and fresh-attempt recovery.
+
 # Changelog
 
 ## 0.10.0rc1 (local candidate, 2026-10-16)
@@ -10,7 +20,7 @@
   continuation, ordered stages and provenance comparison. Tighten queue ownership
   checks so foreign queues and changed payloads cannot bypass destination guards.
 - Include the unreleased source-attribution and project-feedback fixes described
-  in [candidate migration notes](docs/release_0_10_0rc1.md).
+  in [candidate migration notes](release_0_10.md).
 
 This is an isolated validation candidate; no project environment upgrade or
 scientific rerun is implied.

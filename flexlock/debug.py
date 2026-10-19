@@ -410,10 +410,11 @@ def debug_on_fail(fn=None, **legacy_kwargs):
     - PDB post-mortem for scripts
     - Configurable via environment variables
 
-    Environment Variables:
-        FLEXLOCK_NODEBUG: Set to '1' or 'true' to disable this decorator
-            (turns it into a no-op).
-        FLEXLOCK_DEBUG_STRATEGY: 'auto' (default), 'pdb', or 'inject'.
+    Environment variables:
+
+    - ``FLEXLOCK_NODEBUG``: Set to '1' or 'true' to disable this decorator
+      (turns it into a no-op).
+    - ``FLEXLOCK_DEBUG_STRATEGY``: 'auto' (default), 'pdb', or 'inject'.
 
     Note: ``FLEXLOCK_DEBUG=1`` is consumed by ``flexlock-run`` and
     ``@flexcli`` to *opt into* wrapping the user function with this

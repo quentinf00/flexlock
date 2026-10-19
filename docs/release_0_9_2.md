@@ -4,8 +4,8 @@ Rollout status as of 2026-10-14: all 53 originally inventoried environment prefi
 have been upgraded, including MaxSS after its training finished. Later-discovered
 legacy/example consumers must verify their installations individually. The initial
 batch counts below are historical evidence. See the
-[project rollout](../reports/2026-10-13-project-migration/report.md),
-[MaxSS completion](../reports/2026-10-14-maxss-migration/report.md), and
+project rollout (internal validation evidence),
+MaxSS completion (internal validation evidence), and
 [project adoption handoffs](project_adoption_handoff.md). Scientific workflow
 adoption remains project-owned and reviewed separately.
 
@@ -33,4 +33,4 @@ and output validation, new queue-reader requirements and current rollout
 limitations. Unidentified environment prefixes still need project mapping.
 Project manifest/lockfile repinning remains open. See
 [project instruction policy](project_migration_agents.md) and the
-[rollout evidence](../reports/2026-10-12-pandas-removal/report.md).
+rollout evidence (internal validation evidence).

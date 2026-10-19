@@ -8,7 +8,7 @@ description: Launch a FlexLock run or sweep, poll it to completion, and triage f
 ## Launch — always record intent
 
 Pass `--note` explaining *why* this run exists; it lands in `run.lock` and shows
-up in `show`/`graph`/`report` without affecting caching:
+up in `show`/`graph`/`report` without changing computation identity:
 
 ```bash
 flexlock-run -d myproject.pipeline.cfg -s train --note "baseline before lr sweep"
@@ -40,21 +40,24 @@ Read the per-dir sidecar (no sqlite needed):
 flexlock show <run_dir> --format json        # .error = {exc_type, exc_message, traceback}
 ```
 
-Classify by `exc_type`:
-- **User-code error** (`ValueError`, `KeyError`, shape mismatch, assertion): fix
-  the code/config, then re-run **with `--force`** — the save_dir still holds
-  the crashed run's `run.lock`, so a bare re-run raises by default.
-- **Node/infra fault** (CUDA `cudaErrorSystemNotReady`, OOM, `interrupted` with
-  "orphaned"): not your code — retry elsewhere.
+Inspect the failure and retained products before choosing recovery. Code/config/data
+changes get a fresh attempt destination; bind retained producers explicitly and
+select only remaining stages. Infrastructure failure is not permission to retry
+while an old worker may still be active.
 
-## Recovery table
+## Recovery
 
-| situation | action |
-|---|---|
-| sweep tasks stranded `running` by a dead worker | `flexlock-worker --task-db <db> --reclaim` |
-| want to force re-execution of a cached run | re-run with `force=True` / `--force` (clears `run.complete`; success clears `run.error`) |
-| "save_dir ... already contains a run" | expected (0.8 collision guard): `--force` reruns in place; `--save-dir-policy increment`/`overwrite`/`skip` are the alternatives (`skip` = resume for sweeps) |
-| clean up interrupted attempts | `flexlock gc --incomplete` |
+- Continue an unchanged queue with its matching worker/environment; keep failed
+  rows visible. Reclaim a stranded plain item only after its old worker stopped.
+  Do not blindly replay partially completed composites.
+- `--save-dir-policy skip` validates a completed selected record and its recorded
+  outputs; `CACHED` does not claim equivalence to current code/config.
+- `--force` deliberately replaces inactive provenance in place. Prefer fresh
+  destinations when retaining evidence. Force never bypasses active queue ownership.
+- Persist accepted scheduler IDs. If reporting fails after acceptance, inspect
+  scheduler state before retrying submission. Submission is not completion.
+- Inspect all expected items and required products before aggregation.
 
-**Never delete run directories by hand** — use `flexlock gc` so tagged runs and
-their lineage stay protected.
+`flexlock gc -n` previews local run cleanup. `--refs` is not a cross-project
+retention audit; `--incomplete` bypasses normal tag protection. Do not prune
+evidence or snapshot refs without checking retained consumers and active owners.

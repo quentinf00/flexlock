@@ -89,7 +89,7 @@ outputs on consumption. Several calls for different fields of the same producer
 can therefore repeat validation; separate consumers also recheck bytes. A record
 can stay unchanged while product files change, so its digest cannot replace those
 checks. Investigate batching acceptance of multiple fields once within a consumer,
-then measure actual large-file reads before proposing broader reuse. The [local reproduction](../reports/2026-10-16-project-feedback/hashing-duplication.json)
+then measure actual large-file reads before proposing broader reuse. The local reproduction (internal validation evidence)
 shows four 32-KiB reads for two requested fields of one two-product producer; a
 subsequent changed product is still rejected with an unchanged run.lock. Cross-stage
 caches or metadata-only shortcuts would need an explicit integrity-policy decision.

@@ -24,7 +24,7 @@ prepared-job export flag. The full suite passes: 1,053 passed, two skipped, one
 expected failure. SAR's six-stage small-fixture CLI chain also passes.
 
 Detailed migration: [records and source scopes](record_and_source_scope_migration.md).
-Rollout evidence: [release report](../reports/2026-10-15-release-rollout/report.md).
+Rollout evidence: release report (internal validation evidence).
 Installed in 51 of 53 inventoried environments with 19 validated project pins.
 MaxSS was upgraded after its running job completed. SOBA and the project template
 remain blocked by project dependency issues; see the rollout report.

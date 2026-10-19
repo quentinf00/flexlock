@@ -1,7 +1,7 @@
 # Agentic Workflows
 
 FlexLock already persists everything needed to reconstruct experiment history
-(`run.lock`, shadow git commits, data hashes, lineage, the fingerprint index, the
+(`run.lock`, shadow git commits, data hashes, lineage, the
 task DB, and tags as git refs). This page documents the **machine-readable query
 commands** that turn that on-disk state into a stable, agent-facing contract, the
 **shipped skills** that encode common workflows, and the **static HTML report**.
@@ -25,7 +25,7 @@ Every JSON payload is gated by a `schema_version` (currently `1`).
 
 ### `flexlock show --format json`
 
-```json
+```text
 {"schema_version":1, "path":"/abs", "kind":"run|sweep_master|sweep_task",
  "status":"complete|failed|interrupted|running|pending|unknown", "status_detail":null,
  "timestamp":"...", "note":null, "target":"myproject.train.train",
@@ -46,7 +46,7 @@ DB row; otherwise `run.complete` → `complete`, `run.error` → `failed`, `run.
 
 ### `flexlock graph --format json`
 
-```json
+```text
 {"schema_version":1, "root":"/abs", "generated_at":"...",
  "nodes":[{"id":"/abs/dir","label":"train","kind":"run","status":"complete",
            "timestamp":"...","note":null,"target":null,"fingerprint":null,"tag":null,
@@ -63,7 +63,7 @@ nodes sharing identical tree hashes / data dicts.
 
 ### `flexlock why --format json`
 
-```json
+```text
 {"schema_version":1,"run_a":"/a","run_b":"/b","match":false,
  "diffs":{"config":[...],"git":[...],"data":[...]},
  "commits":{"main":{"trees_identical":false,
@@ -89,16 +89,16 @@ query command. See [Reference › On-Disk Run Files](reference.md#on-disk-run-fi
 ## Failure records — `run.error`
 
 When a run's user function raises, FlexLock writes a `run.error` JSON sidecar next
-to `run.lock` (schema in the [Reference](reference.md#run-error-json-schema-v1)).
+to `run.lock` (schema in the [Reference](reference.md)).
 Triage a failure without touching sqlite:
 
 ```bash
 flexlock show <run_dir> --format json    # .error.exc_type / .error.traceback
 ```
 
-Classify by `exc_type`: user-code errors (fix + re-run with `--force`) vs.
-node/infra faults (CUDA `cudaErrorSystemNotReady`, OOM — retry elsewhere). A
-successful re-run clears the stale `run.error`.
+Inspect error and worker ownership before retrying. Code/config/data changes get
+a fresh attempt with explicit retained inputs. In-place force deliberately replaces
+prior provenance; it is not the default recovery.
 
 ## Shipped skills
 
