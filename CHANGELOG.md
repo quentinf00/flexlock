@@ -1,4 +1,4 @@
-# Unreleased
+# 0.10.1
 
 - `FLEXLOCK_TAGS="key=value,..."` in the launch environment is recorded as a top-level
   `tags:` mapping in every run record (e.g. `track=<xpcc-track-id>`), so runs can be
