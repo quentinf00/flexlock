@@ -86,6 +86,7 @@ class RunDiff:
         self.toplevel_ignore = {
             "timestamp",
             "note",
+            "tags",
             "system",
             "job_id",
             "work_dir",

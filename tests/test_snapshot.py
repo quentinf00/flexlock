@@ -58,6 +58,32 @@ def test_snapshot_note_does_not_change_fingerprint(tmp_path):
     assert "note" not in snap_b
 
 
+def test_runtracker_tags_from_env(monkeypatch):
+    """FLEXLOCK_TAGS lands as a top-level ``tags`` mapping; absent or blank → no key."""
+    from flexlock.snapshot import parse_tags
+    assert parse_tags(" track=jepa-ujit-wind, attempt=a1 ,,smoke") == {
+        "track": "jepa-ujit-wind", "attempt": "a1", "smoke": True}
+    monkeypatch.delenv("FLEXLOCK_TAGS", raising=False)
+    assert "tags" not in RunTracker(Path("test_run")).data
+    monkeypatch.setenv("FLEXLOCK_TAGS", " ")
+    assert "tags" not in RunTracker(Path("test_run")).data
+    monkeypatch.setenv("FLEXLOCK_TAGS", "track=jepa-ujit-wind")
+    assert RunTracker(Path("test_run")).data["tags"] == {"track": "jepa-ujit-wind"}
+
+
+def test_snapshot_tags_do_not_change_fingerprint(tmp_path, monkeypatch):
+    cfg = OmegaConf.create({"lr": 0.1, "save_dir": str(tmp_path / "run")})
+    from flexlock.fingerprint import fingerprint as fp
+
+    fp_val = fp(cfg)
+    monkeypatch.setenv("FLEXLOCK_TAGS", "track=t1")
+    snap_a = snapshot(cfg, fingerprint=fp_val, return_snapshot=True)
+    monkeypatch.delenv("FLEXLOCK_TAGS")
+    snap_b = snapshot(cfg, fingerprint=fp_val, return_snapshot=True)
+    assert snap_a["fingerprint"] == snap_b["fingerprint"]
+    assert snap_a["tags"] == {"track": "t1"} and "tags" not in snap_b
+
+
 def test_runtracker_record_data():
     """Test RunTracker data recording."""
     save_dir = Path("test_run")

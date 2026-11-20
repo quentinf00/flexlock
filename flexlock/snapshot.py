@@ -1,5 +1,6 @@
 """Snapshotting utilities for FlexLock."""
 
+import os
 from datetime import datetime
 from pathlib import Path
 from omegaconf import OmegaConf
@@ -67,6 +68,18 @@ def is_complete(run_dir: Path) -> bool:
     return RunRecord(run_dir).is_complete
 
 
+def parse_tags(spec):
+    """``"k=v,k2=v2"`` -> dict; a bare ``word`` becomes ``{word: True}``. Blank items ignored."""
+    tags = {}
+    for item in str(spec or "").split(","):
+        item = item.strip()
+        if not item:
+            continue
+        key, sep, value = item.partition("=")
+        tags[key.strip()] = value.strip() if sep else True
+    return tags
+
+
 class RunTracker:
     def __init__(self, save_dir, parent_lock=None, note=None):
         self.save_dir = Path(save_dir)
@@ -80,6 +93,12 @@ class RunTracker:
         # perturb caching or diffs.
         if note:
             self.data["note"] = str(note)
+
+        # Launch-time labels from the environment (``FLEXLOCK_TAGS="track=x,attempt=y"``),
+        # e.g. the research track a run belongs to. Like the note, never fingerprinted.
+        tags = parse_tags(os.environ.get("FLEXLOCK_TAGS", ""))
+        if tags:
+            self.data["tags"] = tags
 
         if self.parent_lock:
             # We record the link, effectively saying "See parent for Git/Env"

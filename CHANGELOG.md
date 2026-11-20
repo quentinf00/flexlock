@@ -1,3 +1,10 @@
+# Unreleased
+
+- `FLEXLOCK_TAGS="key=value,..."` in the launch environment is recorded as a top-level
+  `tags:` mapping in every run record (e.g. `track=<xpcc-track-id>`), so runs can be
+  attributed when they are launched. Like `note`, tags never enter the fingerprint
+  and `flexlock diff` ignores them.
+
 # 0.10.0
 
 - Retire automatic cross-run cache search, marker-based partial-stage resume and
