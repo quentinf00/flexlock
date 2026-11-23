@@ -3,6 +3,8 @@
 Discussion notes to pick up from. Read with [slim-core.md](slim-core.md) (the census and the
 cut-down plan) and [campaign-launcher.md](campaign-launcher.md) (chains across resources).
 
+**Working plan:** option B with Python configs kept, in [kernel-plan.md](kernel-plan.md).
+
 ## The original promise
 
 Seamless provenance for Python scripts and functions, while keeping freedom in how they are
@@ -107,7 +109,107 @@ Delegate:
 3. **Experiment 2, chains:** run B-CONV (four GPU fits → one CPU scorer) twice: once as submitit +
    kernel + campaign launcher, once as a Snakemake rule set. Compare the effort, the job ids and
    ledger, and what XPCC can read.
-4. **Decide A, B or C** from those two experiments; then rewrite slim-core.md's release table
-   accordingly.
+4. **Decide A, B or C** using the wrapper, chain and [Python config replay](#an-experiment-before-adopting-b)
+   experiments. Then revise slim-core.md's release table accordingly.
 5. **sst, independently:** settle its 198 uncommitted files first (last commit 2026-09-08); the rest
    of its migration (slim-core.md §5) waits on the direction.
+
+## Recommendation for B — keep Python configs, `py2cfg` and `flexlock-run`
+
+Keep these three as first-class interfaces and delegate scheduling. A researcher can define
+`cfg` in an ordinary Python module, import it, derive another config from it, and launch it
+directly. For example, `flexlock-run -d experiments.baseline.cfg -s train -o width=256`
+needs only an importable config object. The project author can launch it without registering it.
+
+The reason to keep `py2cfg` is visible months later. Given a checkpoint, a reader can inspect
+the training function, the nested encoder constructor and the width passed to it. The top-level
+source record identifies the captured trees containing those implementations. A shell command
+alone would generally leave the reader to reconstruct those choices from the script. Even if
+literal replays are rare, a record precise enough to replay answers everyday provenance questions.
+
+### How the runner would work
+
+1. **Prepare the call.** Import the named config object, apply merges and overrides, and select
+   the stage. Keep `--print-config` for inspecting the result. Save the module attribute, stage
+   and overrides as the origin, alongside the call description produced from `py2cfg` (target,
+   arguments and nested targets). Capture the declared source trees at submission, covering both
+   the config definition and the callable implementations. Bind available upstream inputs and
+   record the concrete values used when a queued dependency becomes available.
+2. **Run from the prepared record.** Locally, invoke the prepared call directly. With
+   `--slurm-config`, have a submitit adapter hand the worker a path to that record. The worker
+   reads the saved call and imports its targets. Later edits to the author's config therefore
+   cannot change a queued job's arguments. The adapter owns submission and job IDs. FlexLock owns
+   the destination guard, input and source provenance, output validation and completion marker.
+3. **Replay into a fresh destination.** Let `flexlock-run` read the saved call even after the
+   original config attribute has been renamed. Preserve concrete input bindings. Account for
+   every declared output when changing destinations, including absolute checkpoint paths that
+   still point into the original run. Surface ambiguous paths for explicit override. The target
+   name and arguments recover the call. Reproducing its historical implementation also requires
+   the recorded source, environment and inputs. Report source drift when the checkout differs.
+
+### Where Hydra fits
+
+Keep the kernel callable from plain Python. Hydra can own composition, overrides, nested
+instantiation and multirun. A thin `flexlock-run` can import the selected module attribute and
+pass it to Hydra. For new configs, hydra-zen's `builds(..., populate_full_signature=True)`
+is a candidate for capturing callable defaults. Its `launch` accepts a Python config object
+and uses Hydra's in-memory ConfigStore internally. Registration stays out of project modules.
+Check compatibility with an existing `py2cfg` stage that uses `_snapshot_`, `_outputs_` and
+upstream references before changing the authoring API.
+[hydra-zen builds](https://mit-ll-responsible-ai.github.io/hydra-zen/generated/hydra_zen.builds.html) ·
+[hydra-zen launch](https://mit-ll-responsible-ai.github.io/hydra-zen/generated/hydra_zen.launch.html)
+
+Offer a callback for existing Hydra apps. It can capture source on the controller at multirun
+start and record each job's effective config and outcome on the worker. A generic `main(cfg)`
+exposes that invocation. Recording a nested training call requires the app to describe it.
+For FlexLock-managed runs, put the destination guard and output validation in the task wrapper
+so a failure stops the job. Hydra converts ordinary callback exceptions to warnings.
+[Hydra callback lifecycle and error handling](https://hydra.cc/docs/experimental/callbacks/)
+
+Try the stock Submitit launcher for independent sweeps. It sends per-item overrides to workers,
+loads the sweep config there, and waits for results. A source snapshot taken before the sweep
+therefore leaves two questions open for campaigns: which concrete call was accepted for each
+arm, and when can the caller get its job ID to submit a dependent scorer? Compare a small
+direct Submitit adapter on those requirements.
+[Hydra Submitit launcher implementation](https://github.com/facebookresearch/hydra/blob/main/plugins/hydra_submitit_launcher/hydra_plugins/hydra_submitit_launcher/submitit_launcher.py)
+
+### What to borrow from Exca
+
+Exca lets a project configure a task as a Python object, execute a decorated method locally or
+on Slurm, and cache its result. That model is a good candidate for preprocessing that wants
+per-item caching. For existing FlexLock projects, keep accepting ordinary research functions
+and borrow three design choices. These observations come from the docs and examples.
+[Exca overview](https://github.com/facebookresearch/exca)
+
+- **Execute the captured source.** Exca's optional `WorkDir` copies selected files or editable
+  packages at submission and runs the job from that directory. For FlexLock, share one captured
+  tree across an array and record which tree each worker used. Include declared non-Python
+  files such as YAML alongside imported helpers.
+  [Exca workdir guide](https://facebookresearch.github.io/exca/infra/howto.html)
+- **Distinguish a call from an attempt.** Exca saves the full config and the subset of fields
+  used for cache identity. For FlexLock, retain the resolved callee and arguments for comparison
+  and replay. Give each execution its own record of source, inputs, resources and outputs.
+  Matching arguments alone are insufficient evidence to reuse a checkpoint.
+  [Exca cache layout](https://facebookresearch.github.io/exca/infra/tutorials.html)
+- **Support a Python loop over named arms.** Exca's `job_array(max_workers=...)` batches
+  configured objects and exposes job handles after submission. A small FlexLock Python API
+  could return each arm's job ID and run directory immediately, so the B-CONV launcher can
+  bind its scorer to the four fits. For shared datasets, borrow `MapInfra`'s explicit item
+  identity: record the year or shard key so retries remain traceable if array indices change.
+  [Exca array example](https://facebookresearch.github.io/exca/infra/introduction.html) ·
+  [MapInfra tutorial](https://facebookresearch.github.io/exca/infra/tutorials.html)
+
+### An experiment before adopting B
+
+Use two named arms from one existing `py2cfg` module. Establish the expected calls locally,
+then compare Hydra multirun with a short Python loop using Submitit. For each path, record how
+much project code it takes to cap concurrency, obtain each job ID before completion, and find
+the corresponding run directory.
+
+While the jobs are queued, edit a config argument, an imported helper and a YAML file the
+stage reads. Check the actual outputs against the submitted values and source. Deliberately
+omit a required output in one arm and confirm that it fails without a completion marker.
+Rename the config attribute and replay the successful arm from its record into a fresh
+directory. Verify the nested arguments and upstream bindings, check that the original outputs
+are intact, and read both attempts through the existing reader. Use the result to decide how
+much launcher code FlexLock needs to own.

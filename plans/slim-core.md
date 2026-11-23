@@ -3,6 +3,9 @@
 > Option A of [direction.md](direction.md), which also weighs a smaller provenance kernel (option B)
 > against the alternatives (Hydra, submitit, DVC, Prefect, ClearML, Snakemake). The census, the
 > layout (§4) and the sst analysis (§5) apply to every option.
+>
+> **Superseded for the release order:** option B with Python configs kept is now the working plan,
+> in [kernel-plan.md](kernel-plan.md). Its step table replaces §6 below.
 
 FlexLock stays public with its docs site. It has never been announced, so removed parts go
 without a deprecation release. Scope after the cut: **write configs and stages, run them
@@ -164,6 +167,8 @@ they only load configs; consolidate profiles; upgrade and rerun the 11-stage fou
 acceptance.
 
 ## 6. Releases
+
+> Superseded by [kernel-plan.md](kernel-plan.md) (Releases). Kept for the option A record.
 
 | Release | Content | Consumers |
 |---|---|---|
