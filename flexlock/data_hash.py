@@ -2,12 +2,14 @@
 
 import os
 import sqlite3
-import threading
+import fcntl
+import tempfile
 from pathlib import Path
 import xxhash
 import hashlib
 from joblib import Parallel, delayed
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
+from loguru import logger
 
 from . import config
 
@@ -26,62 +28,68 @@ CACHE_DIR = (
     / "flexlock"
 )
 CACHE_DB = CACHE_DIR / f"hashes_v{HASH_VERSION}.db"
-CACHE_DIR.mkdir(parents=True, exist_ok=True)
-
-# Thread-local storage for database connections
-_thread_local_conns = threading.local()
 
 
 @contextmanager
 def _get_db():
-    """
-    A thread-safe context manager for SQLite database connections.
-
-    This function maintains a cache of connections per thread. A new connection
-    is created for each unique database path and reused for subsequent calls
-    with the same path within that thread.
-    """
-    # Use the absolute path as a reliable key for the connections dictionary.
-    db_path_str = str(CACHE_DB.resolve())
-
-    # Initialize the connections dictionary for the current thread if it doesn't exist.
-    if not hasattr(_thread_local_conns, "conns"):
-        _thread_local_conns.conns = {}
-
-    # Check if a connection for this specific db_path already exists in the thread's cache.
-    if db_path_str not in _thread_local_conns.conns:
-        # If not, create a new connection and add it to the cache.
-        try:
-            c = sqlite3.connect(db_path_str, check_same_thread=False)
-            # Set PRAGMA for better performance and concurrency.
-            c.execute("PRAGMA journal_mode=WAL")
-            c.execute("PRAGMA busy_timeout=15000")
-            c.execute(
-                "PRAGMA foreign_keys=ON"
-            )  # Good practice to enforce foreign key constraints
-            c.execute(
-                """
-                CREATE TABLE IF NOT EXISTS cache (
-                    path TEXT PRIMARY KEY,
-                    mtime REAL,
-                    file_count INTEGER,
-                    latest_mtime REAL,
-                    hash TEXT,
-                    is_dir INTEGER
-                )
-                """
+    """Open the cache with a rollback journal and close it before recovery."""
+    with closing(sqlite3.connect(CACHE_DB, timeout=1)) as conn, conn:
+        (mode,) = conn.execute("PRAGMA journal_mode=DELETE").fetchone()
+        if mode != "delete":
+            raise sqlite3.OperationalError(f"Hash cache uses journal mode {mode}")
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS cache (
+                path TEXT PRIMARY KEY,
+                mtime REAL,
+                file_count INTEGER,
+                latest_mtime REAL,
+                hash TEXT,
+                is_dir INTEGER
             )
-            _thread_local_conns.conns[db_path_str] = c
-        except sqlite3.Error as e:
-            print(f"Error connecting to database {db_path_str}: {e}")
-            raise
+            """
+        )
+        yield conn
 
-    # Yield the connection from the thread's cache.
+
+def _quarantine_cache():
+    """Preserve the damaged database and any journal files together."""
+    quarantine = Path(tempfile.mkdtemp(prefix=f"{CACHE_DB.name}.corrupt-", dir=CACHE_DB.parent))
+    for suffix in ("", "-wal", "-shm", "-journal"):
+        path = Path(f"{CACHE_DB}{suffix}")
+        if path.exists():
+            path.rename(quarantine / path.name)
+    logger.warning(f"Moved damaged hash cache to {quarantine}")
+
+
+def _cache_execute(sql, params):
+    """Run a cache operation, rebuilding once on corruption."""
     try:
-        yield _thread_local_conns.conns[db_path_str]
-    finally:
-        # Don't close the connection since we're caching it for reuse
-        pass
+        CACHE_DB.parent.mkdir(parents=True, exist_ok=True)
+        # Hold the same lock for access and recovery so no other updated client
+        # can open a partially quarantined database or keep using its old inode.
+        with CACHE_DB.with_suffix(".lock").open("a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            if not CACHE_DB.exists() and any(
+                Path(f"{CACHE_DB}{suffix}").exists() for suffix in ("-wal", "-shm", "-journal")
+            ):
+                _quarantine_cache()
+            try:
+                with _get_db() as conn:
+                    return conn.execute(sql, params).fetchone()
+            except sqlite3.DatabaseError as exc:
+                code = getattr(exc, "sqlite_errorcode", 0) & 0xff
+                if code not in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB):
+                    raise
+                _quarantine_cache()
+                with _get_db() as conn:
+                    return conn.execute(sql, params).fetchone()
+    except BlockingIOError:
+        # Cache contention is cheaper to bypass than to block a run on it.
+        return None
+    except (OSError, sqlite3.Error) as exc:
+        logger.warning(f"Skipping hash cache {CACHE_DB}: {exc}")
+        return None
 
 
 def _hash_file_content(path):
@@ -188,53 +196,24 @@ def hash_data(
         return dirhash(path, match=match, ignore=ignore, jobs=jobs,
                        algorithm=algorithm, chunk_size=chunk_size)
 
-    if use_cache:
-        with _get_db() as conn:
-            cursor = conn.cursor()
-
-            if path.is_file():
-                # Check cache for file
-                cursor.execute(
-                    "SELECT hash, mtime FROM cache WHERE path=? AND is_dir=0",
-                    (str(path),),
-                )
-                row = cursor.fetchone()
-
-                if row:
-                    cached_hash, cached_mtime = row
-                    current_mtime = path.stat().st_mtime
-                    if cached_mtime == current_mtime:
-                        return cached_hash
-    # If not in cache or cache is invalid/disabled, compute the hash
     if not path.exists():
         raise FileNotFoundError(f"The specified path does not exist: {path}")
-
-    new_hash = None
-    if path.is_file():
-        new_hash = _hash_file_content(path)
-    elif path.is_dir():
-        new_hash = dirhash(
-            path,
-            match=match,
-            ignore=ignore,
-            jobs=jobs,
-            algorithm=algorithm,
-            chunk_size=chunk_size,
-        )
-
-    if new_hash is None:
+    if not path.is_file():
         raise ValueError(f"Could not compute hash for path: {path}")
 
-    # Update and save the cache if enabled
+    mtime = path.stat().st_mtime
     if use_cache:
-        with _get_db() as conn:
-            cursor = conn.cursor()
-            if path.is_file():
-                mtime = path.stat().st_mtime
-                cursor.execute(
-                    "INSERT OR REPLACE INTO cache VALUES (?, ?, NULL, NULL, ?, 0)",
-                    (str(path), mtime, new_hash),
-                )
-            conn.commit()
+        row = _cache_execute(
+            "SELECT hash FROM cache WHERE path=? AND mtime=? AND is_dir=0",
+            (str(path), mtime),
+        )
+        if row is not None:
+            return row[0]
 
+    new_hash = _hash_file_content(path)
+    if use_cache:
+        _cache_execute(
+            "INSERT OR REPLACE INTO cache VALUES (?, ?, NULL, NULL, ?, 0)",
+            (str(path), mtime, new_hash),
+        )
     return new_hash

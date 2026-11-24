@@ -4,6 +4,7 @@ from omegaconf import OmegaConf
 from dataclasses import dataclass
 import time
 import os
+import sqlite3
 from unittest.mock import patch, call
 
 from flexlock.data_hash import hash_data, _get_db
@@ -78,6 +79,38 @@ def test_hash_caching_file(test_data):
 
     hash2 = hash_data(file_path)
     assert hash1 == hash2
+
+
+def test_hash_cache_rebuilds_damaged_database(test_data):
+    from flexlock.data_hash import CACHE_DB
+
+    broken = b"this is not a sqlite database" * 32
+    CACHE_DB.write_bytes(broken)
+    source = test_data / "file1.txt"
+    assert hash_data(source) == hash_data(source, use_cache=False)
+    (quarantine,) = CACHE_DB.parent.glob(f"{CACHE_DB.name}.corrupt-*")
+    assert (quarantine / CACHE_DB.name).read_bytes() == broken
+    with _get_db() as conn:
+        assert conn.execute("SELECT path FROM cache").fetchone() == (str(source),)
+
+
+def test_hash_cache_migrates_wal_database(test_data):
+    from flexlock.data_hash import CACHE_DB
+
+    with _get_db() as conn:
+        conn.execute("INSERT INTO cache VALUES ('existing', 0, NULL, NULL, 'hash', 0)")
+    conn = sqlite3.connect(CACHE_DB)
+    try:
+        assert conn.execute("PRAGMA journal_mode=WAL").fetchone() == ("wal",)
+    finally:
+        conn.close()
+    hash_data(test_data / "file1.txt")
+    conn = sqlite3.connect(CACHE_DB)
+    try:
+        assert conn.execute("PRAGMA journal_mode").fetchone() == ("delete",)
+        assert conn.execute("SELECT hash FROM cache WHERE path='existing'").fetchone() == ("hash",)
+    finally:
+        conn.close()
 
 
 def test_hash_caching_file_invalidation(test_data):

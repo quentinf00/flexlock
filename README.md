@@ -101,5 +101,5 @@ producers and use fresh destinations. There is no automatic marker-based stage s
 - [Source attribution](docs/source_attribution.md) and [HPC integration](docs/hpc_integration.md)
 - [Slim-core design](docs/philosophy.md) and [migration notes](docs/release_0_10.md)
 
-Install this release with `pip install flexlock==0.10.1` or from the
+Install this release with `pip install flexlock==0.10.2` or from the
 `quentinf00` Conda channel. See the migration notes before upgrading existing callers.

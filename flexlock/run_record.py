@@ -39,10 +39,11 @@ STATUS_MISSING = "MISSING"    # nothing
 
 def _atomic_write(target: Path, text: str) -> Path:
     target.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", dir=target.parent, delete=False) as tf:
-        tf.write(text)
-        tmp_name = tf.name
-    os.replace(tmp_name, target)
+    # A regular file inside a private staging directory inherits the umask.
+    with tempfile.TemporaryDirectory(dir=target.parent) as staging:
+        temporary = Path(staging) / target.name
+        temporary.write_text(text, encoding="utf-8")
+        os.replace(temporary, target)
     return target
 
 
@@ -241,7 +242,7 @@ def _task_snapshot_for_dir(run_dir: Path) -> Optional[dict]:
     """Read-only lookup of the task snapshot that ran *in* ``run_dir``.
 
     Uses the ``.flexlock_marker`` task_id when present, else the most recent
-    row whose snapshot ``config.save_dir`` is ``run_dir`` (done rows first).
+    row whose receipt is ``run_dir`` (done rows first).
     Opens the DB read-only (no schema migration, no write lock).
     """
     import sqlite3
@@ -280,8 +281,8 @@ def _task_snapshot_for_dir(run_dir: Path) -> Optional[dict]:
                 continue
         if task_id is not None and tid == task_id:
             return snap
-        save_dir = (snap.get("config") or {}).get("save_dir")
-        if save_dir is not None and _same_dir(save_dir, run_dir):
+        receipt_dir = snap.get("record_dir") or (snap.get("config") or {}).get("save_dir")
+        if receipt_dir is not None and _same_dir(receipt_dir, run_dir):
             candidates.append(snap)
     return candidates[0] if candidates else None
 

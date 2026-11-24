@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from git.repo import Repo as GitRepo
 
+from . import __version__
 from .git_utils import sanitize_ref_name
 
 
@@ -975,6 +976,7 @@ def main():
         prog="flexlock",
         description="FlexLock experiment management CLI",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command")
 
     for name, handler, help_text in [

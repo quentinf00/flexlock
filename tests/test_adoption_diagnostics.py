@@ -94,7 +94,7 @@ def test_slurm_array_workers_have_separate_default_logs(tmp_path, directive):
                           configure_logging=False).render_script()
     assert 'slurm-%A_%a' not in custom and '--output=custom-%a.log' in custom
     single = SlurmBackend(tmp_path, []).render_script()
-    assert 'slurm.out' in single and '%a' not in single
+    assert '%x-%j.out' in single and '%x-%j.err' in single and '%a' not in single
 
 
 @pytest.mark.parametrize('flag,key', [('-o', 'main.label'), ('-O', 'label')])

@@ -95,7 +95,9 @@ def test_shared_items_independent_receipts_payloads_cache_and_reuse(tmp_path, n_
     assert [r.status for r in results] == ['SUCCESS', 'SUCCESS']
     assert [r.get('item') for r in results] == [1, 2]
     assert len({r.record_dir for r in results}) == 2
-    assert not (tmp_path/'products/run.complete').exists()
+    assert (tmp_path/'products/run.complete').is_file()
+    with pytest.raises(FlexLockValidationError, match='sweep root'):
+        Project()._load_selected_result(tmp_path/'products', cfg)
     db = Path(results[0].task_db)
     entries = list_task_records(db, check_outputs=True)
     assert len(entries) == 2
@@ -139,6 +141,7 @@ def test_failure_keeps_other_shared_item_receipt_complete(tmp_path, n_jobs):
     assert (Path(results[1].record_dir)/'run.complete').is_file()
     assert (Path(results[0].record_dir)/'run.error').is_file()
     assert not (Path(results[0].record_dir)/'run.complete').exists()
+    assert not (tmp_path/'products/run.complete').exists()
 
 
 def test_shared_declared_output_collision_rejected_before_execution(tmp_path):
@@ -171,7 +174,7 @@ def test_append_only_campaign_retains_shared_receipt_scope(tmp_path):
     assert len({r.record_dir for r in extended}) == 3
     assert all(r.record_dir != r.save_dir for r in extended)
     assert len(list_task_records(extended[-1].task_db)) == 3
-    assert not (tmp_path/'products/run.complete').exists()
+    assert (tmp_path/'products/run.complete').is_file()
 
 
 @pytest.mark.parametrize('n_jobs', [1, 2])

@@ -4,11 +4,10 @@ import argparse
 import sys
 import json
 import yaml
-import tempfile
-import os
 from pathlib import Path
 from loguru import logger
 from flexlock.record import materialize, read_lock
+from flexlock.run_record import _atomic_write
 from flexlock.taskdb import get_task_snapshot, list_task_snapshots
 
 
@@ -30,13 +29,7 @@ def export_task(db_path: Path, task_id: str, output_dir: Path) -> None:
     # The DB stores a delta; complete it with the master's repos/env/note.
     snapshot_data = materialize(snapshot_data, read_lock(Path(db_path).parent))
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Atomic write of run.lock file
-    with tempfile.NamedTemporaryFile("w", dir=output_dir, delete=False) as tf:
-        yaml.dump(snapshot_data, tf, sort_keys=False)
-        tmp_name = tf.name
-    os.replace(tmp_name, output_dir / "run.lock")
+    _atomic_write(output_dir / "run.lock", yaml.dump(snapshot_data, sort_keys=False))
 
     logger.info(f"Exported task {task_id} to {output_dir}")
 
@@ -66,15 +59,7 @@ def export_all_tasks(db_path: Path, output_base_dir: Path, status: str = None) -
         if snapshot_data:
             snapshot_data = materialize(snapshot_data, master)
             task_output_dir = output_base_dir / f"task_{task_id[:8]}"
-            task_output_dir.mkdir(parents=True, exist_ok=True)
-
-            # Atomic write
-            with tempfile.NamedTemporaryFile(
-                "w", dir=task_output_dir, delete=False
-            ) as tf:
-                yaml.dump(snapshot_data, tf, sort_keys=False)
-                tmp_name = tf.name
-            os.replace(tmp_name, task_output_dir / "run.lock")
+            _atomic_write(task_output_dir / "run.lock", yaml.dump(snapshot_data, sort_keys=False))
 
             logger.info(
                 f"Exported task {task_id[:8]} (status={task_status}) to {task_output_dir}"

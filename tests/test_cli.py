@@ -20,6 +20,18 @@ from flexlock.cli import (
 from flexlock.git_utils import sanitize_ref_name
 
 
+@pytest.mark.parametrize("entry_point, program", [("cli", "flexlock"), ("run_cli", "flexlock-run")])
+def test_cli_version(entry_point, program, monkeypatch, capsys):
+    from importlib import import_module
+    from flexlock import __version__
+
+    monkeypatch.setattr("sys.argv", [program, "--version"])
+    with pytest.raises(SystemExit) as exc:
+        import_module(f"flexlock.{entry_point}").main()
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.strip() == f"{program} {__version__}"
+
+
 # ── Fixtures ───────────────────────────────────────────────────
 
 

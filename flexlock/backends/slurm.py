@@ -184,7 +184,7 @@ class SlurmBackend(Backend):
         if self.configure_logging:
             is_array = any(re.search(r'^\s*#SBATCH\s+(?:--array(?:=|\s)|-a(?:\s|[0-9]))', line)
                            for line in self.startup_lines)
-            log_name = 'slurm-%A_%a' if is_array else 'slurm'
+            log_name = 'slurm-%A_%a' if is_array else '%x-%j'
             lines.extend(
                 [
                     f"#SBATCH --output={self.folder.absolute() / (log_name + '.out')}",

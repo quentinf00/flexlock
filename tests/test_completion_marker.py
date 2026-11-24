@@ -5,6 +5,7 @@ Interrupted runs leave run.lock without run.complete and must not match.
 """
 
 import json
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -25,6 +26,45 @@ def test_write_complete_marker_atomic(tmp_path):
     payload = json.loads(marker.read_text())
     assert "ts" in payload
     assert payload["version"] == 1
+
+
+@pytest.mark.parametrize("umask, mode", [(0o022, 0o644), (0o002, 0o664), (0o077, 0o600)])
+def test_run_record_files_honor_umask(tmp_path, umask, mode):
+    from flexlock.run_record import RunRecord
+
+    old_umask = os.umask(umask)
+    try:
+        record = RunRecord(tmp_path)
+        paths = [record.write_lock({"config": {}}), record.mark_complete()]
+    finally:
+        os.umask(old_umask)
+    assert all(path.stat().st_mode & 0o777 == mode for path in paths)
+
+
+def test_sweep_marker_tracks_all_tags_and_is_invalidated_on_append(tmp_path):
+    from flexlock.run_record import RunRecord
+    from flexlock.taskdb import (finish_task, publish_sweep_completion, queue_tasks)
+
+    record = RunRecord(tmp_path)
+    record.write_lock({"config": {}})
+    db = tmp_path / "run.lock.tasks.db"
+    first, second, third = {"x": 1}, {"x": 2}, {"x": 3}
+    queue_tasks(db, [first], tag="first")
+    queue_tasks(db, [second], tag="second")
+    finish_task(db, first)
+    publish_sweep_completion(db)
+    assert not record.is_complete
+    finish_task(db, second)
+    publish_sweep_completion(db)
+    assert record.is_complete
+
+    queue_tasks(db, [first], tag="first")
+    assert record.is_complete
+    queue_tasks(db, [third], tag="third")
+    assert not record.is_complete
+    finish_task(db, third, error="missing output")
+    publish_sweep_completion(db)
+    assert not record.is_complete
 
 
 def test_is_complete_requires_both_files(tmp_path):

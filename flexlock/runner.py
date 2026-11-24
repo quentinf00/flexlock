@@ -19,7 +19,7 @@ from .utils import (
     merge_task_into_cfg,
 )
 from .exceptions import FlexLockValidationError
-from . import config
+from . import __version__, config
 from .presets import freeze_run_refs
 from loguru import logger
 
@@ -72,6 +72,7 @@ class FlexLockRunner:
         parser = argparse.ArgumentParser(
             description="FlexLock Execution Manager", add_help=False
         )
+        parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
         parser.add_argument(
             "-h", "--help", action="store_true", help="Show this help message and exit."

@@ -1,3 +1,12 @@
+# 0.10.2
+
+- Give each Slurm job its own stdout and stderr files by default.
+- Honor the process umask when writing run records and task exports.
+- Use SQLite rollback journaling for file hashes. Quarantine and rebuild a
+  corrupt cache and continue hashing if the cache is unavailable.
+- Mark a sweep root complete after every queued task succeeds.
+- Add `--version` to `flexlock` and `flexlock-run`.
+
 # 0.10.1
 
 - `FLEXLOCK_TAGS="key=value,..."` in the launch environment is recorded as a top-level

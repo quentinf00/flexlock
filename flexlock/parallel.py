@@ -424,7 +424,7 @@ class ParallelExecutor:
         Returns:
             bool: True if tasks completed successfully (or not waiting), False on timeout/failure
         """
-        from flexlock.taskdb import dump_to_yaml
+        from flexlock.taskdb import dump_to_yaml, publish_sweep_completion
         from flexlock.record import _list_task_records
         from flexlock.outputs import validate_outputs
         from flexlock.utils import merge_task_into_cfg
@@ -453,6 +453,7 @@ class ParallelExecutor:
 
         if pending_count(self.db_path, tags=[self.tag]) == 0:
             logger.info("All tasks already completed.")
+            publish_sweep_completion(self.db_path)
             dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks",
                          tags=[self.tag])
             from flexlock.taskdb import get_status_counts
@@ -527,6 +528,7 @@ class ParallelExecutor:
                     success = True
 
         finally:
+            publish_sweep_completion(self.db_path)
             # Dump tasks to YAML after all jobs are submitted (or completed locally)
             dump_to_yaml(self.db_path, self.save_dir / "run.lock.tasks",
                          tags=[self.tag])

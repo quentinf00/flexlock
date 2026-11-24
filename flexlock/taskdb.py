@@ -224,9 +224,11 @@ def _write_txn(db_path: Path, op):
 def reset_completed_task(db_path: Path, task_id: str) -> None:
     """Requeue a done item whose completion receipt is missing under skip policy."""
     def op(connection):
-        connection.execute(
+        updated = connection.execute(
             "UPDATE tasks SET status='pending', node=NULL, job_id=NULL, ts_start=NULL, "
             "ts_end=NULL WHERE task_id=? AND status='done'", (task_id,))
+        if updated.rowcount:
+            _invalidate_sweep_completion(db_path)
     _write_txn(db_path, op)
 
 
@@ -237,6 +239,8 @@ def reset_db(db_path: Path) -> None:
     writing to the unlinked inode and the path is never recreated.
     """
     db_path = Path(db_path)
+    if db_path.exists():
+        _invalidate_sweep_completion(db_path)
     conns = getattr(_thread_local_conns, "conns", None)
     if conns:
         c = conns.pop(str(db_path.resolve()), None)
@@ -277,10 +281,46 @@ def queue_tasks(db_path: Path, tasks: List[Any], tag: str | None = None) -> None
                     f"({existing[0]!r}); continue the original queue instead of "
                     "submitting it as new work."
                 )
-        c.executemany(
+        inserted = c.executemany(
             "INSERT OR IGNORE INTO tasks (task_id, task_info, tag) VALUES (?, ?, ?)",
             rows,
         )
+        if inserted.rowcount:
+            _invalidate_sweep_completion(db_path)
+
+    _write_txn(db_path, op)
+
+
+def _invalidate_sweep_completion(db_path: Path) -> None:
+    from .queue_refs import TASKS_DB_NAME, read_marker
+    from .run_record import RunRecord
+
+    if db_path.name == TASKS_DB_NAME and read_marker(db_path.parent) is None:
+        RunRecord(db_path.parent).complete_path.unlink(missing_ok=True)
+
+
+def publish_sweep_completion(db_path: Path) -> None:
+    """Mark a sweep root complete once every row across all tags has succeeded."""
+    from .queue_refs import TASKS_DB_NAME, read_marker
+    from .run_record import RunRecord
+
+    if db_path.name != TASKS_DB_NAME:
+        return
+    record = RunRecord(db_path.parent)
+
+    def op(conn):
+        # Share the queue write lock with appends so a concurrent submission
+        # cannot leave a success marker beside newly queued work.
+        if not record.lock_path.is_file() or record.complete_path.exists():
+            return
+        if read_marker(db_path.parent) is not None:
+            return  # The task running in this directory owns its marker.
+        has_tasks, has_unfinished = conn.execute(
+            "SELECT EXISTS(SELECT 1 FROM tasks), "
+            "EXISTS(SELECT 1 FROM tasks WHERE status IS NOT 'done')"
+        ).fetchone()
+        if has_tasks and not has_unfinished:
+            record.mark_complete()
 
     _write_txn(db_path, op)
 
@@ -726,7 +766,7 @@ def get_all_tasks(db_path: Path, status: str = None, tags=None) -> list:
 
 
 def _atomic_write_yaml(data: list, path: Path):
-    import tempfile, os
+    from .run_record import _atomic_write
 
     def _to_primitive(v):
         if isinstance(v, (DictConfig, ListConfig)):
@@ -740,7 +780,4 @@ def _atomic_write_yaml(data: list, path: Path):
             return [_to_primitive(i) for i in v]
         return v
 
-    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.tmp-")
-    with os.fdopen(fd, "w") as f:
-        yaml.safe_dump(_to_primitive(data), f, default_flow_style=False)
-    os.rename(tmp, path)
+    _atomic_write(path, yaml.safe_dump(_to_primitive(data), default_flow_style=False))

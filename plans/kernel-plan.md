@@ -102,6 +102,12 @@ Read the Python and shell attempts through one reader. Freeze schema v1 when it 
 the submitted and executed invocations to the extent each was known, their source, scheduler
 acceptance and outcomes. Choose the adapter using the prototype results.
 
+For changes to run records, completion markers, or scheduler logs, run the ACDM
+and XPCC suites in `acceptance-runs/downstream/acdm` and
+`acceptance-runs/downstream/xpcc`. Set `PYTHONPATH` to the FlexLock development
+checkout and use its Python environment so the cross-project tests exercise the
+in-development writer and scheduler adapter.
+
 ## Steps
 
 | Step | Content | Acceptance |

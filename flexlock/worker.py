@@ -21,7 +21,8 @@ from pathlib import Path
 from loguru import logger
 from omegaconf import OmegaConf, DictConfig
 
-from .taskdb import claim_next_tasks, finish_tasks, pending_count, dump_to_yaml
+from .taskdb import (claim_next_tasks, finish_tasks, pending_count, dump_to_yaml,
+                     publish_sweep_completion)
 from flexlock.utils import merge_task_into_cfg, instantiate, extract_tracking_info
 from flexlock.resolvers import resolve_deferred
 from flexlock.snapshot import snapshot
@@ -350,6 +351,7 @@ def worker_loop(func, cfg, task_to: str, db_path, tags=None):
         if not batch:
             if pending_count(db_path, tags=tags) == 0:
                 logger.info("All tasks finished.")
+                publish_sweep_completion(db_path)
                 # Refresh run.lock.tasks from the worker side too: the
                 # submitter only dumps it when it stops waiting, so a
                 # ``wait=False``/interrupted submit left it stale (``[]``).

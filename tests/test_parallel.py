@@ -44,6 +44,7 @@ def test_parallel_executor_local_execution(base_cfg):
 
     # Should return True for successful execution
     assert success is True
+    assert (Path(base_cfg.save_dir) / "run.complete").exists()
 
     # Verify that the final results file was created
     results_file = Path(base_cfg.save_dir) / "run.lock.tasks"

@@ -281,14 +281,21 @@ class Project:
     def _load_selected_result(self, match_dir: Path, cfg: DictConfig) -> ExecutionResult:
         """Load an explicitly selected complete producer, without searching."""
         from .outputs import validate_outputs
-        from .record import load_record, read_marker, marker_db
+        from .exceptions import FlexLockValidationError
+        from .queue_refs import TASKS_DB_NAME
+        from .record import is_task_record, load_record, marker_db, read_lock, read_marker
 
         record = load_record(match_dir)
         if not record or not isinstance(record.get('config'), dict):
-            from .exceptions import FlexLockValidationError
             raise FlexLockValidationError(
                 f"Selected run at {match_dir} has no readable authoritative record; "
                 "its completion marker/results alone are insufficient."
+            )
+        marker = read_marker(match_dir)
+        if (marker is None and (match_dir / TASKS_DB_NAME).exists()
+                and not is_task_record(record) and record == read_lock(match_dir)):
+            raise FlexLockValidationError(
+                f"Selected run at {match_dir} is a sweep root. Select a completed task receipt."
             )
         product_dir = record.get('config', {}).get('save_dir', str(match_dir)) if record.get('record_dir') else str(match_dir)
         recorded_cfg = OmegaConf.create(record['config'])
@@ -302,8 +309,8 @@ class Project:
 
         return ExecutionResult(
             save_dir=str(product_dir), status="CACHED", result=result_data, cfg=recorded_cfg,
-            record_dir=str(match_dir), task_id=record.get('task_id') or (read_marker(match_dir) or {}).get('task_id'),
-            task_db=str(marker_db(match_dir, read_marker(match_dir))) if read_marker(match_dir) else None,
+            record_dir=str(match_dir), task_id=record.get('task_id') or (marker or {}).get('task_id'),
+            task_db=str(marker_db(match_dir, marker)) if marker else None,
         )
 
     def run_stage(self, cfg, stage_name=None, **submit_kwargs):
